@@ -51,7 +51,7 @@ jobs:
           -backend-config="dynamodb_table=${{ env.TF_VAR_dynamodb_table_name }}"
 
     - name: Terraform Plan
-      run: terraform plan
+      run: terraform plan -lock=false
 
     - name: Terraform Apply
-      run: terraform apply -auto-approve -input=false
+      run: terraform apply -auto-approve -lock=false -input=false
