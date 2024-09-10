@@ -43,10 +43,9 @@ resource "aws_s3_bucket" "terraform_state" {
     Environment = "Management"
     ManagedBy   = "Terraform"
   }
-
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [
+    ignore_changes = [
       bucket,
     ]
   }
@@ -88,5 +87,12 @@ resource "aws_dynamodb_table" "terraform_locks" {
     Name        = "Terraform State Locks"
     Environment = "Management"
     ManagedBy   = "Terraform"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes = [
+      name,
+    ]
   }
 }
