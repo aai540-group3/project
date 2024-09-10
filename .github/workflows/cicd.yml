@@ -116,15 +116,11 @@ jobs:
           -var="state_bucket_name=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
           -var="dynamodb_table_name=${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}"
 
-    - name: Cleanup Terraform Directory
+    - name: Cleanup
       if: always()
       run: |
         rm -rf .terraform
         rm -f .terraform.lock.hcl
-
-    - name: Logout from AWS
-      if: always()
-      run: |
         aws configure set aws_access_key_id ""
         aws configure set aws_secret_access_key ""
         aws configure set aws_session_token ""
