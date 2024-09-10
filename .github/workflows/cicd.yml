@@ -135,4 +135,14 @@ jobs:
 
     - name: Terraform Apply
       # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false -lock=false
+      run: |
+        terraform apply -auto-approve -input=false -lock=false -replace aws_s3_bucket.terraform_state || true 
+        terraform apply -auto-approve -input=false -lock=false -replace aws_dynamodb_table.terraform_locks || true
+        terraform apply -auto-approve -input=false -lock=false -replace aws_budgets_budget.organization_wide || true
+
+        # Dynamically apply individual budgets
+        EMAIL_LIST="${{ secrets.EMAIL_LIST }}"
+        IFS=',' read -r -a EMAIL_ARRAY <<< "$EMAIL_LIST"
+        for i in "${!EMAIL_ARRAY[@]}"; do
+          terraform apply -auto-approve -input=false -lock=false -replace aws_budgets_budget.individual[$i] || true
+        done
