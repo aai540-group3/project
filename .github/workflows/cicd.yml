@@ -110,6 +110,7 @@ jobs:
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
         terraform apply -auto-approve -lock=false \
+          -var="aws_region=${{ secrets.AWS_REGION }}" \
           -var="state_bucket_name=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
           -var="dynamodb_table_name=${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}"
 
