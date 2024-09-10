@@ -45,17 +45,18 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: terraform init \
+      run: |
+        terraform init \
           -backend-config="bucket=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
           -backend-config="key=terraform.tfstate" \ 
           -backend-config="region=${{ secrets.AWS_REGION }}" 
-
 
     - name: Terraform Plan
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: terraform plan \
+      run: |
+        terraform plan \
           -backend-config="bucket=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
           -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
           -backend-config="dynamodb_table=${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}"
@@ -64,7 +65,8 @@ jobs:
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: terraform apply \
+      run: |
+        terraform apply \
           -auto-approve \
           -input=false \
           -backend-config="bucket=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
