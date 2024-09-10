@@ -1,3 +1,44 @@
+variable "aws_region" {
+  description = "The AWS region to create resources in"
+  type        = string
+  default     = "us-west-2"
+}
+
+variable "state_bucket_name" {
+  description = "The name of the S3 bucket for Terraform state"
+  type        = string
+}
+
+variable "dynamodb_table_name" {
+  description = "The name of the DynamoDB table for Terraform state locking"
+  type        = string
+}
+
+variable "tf_state_key" {
+  description = "The path and filename for the state file within the bucket"
+  type        = string
+  default     = "terraform.tfstate" 
+}
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.66.0"
+    }
+  }
+  backend "s3" {
+    bucket = var.state_bucket_name
+    key    = var.tf_state_key 
+    region = var.aws_region
+    dynamodb_table = var.dynamodb_table_name
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+}
+
 data "aws_s3_bucket" "terraform_state" {
   bucket = var.state_bucket_name
 }
@@ -70,4 +111,14 @@ resource "aws_dynamodb_table" "terraform_locks" {
     Environment = "Management"
     ManagedBy   = "Terraform"
   }
+}
+
+output "s3_bucket_name" {
+  value       = data.aws_s3_bucket.terraform_state.id != null ? data.aws_s3_bucket.terraform_state.id : aws_s3_bucket.terraform_state[0].id
+  description = "The name of the S3 bucket"
+}
+
+output "dynamodb_table_name" {
+  value       = data.aws_dynamodb_table.terraform_locks.id != null ? data.aws_dynamodb_table.terraform_locks.id : aws_dynamodb_table.terraform_locks[0].id
+  description = "The name of the DynamoDB table"
 }
