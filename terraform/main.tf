@@ -14,7 +14,7 @@ terraform {
   }
 
   # Specify the required Terraform version
-  required_version = "= 1.9.5"
+  required_version = ">= 1.5.0" # Use a valid Terraform version
 
   # Configure the backend for storing Terraform state
   # A backend determines how state is stored. Here, we're using an S3 bucket.
@@ -90,10 +90,10 @@ resource "aws_iam_group_membership" "org_users" {
   group = aws_iam_group.org_users.name
 }
 
-# Create an IAM policy for free-tier eligible services
-resource "aws_iam_policy" "free_tier_policy" {
-  name        = "FreeTierEligiblePolicy"
-  description = "Policy allowing access to free-tier eligible services including SNS management"
+# Create an IAM policy for common AWS services with instance type restrictions
+resource "aws_iam_policy" "common_services_policy" {
+  name        = "CommonServicesPolicy"
+  description = "Policy allowing access to common AWS services"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -101,16 +101,19 @@ resource "aws_iam_policy" "free_tier_policy" {
       {
         Effect = "Allow"
         Action = [
-          "s3:Get*", 
-          "s3:List*", 
-          "dynamodb:Query", 
-          "dynamodb:Scan", 
+          "apigateway:*",
+          "cloudwatch:*",
+          "codebuild:*",
+          "codecommit:*",
+          "codepipeline:*",
+          "dynamodb:*",
           "ec2:Describe*",
-          "rds:Describe*",
-          "sns:Publish", 
-          "cloudwatch:Get*", 
-          "sqs:Get*",
-          "sqs:List*"
+          "ecr:*",
+          "iam:PassRole",
+          "lambda:*",
+          "logs:*",
+          "s3:*",
+          "sagemaker:*",
         ]
         Resource = "*"
       },
@@ -120,14 +123,14 @@ resource "aws_iam_policy" "free_tier_policy" {
           "ec2:RunInstances",
           "ec2:StartInstances",
           "ec2:StopInstances",
-          "ec2:TerminateInstances"
+          "ec2:TerminateInstances",
         ]
         Resource = "*"
         Condition = {
           StringEquals = {
             "ec2:InstanceType" = [
               "t2.micro",
-              "t3.micro"
+              "t3.micro",
             ]
           }
         }
@@ -135,22 +138,39 @@ resource "aws_iam_policy" "free_tier_policy" {
       {
         Effect = "Allow"
         Action = [
-          "sns:ListTopics",
           "sns:GetTopicAttributes",
           "sns:ListSubscriptionsByTopic",
+          "sns:ListTopics",
           "sns:Subscribe",
-          "sns:Unsubscribe"
+          "sns:Unsubscribe",
         ]
         Resource = aws_sns_topic.user_notifications[*].arn
+      },
+      # Allow stopping and terminating instances based on tags
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:StopInstances",
+          "ec2:TerminateInstances"
+        ]
+        Resource = "arn:aws:ec2:*:*:instance/*"
+        Condition = {
+          StringEquals = {
+            "ec2:ResourceTag/AutoShutdown" : "true"
+          }
+        }
       }
     ]
   })
+
+  # Ensure that the SNS topics are created before referencing them in this policy
+  depends_on = [aws_sns_topic.user_notifications]
 }
 
-# Attach the free-tier policy to the IAM group
-resource "aws_iam_group_policy_attachment" "free_tier_policy_attachment" {
+# Attach the policy to the IAM group
+resource "aws_iam_group_policy_attachment" "common_services_policy_attachment" {
   group      = aws_iam_group.org_users.name
-  policy_arn = aws_iam_policy.free_tier_policy.arn
+  policy_arn = aws_iam_policy.common_services_policy.arn
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -209,16 +229,16 @@ resource "aws_s3_bucket_policy" "terraform_state_policy" {
     Version = "2012-10-17",
     Statement = [
       {
-        Action = "s3:*",
-        Effect = "Deny",
+        Action    = "s3:*",
+        Effect    = "Deny",
         Principal = "*",
         Resource = [
           "${aws_s3_bucket.terraform_state.arn}/*",
           "${aws_s3_bucket.terraform_state.arn}"
         ],
         Condition = {
-          Bool: {
-            "aws:SecureTransport": "false"
+          Bool : {
+            "aws:SecureTransport" : "false"
           }
         }
       }
@@ -269,13 +289,13 @@ resource "aws_dynamodb_resource_policy" "terraform_locks_policy" {
     Version = "2012-10-17",
     Statement = [
       {
-        Effect = "Deny",
+        Effect    = "Deny",
         Principal = "*",
-        Action = "dynamodb:*",
-        Resource = aws_dynamodb_table.terraform_locks.arn,
+        Action    = "dynamodb:*",
+        Resource  = aws_dynamodb_table.terraform_locks.arn,
         Condition = {
-          Bool: {
-            "aws:SecureTransport": "false"
+          Bool : {
+            "aws:SecureTransport" : "false"
           }
         }
       }
@@ -358,8 +378,8 @@ resource "aws_budgets_budget" "shared_user_budget" {
 # ---------------------------------------------------------------------------------------------------------------------
 # SIMPLE NOTIFICATION SERVICE (SNS) CONFIGURATION
 # ---------------------------------------------------------------------------------------------------------------------
-# Amazon Simple Notification Service (SNS) is a fully managed messaging service for both application-to-application (A2A) 
-# and application-to-person (A2P) communication. It enables decoupled microservices, distributed systems, and serverless 
+# Amazon Simple Notification Service (SNS) is a fully managed messaging service for both application-to-application (A2A)
+# and application-to-person (A2P) communication. It enables decoupled microservices, distributed systems, and serverless
 # applications to communicate with each other and with users.
 
 # Create an SNS topic for each user
@@ -418,9 +438,9 @@ resource "aws_cloudwatch_metric_alarm" "free_tier_usage_alarm" {
   evaluation_periods  = 1
   metric_name         = "EstimatedCharges"
   namespace           = "AWS/Billing"
-  period              = "86400"
+  period              = "300"
   statistic           = "Maximum"
-  threshold           = "0.00"
+  threshold           = "1.00"
   actions_enabled     = true
   alarm_actions       = [aws_sns_topic.free_tier_alerts.arn]
 
