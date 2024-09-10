@@ -3,37 +3,7 @@
 # ---------------------------------------------------------------------------------------------------------------------
 
 locals {
-  emails                   = split(",", var.email_list)
-  total_budget_amount      = "1.00"
-  individual_budget_amount = format("%.2f", tonumber(local.total_budget_amount) / (length(local.emails) + 1))
-}
-
-# ---------------------------------------------------------------------------------------------------------------------
-# DATA SOURCES
-# ---------------------------------------------------------------------------------------------------------------------
-
-data "aws_organizations_organization" "org" {}
-
-# ---------------------------------------------------------------------------------------------------------------------
-# AWS ORGANIZATION ACCOUNTS
-# ---------------------------------------------------------------------------------------------------------------------
-
-resource "aws_organizations_account" "user_accounts" {
-  for_each = toset(local.emails)
-
-  email     = each.key
-  name      = "User Account for ${each.key}"
-  role_name = "OrganizationAccountAccessRole"
-
-  lifecycle {
-    ignore_changes  = [name, email, role_name]
-    prevent_destroy = true
-  }
-
-  tags = {
-    ManagedBy = "Terraform"
-    Email     = each.key
-  }
+  emails = split(",", var.email_list)
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -43,7 +13,7 @@ resource "aws_organizations_account" "user_accounts" {
 resource "aws_budgets_budget" "organization_wide" {
   name         = "OrganizationWideBudget"
   budget_type  = "COST"
-  limit_amount = local.total_budget_amount
+  limit_amount = "1.00"
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
@@ -65,11 +35,10 @@ resource "aws_budgets_budget" "organization_wide" {
 }
 
 resource "aws_budgets_budget" "individual" {
-  for_each     = aws_organizations_account.user_accounts
-  name         = "IndividualBudget-${each.value.id}"
-  account_id   = each.value.id
+  count        = length(local.emails)
+  name         = "IndividualBudget-${local.emails[count.index]}"
   budget_type  = "COST"
-  limit_amount = local.individual_budget_amount
+  limit_amount = "1.00"
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
@@ -78,7 +47,7 @@ resource "aws_budgets_budget" "individual" {
     threshold                  = 50
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = [each.key]
+    subscriber_email_addresses = [local.emails[count.index]]
   }
 
   notification {
@@ -86,6 +55,6 @@ resource "aws_budgets_budget" "individual" {
     threshold                  = 80
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = [each.key]
+    subscriber_email_addresses = [local.emails[count.index]]
   }
 }
