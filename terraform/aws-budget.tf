@@ -32,6 +32,11 @@ resource "aws_budgets_budget" "organization_wide" {
     notification_type          = "ACTUAL"
     subscriber_email_addresses = local.emails
   }
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [name]
+  }
 }
 
 resource "aws_budgets_budget" "individual" {
@@ -56,5 +61,10 @@ resource "aws_budgets_budget" "individual" {
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
     subscriber_email_addresses = [local.emails[count.index]]
+  }
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [name]
   }
 }

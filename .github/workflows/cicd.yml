@@ -87,28 +87,20 @@ jobs:
       run: |
         terraform import aws_s3_bucket.terraform_state ${{ env.TF_VAR_state_bucket_name }} || true
         terraform import aws_dynamodb_table.terraform_locks ${{ env.TF_VAR_dynamodb_table_name }} || true
+        AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        terraform import aws_budgets_budget.organization_wide "${AWS_ACCOUNT_ID}:OrganizationWideBudget" || true
 
-        # # Get AWS Account ID
-        # AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-        # echo "AWS Account ID: $AWS_ACCOUNT_ID"
-        
-        # # Import organization-wide budget
-        # terraform import aws_budgets_budget.organization_wide "${AWS_ACCOUNT_ID}:OrganizationWideBudget" || true
-        
-        # # Dynamically import individual budgets and accounts
-        # IFS=',' read -ra EMAILS <<< "${{ secrets.EMAIL_LIST }}"
-        # for email in "${EMAILS[@]}"; do
-        #   account_id=$(aws organizations list-accounts \
-        #     --query "Accounts[?Email=='${email}'].Id" --output text)
-        #   if [ ! -z "$account_id" ]; then
-        #     terraform import "aws_organizations_account.user_accounts[\"${email}\"]" "${account_id}" || true
-        #     terraform import "aws_budgets_budget.individual[\"${email}\"]" "${account_id}:IndividualBudget-${account_id}" || true
-        #   fi
-        # done
+        # Dynamically import individual budgets
+        EMAIL_LIST="${{ secrets.EMAIL_LIST }}"
+        IFS=',' read -r -a EMAIL_ARRAY <<< "$EMAIL_LIST"
+        for i in "${!EMAIL_ARRAY[@]}"; do
+          BUDGET_NAME="IndividualBudget-${EMAIL_ARRAY[$i]}"
+          terraform import aws_budgets_budget.individual[$i] "$BUDGET_NAME" || true
+        done
 
     - name: Terraform Plan
       id: plan
-      run: terraform plan -no-color -input=false
+      run: terraform plan -no-color -input=false -lock=false
       continue-on-error: true
 
     # - name: Update Pull Request
