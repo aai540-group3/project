@@ -15,6 +15,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+ TF_LOG: DEBUG
+
 jobs:
   setup-backend:
     name: 'Setup Backend'
@@ -38,7 +41,7 @@ jobs:
           aws s3api put-bucket-versioning \
             --bucket ${{ secrets.TF_VAR_STATE_BUCKET_NAME }} \
             --versioning-configuration Status=Enabled
-          
+
           aws s3api put-bucket-encryption \
             --bucket ${{ secrets.TF_VAR_STATE_BUCKET_NAME }} \
             --server-side-encryption-configuration '{"Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]}'
@@ -100,11 +103,7 @@ jobs:
     - name: Terraform Plan
       id: plan
       run: |
-        # Attempt to release the state lock if it exists
-        terraform force-unlock -force ${{ secrets.TF_STATE_KEY }} || true
-        
-        # Run the plan
-        terraform plan -no-color \
+        terraform plan -no-color -lock=false \
           -var="aws_region=${{ secrets.AWS_REGION }}" \
           -var="state_bucket_name=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
           -var="dynamodb_table_name=${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}"
@@ -114,11 +113,12 @@ jobs:
       if: steps.plan.outcome == 'failure'
       run: |
         echo "Terraform plan failed. Please check the logs for more details."
+        echo "Last Terraform output:"
+        terraform show -no-color
         exit 1
 
-    - name: Update Pull Request
+    - name: Update PR or Create Commit Comment
       uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-      if: github.event_name == 'pull_request'
       env:
         PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
       with:
@@ -139,34 +139,46 @@ jobs:
 
           *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
 
-          // Find existing bot comments
-          const comments = await github.rest.issues.listComments({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-          });
-          const botComment = comments.data.find(comment => comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style'));
-          
-          if (botComment) {
-            github.rest.issues.updateComment({
+          if (context.eventName === 'pull_request') {
+            // Find existing bot comments
+            const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              comment_id: botComment.id,
-              body: output
-            })
-          } else {
-            github.rest.issues.createComment({
               issue_number: context.issue.number,
+            });
+            const botComment = comments.data.find(comment => comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style'));
+            
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              })
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
+          } else {
+            // For push events, create a commit comment
+            github.rest.repos.createCommitComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
+              commit_sha: context.sha,
               body: output
-            })
+            });
           }
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
-        terraform apply -auto-approve \
+        terraform apply \
+          -auto-approve \
+          -lock=false \
           -var="aws_region=${{ secrets.AWS_REGION }}" \
           -var="state_bucket_name=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
           -var="dynamodb_table_name=${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}"
