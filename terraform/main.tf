@@ -37,14 +37,14 @@ provider "aws" {
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket        = var.state_bucket_name
-  force_destroy = true
   tags = {
     Name        = "Terraform State"
     Environment = "Management"
     ManagedBy   = "Terraform"
   }
   lifecycle {
-    ignore_changes = [
+    prevent_destroy = true
+    ignore_changes  = [
       bucket,
     ]
   }
@@ -87,8 +87,8 @@ resource "aws_dynamodb_table" "terraform_locks" {
     Environment = "Management"
     ManagedBy   = "Terraform"
   }
-
   lifecycle {
+    prevent_destroy = true
     ignore_changes = [
       name,
     ]

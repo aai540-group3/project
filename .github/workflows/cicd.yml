@@ -58,6 +58,11 @@ jobs:
         terraform import aws_s3_bucket.terraform_state ${{ env.TF_VAR_state_bucket_name }}
       continue-on-error: true
 
+    - name: Import existing DynamoDB table
+      run: |
+        terraform import aws_dynamodb_table.terraform_locks ${{ env.TF_VAR_dynamodb_table_name }}
+      continue-on-error: true
+
     - name: Terraform Plan
       # if: github.event_name == 'pull_request'
       run: terraform plan -no-color -input=false -lock=false
