@@ -57,40 +57,40 @@ jobs:
       run: terraform validate -no-color
 
     - name: Terraform Plan
-      if: github.event_name == 'pull_request'
+      # if: github.event_name == 'pull_request'
       run: terraform plan -no-color -input=false
       continue-on-error: true
 
-    - name: Update Pull Request
-      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-      if: github.event_name == 'pull_request'
-      env:
-        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-          #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-          #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-          #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+    # - name: Update Pull Request
+    #   uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+    #   if: github.event_name == 'pull_request'
+    #   env:
+    #     PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+    #   with:
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
+    #     script: |
+    #       const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+    #       #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+    #       #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+    #       #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
 
-          <details><summary>Show Plan</summary>
+    #       <details><summary>Show Plan</summary>
 
-          \`\`\`\n
-          ${process.env.PLAN}
-          \`\`\`
+    #       \`\`\`\n
+    #       ${process.env.PLAN}
+    #       \`\`\`
 
-          </details>
+    #       </details>
 
-          *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+    #       *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
 
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: output
-          })
+    #       github.rest.issues.createComment({
+    #         issue_number: context.issue.number,
+    #         owner: context.repo.owner,
+    #         repo: context.repo.repo,
+    #         body: output
+    #       })
 
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: terraform apply -auto-approve -input=false
