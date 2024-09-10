@@ -11,6 +11,10 @@ terraform {
       source  = "hashicorp/aws" # The source of the AWS provider
       version = "~> 5.66.0"     # The version of the AWS provider to use
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "3.6.2"
+    }
   }
 
   # Specify the required Terraform version
@@ -130,7 +134,6 @@ resource "aws_iam_policy" "common_services_policy" {
           StringEquals = {
             "ec2:InstanceType" = [
               "t2.micro",
-              "t3.micro",
             ]
           }
         }
@@ -460,4 +463,139 @@ resource "aws_sns_topic_subscription" "free_tier_alerts_email" {
   topic_arn = aws_sns_topic.free_tier_alerts.arn
   protocol  = "email"
   endpoint  = local.emails[count.index]
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# S3 BUCKET FOR MLOPS PIPELINE
+# ---------------------------------------------------------------------------------------------------------------------
+
+resource "aws_s3_bucket" "mlops_artifacts" {
+  bucket = "mlops-artifacts-aai540-group3"
+
+  tags = {
+    Name        = "MLOps Artifacts"
+    Environment = "Development"
+    ManagedBy   = "Terraform"
+  }
+
+  lifecycle {
+    prevent_destroy = true     # Prevent accidental deletion of this bucket
+    ignore_changes  = [bucket] # Ignore changes to the bucket name
+  }
+}
+
+# Enable versioning on the S3 bucket
+resource "aws_s3_bucket_versioning" "mlops_versioning" {
+  bucket = aws_s3_bucket.mlops_artifacts.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Enable server-side encryption for the S3 bucket
+resource "aws_s3_bucket_server_side_encryption_configuration" "mlops_encryption" {
+  bucket = aws_s3_bucket.mlops_artifacts.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Block public access to the S3 bucket
+resource "aws_s3_bucket_public_access_block" "mlops_public_access" {
+  bucket                  = aws_s3_bucket.mlops_artifacts.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Add a policy to enforce SSL-only access to the S3 bucket
+resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
+  bucket = aws_s3_bucket.mlops_artifacts.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action    = "s3:*",
+        Effect    = "Deny",
+        Principal = "*",
+        Resource = [
+          "${aws_s3_bucket.mlops_artifacts.arn}/*",
+          "${aws_s3_bucket.mlops_artifacts.arn}"
+        ],
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      }
+    ]
+  })
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# EC2 INSTANCE FOR MLOPS PIPELINE
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Create a VPC
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+
+  tags = {
+    Name        = "MLOps-VPC"
+    Project     = "MLOps-Pipeline"
+    Environment = "Development"
+  }
+}
+
+# Create a subnet
+resource "aws_subnet" "main" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.1.0/24"
+
+  tags = {
+    Name        = "MLOps-Subnet"
+    Project     = "MLOps-Pipeline"
+    Environment = "Development"
+  }
+}
+
+# Create a security group
+resource "aws_security_group" "allow_egress" {
+  name        = "allow_egress"
+  description = "Allow outbound traffic"
+  vpc_id      = aws_vpc.main.id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "MLOps-SecurityGroup"
+    Project     = "MLOps-Pipeline"
+    Environment = "Development"
+  }
+}
+
+# Launch an EC2 instance
+resource "aws_instance" "mlops_instance" {
+  # Amazon Linux 2023 AMI 2023.5.20240903.0 x86_64 HVM kernel-6.1
+  ami                         = "ami-0bfddf4206f1fa7b9"
+  instance_type               = "t2.micro"
+  subnet_id                   = aws_subnet.main.id
+  vpc_security_group_ids      = [aws_security_group.allow_egress.id]
+  associate_public_ip_address = false
+
+  tags = {
+    Name        = "MLOps-Instance"
+    Project     = "MLOps-Pipeline"
+    Environment = "Development"
+  }
 }
