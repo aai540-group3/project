@@ -44,7 +44,7 @@ resource "aws_s3_bucket" "terraform_state" {
     ManagedBy   = "Terraform"
   }
   lifecycle {
-    ignore_changes  = [
+    ignore_changes = [
       bucket,
     ]
   }
