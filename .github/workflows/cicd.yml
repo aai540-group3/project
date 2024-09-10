@@ -85,17 +85,17 @@ jobs:
 
     - name: Import existing resources if needed
       run: |
-        terraform import aws_s3_bucket.terraform_state ${{ env.TF_VAR_state_bucket_name }} || true
-        terraform import aws_dynamodb_table.terraform_locks ${{ env.TF_VAR_dynamodb_table_name }} || true
+        terraform import -lock=false aws_s3_bucket.terraform_state ${{ env.TF_VAR_state_bucket_name }} || true
+        terraform import -lock=false aws_dynamodb_table.terraform_locks ${{ env.TF_VAR_dynamodb_table_name }} || true
         AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-        terraform import aws_budgets_budget.organization_wide "${AWS_ACCOUNT_ID}:OrganizationWideBudget" || true
+        terraform import -lock=false aws_budgets_budget.organization_wide "${AWS_ACCOUNT_ID}:OrganizationWideBudget" || true
 
         # Dynamically import individual budgets
         EMAIL_LIST="${{ secrets.EMAIL_LIST }}"
         IFS=',' read -r -a EMAIL_ARRAY <<< "$EMAIL_LIST"
         for i in "${!EMAIL_ARRAY[@]}"; do
           BUDGET_NAME="IndividualBudget-${EMAIL_ARRAY[$i]}"
-          terraform import aws_budgets_budget.individual[$i] "$BUDGET_NAME" || true
+          terraform import -lock=false aws_budgets_budget.individual[$i] "$BUDGET_NAME" || true
         done
 
     - name: Terraform Plan
