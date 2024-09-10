@@ -461,3 +461,75 @@ resource "aws_sns_topic_subscription" "free_tier_alerts_email" {
   protocol  = "email"
   endpoint  = local.emails[count.index]
 }
+
+# ---------------------------------------------------------------------------------------------------------------------
+# S3 BUCKET FOR MLOPS PIPELINE
+# ---------------------------------------------------------------------------------------------------------------------
+
+resource "aws_s3_bucket" "mlops_artifacts" {
+  bucket = "mlops-artifacts-usd" # Unique bucket name
+
+  tags = {
+    Name        = "MLOps Artifacts"
+    Environment = "Development"
+    ManagedBy   = "Terraform"
+  }
+
+  lifecycle {
+    prevent_destroy = true     # Prevent accidental deletion of this bucket
+    ignore_changes  = [bucket] # Ignore changes to the bucket name
+  }
+}
+
+# Enable versioning on the S3 bucket
+resource "aws_s3_bucket_versioning" "mlops_versioning" {
+  bucket = aws_s3_bucket.mlops_artifacts.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Enable server-side encryption for the S3 bucket
+resource "aws_s3_bucket_server_side_encryption_configuration" "mlops_encryption" {
+  bucket = aws_s3_bucket.mlops_artifacts.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Block public access to the S3 bucket
+resource "aws_s3_bucket_public_access_block" "mlops_public_access" {
+  bucket                  = aws_s3_bucket.mlops_artifacts.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Add a policy to enforce SSL-only access to the S3 bucket
+resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
+  bucket = aws_s3_bucket.mlops_artifacts.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action    = "s3:*",
+        Effect    = "Deny",
+        Principal = "*",
+        Resource = [
+          "${aws_s3_bucket.mlops_artifacts.arn}/*",
+          "${aws_s3_bucket.mlops_artifacts.arn}"
+        ],
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      }
+    ]
+  })
+}
