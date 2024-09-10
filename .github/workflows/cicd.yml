@@ -70,7 +70,7 @@ jobs:
             -target=aws_dynamodb_table.terraform_locks
         fi
 
-        echo "Initializing Terraform with backend"
+        # Initialize Terraform with backend
         terraform init -reconfigure \
           -backend-config="bucket=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
           -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
