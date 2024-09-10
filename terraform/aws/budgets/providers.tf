@@ -8,12 +8,7 @@ terraform {
     }
   }
 
-  backend "s3" {
-    bucket         = var.state_bucket_name
-    key            = var.tf_state_key
-    region         = var.aws_region
-    dynamodb_table = var.dynamodb_table_name
-  }
+  backend "s3" {}
 }
 
 provider "aws" {
