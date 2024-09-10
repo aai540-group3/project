@@ -17,7 +17,7 @@ variable "dynamodb_table_name" {
 variable "tf_state_key" {
   description = "The path and filename for the state file within the bucket"
   type        = string
-  default     = "terraform.tfstate" 
+  default     = "terraform.tfstate"
 }
 
 terraform {
