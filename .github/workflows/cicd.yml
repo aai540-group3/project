@@ -28,7 +28,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         fetch-depth: 1
 
@@ -40,47 +40,63 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+      uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v3.0.0
       with:
         terraform_version: '1.9.5'
 
-    - name: Terraform Init
-      id: init
+    - name: Terraform Init (No Backend)
+      run: terraform init -backend=false
+
+    - name: Setup and Initialize Terraform Backend
       run: |
-        terraform init \
+        # Initialize Terraform without backend
+        terraform init -backend=false
+
+        # Check if S3 bucket exists and create if it doesn't
+        if ! aws s3api head-bucket --bucket ${{ secrets.TF_VAR_STATE_BUCKET_NAME }} 2>/dev/null; then
+          echo "Creating S3 bucket"
+          terraform apply -auto-approve \
+            -var="aws_region=${{ secrets.AWS_REGION }}" \
+            -var="state_bucket_name=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
+            -target=aws_s3_bucket.terraform_state
+        fi
+
+        # Check if DynamoDB table exists and create if it doesn't
+        if ! aws dynamodb describe-table --table-name ${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }} 2>/dev/null; then
+          echo "Creating DynamoDB table"
+          terraform apply -auto-approve \
+            -var="aws_region=${{ secrets.AWS_REGION }}" \
+            -var="dynamodb_table_name=${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}" \
+            -target=aws_dynamodb_table.terraform_locks
+        fi
+
+        echo "Initializing Terraform with backend"
+        terraform init -reconfigure \
           -backend-config="bucket=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
           -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
+          -backend-config="region=${{ secrets.AWS_REGION }}" \
           -backend-config="dynamodb_table=${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}"
 
     - name: Terraform Format
-      id: fmt
       run: terraform fmt -check
 
     - name: Terraform Validate
-      id: validate
       run: terraform validate -no-color
 
     - name: Terraform Plan
       id: plan
       run: |
-        terraform plan -no-color -lock=false \
+        terraform plan -no-color \
+          -var="aws_region=${{ secrets.AWS_REGION }}" \
           -var="state_bucket_name=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
           -var="dynamodb_table_name=${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}"
       continue-on-error: true
 
-    - name: Check Terraform Plan Status
-      if: steps.plan.outcome == 'failure'
-      run: |
-        echo "Terraform plan failed. Please check the logs for more details."
-        echo "Last Terraform output:"
-        terraform show -no-color
-        exit 1
-
     - name: Update Pull Request
-      if: github.event_name == 'pull_request'
       uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+      if: github.event_name == 'pull_request'
       env:
-        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        PLAN: "${{ steps.plan.outputs.stdout }}"
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -109,9 +125,7 @@ jobs:
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
-        terraform apply \
-          -auto-approve \
-          -lock=false \
+        terraform apply -auto-approve \
           -var="aws_region=${{ secrets.AWS_REGION }}" \
           -var="state_bucket_name=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
           -var="dynamodb_table_name=${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}"
