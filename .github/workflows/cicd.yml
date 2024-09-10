@@ -60,16 +60,25 @@ jobs:
       id: validate
       run: terraform validate -no-color
 
+    - name: Configure AWS CLI
+      run: |
+        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws configure set region ${{ secrets.AWS_REGION }}
+
     - name: Import existing resources
       run: |
-        terraform import aws_s3_bucket.terraform_state ${{ env.TF_VAR_state_bucket_name }} || true
-        terraform import aws_dynamodb_table.terraform_locks ${{ env.TF_VAR_dynamodb_table_name }} || true
-        terraform import aws_budgets_budget.organization_wide OrganizationWideBudget || true
+        # Import S3 bucket and DynamoDB table
+        terraform import aws_s3_bucket.terraform_state ${{ secrets.TF_VAR_STATE_BUCKET_NAME }} || true
+        terraform import aws_dynamodb_table.terraform_locks ${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }} || true
+        
+        # Get AWS Account ID
+        AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        echo "AWS Account ID: $AWS_ACCOUNT_ID"
         
         # Import organization-wide budget
-        AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-        terraform import aws_budgets_budget.organization_wide ${AWS_ACCOUNT_ID}:OrganizationWideBudget || true
-
+        terraform import aws_budgets_budget.organization_wide "${AWS_ACCOUNT_ID}:OrganizationWideBudget" || true
+        
         # Dynamically import individual budgets
         IFS=',' read -ra EMAILS <<< "${{ secrets.EMAIL_LIST }}"
         for i in "${!EMAILS[@]}"; do
