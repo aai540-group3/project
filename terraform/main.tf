@@ -1,7 +1,7 @@
+# Variables
 variable "aws_region" {
   description = "The AWS region to create resources in"
   type        = string
-  default     = "us-west-2"
 }
 
 variable "state_bucket_name" {
@@ -17,16 +17,19 @@ variable "dynamodb_table_name" {
 variable "tf_state_key" {
   description = "The path and filename for the state file within the bucket"
   type        = string
-  default     = "terraform.tfstate"
 }
 
 terraform {
+  required_version = ">= 1.5.0, < 2.0.0"
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.66.0"
     }
   }
+
+  backend "s3" {}
 }
 
 provider "aws" {
@@ -36,25 +39,25 @@ provider "aws" {
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.state_bucket_name
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   tags = {
     Name        = "Terraform State"
     Environment = "Management"
     ManagedBy   = "Terraform"
   }
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
-resource "aws_s3_bucket_versioning" "terraform_state" {
+resource "aws_s3_bucket_versioning" "enabled" {
   bucket = aws_s3_bucket.terraform_state.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
   bucket = aws_s3_bucket.terraform_state.id
 
   rule {
@@ -64,7 +67,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "terraform_state" {
+resource "aws_s3_bucket_public_access_block" "public_access" {
   bucket                  = aws_s3_bucket.terraform_state.id
   block_public_acls       = true
   block_public_policy     = true
@@ -80,10 +83,6 @@ resource "aws_dynamodb_table" "terraform_locks" {
   attribute {
     name = "LockID"
     type = "S"
-  }
-
-  lifecycle {
-    prevent_destroy = true
   }
 
   tags = {
