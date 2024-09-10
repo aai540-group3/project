@@ -3,17 +3,23 @@ variable "aws_region" {
   type        = string
 }
 
+
+variable "tf_state_key" {
+  description = "The path and filename for the state file within the bucket"
+  type        = string
+}
+
+variable "email_list" {
+  type        = string
+  description = "Comma-separated list of email addresses"
+}
+
 variable "state_bucket_name" {
-  description = "The name of the S3 bucket for Terraform state"
+  description = "Name of the S3 bucket for storing Terraform state"
   type        = string
 }
 
 variable "dynamodb_table_name" {
-  description = "The name of the DynamoDB table for Terraform state locking"
-  type        = string
-}
-
-variable "tf_state_key" {
-  description = "The path and filename for the state file within the bucket"
+  description = "Name of the DynamoDB table for Terraform state locking"
   type        = string
 }

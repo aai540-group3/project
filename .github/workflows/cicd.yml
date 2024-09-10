@@ -30,6 +30,7 @@ jobs:
       TF_VAR_dynamodb_table_name: ${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}
       TF_VAR_tf_state_key: ${{ secrets.TF_STATE_KEY }}
       TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+      TF_VAR_email_list: ${{ secrets.EMAIL_LIST }}
 
     steps:
     - name: Checkout
@@ -42,7 +43,12 @@ jobs:
       with:
         terraform_version: '1.9.5'
 
+    - name: Terraform Format
+      run: terraform fmt -check
+      continue-on-error: true
+
     - name: Terraform Init
+      id: init
       run: |
         terraform init \
           -backend-config="bucket=${{ env.TF_VAR_state_bucket_name }}" \
@@ -51,21 +57,18 @@ jobs:
           -backend-config="dynamodb_table=${{ env.TF_VAR_dynamodb_table_name }}"
 
     - name: Terraform Validate
+      id: validate
       run: terraform validate -no-color
 
-    - name: Import existing S3 bucket
+    - name: Import existing resources if needed
       run: |
-        terraform import aws_s3_bucket.terraform_state ${{ env.TF_VAR_state_bucket_name }}
-      continue-on-error: true
-
-    - name: Import existing DynamoDB table
-      run: |
-        terraform import aws_dynamodb_table.terraform_locks ${{ env.TF_VAR_dynamodb_table_name }}
-      continue-on-error: true
+        terraform import aws_s3_bucket.terraform_state ${{ env.TF_VAR_state_bucket_name }} || true
+        terraform import aws_dynamodb_table.terraform_locks ${{ env.TF_VAR_dynamodb_table_name }} || true
 
     - name: Terraform Plan
+      id: plan
       # if: github.event_name == 'pull_request'
-      run: terraform plan -no-color -input=false -lock=false
+      run: terraform plan -no-color -input=false
       continue-on-error: true
 
     # - name: Update Pull Request
@@ -99,5 +102,5 @@ jobs:
     #       })
 
     - name: Terraform Apply
-      # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false -lock=false
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: terraform apply -auto-approve -input=false
