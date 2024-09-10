@@ -54,6 +54,10 @@ jobs:
       with:
         terraform_version: '1.9.5'
 
+    - name: Terraform Init
+      id: init
+      run: terraform init -upgrade -lock=false
+
     - name: Terraform Format
       run: terraform fmt -check
       continue-on-error: true
