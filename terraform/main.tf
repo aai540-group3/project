@@ -134,7 +134,6 @@ resource "aws_iam_policy" "common_services_policy" {
           StringEquals = {
             "ec2:InstanceType" = [
               "t2.micro",
-              "t3.micro",
             ]
           }
         }
@@ -536,4 +535,67 @@ resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
       }
     ]
   })
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# EC2 INSTANCE FOR MLOPS PIPELINE
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Create a VPC
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+
+  tags = {
+    Name        = "MLOps-VPC"
+    Project     = "MLOps-Pipeline"
+    Environment = "Development"
+  }
+}
+
+# Create a subnet
+resource "aws_subnet" "main" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.1.0/24"
+
+  tags = {
+    Name        = "MLOps-Subnet"
+    Project     = "MLOps-Pipeline"
+    Environment = "Development"
+  }
+}
+
+# Create a security group
+resource "aws_security_group" "allow_egress" {
+  name        = "allow_egress"
+  description = "Allow outbound traffic"
+  vpc_id      = aws_vpc.main.id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "MLOps-SecurityGroup"
+    Project     = "MLOps-Pipeline"
+    Environment = "Development"
+  }
+}
+
+# Launch an EC2 instance
+resource "aws_instance" "mlops_instance" {
+  # Amazon Linux 2023 AMI 2023.5.20240903.0 x86_64 HVM kernel-6.1
+  ami                         = "ami-0bfddf4206f1fa7b9"
+  instance_type               = "t2.micro"
+  subnet_id                   = aws_subnet.main.id
+  vpc_security_group_ids      = [aws_security_group.allow_egress.id]
+  associate_public_ip_address = false
+
+  tags = {
+    Name        = "MLOps-Instance"
+    Project     = "MLOps-Pipeline"
+    Environment = "Development"
+  }
 }
