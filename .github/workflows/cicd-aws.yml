@@ -1,14 +1,14 @@
-name: 'Continuous Integration and Continuous Deployment'
+name: 'CI/CD for AWS Budgets'
 
 on:
   push:
     branches: [ "main" ]
     paths:
-      - 'terraform/state/**' 
+      - 'terraform/aws/budgets/**'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'terraform/state/**' 
+      - 'terraform/aws/budgets/**'
   workflow_dispatch:
 
 permissions:
@@ -60,12 +60,7 @@ jobs:
 
     - name: Terraform Init
       id: init
-      run: |
-        terraform init \
-          -backend-config="bucket=${{ env.TF_VAR_state_bucket_name }}" \
-          -backend-config="key=${{ env.TF_VAR_tf_state_key }}" \
-          -backend-config="region=${{ env.TF_VAR_aws_region }}" \
-          -backend-config="dynamodb_table=${{ env.TF_VAR_dynamodb_table_name }}"
+      run: terraform init
 
     - name: Terraform Validate
       id: validate
