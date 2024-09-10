@@ -13,17 +13,15 @@ variable "tf_state_key" {
 variable "state_bucket_name" {
   description = "Name of the S3 bucket for storing Terraform state"
   type        = string
-  sensitive   = true
 }
 
 variable "dynamodb_table_name" {
   description = "Name of the DynamoDB table for Terraform state locking"
   type        = string
-  sensitive   = true
 }
 
 variable "email_list" {
-  description = "Comma-separated list of email addresses for budget notifications"
+  description = "Comma-separated list of email addresses"
   type        = string
   sensitive   = true
 }

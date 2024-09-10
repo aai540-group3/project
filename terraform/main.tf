@@ -3,21 +3,21 @@
 # ---------------------------------------------------------------------------------------------------------------------
 
 locals {
-  # Split the comma-separated email list into an array
-  emails = split(",", var.email_list)
-  
-  # Set the total budget amount for the organization
-  total_budget_amount = "1.00"
-  
-  # Calculate individual budget amount by dividing total budget by number of emails plus one (for org-wide budget)
+  emails                   = split(",", var.email_list)
+  total_budget_amount      = "1.00"
   individual_budget_amount = format("%.2f", tonumber(local.total_budget_amount) / (length(local.emails) + 1))
 }
+
+# ---------------------------------------------------------------------------------------------------------------------
+# DATA SOURCES
+# ---------------------------------------------------------------------------------------------------------------------
+
+data "aws_organizations_organization" "org" {}
 
 # ---------------------------------------------------------------------------------------------------------------------
 # S3 BUCKET FOR TERRAFORM STATE
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Create an S3 bucket to store Terraform state
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.state_bucket_name
   
@@ -27,14 +27,12 @@ resource "aws_s3_bucket" "terraform_state" {
     ManagedBy   = "Terraform"
   }
   
-  # Prevent accidental deletion and ignore changes to the bucket name
   lifecycle {
     prevent_destroy = true
     ignore_changes  = [bucket]
   }
 }
 
-# Enable versioning for the S3 bucket
 resource "aws_s3_bucket_versioning" "enabled" {
   bucket = aws_s3_bucket.terraform_state.id
   versioning_configuration {
@@ -42,7 +40,6 @@ resource "aws_s3_bucket_versioning" "enabled" {
   }
 }
 
-# Enable server-side encryption for the S3 bucket
 resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
   bucket = aws_s3_bucket.terraform_state.id
   
@@ -53,7 +50,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
   }
 }
 
-# Block public access to the S3 bucket
 resource "aws_s3_bucket_public_access_block" "public_access" {
   bucket                  = aws_s3_bucket.terraform_state.id
   block_public_acls       = true
@@ -66,7 +62,6 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
 # DYNAMODB TABLE FOR TERRAFORM STATE LOCKING
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Create a DynamoDB table for Terraform state locking
 resource "aws_dynamodb_table" "terraform_locks" {
   name         = var.dynamodb_table_name
   billing_mode = "PAY_PER_REQUEST"
@@ -83,7 +78,6 @@ resource "aws_dynamodb_table" "terraform_locks" {
     ManagedBy   = "Terraform"
   }
   
-  # Prevent accidental deletion and ignore changes to the table name
   lifecycle {
     prevent_destroy = true
     ignore_changes  = [name]
@@ -94,25 +88,21 @@ resource "aws_dynamodb_table" "terraform_locks" {
 # AWS ORGANIZATION ACCOUNTS
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Create AWS accounts for each email in the list
 resource "aws_organizations_account" "user_accounts" {
-  count                      = length(local.emails)
-  email                      = local.emails[count.index]
-  name                       = "User Account ${count.index + 1}"
-  role_name                  = "OrganizationAccountAccessRole"
-  close_on_deletion          = false
-  iam_user_access_to_billing = "ALLOW"
+  for_each = toset(local.emails)
 
-  # Prevent Terraform from removing the account from your organization
+  email     = each.key
+  name      = "User Account for ${each.key}"
+  role_name = "OrganizationAccountAccessRole"
+
   lifecycle {
+    ignore_changes  = [name, email, role_name]
     prevent_destroy = true
-    ignore_changes  = [name, email]
   }
 
-  # Add tags for better organization
   tags = {
     ManagedBy = "Terraform"
-    Email     = local.emails[count.index]
+    Email     = each.key
   }
 }
 
@@ -120,7 +110,6 @@ resource "aws_organizations_account" "user_accounts" {
 # AWS BUDGETS
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Create an organization-wide AWS budget
 resource "aws_budgets_budget" "organization_wide" {
   name         = "OrganizationWideBudget"
   budget_type  = "COST"
@@ -145,10 +134,10 @@ resource "aws_budgets_budget" "organization_wide" {
   }
 }
 
-# Individual AWS budgets for each email address
 resource "aws_budgets_budget" "individual" {
-  count        = length(local.emails)
-  name         = "IndividualBudget-${count.index}"
+  for_each     = aws_organizations_account.user_accounts
+  name         = "IndividualBudget-${each.value.id}"
+  account_id   = each.value.id
   budget_type  = "COST"
   limit_amount = local.individual_budget_amount
   limit_unit   = "USD"
@@ -159,7 +148,7 @@ resource "aws_budgets_budget" "individual" {
     threshold                  = 50
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = [local.emails[count.index]]
+    subscriber_email_addresses = [each.key]
   }
 
   notification {
@@ -167,6 +156,6 @@ resource "aws_budgets_budget" "individual" {
     threshold                  = 80
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = [local.emails[count.index]]
+    subscriber_email_addresses = [each.key]
   }
 }
