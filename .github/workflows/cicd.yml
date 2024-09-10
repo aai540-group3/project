@@ -52,10 +52,16 @@ jobs:
 
     - name: Check and Remove Terraform State Lock
       run: |
-        LOCK_ID=$(aws dynamodb get-item --table-name ${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }} --key '{"LockID": {"S": "${{ secrets.TF_VAR_STATE_BUCKET_NAME }}/${{ secrets.TF_STATE_KEY }}-md5"}}' --query 'Item.LockID.S' --output text)
+        LOCK_ID=$(aws dynamodb get-item \
+          --table-name ${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }} \
+          --key '{"LockID": {"S": "${{ secrets.TF_VAR_STATE_BUCKET_NAME }}/${{ secrets.TF_STATE_KEY }}-md5"}}' \
+          --query 'Item.LockID.S' --output text)
+
         if [ "$LOCK_ID" != "None" ]; then
           echo "Removing existing lock..."
-          aws dynamodb delete-item --table-name ${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }} --key '{"LockID": {"S": "${{ secrets.TF_VAR_STATE_BUCKET_NAME }}/${{ secrets.TF_STATE_KEY }}-md5"}}'
+          aws dynamodb delete-item \
+            --table-name ${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }} \
+            --key '{"LockID": {"S": "${{ secrets.TF_VAR_STATE_BUCKET_NAME }}/${{ secrets.TF_STATE_KEY }}-md5"}}'
         else
           echo "No existing lock found."
         fi
@@ -93,7 +99,8 @@ jobs:
         # Dynamically import individual budgets and accounts
         IFS=',' read -ra EMAILS <<< "${{ secrets.EMAIL_LIST }}"
         for email in "${EMAILS[@]}"; do
-          account_id=$(aws organizations list-accounts --query "Accounts[?Email=='${email}'].Id" --output text)
+          account_id=$(aws organizations list-accounts \
+            --query "Accounts[?Email=='${email}'].Id" --output text)
           if [ ! -z "$account_id" ]; then
             terraform import "aws_organizations_account.user_accounts[\"${email}\"]" "${account_id}" || true
             terraform import "aws_budgets_budget.individual[\"${email}\"]" "${account_id}:IndividualBudget-${account_id}" || true
@@ -137,4 +144,4 @@ jobs:
 
     - name: Terraform Apply
       # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
+      run: terraform apply -auto-approve -input=false 
