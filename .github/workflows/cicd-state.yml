@@ -1,0 +1,117 @@
+name: 'CI/CD for Terraform State'
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'terraform/state/**' 
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'terraform/state/**' 
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform/state
+    env:
+      TF_LOG: INFO
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_VAR_state_bucket_name: ${{ secrets.TF_VAR_STATE_BUCKET_NAME }}
+      TF_VAR_dynamodb_table_name: ${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}
+      TF_VAR_tf_state_key: ${{ secrets.TF_STATE_KEY }}
+      TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        fetch-depth: 1
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+      with:
+        terraform_version: '1.9.5'
+
+    - name: Terraform Format
+      run: terraform fmt -check
+      continue-on-error: true
+
+    - name: Terraform Init
+      id: init
+      run: |
+        terraform init \
+          -backend-config="bucket=${{ env.TF_VAR_state_bucket_name }}" \
+          -backend-config="key=${{ env.TF_VAR_tf_state_key }}" \
+          -backend-config="region=${{ env.TF_VAR_aws_region }}" \
+          -backend-config="dynamodb_table=${{ env.TF_VAR_dynamodb_table_name }}"
+
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate -no-color
+
+    - name: Import existing resources if needed
+      run: |
+        terraform import -lock=false aws_s3_bucket.terraform_state ${{ env.TF_VAR_state_bucket_name }} || true
+        terraform import -lock=false aws_dynamodb_table.terraform_locks ${{ env.TF_VAR_dynamodb_table_name }} || true
+
+    - name: Terraform Plan
+      id: plan
+      run: terraform plan -no-color -input=false -lock=false
+      continue-on-error: true
+
+    - name: Update Pull Request
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+      if: github.event_name == 'pull_request'
+      env:
+        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+          #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+          #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+          #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+
+          <details><summary>Show Plan</summary>
+
+          \`\`\`\n
+          ${process.env.PLAN}
+          \`\`\`
+
+          </details>
+
+          *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: |
+        terraform apply -auto-approve -input=false -lock=false -replace aws_s3_bucket.terraform_state || true 
+        terraform apply -auto-approve -input=false -lock=false -replace aws_dynamodb_table.terraform_locks || true

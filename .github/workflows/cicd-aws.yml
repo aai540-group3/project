@@ -1,10 +1,14 @@
 name: 'Continuous Integration and Continuous Deployment'
 
 on:
-  pull_request:
-    branches: [ "main" ]
   push:
     branches: [ "main" ]
+    paths:
+      - 'terraform/state/**' 
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'terraform/state/**' 
   workflow_dispatch:
 
 permissions:
@@ -50,22 +54,6 @@ jobs:
       with:
         terraform_version: '1.9.5'
 
-    - name: Check and Remove Terraform State Lock
-      run: |
-        LOCK_ID=$(aws dynamodb get-item \
-          --table-name ${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }} \
-          --key '{"LockID": {"S": "${{ secrets.TF_VAR_STATE_BUCKET_NAME }}/${{ secrets.TF_STATE_KEY }}-md5"}}' \
-          --query 'Item.LockID.S' --output text)
-
-        if [ "$LOCK_ID" != "None" ]; then
-          echo "Removing existing lock..."
-          aws dynamodb delete-item \
-            --table-name ${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }} \
-            --key '{"LockID": {"S": "${{ secrets.TF_VAR_STATE_BUCKET_NAME }}/${{ secrets.TF_STATE_KEY }}-md5"}}'
-        else
-          echo "No existing lock found."
-        fi
-
     - name: Terraform Format
       run: terraform fmt -check
       continue-on-error: true
@@ -85,8 +73,7 @@ jobs:
 
     - name: Import existing resources if needed
       run: |
-        terraform import -lock=false aws_s3_bucket.terraform_state ${{ env.TF_VAR_state_bucket_name }} || true
-        terraform import -lock=false aws_dynamodb_table.terraform_locks ${{ env.TF_VAR_dynamodb_table_name }} || true
+        # Dynamically import existing organization-wide budget
         AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
         terraform import -lock=false aws_budgets_budget.organization_wide "${AWS_ACCOUNT_ID}:OrganizationWideBudget" || true
 
@@ -136,10 +123,8 @@ jobs:
     - name: Terraform Apply
       # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
-        terraform apply -auto-approve -input=false -lock=false -replace aws_s3_bucket.terraform_state || true 
-        terraform apply -auto-approve -input=false -lock=false -replace aws_dynamodb_table.terraform_locks || true
+        # Dynamically apply existing organization-wide budget
         terraform apply -auto-approve -input=false -lock=false -replace aws_budgets_budget.organization_wide || true
-
         # Dynamically apply individual budgets
         EMAIL_LIST="${{ secrets.EMAIL_LIST }}"
         IFS=',' read -r -a EMAIL_ARRAY <<< "$EMAIL_LIST"
