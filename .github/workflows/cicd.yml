@@ -53,12 +53,12 @@ jobs:
 
         terraform plan \
           -backend-config="bucket=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
-          -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
-          -backend-config="dynamodb_table=${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}"
+          -backend-config="key=terraform.tfstate" \
+          -backend-config="region=${{ secrets.AWS_REGION }}"
 
         terraform apply \
           -auto-approve \
           -input=false \
           -backend-config="bucket=${{ secrets.TF_VAR_STATE_BUCKET_NAME }}" \
-          -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
-          -backend-config="dynamodb_table=${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }}"
+          -backend-config="key=terraform.tfstate" \
+          -backend-config="region=${{ secrets.AWS_REGION }}"
