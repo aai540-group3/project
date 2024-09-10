@@ -43,11 +43,12 @@ jobs:
         terraform_version: '1.9.5'
 
     - name: Terraform Init
-      run: terraform init \
-        -backend-config="bucket=${{ env.TF_VAR_state_bucket_name }}" \
-        -backend-config="key=${{ env.TF_VAR_tf_state_key }}" \
-        -backend-config="region=${{ env.TF_VAR_aws_region }}" \
-        -backend-config="dynamodb_table=${{ env.TF_VAR_dynamodb_table_name }}"
+      run: |
+        terraform init \
+          -backend-config="bucket=${{ env.TF_VAR_state_bucket_name }}" \
+          -backend-config="key=${{ env.TF_VAR_tf_state_key }}" \
+          -backend-config="region=${{ env.TF_VAR_aws_region }}" \
+          -backend-config="dynamodb_table=${{ env.TF_VAR_dynamodb_table_name }}"
 
     - name: Terraform Plan
       run: terraform plan
