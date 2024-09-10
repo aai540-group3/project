@@ -3,8 +3,13 @@
 # ---------------------------------------------------------------------------------------------------------------------
 
 locals {
-  emails                   = split(",", var.email_list)
-  total_budget_amount      = "1.00"
+  # Split the comma-separated email list into an array
+  emails = split(",", var.email_list)
+  
+  # Set the total budget amount for the organization
+  total_budget_amount = "1.00"
+  
+  # Calculate individual budget amount by dividing total budget by number of emails plus one (for org-wide budget)
   individual_budget_amount = format("%.2f", tonumber(local.total_budget_amount) / (length(local.emails) + 1))
 }
 
@@ -12,6 +17,7 @@ locals {
 # S3 BUCKET FOR TERRAFORM STATE
 # ---------------------------------------------------------------------------------------------------------------------
 
+# Create an S3 bucket to store Terraform state
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.state_bucket_name
   
@@ -21,12 +27,14 @@ resource "aws_s3_bucket" "terraform_state" {
     ManagedBy   = "Terraform"
   }
   
+  # Prevent accidental deletion and ignore changes to the bucket name
   lifecycle {
     prevent_destroy = true
     ignore_changes  = [bucket]
   }
 }
 
+# Enable versioning for the S3 bucket
 resource "aws_s3_bucket_versioning" "enabled" {
   bucket = aws_s3_bucket.terraform_state.id
   versioning_configuration {
@@ -34,6 +42,7 @@ resource "aws_s3_bucket_versioning" "enabled" {
   }
 }
 
+# Enable server-side encryption for the S3 bucket
 resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
   bucket = aws_s3_bucket.terraform_state.id
   
@@ -44,6 +53,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
   }
 }
 
+# Block public access to the S3 bucket
 resource "aws_s3_bucket_public_access_block" "public_access" {
   bucket                  = aws_s3_bucket.terraform_state.id
   block_public_acls       = true
@@ -56,6 +66,7 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
 # DYNAMODB TABLE FOR TERRAFORM STATE LOCKING
 # ---------------------------------------------------------------------------------------------------------------------
 
+# Create a DynamoDB table for Terraform state locking
 resource "aws_dynamodb_table" "terraform_locks" {
   name         = var.dynamodb_table_name
   billing_mode = "PAY_PER_REQUEST"
@@ -72,6 +83,7 @@ resource "aws_dynamodb_table" "terraform_locks" {
     ManagedBy   = "Terraform"
   }
   
+  # Prevent accidental deletion and ignore changes to the table name
   lifecycle {
     prevent_destroy = true
     ignore_changes  = [name]
@@ -82,13 +94,15 @@ resource "aws_dynamodb_table" "terraform_locks" {
 # AWS BUDGETS
 # ---------------------------------------------------------------------------------------------------------------------
 
+# Create an organization-wide AWS budget
 resource "aws_budgets_budget" "organization_wide" {
   name         = "OrganizationWideBudget"
   budget_type  = "COST"
-  limit_amount = "1.00"
+  limit_amount = local.total_budget_amount
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
+  # Notification at 50% threshold
   notification {
     comparison_operator        = "GREATER_THAN"
     threshold                  = 50
@@ -97,6 +111,7 @@ resource "aws_budgets_budget" "organization_wide" {
     subscriber_email_addresses = local.emails
   }
 
+  # Notification at 80% threshold
   notification {
     comparison_operator        = "GREATER_THAN"
     threshold                  = 80
@@ -106,14 +121,16 @@ resource "aws_budgets_budget" "organization_wide" {
   }
 }
 
+# Create individual AWS budgets for each email address
 resource "aws_budgets_budget" "individual" {
   count        = length(local.emails)
-  name         = "IndividualBudget-${local.emails[count.index]}"
+  name         = "IndividualBudget-${count.index}"
   budget_type  = "COST"
-  limit_amount = "1.00"
+  limit_amount = local.individual_budget_amount
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
+  # Notification at 50% threshold
   notification {
     comparison_operator        = "GREATER_THAN"
     threshold                  = 50
@@ -122,6 +139,7 @@ resource "aws_budgets_budget" "individual" {
     subscriber_email_addresses = [local.emails[count.index]]
   }
 
+  # Notification at 80% threshold
   notification {
     comparison_operator        = "GREATER_THAN"
     threshold                  = 80
@@ -129,4 +147,17 @@ resource "aws_budgets_budget" "individual" {
     notification_type          = "ACTUAL"
     subscriber_email_addresses = [local.emails[count.index]]
   }
+}
+
+# Import block for organization-wide budget
+import {
+  to = aws_budgets_budget.organization_wide
+  id = "OrganizationWideBudget"
+}
+
+# Dynamic import blocks for individual budgets
+import {
+  for_each = { for idx in range(length(split(",", var.email_list))) : idx => "IndividualBudget-${idx}" }
+  to       = aws_budgets_budget.individual[each.key]
+  id       = each.value
 }

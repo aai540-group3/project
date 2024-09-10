@@ -60,14 +60,20 @@ jobs:
       id: validate
       run: terraform validate -no-color
 
-    - name: Import existing resources if needed
+    - name: Import existing resources
       run: |
         terraform import aws_s3_bucket.terraform_state ${{ env.TF_VAR_state_bucket_name }} || true
         terraform import aws_dynamodb_table.terraform_locks ${{ env.TF_VAR_dynamodb_table_name }} || true
+        terraform import aws_budgets_budget.organization_wide OrganizationWideBudget || true
+        
+        # Dynamically import individual budgets
+        EMAIL_COUNT=$(echo ${{ secrets.EMAIL_LIST }} | tr ',' '\n' | wc -l)
+        for i in $(seq 0 $((EMAIL_COUNT-1))); do
+          terraform import "aws_budgets_budget.individual[$i]" "IndividualBudget-$i" || true
+        done
 
     - name: Terraform Plan
       id: plan
-      # if: github.event_name == 'pull_request'
       run: terraform plan -no-color -input=false
       continue-on-error: true
 
