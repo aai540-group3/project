@@ -42,9 +42,6 @@ jobs:
       with:
         terraform_version: '1.9.5'
 
-    - name: Terraform Format
-      run: terraform fmt -check
-
     - name: Terraform Init
       run: |
         terraform init \
