@@ -11,6 +11,10 @@ terraform {
       source  = "hashicorp/aws" # The source of the AWS provider
       version = "~> 5.66.0"     # The version of the AWS provider to use
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "3.6.2"
+    }
   }
 
   # Specify the required Terraform version
@@ -467,7 +471,7 @@ resource "aws_sns_topic_subscription" "free_tier_alerts_email" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_s3_bucket" "mlops_artifacts" {
-  bucket = "mlops-artifacts-usd" # Unique bucket name
+  bucket = "mlops-artifacts-aai540-group3"
 
   tags = {
     Name        = "MLOps Artifacts"
