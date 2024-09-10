@@ -140,31 +140,13 @@ jobs:
           *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
 
           if (context.eventName === 'pull_request') {
-            // Find existing bot comments
-            const comments = await github.rest.issues.listComments({
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const botComment = comments.data.find(comment => comment.user.type === 'Bot' && comment.body.includes('Terraform Format and Style'));
-            
-            if (botComment) {
-              github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: output
-              })
-            } else {
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: output
-              })
-            }
+              body: output
+            })
           } else {
-            // For push events, create a commit comment
             github.rest.repos.createCommitComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
