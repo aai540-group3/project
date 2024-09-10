@@ -1,34 +1,49 @@
-data "aws_s3_bucket" "terraform_state" {
-  bucket = var.state_bucket_name
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.66.0"
+    }
+  }
+
+  required_version = "= 1.9.5"
+
+  backend "s3" {
+    bucket         = "terraform-state-bucket-f3b7a9c1"
+    dynamodb_table = "terraform-state-lock-e2d8b0a5"
+    key            = "infrastructure/terraform.tfstate"
+    region         = "us-west-2"
+    encrypt        = true
+  }
 }
 
-data "aws_dynamodb_table" "terraform_locks" {
-  name = var.dynamodb_table_name
-}
+# ---------------------------------------------------------------------------------------------------------------------
+# S3 BUCKET FOR TERRAFORM STATE
+# ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = var.state_bucket_name
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes  = [bucket]
-  }
+  bucket = "terraform-state-bucket-f3b7a9c1"
 
   tags = {
     Name        = "Terraform State"
     Environment = "Management"
     ManagedBy   = "Terraform"
   }
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [bucket]
+  }
 }
 
-resource "aws_s3_bucket_versioning" "terraform_state" {
+resource "aws_s3_bucket_versioning" "enabled" {
   bucket = aws_s3_bucket.terraform_state.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
   bucket = aws_s3_bucket.terraform_state.id
 
   rule {
@@ -38,7 +53,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "terraform_state" {
+resource "aws_s3_bucket_public_access_block" "public_access" {
   bucket                  = aws_s3_bucket.terraform_state.id
   block_public_acls       = true
   block_public_policy     = true
@@ -46,8 +61,12 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
   restrict_public_buckets = true
 }
 
+# ---------------------------------------------------------------------------------------------------------------------
+# DYNAMODB TABLE FOR TERRAFORM STATE LOCKING
+# ---------------------------------------------------------------------------------------------------------------------
+
 resource "aws_dynamodb_table" "terraform_locks" {
-  name         = var.dynamodb_table_name
+  name         = "terraform-state-lock-e2d8b0a5"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
 
@@ -56,14 +75,89 @@ resource "aws_dynamodb_table" "terraform_locks" {
     type = "S"
   }
 
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes  = [name]
-  }
-
   tags = {
     Name        = "Terraform State Locks"
     Environment = "Management"
     ManagedBy   = "Terraform"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [name]
+  }
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# LOCALS
+# ---------------------------------------------------------------------------------------------------------------------
+
+locals {
+  emails = [
+    "jagustin@sandiego.edu",
+    "lvo@sandiego.edu",
+    "zrobertson@sandiego.edu"
+  ]
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# AWS BUDGETS
+# ---------------------------------------------------------------------------------------------------------------------
+
+resource "aws_budgets_budget" "organization_wide" {
+  name         = "OrganizationWideBudget"
+  budget_type  = "COST"
+  limit_amount = "1.00"
+  limit_unit   = "USD"
+  time_unit    = "MONTHLY"
+
+  notification {
+    comparison_operator        = "GREATER_THAN"
+    threshold                  = 50
+    threshold_type             = "PERCENTAGE"
+    notification_type          = "ACTUAL"
+    subscriber_email_addresses = local.emails
+  }
+
+  notification {
+    comparison_operator        = "GREATER_THAN"
+    threshold                  = 80
+    threshold_type             = "PERCENTAGE"
+    notification_type          = "ACTUAL"
+    subscriber_email_addresses = local.emails
+  }
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [name]
+  }
+}
+
+resource "aws_budgets_budget" "individual" {
+  count        = length(local.emails)
+  name         = "IndividualBudget-${local.emails[count.index]}"
+  budget_type  = "COST"
+  limit_amount = "1.00"
+  limit_unit   = "USD"
+  time_unit    = "MONTHLY"
+
+  notification {
+    comparison_operator        = "GREATER_THAN"
+    threshold                  = 50
+    threshold_type             = "PERCENTAGE"
+    notification_type          = "ACTUAL"
+    subscriber_email_addresses = [local.emails[count.index]]
+  }
+
+  notification {
+    comparison_operator        = "GREATER_THAN"
+    threshold                  = 80
+    threshold_type             = "PERCENTAGE"
+    notification_type          = "ACTUAL"
+    subscriber_email_addresses = [local.emails[count.index]]
+  }
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [name]
   }
 }
