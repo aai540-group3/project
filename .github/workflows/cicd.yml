@@ -53,6 +53,11 @@ jobs:
     - name: Terraform Validate
       run: terraform validate -no-color
 
+    - name: Import existing S3 bucket
+      run: |
+        terraform import aws_s3_bucket.terraform_state ${{ env.TF_VAR_state_bucket_name }}
+      continue-on-error: true
+
     - name: Terraform Plan
       # if: github.event_name == 'pull_request'
       run: terraform plan -no-color -input=false -lock=false
