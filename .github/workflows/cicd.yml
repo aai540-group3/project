@@ -50,6 +50,16 @@ jobs:
       with:
         terraform_version: '1.9.5'
 
+    - name: Check and Remove Terraform State Lock
+      run: |
+        LOCK_ID=$(aws dynamodb get-item --table-name ${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }} --key '{"LockID": {"S": "${{ secrets.TF_VAR_STATE_BUCKET_NAME }}/${{ secrets.TF_STATE_KEY }}-md5"}}' --query 'Item.LockID.S' --output text)
+        if [ "$LOCK_ID" != "None" ]; then
+          echo "Removing existing lock..."
+          aws dynamodb delete-item --table-name ${{ secrets.TF_VAR_DYNAMODB_TABLE_NAME }} --key '{"LockID": {"S": "${{ secrets.TF_VAR_STATE_BUCKET_NAME }}/${{ secrets.TF_STATE_KEY }}-md5"}}'
+        else
+          echo "No existing lock found."
+        fi
+
     - name: Terraform Format
       run: terraform fmt -check
       continue-on-error: true
