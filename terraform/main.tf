@@ -91,6 +91,32 @@ resource "aws_dynamodb_table" "terraform_locks" {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
+# AWS ORGANIZATION ACCOUNTS
+# ---------------------------------------------------------------------------------------------------------------------
+
+# Create AWS accounts for each email in the list
+resource "aws_organizations_account" "user_accounts" {
+  count                      = length(local.emails)
+  email                      = local.emails[count.index]
+  name                       = "User Account ${count.index + 1}"
+  role_name                  = "OrganizationAccountAccessRole"
+  close_on_deletion          = false
+  iam_user_access_to_billing = "ALLOW"
+
+  # Prevent Terraform from removing the account from your organization
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = [name, email]
+  }
+
+  # Add tags for better organization
+  tags = {
+    ManagedBy = "Terraform"
+    Email     = local.emails[count.index]
+  }
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
 # AWS BUDGETS
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -102,7 +128,6 @@ resource "aws_budgets_budget" "organization_wide" {
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
-  # Notification at 50% threshold
   notification {
     comparison_operator        = "GREATER_THAN"
     threshold                  = 50
@@ -111,7 +136,6 @@ resource "aws_budgets_budget" "organization_wide" {
     subscriber_email_addresses = local.emails
   }
 
-  # Notification at 80% threshold
   notification {
     comparison_operator        = "GREATER_THAN"
     threshold                  = 80
@@ -121,7 +145,7 @@ resource "aws_budgets_budget" "organization_wide" {
   }
 }
 
-# Create individual AWS budgets for each email address
+# Individual AWS budgets for each email address
 resource "aws_budgets_budget" "individual" {
   count        = length(local.emails)
   name         = "IndividualBudget-${count.index}"
@@ -130,7 +154,6 @@ resource "aws_budgets_budget" "individual" {
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
-  # Notification at 50% threshold
   notification {
     comparison_operator        = "GREATER_THAN"
     threshold                  = 50
@@ -139,7 +162,6 @@ resource "aws_budgets_budget" "individual" {
     subscriber_email_addresses = [local.emails[count.index]]
   }
 
-  # Notification at 80% threshold
   notification {
     comparison_operator        = "GREATER_THAN"
     threshold                  = 80
@@ -147,17 +169,4 @@ resource "aws_budgets_budget" "individual" {
     notification_type          = "ACTUAL"
     subscriber_email_addresses = [local.emails[count.index]]
   }
-}
-
-# Import block for organization-wide budget
-import {
-  to = aws_budgets_budget.organization_wide
-  id = "OrganizationWideBudget"
-}
-
-# Dynamic import blocks for individual budgets
-import {
-  for_each = { for idx in range(length(split(",", var.email_list))) : idx => "IndividualBudget-${idx}" }
-  to       = aws_budgets_budget.individual[each.key]
-  id       = each.value
 }

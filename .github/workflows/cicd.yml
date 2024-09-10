@@ -66,10 +66,14 @@ jobs:
         terraform import aws_dynamodb_table.terraform_locks ${{ env.TF_VAR_dynamodb_table_name }} || true
         terraform import aws_budgets_budget.organization_wide OrganizationWideBudget || true
         
+        # Import organization-wide budget
+        AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        terraform import aws_budgets_budget.organization_wide ${AWS_ACCOUNT_ID}:OrganizationWideBudget || true
+
         # Dynamically import individual budgets
-        EMAIL_COUNT=$(echo ${{ secrets.EMAIL_LIST }} | tr ',' '\n' | wc -l)
-        for i in $(seq 0 $((EMAIL_COUNT-1))); do
-          terraform import "aws_budgets_budget.individual[$i]" "IndividualBudget-$i" || true
+        IFS=',' read -ra EMAILS <<< "${{ secrets.EMAIL_LIST }}"
+        for i in "${!EMAILS[@]}"; do
+          terraform import "aws_budgets_budget.individual[$i]" "${AWS_ACCOUNT_ID}:IndividualBudget-$i" || true
         done
 
     - name: Terraform Plan
