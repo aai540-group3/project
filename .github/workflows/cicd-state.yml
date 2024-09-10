@@ -4,11 +4,11 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'terraform/state/**' 
+      - 'terraform/state/**'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'terraform/state/**' 
+      - 'terraform/state/**'
   workflow_dispatch:
 
 permissions:
@@ -113,5 +113,5 @@ jobs:
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
-        terraform apply -auto-approve -input=false -lock=false -replace aws_s3_bucket.terraform_state || true 
+        terraform apply -auto-approve -input=false -lock=false -replace aws_s3_bucket.terraform_state || true
         terraform apply -auto-approve -input=false -lock=false -replace aws_dynamodb_table.terraform_locks || true
