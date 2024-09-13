@@ -1,3 +1,13 @@
+variable "s3_bucket_name" {
+  description = "Name of the S3 bucket for Terraform state"
+  type        = string
+}
+
+variable "dynamodb_table_name" {
+  description = "Name of the DynamoDB table for Terraform state locking"
+  type        = string
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # TERRAFORM CONFIGURATION
 # ---------------------------------------------------------------------------------------------------------------------
@@ -11,6 +21,10 @@ terraform {
       source  = "hashicorp/aws" # The source of the AWS provider
       version = "~> 5.66.0"     # The version of the AWS provider to use
     }
+    asana = {
+      source  = "davidji99/asana"
+      version = "0.1.2"
+    }
     random = {
       source  = "hashicorp/random"
       version = "3.6.2"
@@ -23,13 +37,21 @@ terraform {
   # Configure the backend for storing Terraform state
   # A backend determines how state is stored. Here, we're using an S3 bucket.
   backend "s3" {
-    bucket         = "terraform-state-bucket-f3b7a9c1"  # The name of the S3 bucket to store state
-    dynamodb_table = "terraform-state-lock-e2d8b0a5"    # DynamoDB table for state locking
+    bucket         = "terraform-state-bucket-eeb973f4"  # The name of the S3 bucket to store state
+    dynamodb_table = "terraform-state-lock-eeb973f4"    # DynamoDB table for state locking
     key            = "infrastructure/terraform.tfstate" # The path to the state file in the S3 bucket
-    region         = "us-west-2"                        # The AWS region where the S3 bucket is located
+    region         = "us-east-1"                        # The AWS region where the S3 bucket is located
     encrypt        = true                               # Enable encryption for the state file
   }
 }
+
+
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+provider "asana" {}
 
 # ---------------------------------------------------------------------------------------------------------------------
 # LOCALS
@@ -182,7 +204,7 @@ resource "aws_iam_group_policy_attachment" "common_services_policy_attachment" {
 # Amazon S3 is an object storage service offering industry-leading scalability, data availability, security, and performance.
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "terraform-state-bucket-f3b7a9c1" # Unique bucket name
+  bucket = var.s3_bucket_name
 
   tags = {
     Name        = "Terraform State"
@@ -191,8 +213,8 @@ resource "aws_s3_bucket" "terraform_state" {
   }
 
   lifecycle {
-    prevent_destroy = true     # Prevent accidental deletion of this bucket
-    ignore_changes  = [bucket] # Ignore changes to the bucket name
+    # prevent_destroy = true     # Prevent accidental deletion of this bucket
+    ignore_changes = [bucket] # Ignore changes to the bucket name
   }
 }
 
@@ -256,7 +278,7 @@ resource "aws_s3_bucket_policy" "terraform_state_policy" {
 
 # DynamoDB table for Terraform state locking
 resource "aws_dynamodb_table" "terraform_locks" {
-  name         = "terraform-state-lock-e2d8b0a5"
+  name         = var.dynamodb_table_name
   billing_mode = "PAY_PER_REQUEST" # Pay only for what you use
   hash_key     = "LockID"
 
@@ -272,8 +294,8 @@ resource "aws_dynamodb_table" "terraform_locks" {
   }
 
   lifecycle {
-    prevent_destroy = true   # Prevent accidental deletion of this table
-    ignore_changes  = [name] # Ignore changes to the table name
+    # prevent_destroy = true   # Prevent accidental deletion of this table
+    ignore_changes = [name] # Ignore changes to the table name
   }
 
   server_side_encryption {
@@ -373,8 +395,8 @@ resource "aws_budgets_budget" "shared_user_budget" {
   }
 
   lifecycle {
-    prevent_destroy = true   # Prevent accidental deletion of this budget
-    ignore_changes  = [name] # Ignore changes to the budget name
+    # prevent_destroy = true   # Prevent accidental deletion of this budget
+    ignore_changes = [name] # Ignore changes to the budget name
   }
 }
 
@@ -479,8 +501,8 @@ resource "aws_s3_bucket" "mlops_artifacts" {
   }
 
   lifecycle {
-    prevent_destroy = true     # Prevent accidental deletion of this bucket
-    ignore_changes  = [bucket] # Ignore changes to the bucket name
+    # prevent_destroy = true     # Prevent accidental deletion of this bucket
+    ignore_changes = [bucket] # Ignore changes to the bucket name
   }
 }
 
@@ -543,7 +565,8 @@ resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
 
 # Create a VPC
 resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
 
   tags = {
     Name        = "MLOps-VPC"
@@ -552,23 +575,80 @@ resource "aws_vpc" "main" {
   }
 }
 
-# Create a subnet
-resource "aws_subnet" "main" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.1.0/24"
+# Create an Internet Gateway
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
 
   tags = {
-    Name        = "MLOps-Subnet"
+    Name        = "MLOps-IGW"
+    Project     = "MLOps-Pipeline"
+    Environment = "Development"
+  }
+}
+
+# Create subnets
+resource "aws_subnet" "main" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name        = "MLOps-Subnet-Main"
+    Project     = "MLOps-Pipeline"
+    Environment = "Development"
+  }
+}
+
+# Create a route table
+resource "aws_route_table" "main" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
+  }
+
+  tags = {
+    Name        = "MLOps-RouteTable"
+    Project     = "MLOps-Pipeline"
+    Environment = "Development"
+  }
+}
+
+# Associate the route table with the main subnet
+resource "aws_route_table_association" "main" {
+  subnet_id      = aws_subnet.main.id
+  route_table_id = aws_route_table.main.id
+}
+
+# Create a NAT Gateway
+resource "aws_eip" "nat" {
+  domain = "vpc"
+}
+
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.main.id
+
+  tags = {
+    Name        = "MLOps-NATGateway"
     Project     = "MLOps-Pipeline"
     Environment = "Development"
   }
 }
 
 # Create a security group
-resource "aws_security_group" "allow_egress" {
-  name        = "allow_egress"
-  description = "Allow outbound traffic"
+resource "aws_security_group" "mlops_sg" {
+  name        = "mlops_sg"
+  description = "Security group for MLOps pipeline"
   vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["140.82.112.0/20", "185.199.108.0/22", "192.30.252.0/22"] # GitHub Codespaces IP ranges
+  }
 
   egress {
     from_port   = 0
@@ -584,14 +664,19 @@ resource "aws_security_group" "allow_egress" {
   }
 }
 
-# Launch an EC2 instance
+# Create an EC2 instance
 resource "aws_instance" "mlops_instance" {
-  # Amazon Linux 2023 AMI 2023.5.20240903.0 x86_64 HVM kernel-6.1
-  ami                         = "ami-0bfddf4206f1fa7b9"
-  instance_type               = "t2.micro"
-  subnet_id                   = aws_subnet.main.id
-  vpc_security_group_ids      = [aws_security_group.allow_egress.id]
-  associate_public_ip_address = false
+  ami                    = "ami-0182f373e66f89c85" # Amazon Linux 2023 AMI 2023.5.20240903.0 x86_64 HVM kernel-6.1
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.main.id
+  vpc_security_group_ids = [aws_security_group.mlops_sg.id]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              echo "ssh-rsa YOUR_PUBLIC_KEY" >> /home/ec2-user/.ssh/authorized_keys
+              chmod 600 /home/ec2-user/.ssh/authorized_keys
+              chown ec2-user:ec2-user /home/ec2-user/.ssh/authorized_keys
+              EOF
 
   tags = {
     Name        = "MLOps-Instance"

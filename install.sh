@@ -116,6 +116,11 @@ install_terraform() {
     fi
   fi
 
+  sudo ln -sf /usr/bin/terraform /usr/local/bin/terraform 
+  if [[ $? -ne 0 ]]; then
+    die "Failed to create symbolic link for Terraform."
+  fi
+
   local version=$(print_version)
   msg "INSTALLED: Terraform $version"
 }
