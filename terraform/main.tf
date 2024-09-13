@@ -21,10 +21,6 @@ terraform {
       source  = "hashicorp/aws" # The source of the AWS provider
       version = "~> 5.66.0"     # The version of the AWS provider to use
     }
-    asana = {
-      source  = "davidji99/asana"
-      version = "0.1.2"
-    }
     random = {
       source  = "hashicorp/random"
       version = "3.6.2"
@@ -45,13 +41,9 @@ terraform {
   }
 }
 
-
-
 provider "aws" {
   region = "us-east-1"
 }
-
-provider "asana" {}
 
 # ---------------------------------------------------------------------------------------------------------------------
 # LOCALS
@@ -116,86 +108,27 @@ resource "aws_iam_group_membership" "org_users" {
   group = aws_iam_group.org_users.name
 }
 
-# Create an IAM policy for common AWS services with instance type restrictions
-resource "aws_iam_policy" "common_services_policy" {
-  name        = "CommonServicesPolicy"
-  description = "Policy allowing access to common AWS services"
+# Create an IAM policy for administrator access 
+resource "aws_iam_policy" "administrator_access_policy" {
+  name        = "AdministratorAccessPolicy"
+  description = "Policy granting administrator access"
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [
       {
-        Effect = "Allow"
-        Action = [
-          "apigateway:*",
-          "cloudwatch:*",
-          "codebuild:*",
-          "codecommit:*",
-          "codepipeline:*",
-          "dynamodb:*",
-          "ec2:Describe*",
-          "ecr:*",
-          "iam:PassRole",
-          "lambda:*",
-          "logs:*",
-          "s3:*",
-          "sagemaker:*",
-        ]
+        Effect   = "Allow",
+        Action   = "*",
         Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "ec2:RunInstances",
-          "ec2:StartInstances",
-          "ec2:StopInstances",
-          "ec2:TerminateInstances",
-        ]
-        Resource = "*"
-        Condition = {
-          StringEquals = {
-            "ec2:InstanceType" = [
-              "t2.micro",
-            ]
-          }
-        }
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "sns:GetTopicAttributes",
-          "sns:ListSubscriptionsByTopic",
-          "sns:ListTopics",
-          "sns:Subscribe",
-          "sns:Unsubscribe",
-        ]
-        Resource = aws_sns_topic.user_notifications[*].arn
-      },
-      # Allow stopping and terminating instances based on tags
-      {
-        Effect = "Allow"
-        Action = [
-          "ec2:StopInstances",
-          "ec2:TerminateInstances"
-        ]
-        Resource = "arn:aws:ec2:*:*:instance/*"
-        Condition = {
-          StringEquals = {
-            "ec2:ResourceTag/AutoShutdown" : "true"
-          }
-        }
       }
     ]
   })
-
-  # Ensure that the SNS topics are created before referencing them in this policy
-  depends_on = [aws_sns_topic.user_notifications]
 }
 
-# Attach the policy to the IAM group
-resource "aws_iam_group_policy_attachment" "common_services_policy_attachment" {
+# Attach the administrator access policy to the IAM group
+resource "aws_iam_group_policy_attachment" "administrator_access_policy_attachment" {
   group      = aws_iam_group.org_users.name
-  policy_arn = aws_iam_policy.common_services_policy.arn
+  policy_arn = aws_iam_policy.administrator_access_policy.arn
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -667,20 +600,32 @@ resource "aws_security_group" "mlops_sg" {
 # Create an EC2 instance
 resource "aws_instance" "mlops_instance" {
   ami                    = "ami-0182f373e66f89c85" # Amazon Linux 2023 AMI 2023.5.20240903.0 x86_64 HVM kernel-6.1
-  instance_type          = "t2.micro"
+  instance_type          = "t2.micro"              # Free Tier eligible
   subnet_id              = aws_subnet.main.id
   vpc_security_group_ids = [aws_security_group.mlops_sg.id]
 
   user_data = <<-EOF
               #!/bin/bash
-              echo "ssh-rsa YOUR_PUBLIC_KEY" >> /home/ec2-user/.ssh/authorized_keys
-              chmod 600 /home/ec2-user/.ssh/authorized_keys
-              chown ec2-user:ec2-user /home/ec2-user/.ssh/authorized_keys
+              # Update and install dependencies
+              yum update -y
+              yum install -y docker git
+
+              # Start and enable Docker
+              systemctl start docker
+              systemctl enable docker
+
+              # Install Docker Compose
+              curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              chmod +x /usr/local/bin/docker-compose
+
+              # Add ec2-user to docker group
+              usermod -aG docker ec2-user
               EOF
 
   tags = {
-    Name        = "MLOps-Instance"
-    Project     = "MLOps-Pipeline"
-    Environment = "Development"
+    Name         = "MLOps-Instance"
+    Project      = "MLOps-Pipeline"
+    Environment  = "Development"
+    AutoShutdown = "true"
   }
 }
