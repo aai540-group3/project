@@ -14,10 +14,57 @@ def tts(
     speed: float = 1.0,
 ) -> str:
     """
-    [Function remains unchanged]
+    Convert input text to speech using OpenAI's Text-to-Speech API.
+
+    :param input_text: The text to be converted to speech.
+    :type input_text: str
+    :param model: The model to use for synthesis (e.g., 'tts-1', 'tts-1-hd').
+    :type model: str
+    :param voice: The voice profile to use (e.g., 'alloy', 'echo', 'fable', etc.).
+    :type voice: str
+    :param api_key: OpenAI API key.
+    :type api_key: str
+    :param response_format: The audio format of the output file, defaults to 'mp3'.
+    :type response_format: str, optional
+    :param speed: The speed of the synthesized speech (0.25 to 4.0), defaults to 1.0.
+    :type speed: float, optional
+    :return: File path to the generated audio file.
+    :rtype: str
+    :raises gr.Error: If input parameters are invalid or API call fails.
     """
-    # [Function body remains unchanged]
-    # ...
+    if not api_key.strip():
+        raise gr.Error(
+            "API key is required. Get an API key at: https://platform.openai.com/account/api-keys"
+        )
+
+    if not input_text.strip():
+        raise gr.Error("Input text cannot be empty.")
+
+    openai.api_key = api_key
+
+    try:
+        response = openai.audio.speech.create(
+            model=model,
+            voice=voice,
+            input=input_text,
+            response_format=response_format,
+            speed=speed,
+        )
+    except openai.error.OpenAIError as e:
+        # Catch OpenAI exceptions
+        raise gr.Error(f"An OpenAI error occurred: {e}")
+    except Exception as e:
+        # Catch any other exceptions
+        raise gr.Error(f"An unexpected error occurred: {e}")
+
+    # Save the audio content to a temporary file
+    file_extension = f".{response_format}"
+    with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as temp_file:
+        response.stream_to_file(temp_file.name)
+        temp_file_path = temp_file.name
+
+    return temp_file_path
+
 
 def main():
     """
