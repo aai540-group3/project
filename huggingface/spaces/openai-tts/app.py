@@ -5,6 +5,7 @@ import requests
 import os
 from functools import partial
 
+
 def tts(
     input_text: str,
     model: str,
@@ -50,18 +51,22 @@ def tts(
             response_format=response_format,
             speed=speed,
         )
+
+        # Save the audio content to a temporary file
+        file_extension = f".{response_format}"
+        with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as temp_file:
+            temp_file_path = temp_file.name
+
+            with response.with_streaming_response():
+                for chunk in response:
+                    temp_file.write(chunk)
+
     except openai.error.OpenAIError as e:
         # Catch OpenAI exceptions
         raise gr.Error(f"An OpenAI error occurred: {e}")
     except Exception as e:
         # Catch any other exceptions
         raise gr.Error(f"An unexpected error occurred: {e}")
-
-    # Save the audio content to a temporary file
-    file_extension = f".{response_format}"
-    with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as temp_file:
-        response.stream_to_file(temp_file.name)
-        temp_file_path = temp_file.name
 
     return temp_file_path
 
@@ -80,7 +85,7 @@ def main():
         for voice in VOICE_OPTIONS
     }
 
-    # Download audio previews to disk before initiating the interface
+    # Download audio previews before initiating the interface
     PREVIEW_DIR = "voice_previews"
     os.makedirs(PREVIEW_DIR, exist_ok=True)
 
@@ -103,6 +108,7 @@ def main():
     with gr.Blocks(title="OpenAI - Text to Speech") as demo:
         with gr.Row():
             with gr.Column(scale=1):
+
                 def play_voice_sample(voice: str):
                     """
                     Play the preview audio sample for the selected voice.
@@ -116,12 +122,13 @@ def main():
                         value=VOICE_PREVIEW_FILES[voice],
                         label=f"Preview Voice: {voice.capitalize()}",
                     )
+
                 with gr.Group():
 
                     preview_audio = gr.Audio(
                         interactive=False,
                         label="Preview Voice: Echo",
-                        value=VOICE_PREVIEW_FILES['echo'],
+                        value=VOICE_PREVIEW_FILES["echo"],
                         visible=True,
                         show_download_button=False,
                         show_share_button=False,
@@ -196,7 +203,7 @@ def main():
                     fn=update_label,
                     inputs=input_textbox,
                     outputs=input_textbox,
-                    show_progress='hidden',  # Hide the progress indicator
+                    show_progress="hidden",  # Hide the progress indicator
                 )
 
                 # Initialize the submit button as non-interactive
@@ -218,10 +225,14 @@ def main():
                     """
                     if api_key.strip():
                         # There is an API key, enable the submit button
-                        return gr.update(value="Convert Text to Speech", interactive=True)
+                        return gr.update(
+                            value="Convert Text to Speech", interactive=True
+                        )
                     else:
                         # No API key, disable the submit button
-                        return gr.update(value="Enter OpenAI API Key", interactive=False)
+                        return gr.update(
+                            value="Enter OpenAI API Key", interactive=False
+                        )
 
                 # Update the submit button whenever the API Key input changes
                 api_key_input.input(
@@ -231,10 +242,19 @@ def main():
                 )
 
             with gr.Column(scale=1):
-                output_audio = gr.Audio(label="Output Audio")
+                output_audio = gr.Audio(
+                    label="Output Audio",
+                    show_download_button=False,
+                    show_share_button=False,
+                )
 
         def on_submit(
-            input_text: str, model: str, voice: str, api_key: str, response_format: str, speed: float
+            input_text: str,
+            model: str,
+            voice: str,
+            api_key: str,
+            response_format: str,
+            speed: float,
         ) -> str:
             """
             Event handler for the submit button; converts text to speech using the tts function.
@@ -254,9 +274,7 @@ def main():
             :return: File path to the generated audio file.
             :rtype: str
             """
-            audio_file = tts(
-                input_text, model, voice, api_key, response_format, speed
-            )
+            audio_file = tts(input_text, model, voice, api_key, response_format, speed)
             return audio_file
 
         # Trigger the conversion when the submit button is clicked
@@ -275,6 +293,7 @@ def main():
 
     # Launch the Gradio app with error display enabled
     demo.launch(show_error=True)
+
 
 if __name__ == "__main__":
     main()
