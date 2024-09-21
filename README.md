@@ -25,8 +25,6 @@ project/
 │   └── requirements.md              # Project requirements and specifications
 │
 ├── huggingface                      # Hugging Face applications
-│   └── spaces                       # Hugging Face Spaces applications
-│       └── openai-tts               # OpenAI Text-to-Speech application
 │
 ├── models                           # Trained and serialized models
 │
