@@ -44,22 +44,21 @@ def tts(
     openai.api_key = api_key
 
     try:
+        # Create the audio speech object
+        speech_file = openai.audio.speech.create(
+            model=model,
+            voice=voice,
+            input=input_text,
+            response_format=response_format,
+            speed=speed,
+        )
         # Save the audio content to a temporary file
         file_extension = f".{response_format}"
         with tempfile.NamedTemporaryFile(
             suffix=file_extension, delete=False, mode="wb"
         ) as temp_file:
             temp_file_path = temp_file.name
-
-            # Use a context manager to handle the streaming response
-            with openai.audio.speech.create(
-                model=model,
-                voice=voice,
-                input=input_text,
-                response_format=response_format,
-                speed=speed,
-            ) as response:
-                response.stream_to_file(temp_file_path)
+            temp_file.write(speech_file.content)
 
     except openai.OpenAIError as e:
         # Catch OpenAI exceptions
