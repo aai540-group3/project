@@ -1,7 +1,4 @@
-#!/bin/bash
-
-set -e
-
+#!/usr/bin/env bash
 #===============================================================================
 # Title           :aws_bootstrap.sh
 # Description     :This script bootstraps AWS resources required for Terraform,
@@ -10,6 +7,7 @@ set -e
 # Version         :1.0
 # Usage           :./aws_bootstrap.sh [undo]
 #===============================================================================
+set -e
 
 #---------------------------------------
 # Generate a random 8-character hash
