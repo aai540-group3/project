@@ -1,7 +1,6 @@
 import gradio as gr
 import tempfile
 import openai
-import os
 from functools import partial
 
 def tts(
@@ -74,9 +73,6 @@ def main():
     MODEL_OPTIONS = ["tts-1", "tts-1-hd"]
     VOICE_OPTIONS = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
     RESPONSE_FORMAT_OPTIONS = ["mp3", "opus", "aac", "flac", "wav", "pcm"]
-
-    # Since you've already downloaded the voice previews to the current directory,
-    # set up the VOICE_PREVIEW_FILES dictionary to point to these files directly.
     VOICE_PREVIEW_FILES = {voice: f"{voice}.wav" for voice in VOICE_OPTIONS}
 
     with gr.Blocks(title="OpenAI - Text to Speech") as demo:
