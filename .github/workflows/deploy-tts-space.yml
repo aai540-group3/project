@@ -28,14 +28,12 @@ jobs:
       - name: Login to Hugging Face
         run: huggingface-cli login --token "${{ secrets.HUGGINGFACE_TOKEN }}"
 
-      - name: Upload Files to Hugging Face Space
+      - name: Upload app.py to Hugging Face Space
         env:
           HF_HUB_ENABLE_HF_TRANSFER: 1
         run: |
-          huggingface-cli \
-            upload-large-folder \
+          huggingface-cli upload \
             "${{ env.REPO_ID }}" \
-            ./huggingface/openai-tts/ \
-            --repo-type=space \
-            --space-sdk=gradio \
-            --num-workers=16
+            ./huggingface/openai-tts/app.py \
+            app.py \
+            --repo-type space
