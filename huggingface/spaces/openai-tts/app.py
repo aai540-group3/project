@@ -133,7 +133,7 @@ def main():
                 )
                 voice_dropdown = gr.Dropdown(
                     choices=VOICE_OPTIONS,
-                    label="Voice Options",
+                    label="Voice",
                     value="Echo",
                 )
                 response_format_dropdown = gr.Dropdown(
