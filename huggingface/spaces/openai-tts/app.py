@@ -58,11 +58,9 @@ def tts(
                 input=input_text,
                 response_format=response_format,
                 speed=speed,
-                stream=True,
             ) as response:
-                # Stream the response directly to the temp file
-                for chunk in response:
-                    temp_file.write(chunk)
+                response.stream_to_file(temp_file_path)
+
     except openai.OpenAIError as e:
         # Catch OpenAI exceptions
         raise gr.Error(f"An OpenAI error occurred: {e}")
