@@ -94,7 +94,6 @@ def main():
                     )
 
                 with gr.Group():
-
                     # Set the default preview audio to one of the voices
                     default_voice = "echo"
                     preview_audio = gr.Audio(
