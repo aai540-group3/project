@@ -1,10 +1,10 @@
 name: "Deploy Hugging Face Space: OpenAI TTS"
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'huggingface/openai-tts/**'
-  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
