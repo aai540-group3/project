@@ -22,7 +22,6 @@ project/
 │   └── raw                          # The original, immutable data dump
 │
 ├── docs                             # Project documentation
-│   └── requirements.md              # Project requirements and specifications
 │
 ├── huggingface                      # Hugging Face applications
 │
