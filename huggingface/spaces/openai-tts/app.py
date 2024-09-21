@@ -43,8 +43,8 @@ def tts(
     try:
         # Create the audio speech object
         speech_file = openai.audio.speech.create(
-            model=model,
-            voice=voice,
+            model=model.lower(),
+            voice=voice.lower(),
             input=input_text,
             response_format=response_format,
             speed=speed,
@@ -71,7 +71,7 @@ def main():
     Main function to create and launch the Gradio interface.
     """
     MODEL_OPTIONS = ["tts-1", "tts-1-hd"]
-    VOICE_OPTIONS = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
+    VOICE_OPTIONS = ["Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer"]
     RESPONSE_FORMAT_OPTIONS = ["mp3", "opus", "aac", "flac", "wav", "pcm"]
     VOICE_PREVIEW_FILES = {voice: f"{voice}.wav" for voice in VOICE_OPTIONS}
 
@@ -246,7 +246,7 @@ def main():
             :rtype: str
             """
             audio_file = tts(
-                input_text, model, voice, api_key, response_format, speed
+                input_text, model.lower(), voice.lower(), api_key, response_format, speed
             )
             return audio_file
 
