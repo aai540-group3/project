@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "huggingface/openai-tts/**"
+      - 'huggingface/openai-tts/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,32 +17,32 @@ jobs:
       - name: Verify Inputs
         run: |
           set -e
-          if [ -z "${{ secrets.HF_TOKEN }}" ]; then
-            echo "Error: HF_TOKEN is not set."
+          if [ -z "${{ secrets.HUGGINGFACE_TOKEN }}" ]; then
+            echo "Error: HUGGINGFACE_TOKEN is not set."
+            exit 1
+          fi
+          if [ -z "${{ secrets.HF_USERNAME }}" ]; then
+            echo "Error: HF_USERNAME is not set."
+            exit 1
+          fi
+          if [ -z "${{ secrets.HF_SPACE }}" ]; then
+            echo "Error: HF_SPACE is not set."
             exit 1
           fi
 
-      - name: Set Git Config
-        run: |
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Setup Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
-        with:
-          python-version: "3.x"
-
-      - name: Install Hugging Face Hub
-        run: pip install --upgrade huggingface_hub
+      - name: Install Hugging Face CLI
+        run: pip install -U "huggingface_hub[cli]"
 
       - name: Login to Hugging Face
-        run: echo "${{ secrets.HF_TOKEN }}" | hf auth login --token-file -
+        run: huggingface-cli login --token "${{ secrets.HUGGINGFACE_TOKEN }}"
 
       - name: Upload Files to Hugging Face Space
         run: |
-          hf space upload ./huggingface/openai-tts --repo-id "${{ secrets.HF_USERNAME }}/${{ secrets.HF_SPACE }}" --recursive --overwrite
+          huggingface-cli upload "${{ secrets.HF_USERNAME }}/${{ secrets.HF_SPACE }}" \
+            ./huggingface/openai-tts/ . \
+            --include-untracked --yes --recursive
