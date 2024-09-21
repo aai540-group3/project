@@ -45,13 +45,18 @@ jobs:
       - name: Login to Hugging Face
         run: huggingface-cli login --token "${{ secrets.HF_TOKEN }}"
 
-      - name: Push Files to Hugging Face Space
+      - name: Clone Hugging Face Space Repository
         run: |
           REPO_URL="https://${{ secrets.HF_USERNAME }}:${{ secrets.HF_TOKEN }}@huggingface.co/${{ secrets.HF_SPACE }}.git"
           GIT_LFS_SKIP_SMUDGE=1 git clone "$REPO_URL" space
+
+      - name: Sync Files to Space Repository
+        run: |
           rsync -av --delete ./huggingface/openai-tts/ ./space/
-          cd space
-          git lfs install --skip-repo
+
+      - name: Commit and Push Changes
+        working-directory: space
+        run: |
           git add .
-          git commit -m "Update deployment on $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          git commit --allow-empty -m "Update deployment on $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           git push origin main
