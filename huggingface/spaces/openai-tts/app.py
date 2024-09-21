@@ -61,7 +61,7 @@ def tts(
                 for chunk in response:
                     temp_file.write(chunk)
 
-    except openai.error.OpenAIError as e:
+    except openai.OpenAIError as e:
         # Catch OpenAI exceptions
         raise gr.Error(f"An OpenAI error occurred: {e}")
     except Exception as e:
