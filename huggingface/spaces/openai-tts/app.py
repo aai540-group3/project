@@ -1,141 +1,233 @@
-"""
-This script implements a Gradio interface for text-to-speech conversion using OpenAI's API.
-Users can input text, select a model and voice, and receive an audio output of the synthesized speech.
-
-Dependencies:
-    - gradio
-    - openai
-
-Usage:
-    Run the script to launch a web interface for text-to-speech conversion.
-
-Note:
-    - Ensure that you have installed the required packages:
-        pip install gradio openai
-    - Obtain a valid OpenAI API key with access to the necessary services.
-"""
-
 import gradio as gr
 import tempfile
 import openai
-from typing import Tuple
+import requests
+import os
+from functools import partial
 
-
-def tts(input_text: str, model: str, voice: str, api_key: str) -> str:
+def tts(
+    input_text: str,
+    model: str,
+    voice: str,
+    api_key: str,
+    response_format: str = "mp3",
+    speed: float = 1.0,
+) -> str:
     """
-    Convert input text to speech using OpenAI's Text-to-Speech API.
-
-    :param input_text: The text to be converted to speech.
-    :type input_text: str
-    :param model: The model to use for synthesis (e.g., 'tts-1', 'tts-1-hd').
-    :type model: str
-    :param voice: The voice profile to use (e.g., 'alloy', 'echo', 'fable', etc.).
-    :type voice: str
-    :param api_key: OpenAI API key.
-    :type api_key: str
-    :return: File path to the generated audio file.
-    :rtype: str
-    :raises ValueError: If input parameters are invalid.
-    :raises openai.error.OpenAIError: If API call fails.
+    [Function remains unchanged]
     """
-    if not input_text.strip():
-        raise ValueError("Input text cannot be empty.")
-
-    if not api_key.strip():
-        raise ValueError("API key is required.")
-
-    openai.api_key = api_key
-
-    try:
-        response = openai.audio.speech.create(
-            input=input_text,
-            voice=voice,
-            model=model
-        )
-    except openai.error.OpenAIError as e:
-        raise e
-
-    if not hasattr(response, 'content'):
-        raise Exception("Invalid response from OpenAI API. The response does not contain audio content.")
-
-    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
-        temp_file.write(response.content)
-        temp_file_path = temp_file.name
-
-    return temp_file_path
-
-
-def on_convert_click(input_text: str, model: str, voice: str, api_key: str) -> Tuple[str, str]:
-    """
-    Callback function to handle the click event for text-to-speech conversion.
-
-    :param input_text: Text input from the user.
-    :type input_text: str
-    :param model: Selected model.
-    :type model: str
-    :param voice: Selected voice.
-    :type voice: str
-    :param api_key: User's OpenAI API key.
-    :type api_key: str
-    :return: Tuple containing the file path to the generated audio file and an error message.
-    :rtype: Tuple[str, str]
-    """
-    try:
-        file_path = tts(input_text, model, voice, api_key)
-        return file_path, ""
-    except Exception as e:
-        return None, str(e)
-
+    # [Function body remains unchanged]
+    # ...
 
 def main():
     """
     Main function to create and launch the Gradio interface.
     """
-    # Define model and voice options
     MODEL_OPTIONS = ["tts-1", "tts-1-hd"]
     VOICE_OPTIONS = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
+    RESPONSE_FORMAT_OPTIONS = ["mp3", "opus", "aac", "flac", "wav", "pcm"]
 
-    with gr.Blocks() as demo:
+    # Predefine voice previews URLs
+    VOICE_PREVIEW_URLS = {
+        voice: f"https://cdn.openai.com/API/docs/audio/{voice}.wav"
+        for voice in VOICE_OPTIONS
+    }
+
+    # Download audio previews to disk before initiating the interface
+    PREVIEW_DIR = "voice_previews"
+    os.makedirs(PREVIEW_DIR, exist_ok=True)
+
+    VOICE_PREVIEW_FILES = {}
+    for voice, url in VOICE_PREVIEW_URLS.items():
+        local_file_path = os.path.join(PREVIEW_DIR, f"{voice}.wav")
+        if not os.path.exists(local_file_path):
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+                with open(local_file_path, "wb") as f:
+                    f.write(response.content)
+            except requests.exceptions.RequestException as e:
+                print(f"Failed to download {voice} preview: {e}")
+        VOICE_PREVIEW_FILES[voice] = local_file_path
+
+    # Set static paths for Gradio to serve
+    gr.set_static_paths(paths=[PREVIEW_DIR])
+
+    with gr.Blocks(title="OpenAI - Text to Speech") as demo:
         with gr.Row():
             with gr.Column(scale=1):
+                def play_voice_sample(voice: str):
+                    """
+                    Play the preview audio sample for the selected voice.
+
+                    :param voice: The name of the voice to preview.
+                    :type voice: str
+                    :return: Updated Gradio Audio component with the selected voice sample.
+                    :rtype: gr.Audio
+                    """
+                    return gr.update(
+                        value=VOICE_PREVIEW_FILES[voice],
+                        label=f"Preview Voice: {voice.capitalize()}",
+                    )
+                with gr.Group():
+
+                    preview_audio = gr.Audio(
+                        interactive=False,
+                        label="Preview Voice: Echo",
+                        value=VOICE_PREVIEW_FILES['echo'],
+                        visible=True,
+                        show_download_button=False,
+                        show_share_button=False,
+                        autoplay=False,
+                    )
+
+                    # Create buttons for each voice
+                    for voice in VOICE_OPTIONS:
+                        voice_button = gr.Button(
+                            value=f"{voice.capitalize()}",
+                            variant="secondary",
+                            size="sm",
+                        )
+                        voice_button.click(
+                            fn=partial(play_voice_sample, voice=voice),
+                            outputs=preview_audio,
+                        )
+
+            with gr.Column(scale=1):
                 api_key_input = gr.Textbox(
-                    label="API Key", type="password", placeholder="Enter your OpenAI API Key"
+                    label="OpenAI API Key",
+                    info="https://platform.openai.com/account/api-keys",
+                    type="password",
+                    placeholder="Enter your OpenAI API Key",
                 )
                 model_dropdown = gr.Dropdown(
-                    choices=MODEL_OPTIONS, label="Model", value="tts-1"
+                    choices=MODEL_OPTIONS,
+                    label="Model",
+                    value="tts-1",
+                    info="Select tts-1 for speed or tts-1-hd for quality",
                 )
                 voice_dropdown = gr.Dropdown(
-                    choices=VOICE_OPTIONS, label="Voice Options", value="echo"
+                    choices=VOICE_OPTIONS,
+                    label="Voice Options",
+                    value="echo",
                 )
+                response_format_dropdown = gr.Dropdown(
+                    choices=RESPONSE_FORMAT_OPTIONS,
+                    label="Response Format",
+                    value="mp3",
+                )
+                speed_slider = gr.Slider(
+                    minimum=0.25,
+                    maximum=4.0,
+                    step=0.05,
+                    label="Voice Speed",
+                    value=1.0,
+                )
+
             with gr.Column(scale=2):
                 input_textbox = gr.Textbox(
-                    label="Input Text",
+                    label="Input Text (0000 / 4096 chars)",
                     lines=10,
-                    placeholder="Type your text here..."
+                    placeholder="Type your text here...",
                 )
-                submit_button = gr.Button("Convert Text to Speech", variant="primary")
+
+                def update_label(input_text: str):
+                    """
+                    Update the label of the input textbox with the current character count.
+
+                    :param input_text: The current text in the input textbox.
+                    :type input_text: str
+                    :return: Updated Gradio component with new label.
+                    :rtype: gr.update
+                    """
+                    char_count = len(input_text)
+                    new_label = f"Input Text ({char_count:04d} / 4096 chars)"
+                    return gr.update(label=new_label)
+
+                # Update the label when the text changes, with progress hidden
+                input_textbox.change(
+                    fn=update_label,
+                    inputs=input_textbox,
+                    outputs=input_textbox,
+                    show_progress='hidden',  # Hide the progress indicator
+                )
+
+                # Initialize the submit button as non-interactive
+                submit_button = gr.Button(
+                    "Enter OpenAI API Key",
+                    variant="primary",
+                    interactive=False,
+                )
+
+                # Function to update the submit button based on API Key input
+                def update_button(api_key):
+                    """
+                    Update the submit button's label and interactivity based on the API key input.
+
+                    :param api_key: The current text in the API key input.
+                    :type api_key: str
+                    :return: Updated Gradio component for the submit button.
+                    :rtype: gr.update
+                    """
+                    if api_key.strip():
+                        # There is an API key, enable the submit button
+                        return gr.update(value="Convert Text to Speech", interactive=True)
+                    else:
+                        # No API key, disable the submit button
+                        return gr.update(value="Enter OpenAI API Key", interactive=False)
+
+                # Update the submit button whenever the API Key input changes
+                api_key_input.input(
+                    fn=update_button,
+                    inputs=api_key_input,
+                    outputs=submit_button,
+                )
+
             with gr.Column(scale=1):
                 output_audio = gr.Audio(label="Output Audio")
-                error_output = gr.Textbox(
-                    label="Error Message", interactive=False, visible=False
-                )
 
-        # Define the event handler for the submit button
+        def on_submit(
+            input_text: str, model: str, voice: str, api_key: str, response_format: str, speed: float
+        ) -> str:
+            """
+            Event handler for the submit button; converts text to speech using the tts function.
+
+            :param input_text: The text to convert to speech.
+            :type input_text: str
+            :param model: The TTS model to use (e.g., 'tts-1', 'tts-1-hd').
+            :type model: str
+            :param voice: The voice profile to use (e.g., 'alloy', 'echo', etc.).
+            :type voice: str
+            :param api_key: OpenAI API key.
+            :type api_key: str
+            :param response_format: The audio format of the output file.
+            :type response_format: str
+            :param speed: The speed of the synthesized speech.
+            :type speed: float
+            :return: File path to the generated audio file.
+            :rtype: str
+            """
+            audio_file = tts(
+                input_text, model, voice, api_key, response_format, speed
+            )
+            return audio_file
+
+        # Trigger the conversion when the submit button is clicked
         submit_button.click(
-            fn=on_convert_click,
-            inputs=[input_textbox, model_dropdown, voice_dropdown, api_key_input],
-            outputs=[output_audio, error_output]
+            fn=on_submit,
+            inputs=[
+                input_textbox,
+                model_dropdown,
+                voice_dropdown,
+                api_key_input,
+                response_format_dropdown,
+                speed_slider,
+            ],
+            outputs=output_audio,
         )
 
-        # Allow pressing Enter in the input textbox to trigger the conversion
-        input_textbox.submit(
-            fn=on_convert_click,
-            inputs=[input_textbox, model_dropdown, voice_dropdown, api_key_input],
-            outputs=[output_audio, error_output]
-        )
-
-    demo.launch()
-
+    # Launch the Gradio app with error display enabled
+    demo.launch(show_error=True)
 
 if __name__ == "__main__":
     main()

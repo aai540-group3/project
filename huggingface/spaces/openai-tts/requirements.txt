@@ -1,2 +1,5 @@
-gradio
-openai
+gradio[oauth]==4.44.0
+openai==1.47.0
+requests==2.31.0
+spaces==0.30.2
+uvicorn==0.30.6
