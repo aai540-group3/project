@@ -4,45 +4,37 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'huggingface/openai-tts/**'
+      - "huggingface/openai-tts/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  REPO_ID: aai540-group3/openai-tts
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify Inputs
-        run: |
-          set -e
-          if [ -z "${{ secrets.HUGGINGFACE_TOKEN }}" ]; then
-            echo "Error: HUGGINGFACE_TOKEN is not set."
-            exit 1
-          fi
-          if [ -z "${{ secrets.HF_USERNAME }}" ]; then
-            echo "Error: HF_USERNAME is not set."
-            exit 1
-          fi
-          if [ -z "${{ secrets.HF_SPACE }}" ]; then
-            echo "Error: HF_SPACE is not set."
-            exit 1
-          fi
-
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
 
       - name: Install Hugging Face CLI
-        run: pip install -U "huggingface_hub[cli]"
+        run: pip install -U "huggingface_hub[cli,hf_transfer]"
 
       - name: Login to Hugging Face
         run: huggingface-cli login --token "${{ secrets.HUGGINGFACE_TOKEN }}"
 
       - name: Upload Files to Hugging Face Space
+        env:
+          HF_HUB_ENABLE_HF_TRANSFER: 1
         run: |
-          huggingface-cli upload "${{ secrets.HF_USERNAME }}/${{ secrets.HF_SPACE }}" \
-            ./huggingface/openai-tts/ . \
-            --include-untracked --yes --recursive
+          huggingface-cli \
+            upload-large-folder \
+            "${{ env.REPO_ID }}" \
+            --repo-type=space \
+            ./huggingface/openai-tts/ \
+            --num-workers=16
