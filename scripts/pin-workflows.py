@@ -1,149 +1,285 @@
-import re
+"""
+This script scans GitHub Actions workflow files and updates action references by pinning them to specific
+commit SHAs. It replaces the action references with their corresponding commit SHAs and adds any associated
+tags as comments. This practice enhances security by ensuring that workflows use immutable code versions.
+
+Usage:
+    Run the script to automatically update all `.yml` and `.yaml` files in the GitHub workflows
+    directory (`.github/workflows`).
+
+Requirements:
+    - Python 3.x
+    - `requests` library
+    - `PyYAML` library (optional, for future enhancements)
+    - Set the `GITHUB_TOKEN` environment variable with a valid GitHub personal access token.
+
+Note:
+    Ensure that you have the necessary permissions for the repositories being accessed. The GitHub token must
+    have at least `public_repo` scope for public repositories and additional scopes if accessing private repositories.
+"""
+
 import os
 import sys
 import glob
+import logging
+import re
+from typing import Optional, List, Dict
 import requests
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger = logging.getLogger(__name__)
+
+# Global configuration
 GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
+if not GITHUB_TOKEN:
+    print("Error: GITHUB_TOKEN environment variable is not set.")
+    sys.exit(1)
 
-def get_tags(owner, repo):
-    headers = {}
-    if GITHUB_TOKEN:
-        headers['Authorization'] = f'token {GITHUB_TOKEN}'
+WORKFLOWS_DIR = os.path.join('..', '.github', 'workflows')
 
-    tags = []
-    page = 1
-    per_page = 100
-    while True:
-        tags_url = f'https://api.github.com/repos/{owner}/{repo}/tags'
-        params = {'per_page': per_page, 'page': page}
-        response = requests.get(tags_url, headers=headers, params=params)
-        if response.status_code == 200:
-            page_tags = response.json()
-            if not page_tags:
+
+class GitHubAPI:
+    """
+    A helper class to interact with the GitHub API.
+    """
+
+    def __init__(self, token: Optional[str] = None):
+        """
+        Initialize the GitHubAPI instance.
+
+        :param token: GitHub personal access token.
+        :type token: str or None
+        """
+        self.session = requests.Session()
+        self.headers = {}
+        if token:
+            self.headers['Authorization'] = f'token {token}'
+        self.session.headers.update(self.headers)
+
+    def get_tags(self, owner: str, repo: str) -> List[Dict]:
+        """
+        Retrieve all tags for a given GitHub repository.
+
+        :param owner: The GitHub username or organization name.
+        :type owner: str
+        :param repo: The repository name.
+        :type repo: str
+        :return: A list of tag objects retrieved from the GitHub API.
+        :rtype: list
+        """
+        tags = []
+        page = 1
+        per_page = 100
+        while True:
+            tags_url = f'https://api.github.com/repos/{owner}/{repo}/tags'
+            params = {'per_page': per_page, 'page': page}
+            response = self.session.get(tags_url, params=params)
+            if response.status_code == 200:
+                page_tags = response.json()
+                if not page_tags:
+                    break
+                tags.extend(page_tags)
+                page += 1
+            else:
+                logger.error(f"Failed to fetch tags for {owner}/{repo}: {response.status_code}")
                 break
-            tags.extend(page_tags)
-            page += 1
-        else:
-            print(f"Failed to fetch tags for {owner}/{repo}: {response.status_code}")
-            break
-    return tags
+        return tags
 
-def get_tag_for_sha(owner, repo, sha):
-    tags = get_tags(owner, repo)
-    for tag in tags:
-        if tag['commit']['sha'] == sha:
-            return tag['name']
-    return None
+    def get_tag_for_sha(self, owner: str, repo: str, sha: str) -> Optional[str]:
+        """
+        Find the tag name associated with a specific commit SHA in a repository.
 
-def get_sha_for_ref(owner, repo, ref):
-    headers = {}
-    if GITHUB_TOKEN:
-        headers['Authorization'] = f'token {GITHUB_TOKEN}'
+        :param owner: The GitHub username or organization name.
+        :type owner: str
+        :param repo: The repository name.
+        :type repo: str
+        :param sha: The commit SHA to search for.
+        :type sha: str
+        :return: The tag name if found, otherwise None.
+        :rtype: str or None
+        """
+        tags = self.get_tags(owner, repo)
+        for tag in tags:
+            if tag.get('commit', {}).get('sha') == sha:
+                return tag.get('name')
+        return None
 
-    # Try to get the SHA directly (might be a SHA, tag, or branch)
-    ref_url = f'https://api.github.com/repos/{owner}/{repo}/git/refs/heads/{ref}'
-    response = requests.get(ref_url, headers=headers)
-    if response.status_code == 200:
-        ref_data = response.json()
-        sha = ref_data['object']['sha']
-        return sha
-    else:
-        ref_url = f'https://api.github.com/repos/{owner}/{repo}/git/refs/tags/{ref}'
-        response = requests.get(ref_url, headers=headers)
+    def get_sha_for_ref(self, owner: str, repo: str, ref: str) -> Optional[str]:
+        """
+        Resolve a reference (branch name, tag name, or SHA) to a commit SHA.
+
+        :param owner: The GitHub username or organization name.
+        :type owner: str
+        :param repo: The repository name.
+        :type repo: str
+        :param ref: The reference to resolve.
+        :type ref: str
+        :return: The commit SHA if resolved, otherwise None.
+        :rtype: str or None
+        """
+        # Attempt to resolve the ref as a branch
+        sha = self._get_sha_from_ref_type(owner, repo, ref_type='heads', ref=ref)
+        if sha:
+            return sha
+
+        # Attempt to resolve the ref as a tag
+        sha = self._get_sha_from_ref_type(owner, repo, ref_type='tags', ref=ref)
+        if sha:
+            return sha
+
+        # Attempt to validate the ref as a SHA
+        sha = self._validate_sha(owner, repo, sha_candidate=ref)
+        if sha:
+            return sha
+
+        logger.warning(f"Failed to resolve ref '{ref}' in {owner}/{repo}")
+        return None
+
+    def _get_sha_from_ref_type(self, owner: str, repo: str, ref_type: str, ref: str) -> Optional[str]:
+        """
+        Helper method to get SHA from a specific ref type (branch or tag).
+
+        :param owner: The GitHub username or organization name.
+        :type owner: str
+        :param repo: The repository name.
+        :type repo: str
+        :param ref_type: The type of ref ('heads' for branches, 'tags' for tags).
+        :type ref_type: str
+        :param ref: The reference name.
+        :type ref: str
+        :return: The commit SHA if found, otherwise None.
+        :rtype: str or None
+        """
+        ref_url = f'https://api.github.com/repos/{owner}/{repo}/git/refs/{ref_type}/{ref}'
+        response = self.session.get(ref_url)
         if response.status_code == 200:
             ref_data = response.json()
-            sha = ref_data['object']['sha']
+            sha = ref_data.get('object', {}).get('sha')
             # Handle annotated tags
-            if ref_data['object']['type'] == 'tag':
-                tag_url = f'https://api.github.com/repos/{owner}/{repo}/git/tags/{sha}'
-                tag_response = requests.get(tag_url, headers=headers)
-                if tag_response.status_code == 200:
-                    tag_data = tag_response.json()
-                    sha = tag_data['object']['sha']
+            if ref_type == 'tags' and ref_data.get('object', {}).get('type') == 'tag':
+                sha = self._get_sha_for_annotated_tag(owner, repo, sha)
             return sha
-        else:
-            # It's possibly a SHA
-            commit_url = f'https://api.github.com/repos/{owner}/{repo}/git/commits/{ref}'
-            commit_response = requests.get(commit_url, headers=headers)
-            if commit_response.status_code == 200:
-                commit_data = commit_response.json()
-                sha = commit_data['sha']
-                return sha
-            else:
-                print(f"Failed to find ref '{ref}' in {owner}/{repo}")
-                return None
+        return None
 
-def update_workflow_file(file_path):
-    print(f"\nProcessing workflow file: {file_path}")
+    def _get_sha_for_annotated_tag(self, owner: str, repo: str, tag_sha: str) -> Optional[str]:
+        """
+        Resolve the commit SHA for an annotated tag.
 
-    with open(file_path, 'r') as f:
+        :param owner: The GitHub username or organization name.
+        :type owner: str
+        :param repo: The repository name.
+        :type repo: str
+        :param tag_sha: The SHA of the tag object.
+        :type tag_sha: str
+        :return: The commit SHA if resolved, otherwise None.
+        :rtype: str or None
+        """
+        tag_url = f'https://api.github.com/repos/{owner}/{repo}/git/tags/{tag_sha}'
+        response = self.session.get(tag_url)
+        if response.status_code == 200:
+            tag_data = response.json()
+            return tag_data.get('object', {}).get('sha')
+        return None
+
+    def _validate_sha(self, owner: str, repo: str, sha_candidate: str) -> Optional[str]:
+        """
+        Validate if a given string is a valid commit SHA.
+
+        :param owner: The GitHub username or organization name.
+        :type owner: str
+        :param repo: The repository name.
+        :type repo: str
+        :param sha_candidate: The SHA candidate to validate.
+        :type sha_candidate: str
+        :return: The commit SHA if valid, otherwise None.
+        :rtype: str or None
+        """
+        commit_url = f'https://api.github.com/repos/{owner}/{repo}/commits/{sha_candidate}'
+        response = self.session.get(commit_url)
+        if response.status_code == 200:
+            commit_data = response.json()
+            return commit_data.get('sha')
+        return None
+
+
+def update_workflow_file(file_path: str, github_api: GitHubAPI) -> None:
+    """
+    Update a GitHub Actions workflow file by pinning actions to commit SHAs and adding version comments.
+
+    :param file_path: The path to the workflow file to update.
+    :type file_path: str
+    :param github_api: An instance of the GitHubAPI class.
+    :type github_api: GitHubAPI
+    """
+    logger.info(f"\nProcessing workflow file: {file_path}")
+
+    with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # Regex pattern to find uses: statements with any ref (SHA, tag, or branch)
-    pattern = r'(uses:\s*([^\s@]+)@([^\s#\n]+)(\s*#.*)?)'
-    matches = re.findall(pattern, content)
+    # Regex pattern to find 'uses:' statements with any ref (SHA, tag, or branch)
+    pattern = r'(uses:\s*([^\s@]+)@([^\s#\n]+))'
 
-    updated_content = content
+    def replace_match(match):
+        full_match = match.group(0)
+        action = match.group(2)
+        ref = match.group(3)
+        logger.info(f"Found action: {action}@{ref}")
 
-    for full_match, action, ref, comment in matches:
-        print(f"Found action: {action}@{ref}")
         owner_repo = action
         if '/' not in owner_repo:
-            owner_repo = 'actions/' + owner_repo
-        # Extract owner and repo
+            owner_repo = 'actions/' + owner_repo  # Default to 'actions' org if not specified
         owner_repo_parts = owner_repo.split('/')
         if len(owner_repo_parts) < 2:
-            print(f"Invalid action format: {action}")
-            continue
-        owner = owner_repo_parts[0]
-        repo = owner_repo_parts[1]
+            logger.warning(f"Invalid action format: {action}. Skipping.")
+            return full_match
 
-        # Get the commit SHA for the ref
-        sha = get_sha_for_ref(owner, repo, ref)
+        owner, repo = owner_repo_parts[:2]
 
+        sha = github_api.get_sha_for_ref(owner, repo, ref)
         if sha:
-            # Get the semantic version tag for the SHA
-            tag = get_tag_for_sha(owner, repo, sha)
-            if tag:
-                version_info = tag
-            else:
-                version_info = "no tag found"
+            tag = github_api.get_tag_for_sha(owner, repo, sha)
+            version_info = tag if tag else "no tag found"
 
-            # Prepare the original and new uses lines
-            original_line = full_match.strip()
             new_line = f'uses: {action}@{sha}  # {version_info}'
-
-            # Print BEFORE and AFTER lines
-            print(f"BEFORE: {original_line}")
-            print(f"AFTER:  {new_line}\n")
-
-            # Replace in the content
-            updated_content = updated_content.replace(
-                original_line,
-                new_line
-            )
+            logger.info(f"BEFORE: {full_match}")
+            logger.info(f"AFTER:  {new_line}\n")
+            return new_line
         else:
-            print(f"Could not resolve ref '{ref}' for {action}. Skipping update.\n")
+            logger.warning(f"Could not resolve ref '{ref}' for {action}. Skipping update.\n")
+            return full_match
 
-    with open(file_path, 'w') as f:
+    updated_content = re.sub(pattern, replace_match, content)
+
+    with open(file_path, 'w', encoding='utf-8') as f:
         f.write(updated_content)
-    print(f"Workflow file '{file_path}' updated successfully.")
+    logger.info(f"Workflow file '{file_path}' updated successfully.")
 
-if __name__ == '__main__':
-    # Set the workflows directory
-    workflows_dir = '../.github/workflows'
-    if not os.path.exists(workflows_dir):
-        print(f"No workflows directory found at '{workflows_dir}'")
+
+def main():
+    """
+    Main function to update GitHub Actions workflow files by pinning action references to commit SHAs.
+    """
+    if not os.path.exists(WORKFLOWS_DIR):
+        logger.error(f"No workflows directory found at '{WORKFLOWS_DIR}'")
         sys.exit(1)
 
     # Get all .yml and .yaml files in the workflows directory
-    yaml_files = glob.glob(os.path.join(workflows_dir, '*.yml')) + \
-                 glob.glob(os.path.join(workflows_dir, '*.yaml'))
+    yaml_files = glob.glob(os.path.join(WORKFLOWS_DIR, '*.yml')) + \
+                 glob.glob(os.path.join(WORKFLOWS_DIR, '*.yaml'))
 
     if not yaml_files:
-        print(f"No workflow files found in '{workflows_dir}'")
+        logger.error(f"No workflow files found in '{WORKFLOWS_DIR}'")
         sys.exit(1)
 
+    github_api = GitHubAPI(token=GITHUB_TOKEN)
+
     for yaml_file in yaml_files:
-        update_workflow_file(yaml_file)
+        try:
+            update_workflow_file(yaml_file, github_api)
+        except Exception as e:
+            logger.error(f"An error occurred while processing '{yaml_file}': {e}")
+
+
+if __name__ == '__main__':
+    main()
