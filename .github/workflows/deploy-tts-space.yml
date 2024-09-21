@@ -1,4 +1,4 @@
-name: "Deploy Hugging Face Space: OpenAI TTS"
+name: "Deploy HF Space: OpenAI TTS"
 
 on:
   workflow_dispatch:
