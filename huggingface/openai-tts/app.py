@@ -21,7 +21,7 @@ with gr.Blocks(analytics_enabled=False) as demo:
     with gr.Row():
         with gr.Column(scale=1):
             api_key_input = gr.Textbox(label="API Key", type="password")
-            model_dropdown = gr.Dropdown(choices=model_options, label="Model", value="tts-1-hd")
+            model_dropdown = gr.Dropdown(choices=model_options, label="Model", value="tts")
             voice_dropdown = gr.Dropdown(choices=voice_options, label="Voice Options", value="echo")
         with gr.Column(scale=2):
             input_textbox = gr.Textbox(
