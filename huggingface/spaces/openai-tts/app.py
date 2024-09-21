@@ -101,7 +101,7 @@ def main():
                         label=f"Preview Voice: {default_voice.capitalize()}",
                         value=VOICE_PREVIEW_FILES[default_voice],
                         visible=True,
-                        show_download_button=True,
+                        show_download_button=False,
                         show_share_button=False,
                         autoplay=False,
                     )
@@ -215,7 +215,7 @@ def main():
             with gr.Column(scale=1):
                 output_audio = gr.Audio(
                     label="Output Audio",
-                    show_download_button=False,
+                    show_download_button=True,
                     show_share_button=False,
                 )
 
