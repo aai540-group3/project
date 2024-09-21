@@ -35,6 +35,7 @@ jobs:
           huggingface-cli \
             upload-large-folder \
             "${{ env.REPO_ID }}" \
-            --repo-type=space \
             ./huggingface/openai-tts/ \
+            --repo-type=space \
+            --space-sdk=gradio \
             --num-workers=16
