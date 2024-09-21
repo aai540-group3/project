@@ -1,10 +1,8 @@
 import gradio as gr
 import tempfile
 import openai
-import requests
 import os
 from functools import partial
-
 
 def tts(
     input_text: str,
@@ -69,7 +67,6 @@ def tts(
 
     return temp_file_path
 
-
 def main():
     """
     Main function to create and launch the Gradio interface.
@@ -78,31 +75,9 @@ def main():
     VOICE_OPTIONS = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
     RESPONSE_FORMAT_OPTIONS = ["mp3", "opus", "aac", "flac", "wav", "pcm"]
 
-    # Predefine voice previews URLs
-    VOICE_PREVIEW_URLS = {
-        voice: f"https://cdn.openai.com/API/docs/audio/{voice}.wav"
-        for voice in VOICE_OPTIONS
-    }
-
-    # Download audio previews before initiating the interface
-    PREVIEW_DIR = "voice_previews"
-    os.makedirs(PREVIEW_DIR, exist_ok=True)
-
-    VOICE_PREVIEW_FILES = {}
-    for voice, url in VOICE_PREVIEW_URLS.items():
-        local_file_path = os.path.join(PREVIEW_DIR, f"{voice}.wav")
-        if not os.path.exists(local_file_path):
-            try:
-                response = requests.get(url)
-                response.raise_for_status()
-                with open(local_file_path, "wb") as f:
-                    f.write(response.content)
-            except requests.exceptions.RequestException as e:
-                print(f"Failed to download {voice} preview: {e}")
-        VOICE_PREVIEW_FILES[voice] = local_file_path
-
-    # Set static paths for Gradio to serve
-    gr.set_static_paths(paths=[PREVIEW_DIR])
+    # Since you've already downloaded the voice previews to the current directory,
+    # set up the VOICE_PREVIEW_FILES dictionary to point to these files directly.
+    VOICE_PREVIEW_FILES = {voice: f"{voice}.wav" for voice in VOICE_OPTIONS}
 
     with gr.Blocks(title="OpenAI - Text to Speech") as demo:
         with gr.Row():
@@ -124,10 +99,12 @@ def main():
 
                 with gr.Group():
 
+                    # Set the default preview audio to one of the voices
+                    default_voice = "echo"
                     preview_audio = gr.Audio(
                         interactive=False,
-                        label="Preview Voice: Echo",
-                        value=VOICE_PREVIEW_FILES["echo"],
+                        label=f"Preview Voice: {default_voice.capitalize()}",
+                        value=VOICE_PREVIEW_FILES[default_voice],
                         visible=True,
                         show_download_button=True,
                         show_share_button=False,
@@ -273,7 +250,9 @@ def main():
             :return: File path to the generated audio file.
             :rtype: str
             """
-            audio_file = tts(input_text, model, voice, api_key, response_format, speed)
+            audio_file = tts(
+                input_text, model, voice, api_key, response_format, speed
+            )
             return audio_file
 
         # Trigger the conversion when the submit button is clicked
@@ -292,7 +271,6 @@ def main():
 
     # Launch the Gradio app with error display enabled
     demo.launch(show_error=True)
-
 
 if __name__ == "__main__":
     main()
