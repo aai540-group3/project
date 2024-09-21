@@ -34,6 +34,7 @@ jobs:
         run: |
           huggingface-cli upload \
             "${{ env.REPO_ID }}" \
-            ./huggingface/openai-tts/app.py \
-            app.py \
-            --repo-type space
+            ./huggingface/openai-tts \
+            . \
+            --repo-type space \
+            --overwrite
