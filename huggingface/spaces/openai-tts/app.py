@@ -129,7 +129,7 @@ def main():
                         label="Preview Voice: Echo",
                         value=VOICE_PREVIEW_FILES["echo"],
                         visible=True,
-                        show_download_button=False,
+                        show_download_button=True,
                         show_share_button=False,
                         autoplay=False,
                     )
