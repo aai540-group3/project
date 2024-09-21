@@ -72,7 +72,7 @@ def main():
     """
     MODEL_OPTIONS = ["tts-1", "tts-1-hd"]
     VOICE_OPTIONS = ["Alloy", "Echo", "Fable", "Onyx", "Nova", "Shimmer"]
-    RESPONSE_FORMAT_OPTIONS = ["mp3", "opus", "aac", "flac", "wav", "pcm"]
+    RESPONSE_FORMAT_OPTIONS = ["mp3", "opus", "aac", "flac", "wav"]
     VOICE_PREVIEW_FILES = {voice: f"{voice}.wav" for voice in VOICE_OPTIONS}
 
     with gr.Blocks(title="OpenAI - Text to Speech") as demo:
