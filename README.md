@@ -5,7 +5,6 @@
 * **Due:** Oct 21 by 11:59pm
 * **Points:** 320
 * **Submitting:** a text entry box, a website url, a media recording, or a file upload
-* **Attempts:** 0
 * **Allowed Attempts:** 3
 
 ## Description
@@ -158,7 +157,6 @@ The final presentation and submission of your codebase should support your ML De
 * **Please note:** Since this assignment requires the submission of more than one item, files must be submitted *at the same time* (submissions overwrite rather than add, avoid submitting deliverables one at a time). 
 * **Teamwork**: You will submit the Peer Evaluation form individually using the separate assignment link in Module 7. Consult the syllabus for grading weights of the team project and peer evaluations. Team members may not get the same grade on the Final Team Project, depending on each team member's level of contribution.
 * **Turnitin:** This assignment has [Turnitin](https://help.turnitin.com/integrity/student/canvas/assignments/submitting-an-assignment.htm) enabled for document submissions which means that your instructor will obtain a Similarity Report that identifies specific parts of your writing that may indicate a high level of matching to external content. You are strongly encouraged to review your work without penalty by activating the [Draft Coach extension in your Google Docs](https://help.turnitin.com/integrity/student/draft-coach/using-draft-coach.htm) prior to submitting your work for final grading.
-
 
 ---
 
