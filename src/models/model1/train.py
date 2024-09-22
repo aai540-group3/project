@@ -26,13 +26,13 @@ def main(cfg: DictConfig):
     train_data_path = to_absolute_path(f"{data_paths.processed}/train.csv")
     model_output_path = to_absolute_path(cfg.model.model_output_path)
 
-    print("Loading training data...")
+    print("**Step 1: Loading training data...**")
     train_df = pd.read_csv(train_data_path)
 
     X_train = train_df.drop(columns=["readmitted"])
     y_train = train_df["readmitted"]
 
-    # Identify categorical and numerical columns dynamically
+    print("**Step 2: Identifying categorical and numerical columns...**")
     categorical_cols = X_train.select_dtypes(
         include=["object", "category"]
     ).columns.tolist()
@@ -40,7 +40,7 @@ def main(cfg: DictConfig):
         include=["int64", "float64"]
     ).columns.tolist()
 
-    # Preprocessing steps
+    print("**Step 3: Creating preprocessing pipeline...**")
     numerical_steps = [
         ("imputer", SimpleImputer(strategy="mean")),
         ("scaler", StandardScaler()),
@@ -74,35 +74,32 @@ def main(cfg: DictConfig):
         ]
     )
 
-    # Logistic Regression model
+    print("**Step 4: Creating Logistic Regression model...**")
     model = LogisticRegression(**model_params)
 
-    # Pipeline
+    print("**Step 5: Creating final pipeline...**")
     clf = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", model)])
 
-    # Initialize DVCLive
-    with Live() as live: # You can remove live_dir here if you want
-        # Fit the model
-        print("Training the model...")
+    print("**Step 6: Training the model...**")
+    with Live() as live:
         clf.fit(X_train, y_train)
 
-        # Log metrics to DVCLive
+        print("**Step 7: Logging training completion metric...**")
         live.log_metric("training_completed", 1)
 
-        # Perform cross-validation
-        print("Performing cross-validation...")
+        print("**Step 8: Performing cross-validation...**")
         cross_val_scores = cross_val_score(
             clf, X_train, y_train, cv=5, scoring="accuracy"
         )
         cv_accuracy = cross_val_scores.mean()
         print(f"Cross-Validation Accuracy: {cv_accuracy * 100:.2f}%")
 
-        # Log cross-validation metrics
+        print("**Step 9: Logging cross-validation metrics...**")
         live.log_metric("cv_accuracy", cv_accuracy)
         for idx, score in enumerate(cross_val_scores):
             live.log_metric(f"cv_fold_{idx+1}_accuracy", score)
 
-    # Save the model
+    print("**Step 10: Saving the model...**")
     os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
     joblib.dump(clf, model_output_path)
     print(f"Model saved to {model_output_path}")
