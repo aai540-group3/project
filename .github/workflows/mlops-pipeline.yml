@@ -82,8 +82,19 @@ jobs:
         run: |
           dvc pull --force
 
+      - name: Check if model exists
+        id: check-model
+        run: |
+          if [ ! -f "models/trained_model.joblib" ]; then
+            echo "model_missing=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run DVC pipeline
         run: |
+          if [ "${{ steps.check-model.outputs.model_missing }}" == "true" ]; then
+            echo "Model is missing. Running 'dvc repro train' first..."
+            dvc repro train
+          fi
           dvc exp run --queue
 
       - name: Push data and models to DVC remotes
