@@ -1,3 +1,12 @@
+"""
+.. module:: src.models.autogluon.evaluate
+   :synopsis: Evaluate the trained AutoGluon model and log metrics.
+
+This script loads a trained AutoGluon model, evaluates it on the test dataset, and logs various metrics
+including accuracy, precision, recall, ROC-AUC, and F1-score. It also generates and logs a confusion
+matrix, ROC curve, and feature importances plot as image artifacts using DVCLive.
+"""
+
 import json
 import logging
 from pathlib import Path
@@ -6,7 +15,6 @@ import hydra
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import tqdm
 from autogluon.tabular import TabularPredictor
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
@@ -19,8 +27,16 @@ from dvclive import Live
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @hydra.main(config_path="../../../configs", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
+    """
+    Evaluate the trained AutoGluon model and log metrics.
+
+    :param cfg: Hydra configuration object.
+    :type cfg: DictConfig
+    :raises Exception: If an error occurs during evaluation.
+    """
     try:
         logger.info("Configuration:")
         logger.info(OmegaConf.to_yaml(cfg))
@@ -28,7 +44,9 @@ def main(cfg: DictConfig) -> None:
         data_paths = cfg.dataset.path
         test_data_path = Path(to_absolute_path(f"{data_paths.processed}/test.csv"))
         model_dir = Path(to_absolute_path(f"models/{cfg.model.name}"))
-        metrics_output_path = Path(to_absolute_path(f"reports/metrics/{cfg.model.name}_metrics.json"))
+        metrics_output_path = Path(
+            to_absolute_path(f"reports/metrics/{cfg.model.name}_metrics.json")
+        )
 
         logger.info(f"Evaluating AutoGluon model {cfg.model.name}...")
 
@@ -43,28 +61,40 @@ def main(cfg: DictConfig) -> None:
         y_pred_proba = predictor.predict_proba(X_test)
 
         # Get the probability of the positive class
-        positive_class = predictor.class_labels[-1]  # Assuming the last class is positive
+        positive_class = predictor.class_labels[
+            -1
+        ]  # Assuming the last class is positive
         y_pred_proba_positive = y_pred_proba[positive_class]
 
         # Calculate evaluation metrics
         metrics = {
             "accuracy": accuracy_score(y_true, y_pred),
-            "precision": precision_score(y_true, y_pred, average='weighted', zero_division=0),
-            "recall": recall_score(y_true, y_pred, average='weighted', zero_division=0),
-            "roc_auc": roc_auc_score(y_true, y_pred_proba_positive, average='weighted'),
-            "f1_score": recall_score(y_true, y_pred, average='weighted', zero_division=0),
+            "precision": precision_score(
+                y_true, y_pred, average="weighted", zero_division=0
+            ),
+            "recall": recall_score(
+                y_true, y_pred, average="weighted", zero_division=0
+            ),
+            "roc_auc": roc_auc_score(
+                y_true, y_pred_proba_positive, average="weighted"
+            ),
+            "f1_score": recall_score(
+                y_true, y_pred, average="weighted", zero_division=0
+            ),
         }
 
         # Initialize DVCLive
         with Live() as live:
             # Log evaluation parameters
-            live.log_params({
-                "model_name": cfg.model.name,
-                "metrics_output_path": str(metrics_output_path),
-                "test_data_path": str(test_data_path),
-                "evaluation_date": pd.Timestamp.now().isoformat(),
-                "dataset_version": cfg.dataset.version
-            })
+            live.log_params(
+                {
+                    "model_name": cfg.model.name,
+                    "metrics_output_path": str(metrics_output_path),
+                    "test_data_path": str(test_data_path),
+                    "evaluation_date": pd.Timestamp.now().isoformat(),
+                    "dataset_version": cfg.dataset.version,
+                }
+            )
 
             # Log evaluation metrics
             for metric_name, metric_value in metrics.items():
@@ -78,8 +108,14 @@ def main(cfg: DictConfig) -> None:
             logger.info(f"Metrics saved to {metrics_output_path}")
 
             # Log metrics JSON as artifact
-            live.log_artifact(str(metrics_output_path), type="metrics", name=f"{cfg.model.name}_metrics")
-            logger.info(f"Metrics JSON logged as artifact at {metrics_output_path}")
+            live.log_artifact(
+                str(metrics_output_path),
+                type="metrics",
+                name=f"{cfg.model.name}_metrics",
+            )
+            logger.info(
+                f"Metrics JSON logged as artifact at {metrics_output_path}"
+            )
 
             # Generate and log Confusion Matrix plot
             conf_matrix = confusion_matrix(y_true, y_pred)
@@ -94,13 +130,13 @@ def main(cfg: DictConfig) -> None:
             ax.set_xticklabels(class_labels)
             ax.set_yticklabels(class_labels)
 
-            plt.xlabel('Predicted')
-            plt.ylabel('True')
-            plt.title('Confusion Matrix')
+            plt.xlabel("Predicted")
+            plt.ylabel("True")
+            plt.title("Confusion Matrix")
 
             # Annotate the confusion matrix
             for (i, j), val in np.ndenumerate(conf_matrix):
-                ax.text(j, i, f"{val}", ha='center', va='center', color='red')
+                ax.text(j, i, f"{val}", ha="center", va="center", color="red")
 
             conf_matrix_path = metrics_output_path.parent / "confusion_matrix.png"
             plt.savefig(conf_matrix_path)
@@ -115,14 +151,19 @@ def main(cfg: DictConfig) -> None:
             roc_auc_value = auc(fpr, tpr)
 
             plt.figure()
-            plt.plot(fpr, tpr, color='darkorange',
-                     lw=2, label=f'ROC curve (area = {roc_auc_value:.2f})')
-            plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+            plt.plot(
+                fpr,
+                tpr,
+                color="darkorange",
+                lw=2,
+                label=f"ROC curve (area = {roc_auc_value:.2f})",
+            )
+            plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--")
             plt.xlim([0.0, 1.0])
             plt.ylim([0.0, 1.05])
-            plt.xlabel('False Positive Rate')
-            plt.ylabel('True Positive Rate')
-            plt.title('Receiver Operating Characteristic')
+            plt.xlabel("False Positive Rate")
+            plt.ylabel("True Positive Rate")
+            plt.title("Receiver Operating Characteristic")
             plt.legend(loc="lower right")
 
             roc_curve_path = metrics_output_path.parent / "roc_curve.png"
@@ -142,15 +183,21 @@ def main(cfg: DictConfig) -> None:
             # Assuming the feature importance is in the first column
             importance_column = feature_importances.columns[0]
 
-            unused_features = feature_importances[feature_importances[importance_column] == 0].index.tolist()
+            unused_features = feature_importances[
+                feature_importances[importance_column] == 0
+            ].index.tolist()
             logger.info(f"Unused features: {unused_features}")
 
-            sorted_importances = feature_importances[feature_importances[importance_column] > 0].sort_values(by=importance_column, ascending=False)
+            sorted_importances = feature_importances[
+                feature_importances[importance_column] > 0
+            ].sort_values(by=importance_column, ascending=False)
             plt.figure(figsize=(10, 6))
-            sorted_importances.plot(kind='bar', y=importance_column)
-            plt.title('Feature Importances')
+            sorted_importances.plot(kind="bar", y=importance_column)
+            plt.title("Feature Importances")
             plt.tight_layout()
-            feature_importance_path = metrics_output_path.parent / "feature_importances.png"
+            feature_importance_path = (
+                metrics_output_path.parent / "feature_importances.png"
+            )
             plt.savefig(feature_importance_path)
             plt.close()
 
@@ -158,13 +205,15 @@ def main(cfg: DictConfig) -> None:
             live.log_image("importance", str(feature_importance_path))
             logger.info("Feature importances logged as image artifact.")
 
-            logger.info(f"Evaluation completed for AutoGluon model {cfg.model.name}.")
-
+            logger.info(
+                f"Evaluation completed for AutoGluon model {cfg.model.name}."
+            )
 
     except Exception as e:
         logger.error(f"An error occurred during evaluation: {str(e)}")
         logger.error(f"Configuration dump: {OmegaConf.to_yaml(cfg)}")
         raise
+
 
 if __name__ == "__main__":
     main()

@@ -94,6 +94,7 @@ stages:
     - reports/metrics/autogluon_metrics.json
     outs:
     - reports/figures/model_comparison.png
+
 params:
 - dvclive/params.yaml
 artifacts:

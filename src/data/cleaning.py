@@ -1,3 +1,11 @@
+"""
+.. module:: src.data.cleaning
+   :synopsis: Clean the raw dataset.
+
+This script loads the raw dataset, performs various data cleaning operations, and saves the cleaned
+dataset as a CSV file in the interim data directory.
+"""
+
 import logging
 from pathlib import Path
 
@@ -11,7 +19,14 @@ logger = logging.getLogger(__name__)
 
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Perform data cleaning operations."""
+    """
+    Perform data cleaning operations.
+
+    :param df: The raw Pandas DataFrame.
+    :type df: pd.DataFrame
+    :return: The cleaned Pandas DataFrame.
+    :rtype: pd.DataFrame
+    """
 
     logger.info(f"Columns in the dataset: {', '.join(df.columns)}")
 
@@ -68,25 +83,36 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
 
 @hydra.main(config_path="../../configs", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
+    """
+    Clean the raw dataset.
+
+    :param cfg: Hydra configuration object.
+    :type cfg: DictConfig
+    :raises Exception: If any error occurs during data cleaning.
+    """
     try:
         logger.info("Configuration:")
         logger.info(OmegaConf.to_yaml(cfg))
 
+        # Get data paths
         raw_data_path = Path(to_absolute_path(cfg.dataset.path.raw)) / "data.csv"
         interim_data_path = Path(to_absolute_path(cfg.dataset.path.interim)) / "data.csv"
 
+        # Load raw data
         logger.info("Loading raw data...")
         df = pd.read_csv(raw_data_path)
 
+        # Perform data cleaning
         logger.info("Performing data cleaning...")
         df_cleaned = clean_data(df)
 
+        # Save cleaned data
         logger.info("Saving cleaned data...")
         interim_data_path.parent.mkdir(parents=True, exist_ok=True)
         df_cleaned.to_csv(interim_data_path, index=False)
         logger.info(f"Interim data saved to {interim_data_path}")
 
-        # Log some data quality metrics
+        # Log data quality metrics
         logger.info(f"Original data shape: {df.shape}")
         logger.info(f"Cleaned data shape: {df_cleaned.shape}")
         logger.info(f"Columns in cleaned data: {', '.join(df_cleaned.columns)}")

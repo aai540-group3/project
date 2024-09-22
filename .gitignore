@@ -1,6 +1,4 @@
 __pycache__/
-!.dvc/*
-!.gitkeep
 .cache
 .coverage
 .coverage.*
@@ -60,3 +58,7 @@ sdist/
 target/
 terraform/.terraform/providers/
 var/
+
+!.dvc/*
+!.gitkeep
+!src/models/

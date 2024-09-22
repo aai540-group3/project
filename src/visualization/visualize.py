@@ -1,3 +1,13 @@
+"""
+.. module:: src.visualization.visualize
+   :synopsis: Generate visualizations for model comparison.
+
+This script generates a bar plot comparing the performance of different models based on their
+evaluation metrics. It reads the evaluation metrics from JSON files for each model specified in
+the configuration. If metrics files are found, the script creates a bar plot comparing the models
+across various metrics and saves the plot as an image.
+"""
+
 import json
 import logging
 import os
@@ -14,6 +24,13 @@ logger = logging.getLogger(__name__)
 
 @hydra.main(config_path="../../configs", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
+    """
+    Generate visualizations for model comparison.
+
+    :param cfg: Hydra configuration object containing the list of models to compare.
+    :type cfg: DictConfig
+    :raises Exception: If an error occurs during visualization.
+    """
     try:
         logger.info("Configuration:")
         logger.info(OmegaConf.to_yaml(cfg))
@@ -42,7 +59,7 @@ def main(cfg: DictConfig) -> None:
             plt.title("Model Comparison")
             plt.ylabel("Metric Score")
             plt.xticks(rotation=0)
-            plt.ylim(0, 1)
+            plt.ylim(0, 1)  # Set y-axis limits for better visualization
             plt.tight_layout()
             plt.savefig(os.path.join(output_dir, "model_comparison.png"))
             plt.close()

@@ -1,5 +1,12 @@
+"""
+.. module:: src.data.build_features
+   :synopsis: Create new features from the existing dataset.
+
+This script loads the interim dataset, performs feature engineering to create new features, and saves
+the processed dataset with the new features as a CSV file in the processed data directory.
+"""
+
 import logging
-import sys
 from pathlib import Path
 
 import hydra
@@ -7,15 +14,19 @@ import pandas as pd
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 
-project_root = Path(__file__).resolve().parents[2]
-sys.path.append(str(project_root))
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 def identify_features(df: pd.DataFrame):
-    """Identifies categorical and numerical features in a DataFrame."""
+    """
+    Identifies categorical and numerical features in a DataFrame.
+
+    :param df: The input Pandas DataFrame.
+    :type df: pd.DataFrame
+    :return: A tuple containing lists of categorical and numerical column names.
+    :rtype: tuple[list[str], list[str]]
+    """
     categorical_cols = df.select_dtypes(
         include=["object", "category", "bool"]
     ).columns.tolist()
@@ -24,7 +35,14 @@ def identify_features(df: pd.DataFrame):
 
 
 def create_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Create new features from existing data."""
+    """
+    Create new features from existing data.
+
+    :param df: The input Pandas DataFrame.
+    :type df: pd.DataFrame
+    :return: The DataFrame with new features added.
+    :rtype: pd.DataFrame
+    """
 
     logger.info("Starting feature engineering process...")
 
@@ -62,25 +80,36 @@ def create_features(df: pd.DataFrame) -> pd.DataFrame:
 
 @hydra.main(config_path="../../configs", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
+    """
+    Create new features and save the processed dataset.
+
+    :param cfg: Hydra configuration object.
+    :type cfg: DictConfig
+    :raises Exception: If any error occurs during feature engineering or data saving.
+    """
     try:
         logger.info("Configuration:")
         logger.info(OmegaConf.to_yaml(cfg))
 
+        # Get data paths
         interim_data_path = Path(to_absolute_path(cfg.dataset.path.interim)) / "data.csv"
         processed_data_path = Path(to_absolute_path(cfg.dataset.path.processed)) / "data_featured.csv"
 
+        # Load interim data
         logger.info("Loading interim data...")
         df = pd.read_csv(interim_data_path)
 
+        # Perform feature engineering
         logger.info("Performing feature engineering...")
         df_featured = create_features(df)
 
+        # Save processed data with new features
         logger.info("Saving processed data with new features...")
         processed_data_path.parent.mkdir(parents=True, exist_ok=True)
         df_featured.to_csv(processed_data_path, index=False)
         logger.info(f"Processed data saved to {processed_data_path}")
 
-        # Log some data quality metrics
+        # Log data quality metrics
         logger.info(f"Original data shape: {df.shape}")
         logger.info(f"Processed data shape: {df_featured.shape}")
         logger.info(

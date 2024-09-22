@@ -5,8 +5,8 @@ stages:
     deps:
     - path: src/data/ingestion.py
       hash: md5
-      md5: 86d1c14e321ea84343d75b2bf1308db1
-      size: 1272
+      md5: 9dd9af040bff867c8b273aa2be251438
+      size: 1902
     params:
       params.yaml:
         dataset.name: aai540-group3/diabetes-readmission
@@ -25,8 +25,8 @@ stages:
       size: 49159045
     - path: src/data/cleaning.py
       hash: md5
-      md5: 35b17e29cd4a83ff8e8a5700d7575655
-      size: 3184
+      md5: 4bbfd86aeaaa2681e419ae3a564f0c37
+      size: 3834
     params:
       params.yaml:
         dataset.path.interim: data/interim
@@ -45,8 +45,8 @@ stages:
       size: 70117495
     - path: src/data/splitting.py
       hash: md5
-      md5: 36a277a28d6e0d8b3d9a4c1c2c1236b2
-      size: 2503
+      md5: 6d956225520b1dbe05539d1d7e215123
+      size: 3375
     params:
       params.yaml:
         dataset.path.interim: data/interim
@@ -132,8 +132,8 @@ stages:
       size: 70117495
     - path: src/data/build_features.py
       hash: md5
-      md5: f3c4c9f93acf21daa1610e32b5c8a8f6
-      size: 3270
+      md5: f116de09a59fc6a0567249dfdf3b835e
+      size: 4185
     params:
       params.yaml:
         dataset.path.interim: data/interim
@@ -176,16 +176,16 @@ stages:
     deps:
     - path: reports/metrics/autogluon_metrics.json
       hash: md5
-      md5: 7a0f33e5b5e5e227d4eb8963467610a9
-      size: 180
+      md5: 9fab3e3b70c0ebeaaac2bfaa2bcaae87
+      size: 179
     - path: reports/metrics/logistic_regression_metrics.json
       hash: md5
       md5: e71750b133aa7399768c7ac9e7863481
       size: 180
     - path: src/visualization/visualize.py
       hash: md5
-      md5: 6b07487068c422fd7d3f4718f44787c6
-      size: 1906
+      md5: 08fd134cd212e76908771431c4b9a01b
+      size: 2647
     outs:
     - path: reports/figures/model_comparison.png
       hash: md5
@@ -200,8 +200,8 @@ stages:
       size: 56094172
     - path: src/models/logistic_regression/preprocessing.py
       hash: md5
-      md5: 827ba56301f07696954c87f92c7efec7
-      size: 3135
+      md5: ceee6fe4f1a05f281f8b310eba01f3c9
+      size: 4394
     params:
       params.yaml:
         dataset.path.processed: data/processed
@@ -227,8 +227,8 @@ stages:
       size: 56094172
     - path: src/models/autogluon/preprocessing.py
       hash: md5
-      md5: 0078b45d36381f662d590324d84cbc65
-      size: 3335
+      md5: bab49c31ede4097d030e6a0e5d79f73e
+      size: 4967
     params:
       params.yaml:
         dataset.path.processed: data/processed
@@ -251,8 +251,8 @@ stages:
       size: 47491440
     - path: src/models/logistic_regression/train.py
       hash: md5
-      md5: 558916df01ff81c5e319bf9122f219fe
-      size: 3659
+      md5: fc06af76ba6bb2ad3c79dd398299a87b
+      size: 5603
     params:
       params.yaml:
         dataset.path.processed: data/processed
@@ -278,8 +278,8 @@ stages:
       size: 47491440
     - path: src/models/autogluon/train.py
       hash: md5
-      md5: 91332001464c086af1616c9acc7539a7
-      size: 3874
+      md5: 3aae181ab5c487b882293a6aaeeda845
+      size: 6143
     params:
       params.yaml:
         dataset.path.processed: data/processed
@@ -291,7 +291,7 @@ stages:
     outs:
     - path: models/autogluon/model.pkl
       hash: md5
-      md5: 84ccc022634269d32af8297a5686c545
+      md5: e6f8a7d4a81651e573565cdc129b97c9
       size: 75375
   evaluate@logistic_regression:
     cmd: python src/models/logistic_regression/evaluate.py model=logistic_regression
@@ -306,8 +306,8 @@ stages:
       size: 6159
     - path: src/models/logistic_regression/evaluate.py
       hash: md5
-      md5: 8bf4fa4cdb59293d5fb60370dc63d04c
-      size: 6234
+      md5: 3d0a219be1f31f55695cdd7fee31e1c6
+      size: 7590
     params:
       params.yaml:
         dataset.path.processed: data/processed
@@ -333,12 +333,12 @@ stages:
       size: 14026237
     - path: models/autogluon/model.pkl
       hash: md5
-      md5: 84ccc022634269d32af8297a5686c545
+      md5: e6f8a7d4a81651e573565cdc129b97c9
       size: 75375
     - path: src/models/autogluon/evaluate.py
       hash: md5
-      md5: 45442177424cd5d8cd57998d762ff842
-      size: 7071
+      md5: 8e2ad3ec36e97420c059136b2a8b7d9d
+      size: 8155
     params:
       params.yaml:
         dataset.path.processed: data/processed
@@ -350,5 +350,5 @@ stages:
     outs:
     - path: reports/metrics/autogluon_metrics.json
       hash: md5
-      md5: 7a0f33e5b5e5e227d4eb8963467610a9
-      size: 180
+      md5: 9fab3e3b70c0ebeaaac2bfaa2bcaae87
+      size: 179
