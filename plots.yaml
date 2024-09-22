@@ -1,0 +1,6 @@
+plots:
+  - dvclive/metrics.json:
+      x: step
+      y:
+        - cv_accuracy
+      template: linear

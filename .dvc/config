@@ -1,6 +1,12 @@
 [core]
-    remote = hf
+    remote = models_remote
 [hydra]
     enabled = True
-['remote "hf"']
+[studio]
+    url = https://studio.iterative.ai
+['remote "models_remote"']
     url = https://huggingface.co/aai540-group3/project
+    auth = custom
+['remote "dataset_remote"']
+    url = https://huggingface.co/aai540-group3/diabetes-readmission
+    auth = custom

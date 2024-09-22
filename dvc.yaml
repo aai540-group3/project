@@ -1,0 +1,43 @@
+stages:
+  ingest:
+    cmd: python src/data/ingestion.py hydra.run.dir=.
+    deps:
+    - src/data/ingestion.py
+    outs:
+    - data/raw/
+
+  clean:
+    cmd: python src/data/cleaning.py hydra.run.dir=.
+    deps:
+    - src/data/cleaning.py
+    - data/raw/
+    outs:
+    - data/interim/
+
+  split:
+    cmd: python src/data/splitting.py hydra.run.dir=.
+    deps:
+    - src/data/splitting.py
+    - data/interim/data.csv
+    outs:
+    - data/processed/train.csv
+    - data/processed/test.csv
+
+  train:
+    cmd: python src/models/model1/train.py hydra.run.dir=.
+    deps:
+    - src/models/model1/train.py
+    - data/processed/train.csv
+    outs:
+    - models/trained_model.joblib
+    - dvclive:
+        cache: false
+
+  evaluate:
+    cmd: python src/visualization/evaluation.py hydra.run.dir=.
+    deps:
+    - src/visualization/evaluation.py
+    - models/trained_model.joblib
+    - data/processed/test.csv
+    metrics:
+    - reports/metrics.json

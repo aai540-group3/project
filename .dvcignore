@@ -1,3 +1,11 @@
-# Add patterns of files dvc should ignore, which could improve
-# the performance. Learn more at
-# https://dvc.org/doc/user-guide/dvcignore
+.DS_Store
+.idea/
+.venv/
+.vscode/
+*.log
+*.swo
+*.swp
+*.temp
+*.tmp
+build/
+combined.txt

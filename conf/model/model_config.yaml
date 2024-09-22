@@ -1,0 +1,5 @@
+name: LogisticRegression
+model_output_path: models/trained_model.joblib
+params:
+  random_state: 42
+  max_iter: 1000

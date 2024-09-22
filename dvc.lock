@@ -1,0 +1,53 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python src/data/ingestion.py hydra.run.dir=.
+    deps:
+    - path: src/data/ingestion.py
+      hash: md5
+      md5: 4f0ca0b48f2234924e1464fcf53676d3
+      size: 818
+    outs:
+    - path: data/raw/
+      hash: md5
+      md5: f49a697b6370fc83a46fce6297936b7a.dir
+      size: 49159045
+      nfiles: 1
+  clean:
+    cmd: python src/data/cleaning.py hydra.run.dir=.
+    deps:
+    - path: data/raw/
+      hash: md5
+      md5: f49a697b6370fc83a46fce6297936b7a.dir
+      size: 49159045
+      nfiles: 1
+    - path: src/data/cleaning.py
+      hash: md5
+      md5: 82c87fcecb42403199938df2c8bba498
+      size: 797
+    outs:
+    - path: data/interim/
+      hash: md5
+      md5: f49a697b6370fc83a46fce6297936b7a.dir
+      size: 49159045
+      nfiles: 1
+  split:
+    cmd: python src/data/splitting.py hydra.run.dir=.
+    deps:
+    - path: data/interim/data.csv
+      hash: md5
+      md5: dbfe12c203805ccf7fdb683042c46ab3
+      size: 49159045
+    - path: src/data/splitting.py
+      hash: md5
+      md5: a0edc527db113b46839d818b08dc413c
+      size: 1340
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 8c22e4812019b778211cc15ce89210d0
+      size: 9834187
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 524b033b66640ebbab203855b05d1302
+      size: 39327772

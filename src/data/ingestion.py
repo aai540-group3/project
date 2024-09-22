@@ -1,30 +1,30 @@
-# -*- coding: utf-8 -*-
-import click
-import logging
-from pathlib import Path
-from dotenv import find_dotenv, load_dotenv
+import os
+
+import datasets
+import hydra
+from hydra.utils import to_absolute_path
+from omegaconf import DictConfig
 
 
-@click.command()
-@click.argument('input_filepath', type=click.Path(exists=True))
-@click.argument('output_filepath', type=click.Path())
-def main(input_filepath, output_filepath):
-    """ Runs data processing scripts to turn raw data from (../raw) into
-        cleaned data ready to be analyzed (saved in ../processed).
-    """
-    logger = logging.getLogger(__name__)
-    logger.info('making final data set from raw data')
+@hydra.main(config_path="../../conf", config_name="config", version_base=None)
+def main(cfg: DictConfig):
+    data_paths = cfg.data.path
+    dataset_name = cfg.data.dataset_name
+    data_output_path = to_absolute_path(data_paths.raw)
+
+    # Load dataset
+    print("Loading dataset...")
+    dataset = datasets.load_dataset(dataset_name, token=None)
+    df = dataset["train"].to_pandas()
+
+    # Create the output directory if it doesn't exist
+    os.makedirs(data_output_path, exist_ok=True)
+
+    # Save to data/raw/
+    print("Saving raw data...")
+    df.to_csv(f"{data_output_path}/data.csv", index=False)
+    print(f"Data saved to {data_output_path}/data.csv")
 
 
-if __name__ == '__main__':
-    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-    # not used in this stub but often useful for finding various files
-    project_dir = Path(__file__).resolve().parents[2]
-
-    # find .env automagically by walking up directories until it's found, then
-    # load up the .env entries as environment variables
-    load_dotenv(find_dotenv())
-
+if __name__ == "__main__":
     main()

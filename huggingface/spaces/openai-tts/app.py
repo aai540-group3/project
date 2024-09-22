@@ -1,7 +1,9 @@
-import gradio as gr
 import tempfile
-import openai
 from functools import partial
+
+import gradio as gr
+import openai
+
 
 def tts(
     input_text: str,
@@ -65,6 +67,7 @@ def tts(
         raise gr.Error(f"An unexpected error occurred: {e}")
 
     return temp_file_path
+
 
 def main():
     """
@@ -246,7 +249,12 @@ def main():
             :rtype: str
             """
             audio_file = tts(
-                input_text, model.lower(), voice.lower(), api_key, response_format, speed
+                input_text,
+                model.lower(),
+                voice.lower(),
+                api_key,
+                response_format,
+                speed,
             )
             return audio_file
 
@@ -266,6 +274,7 @@ def main():
 
     # Launch the Gradio app with error display enabled
     demo.launch(show_error=True)
+
 
 if __name__ == "__main__":
     main()

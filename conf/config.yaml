@@ -1,0 +1,6 @@
+defaults:
+  - data: data_config
+  - model: model_config
+  - training: training_config
+  - feature_engineering: feature_config
+  - evaluation: evaluation_config
