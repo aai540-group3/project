@@ -2,75 +2,80 @@ stages:
   ingest:
     cmd: python src/data/ingestion.py
     deps:
-      - src/data/ingestion.py
+    - src/data/ingestion.py
     outs:
-      - data/raw/:
-          remote: datasets_remote
+    - data/raw/:
+        remote: datasets_remote
 
   clean:
     cmd: python src/data/cleaning.py
     deps:
-      - src/data/cleaning.py
-      - data/raw/
+    - src/data/cleaning.py
+    - data/raw/
     outs:
-      - data/interim/:
-          remote: datasets_remote
+    - data/interim/:
+        remote: datasets_remote
 
   split:
     cmd: python src/data/splitting.py
     deps:
-      - src/data/splitting.py
-      - data/interim/data.csv
+    - src/data/splitting.py
+    - data/interim/data.csv
     outs:
-      - data/processed/train.csv:
-          remote: datasets_remote
-      - data/processed/test.csv:
-          remote: datasets_remote
+    - data/processed/train.csv:
+        remote: datasets_remote
+    - data/processed/test.csv:
+        remote: datasets_remote
 
   train:
     cmd: python src/models/model1/train.py
     deps:
-      - src/models/model1/train.py
-      - data/processed/train.csv
+    - src/models/model1/train.py
+    - data/processed/train.csv
     params:
-      - model.name
-      - training.split.test_size
+    - model.name
+    - training.split.test_size
     outs:
-      - models/trained_model.joblib:
-          remote: models_remote
+    - models/trained_model.joblib:
+        remote: models_remote
     metrics:
-      - dvclive/plots/metrics/cv_accuracy.tsv:
-          cache: false
+    - dvclive/plots/metrics/cv_accuracy.tsv:
+        cache: false
     plots:
-      - dvclive/plots/metrics/training_completed.tsv:
-          cache: false
+    - dvclive/plots/metrics/training_completed.tsv:
+        cache: false
 
   evaluate:
     cmd: python src/visualization/evaluation.py
     deps:
-      - src/visualization/evaluation.py
-      - models/trained_model.joblib
-      - data/processed/test.csv
+    - src/visualization/evaluation.py
+    - models/trained_model.joblib
+    - data/processed/test.csv
     metrics:
-      - dvclive_evaluate/plots/metrics/accuracy.tsv:
-          cache: false
+    - dvclive_evaluate/plots/metrics/accuracy.tsv:
+        cache: false
     plots:
-      - dvclive_evaluate/plots/metrics/precision.tsv:
-          cache: false
-      - dvclive_evaluate/plots/metrics/recall.tsv:
-          cache: false
-      - dvclive_evaluate/plots/metrics/roc_auc.tsv:
-          cache: false
+    - dvclive_evaluate/plots/metrics/precision.tsv:
+        cache: false
+    - dvclive_evaluate/plots/metrics/recall.tsv:
+        cache: false
+    - dvclive_evaluate/plots/metrics/roc_auc.tsv:
+        cache: false
 
   visualize:
     cmd: python src/visualization/visualization.py
     deps:
-      - src/visualization/visualization.py
-      - dvclive/plots/metrics/cv_accuracy.tsv
-      - dvclive_evaluate/plots/metrics/accuracy.tsv
-      - dvclive_evaluate/plots/metrics/precision.tsv
-      - dvclive_evaluate/plots/metrics/recall.tsv
-      - dvclive_evaluate/plots/metrics/roc_auc.tsv
+    - src/visualization/visualization.py
+    - dvclive/plots/metrics/cv_accuracy.tsv
+    - dvclive_evaluate/plots/metrics/accuracy.tsv
+    - dvclive_evaluate/plots/metrics/precision.tsv
+    - dvclive_evaluate/plots/metrics/recall.tsv
+    - dvclive_evaluate/plots/metrics/roc_auc.tsv
     outs:
-      - reports/figures:
-          cache: false
+    - reports/figures:
+        cache: false
+metrics:
+- dvclive/metrics.json
+plots:
+- dvclive/plots/metrics:
+    x: step
