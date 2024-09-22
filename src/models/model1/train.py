@@ -9,26 +9,12 @@ from omegaconf import DictConfig
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
-<<<<<<< HEAD
-<<<<<<< HEAD
 
 from dvclive import Live
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-=======
-from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
-
-from dvclive import Live
-
->>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
-=======
-from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
-
-from dvclive import Live
-
->>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
 @hydra.main(config_path="../../../conf", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
     try:
@@ -47,7 +33,6 @@ def main(cfg: DictConfig) -> None:
         logger.info("Creating Logistic Regression model...")
         model = LogisticRegression(**model_params)
 
-<<<<<<< HEAD
         logger.info("Creating final pipeline...")
         clf = Pipeline(steps=[("classifier", model)])
 
@@ -57,33 +42,6 @@ def main(cfg: DictConfig) -> None:
 
             logger.info("Logging training completion metric...")
             live.log_metric("training_completed", 1)
-=======
-    print("**Step 3: Creating preprocessing pipeline...**")
-    numerical_transformer = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="mean")),
-            ("scaler", StandardScaler()),
-            (
-                "polynomial",
-                PolynomialFeatures(
-                    degree=feature_params.poly_degree,
-                    interaction_only=True,
-                    include_bias=False,
-                ),
-            ) if feature_params.add_polynomial_features else ("noop", "passthrough"),
-<<<<<<< HEAD
-=======
-        ]
-    )
-
-    categorical_transformer = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("onehot", OneHotEncoder(handle_unknown="ignore")),
->>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
-        ]
-    )
->>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
 
             logger.info("Performing cross-validation...")
             cross_val_scores = cross_val_score(clf, X_train, y_train, cv=5, scoring="accuracy")
