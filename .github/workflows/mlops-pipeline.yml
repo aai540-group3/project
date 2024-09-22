@@ -89,6 +89,11 @@ jobs:
             echo "model_missing=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Pull model from DVC remote
+        if: steps.check-model.outputs.model_missing != 'true'
+        run: |
+          dvc pull models/trained_model.joblib --force
+
       - name: Run DVC pipeline
         run: |
           if [ "${{ steps.check-model.outputs.model_missing }}" == "true" ]; then
