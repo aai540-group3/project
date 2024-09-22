@@ -10,12 +10,19 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 from dvclive import Live
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+=======
+from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
+
+from dvclive import Live
+
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
 =======
 from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
 
@@ -64,6 +71,16 @@ def main(cfg: DictConfig) -> None:
                     include_bias=False,
                 ),
             ) if feature_params.add_polynomial_features else ("noop", "passthrough"),
+<<<<<<< HEAD
+=======
+        ]
+    )
+
+    categorical_transformer = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("onehot", OneHotEncoder(handle_unknown="ignore")),
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
         ]
     )
 >>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c

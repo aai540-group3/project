@@ -4,15 +4,21 @@ stages:
     cmd: python src/data/ingestion.py
     deps:
 <<<<<<< HEAD
+<<<<<<< HEAD
     - path: src/data/ingestion.py
       hash: md5
       md5: afbeb9ed4e2b1293d73843a5aac50c63
       size: 1028
 =======
+=======
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
       - path: src/data/ingestion.py
         hash: md5
         md5: 4f0ca0b48f2234924e1464fcf53676d3
         size: 818
+<<<<<<< HEAD
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
+=======
 >>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
     outs:
       - path: data/raw/
@@ -23,6 +29,7 @@ stages:
   clean:
     cmd: python src/data/cleaning.py
     deps:
+<<<<<<< HEAD
 <<<<<<< HEAD
     - path: data/raw/
       hash: md5
@@ -98,6 +105,35 @@ stages:
         md5: a0edc527db113b46839d818b08dc413c
         size: 1340
     outs:
+=======
+      - path: data/raw/
+        hash: md5
+        md5: f49a697b6370fc83a46fce6297936b7a.dir
+        size: 49159045
+        nfiles: 1
+      - path: src/data/cleaning.py
+        hash: md5
+        md5: 82c87fcecb42403199938df2c8bba498
+        size: 797
+    outs:
+      - path: data/interim/
+        hash: md5
+        md5: f49a697b6370fc83a46fce6297936b7a.dir
+        size: 49159045
+        nfiles: 1
+  split:
+    cmd: python src/data/splitting.py
+    deps:
+      - path: data/interim/data.csv
+        hash: md5
+        md5: dbfe12c203805ccf7fdb683042c46ab3
+        size: 49159045
+      - path: src/data/splitting.py
+        hash: md5
+        md5: a0edc527db113b46839d818b08dc413c
+        size: 1340
+    outs:
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
       - path: data/processed/test.csv
         hash: md5
         md5: 8c22e4812019b778211cc15ce89210d0
@@ -117,12 +153,16 @@ stages:
         hash: md5
         md5: c9d6065f18d5752c93943e839d06dce9
         size: 3536
+<<<<<<< HEAD
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
+=======
 >>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
     params:
       params.yaml:
         model.name: LogisticRegression
         training.split.test_size: 0.2
     outs:
+<<<<<<< HEAD
 <<<<<<< HEAD
     - path: dvclive/plots/metrics/cv_accuracy.tsv
       hash: md5
@@ -243,6 +283,8 @@ stages:
       size: 2413461
       nfiles: 11
 =======
+=======
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
       - path: dvclive/plots/metrics/cv_accuracy.tsv
         hash: md5
         md5: f1592ab9703e874f61bb5794d54b4499
@@ -287,4 +329,7 @@ stages:
         hash: md5
         md5: 3609b19c5039e624dc614b9b8ebceab8
         size: 34
+<<<<<<< HEAD
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
+=======
 >>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c

@@ -15,6 +15,7 @@ stages:
     outs:
       - data/interim/:
           remote: datasets_remote
+<<<<<<< HEAD
 
   feature_engineering:
     cmd: python src/data/build_features.py
@@ -24,13 +25,20 @@ stages:
     outs:
     - data/processed/data_featured.csv:
         remote: datasets_remote
+=======
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
 
   split:
     cmd: python src/data/splitting.py
     deps:
 <<<<<<< HEAD
+<<<<<<< HEAD
     - src/data/splitting.py
     - data/processed/data_featured.csv
+=======
+      - src/data/splitting.py
+      - data/interim/data.csv
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
 =======
       - src/data/splitting.py
       - data/interim/data.csv
@@ -40,6 +48,7 @@ stages:
           remote: datasets_remote
       - data/processed/test.csv:
           remote: datasets_remote
+<<<<<<< HEAD
 
   preprocess:
     cmd: python src/models/model1/preprocessing.py
@@ -53,13 +62,20 @@ stages:
         remote: datasets_remote
     - data/processed/preprocessor.joblib:
         remote: models_remote
+=======
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
 
   train:
     cmd: python src/models/model1/train.py
     deps:
 <<<<<<< HEAD
+<<<<<<< HEAD
     - src/models/model1/train.py
     - data/processed/train_preprocessed.csv
+=======
+      - src/models/model1/train.py
+      - data/processed/train.csv
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
 =======
       - src/models/model1/train.py
       - data/processed/train.csv
@@ -88,6 +104,7 @@ stages:
           cache: false
     plots:
 <<<<<<< HEAD
+<<<<<<< HEAD
     - dvclive_evaluate/plots/metrics/precision.tsv:
         cache: false
     - dvclive_evaluate/plots/metrics/recall.tsv:
@@ -95,17 +112,23 @@ stages:
     - dvclive_evaluate/plots/metrics/roc_auc.tsv:
         cache: false
 =======
+=======
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
       - dvclive_evaluate/plots/metrics/precision.tsv:
           cache: false
       - dvclive_evaluate/plots/metrics/recall.tsv:
           cache: false
       - dvclive_evaluate/plots/metrics/roc_auc.tsv:
           cache: false
+<<<<<<< HEAD
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
+=======
 >>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
 
   visualize:
     cmd: python src/visualization/visualization.py
     deps:
+<<<<<<< HEAD
 <<<<<<< HEAD
     - src/visualization/visualize.py
     - dvclive/plots/metrics/cv_accuracy.tsv
@@ -133,6 +156,15 @@ plots:
       - dvclive_evaluate/plots/metrics/recall.tsv
       - dvclive_evaluate/plots/metrics/roc_auc.tsv
     outs:
+=======
+      - src/visualization/visualize.py
+      - dvclive/plots/metrics/cv_accuracy.tsv
+      - dvclive_evaluate/plots/metrics/accuracy.tsv
+      - dvclive_evaluate/plots/metrics/precision.tsv
+      - dvclive_evaluate/plots/metrics/recall.tsv
+      - dvclive_evaluate/plots/metrics/roc_auc.tsv
+    outs:
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
       - reports/figures:
           cache: false
 metrics:
@@ -143,4 +175,7 @@ plots:
       x: step
   - dvclive_evaluate/plots/metrics:
       x: step
+<<<<<<< HEAD
+>>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
+=======
 >>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
