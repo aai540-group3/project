@@ -1,12 +1,10 @@
-import json
-import os
-
 import hydra
-import joblib
 import pandas as pd
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
+from dvclive import Live
+import joblib
 
 
 @hydra.main(config_path="../../conf", config_name="config", version_base=None)
@@ -14,7 +12,6 @@ def main(cfg: DictConfig):
     data_paths = cfg.data.path
     model_output_path = to_absolute_path(cfg.model.model_output_path)
     test_data_path = to_absolute_path(f"{data_paths.processed}/test.csv")
-    metrics_output_path = to_absolute_path(cfg.evaluation.metrics_output_path)
 
     print("Loading test data...")
     test_df = pd.read_csv(test_data_path)
@@ -38,18 +35,13 @@ def main(cfg: DictConfig):
     print(f"Recall: {recall * 100:.2f}%")
     print(f"ROC-AUC Score: {roc_auc * 100:.2f}%")
 
-    metrics = {
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "roc_auc": roc_auc,
-    }
-
-    print("Saving metrics...")
-    os.makedirs(os.path.dirname(metrics_output_path), exist_ok=True)
-    with open(metrics_output_path, "w") as f:
-        json.dump(metrics, f, indent=4)
-    print(f"Metrics saved to {metrics_output_path}")
+    # Log metrics using DVCLive
+    with Live() as live:
+        live.log_metric("accuracy", accuracy)
+        live.log_metric("precision", precision)
+        live.log_metric("recall", recall)
+        live.log_metric("roc_auc", roc_auc)
+        live.next_step()
 
 
 if __name__ == "__main__":

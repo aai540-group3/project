@@ -4,3 +4,7 @@ defaults:
   - training: training_config
   - feature_engineering: feature_config
   - evaluation: evaluation_config
+
+hydra:
+  run:
+    dir: .

@@ -6,6 +6,7 @@ __pycache__/
 .dvc/config.local
 .eggs/
 .env
+.hydra/
 .idea
 .installed.cfg
 .ipynb_checkpoints/
@@ -39,7 +40,6 @@ develop-eggs/
 dist/
 docs/_build/
 downloads/
-terraform/.terraform/providers/
 eggs/
 env/
 htmlcov/
@@ -52,4 +52,5 @@ pip-delete-this-directory.txt
 pip-log.txt
 sdist/
 target/
+terraform/.terraform/providers/
 var/

@@ -1,6 +1,6 @@
 stages:
   ingest:
-    cmd: python src/data/ingestion.py hydra.run.dir=.
+    cmd: python src/data/ingestion.py
     deps:
       - src/data/ingestion.py
     outs:
@@ -8,7 +8,7 @@ stages:
           remote: datasets_remote
 
   clean:
-    cmd: python src/data/cleaning.py hydra.run.dir=.
+    cmd: python src/data/cleaning.py
     deps:
       - src/data/cleaning.py
       - data/raw/
@@ -17,7 +17,7 @@ stages:
           remote: datasets_remote
 
   split:
-    cmd: python src/data/splitting.py hydra.run.dir=.
+    cmd: python src/data/splitting.py
     deps:
       - src/data/splitting.py
       - data/interim/data.csv
@@ -28,24 +28,28 @@ stages:
           remote: datasets_remote
 
   train:
-    cmd: python src/models/model1/train.py hydra.run.dir=.
+    cmd: python src/models/model1/train.py
     deps:
       - src/models/model1/train.py
       - data/processed/train.csv
     outs:
       - models/trained_model.joblib:
           remote: models_remote
-      - dvclive/:
-          cache: false
+    live:
+      dvclive:
+        summary: true
+        html: true
 
   evaluate:
-    cmd: python src/visualization/evaluation.py hydra.run.dir=.
+    cmd: python src/visualization/evaluation.py
     deps:
       - src/visualization/evaluation.py
       - models/trained_model.joblib
       - data/processed/test.csv
-    metrics:
-      - reports/metrics.json
+    live:
+      dvclive:
+        summary: true
+        html: true
 
 metrics:
   - dvclive/metrics.json

@@ -10,6 +10,7 @@ OUTPUT_FILE="combined.txt"
 # Define exclusions
 EXCLUDE_FILES=(
     ".DS_Store"
+    "cleaning.log"
     "combine.sh"
     "combined.txt"
     "combined.yaml"
@@ -19,6 +20,7 @@ EXCLUDE_FILES=(
     "README.md"
     "test.sh"
     "Thumbs.db"
+    "train.log"
 )
 
 EXCLUDE_FOLDERS=(
