@@ -229,14 +229,15 @@ def update_workflow_file(file_path: str, github_api: GitHubAPI) -> None:
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    # Regex pattern to find 'uses:' statements with any ref (SHA, tag, or branch)
-    pattern = r"(uses:\s*([^\s@]+)@([^\s#\n]+))"
+    # Improved Regex pattern to handle existing comments
+    pattern = r"(uses:\s*([^\s@]+)@([^\s#\n]+)(\s*#.*)?)"
 
     def replace_match(match):
         full_match = match.group(0)
         action = match.group(2)
         ref = match.group(3)
-        logger.info(f"Found action: {action}@{ref}")
+        existing_comment = match.group(4) or ""  # Get existing comment or empty string
+        logger.info(f"Found action: {action}@{ref}{existing_comment}")
 
         owner_repo = action
         if "/" not in owner_repo:

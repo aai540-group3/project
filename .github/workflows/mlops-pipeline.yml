@@ -47,8 +47,10 @@ jobs:
         run: |
           dvc remote modify models_remote auth custom
           dvc remote modify models_remote --local custom_auth_header "Authorization: Bearer $HF_TOKEN"
+          dvc remote modify models_remote --local password "$HF_TOKEN"
           dvc remote modify dataset_remote auth custom
           dvc remote modify dataset_remote --local custom_auth_header "Authorization: Bearer $HF_TOKEN"
+          dvc remote modify dataset_remote --local password "$HF_TOKEN"
 
       - name: Pull data and models from DVC remotes
         run: |
@@ -65,7 +67,7 @@ jobs:
 
       - name: Commit and push changes
         if: always()
-        uses: stefanzweifel/git-auto-commit-action@3ea6ae190baf489ba007f7c92608f33ce20ef04a # v4.16.0
+        uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842 # v5.0.1
         with:
           commit_message: "Update DVC artifacts and metrics"
           branch: ${{ github.ref }}
