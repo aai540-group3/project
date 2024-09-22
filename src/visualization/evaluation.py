@@ -37,7 +37,7 @@ def main(cfg: DictConfig):
     print(f"ROC-AUC Score: {roc_auc * 100:.2f}%")
 
     # Log metrics using DVCLive
-    with Live() as live:
+    with Live(dir="dvclive_evaluate") as live:
         live.log_metric("accuracy", accuracy)
         live.log_metric("precision", precision)
         live.log_metric("recall", recall)

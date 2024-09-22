@@ -41,13 +41,10 @@ def main(cfg: DictConfig):
     ).columns.tolist()
 
     print("**Step 3: Creating preprocessing pipeline...**")
-    numerical_steps = [
-        ("imputer", SimpleImputer(strategy="mean")),
-        ("scaler", StandardScaler()),
-    ]
-
-    if feature_params.add_polynomial_features:
-        numerical_steps.append(
+    numerical_transformer = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="mean")),
+            ("scaler", StandardScaler()),
             (
                 "polynomial",
                 PolynomialFeatures(
@@ -55,10 +52,9 @@ def main(cfg: DictConfig):
                     interaction_only=True,
                     include_bias=False,
                 ),
-            )
-        )
-
-    numerical_transformer = Pipeline(steps=numerical_steps)
+            ) if feature_params.add_polynomial_features else ("noop", "passthrough"),
+        ]
+    )
 
     categorical_transformer = Pipeline(
         steps=[
