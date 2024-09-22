@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-run-pipeline:
+  run-mlops-pipeline:
     runs-on: ubuntu-latest
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -39,10 +39,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
 
       - name: Cache Python dependencies
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -50,7 +50,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
         with:
           python-version: "3.x"
 
@@ -66,7 +66,7 @@ jobs:
         shell: bash
 
       - name: Cache DVC repository
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
         with:
           path: .dvc
           key: ${{ runner.os }}-dvc-${{ hashFiles('**/dvc.lock') }}
@@ -95,26 +95,21 @@ jobs:
             echo "Model is missing. Running 'dvc repro train' first..."
             dvc repro train
           fi
-          dvc exp run --queue
+          dvc exp run --run-all  # Run all queued experiments
 
       - name: Push data and models to DVC remotes
         if: always()
         run: |
           dvc push
 
-      - name: Apply queued experiments and push changes
-        if: always()
-        run: |
-          dvc exp apply
-          dvc push
-
       - name: Commit and push changes
         if: always()
-        uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842 # v5.0.1
+        uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842  # v5.0.1
         with:
           commit_message: "Update DVC artifacts and metrics"
           branch: ${{ github.ref }}
           file_pattern: |
             dvc.lock
             dvclive/*
+            dvclive_evaluate/*
             reports/metrics.json
