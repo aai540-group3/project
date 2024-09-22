@@ -80,7 +80,11 @@ jobs:
 
       - name: Pull data from DVC remotes
         run: |
-          dvc pull data/ --force
+          dvc pull data/raw/data.csv --force
+          dvc pull data/interim/data.csv --force
+          dvc pull data/processed/data_featured.csv --force
+          dvc pull data/processed/train.csv --force
+          dvc pull data/processed/test.csv --force
 
       - name: Check if model exists
         id: check-model
