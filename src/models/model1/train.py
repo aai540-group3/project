@@ -10,7 +10,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
+from sklearn.preprocessing import (OneHotEncoder, PolynomialFeatures,
+                                   StandardScaler)
 
 from dvclive import Live
 
@@ -80,7 +81,7 @@ def main(cfg: DictConfig):
     clf = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", model)])
 
     # Initialize DVCLive
-    with Live() as live:
+    with Live() as live: # You can remove live_dir here if you want
         # Fit the model
         print("Training the model...")
         clf.fit(X_train, y_train)
@@ -100,9 +101,6 @@ def main(cfg: DictConfig):
         live.log_metric("cv_accuracy", cv_accuracy)
         for idx, score in enumerate(cross_val_scores):
             live.log_metric(f"cv_fold_{idx+1}_accuracy", score)
-
-        # Signal DVCLive to move to the next step (for plotting purposes)
-        live.next_step()
 
     # Save the model
     os.makedirs(os.path.dirname(model_output_path), exist_ok=True)

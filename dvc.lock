@@ -1,7 +1,7 @@
 schema: '2.0'
 stages:
   ingest:
-    cmd: python src/data/ingestion.py hydra.run.dir=.
+    cmd: python src/data/ingestion.py
     deps:
     - path: src/data/ingestion.py
       hash: md5
@@ -14,7 +14,7 @@ stages:
       size: 49159045
       nfiles: 1
   clean:
-    cmd: python src/data/cleaning.py hydra.run.dir=.
+    cmd: python src/data/cleaning.py
     deps:
     - path: data/raw/
       hash: md5
@@ -32,7 +32,7 @@ stages:
       size: 49159045
       nfiles: 1
   split:
-    cmd: python src/data/splitting.py hydra.run.dir=.
+    cmd: python src/data/splitting.py
     deps:
     - path: data/interim/data.csv
       hash: md5

@@ -1,10 +1,11 @@
 import hydra
+import joblib
 import pandas as pd
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
+
 from dvclive import Live
-import joblib
 
 
 @hydra.main(config_path="../../conf", config_name="config", version_base=None)
@@ -41,7 +42,6 @@ def main(cfg: DictConfig):
         live.log_metric("precision", precision)
         live.log_metric("recall", recall)
         live.log_metric("roc_auc", roc_auc)
-        live.next_step()
 
 
 if __name__ == "__main__":

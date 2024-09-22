@@ -1,0 +1,5 @@
+model:
+  name: LogisticRegression
+training:
+  split:
+    test_size: 0.2

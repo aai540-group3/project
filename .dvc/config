@@ -1,5 +1,6 @@
 [core]
     remote = datasets_remote
+    autostage = true
 [hydra]
     enabled = True
 [studio]
