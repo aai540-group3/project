@@ -1,109 +1,66 @@
-import os
+import logging
+from pathlib import Path
 
 import hydra
 import joblib
 import pandas as pd
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig
-from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import (OneHotEncoder, PolynomialFeatures,
-                                   StandardScaler)
 
 from dvclive import Live
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @hydra.main(config_path="../../../conf", config_name="config", version_base=None)
-def main(cfg: DictConfig):
-    # Load configurations
-    data_paths = cfg.data.path
-    model_params = cfg.model.params
-    feature_params = cfg.feature_engineering
+def main(cfg: DictConfig) -> None:
+    try:
+        data_paths = cfg.data.path
+        model_params = cfg.model.params
 
-    train_data_path = to_absolute_path(f"{data_paths.processed}/train.csv")
-    model_output_path = to_absolute_path(cfg.model.model_output_path)
+        train_data_path = Path(to_absolute_path(f"{data_paths.processed}/train_preprocessed.csv"))
+        model_output_path = Path(to_absolute_path(cfg.model.model_output_path))
 
-    print("**Step 1: Loading training data...**")
-    train_df = pd.read_csv(train_data_path)
+        logger.info("Loading preprocessed training data...")
+        train_df = pd.read_csv(train_data_path)
 
-    X_train = train_df.drop(columns=["readmitted"])
-    y_train = train_df["readmitted"]
+        X_train = train_df.drop(columns=["readmitted"])
+        y_train = train_df["readmitted"]
 
-    print("**Step 2: Identifying categorical and numerical columns...**")
-    categorical_cols = X_train.select_dtypes(
-        include=["object", "category"]
-    ).columns.tolist()
-    numerical_cols = X_train.select_dtypes(
-        include=["int64", "float64"]
-    ).columns.tolist()
+        logger.info("Creating Logistic Regression model...")
+        model = LogisticRegression(**model_params)
 
-    print("**Step 3: Creating preprocessing pipeline...**")
-    numerical_steps = [
-        ("imputer", SimpleImputer(strategy="mean")),
-        ("scaler", StandardScaler()),
-    ]
+        logger.info("Creating final pipeline...")
+        clf = Pipeline(steps=[("classifier", model)])
 
-    if feature_params.add_polynomial_features:
-        numerical_steps.append(
-            (
-                "polynomial",
-                PolynomialFeatures(
-                    degree=feature_params.poly_degree,
-                    interaction_only=True,
-                    include_bias=False,
-                ),
-            )
-        )
+        logger.info("Training the model...")
+        with Live() as live:
+            clf.fit(X_train, y_train)
 
-    numerical_transformer = Pipeline(steps=numerical_steps)
+            logger.info("Logging training completion metric...")
+            live.log_metric("training_completed", 1)
 
-    categorical_transformer = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("onehot", OneHotEncoder(handle_unknown="ignore")),
-        ]
-    )
+            logger.info("Performing cross-validation...")
+            cross_val_scores = cross_val_score(clf, X_train, y_train, cv=5, scoring="accuracy")
+            cv_accuracy = cross_val_scores.mean()
+            logger.info(f"Cross-Validation Accuracy: {cv_accuracy * 100:.2f}%")
 
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", numerical_transformer, numerical_cols),
-            ("cat", categorical_transformer, categorical_cols),
-        ]
-    )
+            logger.info("Logging cross-validation metrics...")
+            live.log_metric("cv_accuracy", cv_accuracy)
+            for idx, score in enumerate(cross_val_scores):
+                live.log_metric(f"cv_fold_{idx+1}_accuracy", score)
 
-    print("**Step 4: Creating Logistic Regression model...**")
-    model = LogisticRegression(**model_params)
+        logger.info("Saving the model...")
+        model_output_path.parent.mkdir(parents=True, exist_ok=True)
+        joblib.dump(clf, model_output_path)
+        logger.info(f"Model saved to {model_output_path}")
 
-    print("**Step 5: Creating final pipeline...**")
-    clf = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", model)])
-
-    print("**Step 6: Training the model...**")
-    with Live() as live:
-        clf.fit(X_train, y_train)
-
-        print("**Step 7: Logging training completion metric...**")
-        live.log_metric("training_completed", 1)
-
-        print("**Step 8: Performing cross-validation...**")
-        cross_val_scores = cross_val_score(
-            clf, X_train, y_train, cv=5, scoring="accuracy"
-        )
-        cv_accuracy = cross_val_scores.mean()
-        print(f"Cross-Validation Accuracy: {cv_accuracy * 100:.2f}%")
-
-        print("**Step 9: Logging cross-validation metrics...**")
-        live.log_metric("cv_accuracy", cv_accuracy)
-        for idx, score in enumerate(cross_val_scores):
-            live.log_metric(f"cv_fold_{idx+1}_accuracy", score)
-
-    print("**Step 10: Saving the model...**")
-    os.makedirs(os.path.dirname(model_output_path), exist_ok=True)
-    joblib.dump(clf, model_output_path)
-    print(f"Model saved to {model_output_path}")
-
+    except Exception as e:
+        logger.error(f"An error occurred: {str(e)}")
+        raise
 
 if __name__ == "__main__":
     main()
