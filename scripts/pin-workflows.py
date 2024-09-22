@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 This script scans GitHub Actions workflow files and updates action references by pinning them to specific
-commit SHAs. It replaces the action references with their corresponding commit SHAs and adds any associated
-tags as comments. This practice enhances security by ensuring that workflows use immutable code versions.
+commit SHAs or the latest release tag. It replaces the action references with their corresponding commit SHAs or
+tag names and adds any associated tags as comments. This practice enhances security by ensuring that workflows
+use immutable code versions or the most up-to-date versions within a major release.
 
 Usage:
     Run the script to automatically update all `.yml` and `.yaml` files in the GitHub workflows
@@ -58,6 +59,28 @@ class GitHubAPI:
         if token:
             self.headers["Authorization"] = f"token {token}"
         self.session.headers.update(self.headers)
+
+    def get_latest_release_sha(self, owner: str, repo: str) -> Optional[str]:
+        """
+        Retrieve the tag name of the latest release for a given GitHub repository.
+
+        :param owner: The GitHub username or organization name.
+        :type owner: str
+        :param repo: The repository name.
+        :type repo: str
+        :return: The tag name of the latest release if found, otherwise None.
+        :rtype: str or None
+        """
+        releases_url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
+        response = self.session.get(releases_url)
+        if response.status_code == 200:
+            release_data = response.json()
+            return release_data.get("tag_name")
+        else:
+            logger.error(
+                f"Failed to fetch latest release for {owner}/{repo}: {response.status_code}"
+            )
+            return None
 
     def get_tags(self, owner: str, repo: str) -> List[Dict]:
         """
@@ -122,6 +145,18 @@ class GitHubAPI:
         :return: The commit SHA if resolved, otherwise None.
         :rtype: str or None
         """
+
+        # Try to get the SHA for the latest release if ref is not pinned
+        if not re.match(r"^[a-f0-9]+$", ref):  # Check if ref is a SHA
+            latest_release_tag = self.get_latest_release_sha(owner, repo)
+            if latest_release_tag:
+                ref = latest_release_tag
+                logger.info(f"Using latest release tag '{ref}' for {owner}/{repo}")
+            else:
+                logger.warning(
+                    f"Could not find latest release for {owner}/{repo}. Using original ref '{ref}'"
+                )
+
         # Attempt to resolve the ref as a branch
         sha = self._get_sha_from_ref_type(owner, repo, ref_type="heads", ref=ref)
         if sha:
@@ -217,7 +252,7 @@ class GitHubAPI:
 
 def update_workflow_file(file_path: str, github_api: GitHubAPI) -> None:
     """
-    Update a GitHub Actions workflow file by pinning actions to commit SHAs and adding version comments.
+    Update a GitHub Actions workflow file by pinning actions to commit SHAs or latest release tags and adding version comments.
 
     :param file_path: The path to the workflow file to update.
     :type file_path: str
@@ -253,8 +288,16 @@ def update_workflow_file(file_path: str, github_api: GitHubAPI) -> None:
 
         sha = github_api.get_sha_for_ref(owner, repo, ref)
         if sha:
-            tag = github_api.get_tag_for_sha(owner, repo, sha)
-            version_info = tag if tag else "no tag found"
+            latest_release_tag = github_api.get_latest_release_sha(owner, repo)
+
+            if latest_release_tag and not re.match(r"^[a-f0-9]+$", ref):
+                # Get the tag associated with the resolved SHA
+                version_info = (
+                    github_api.get_tag_for_sha(owner, repo, sha) or latest_release_tag
+                )
+            else:
+                # If not pinning to latest release, use the original ref or get the tag for the SHA
+                version_info = github_api.get_tag_for_sha(owner, repo, sha) or ref
 
             new_line = f"uses: {action}@{sha}  # {version_info}"
             logger.info(f"BEFORE: {full_match}")
@@ -275,7 +318,7 @@ def update_workflow_file(file_path: str, github_api: GitHubAPI) -> None:
 
 def main():
     """
-    Main function to update GitHub Actions workflow files by pinning action references to commit SHAs.
+    Main function to update GitHub Actions workflow files by pinning action references to commit SHAs or latest release tags.
     """
     if not os.path.exists(WORKFLOWS_DIR):
         logger.error(f"No workflows directory found at '{WORKFLOWS_DIR}'")
