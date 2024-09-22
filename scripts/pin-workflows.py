@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 This script scans GitHub Actions workflow files and updates action references by pinning them to specific
 commit SHAs. It replaces the action references with their corresponding commit SHAs and adds any associated
@@ -18,25 +19,26 @@ Note:
     have at least `public_repo` scope for public repositories and additional scopes if accessing private repositories.
 """
 
-import os
-import sys
 import glob
 import logging
+import os
 import re
-from typing import Optional, List, Dict
+import sys
+from typing import Dict, List, Optional
+
 import requests
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 # Global configuration
-GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 if not GITHUB_TOKEN:
     print("Error: GITHUB_TOKEN environment variable is not set.")
     sys.exit(1)
 
-WORKFLOWS_DIR = os.path.join('..', '.github', 'workflows')
+WORKFLOWS_DIR = os.path.join("..", ".github", "workflows")
 
 
 class GitHubAPI:
@@ -54,7 +56,7 @@ class GitHubAPI:
         self.session = requests.Session()
         self.headers = {}
         if token:
-            self.headers['Authorization'] = f'token {token}'
+            self.headers["Authorization"] = f"token {token}"
         self.session.headers.update(self.headers)
 
     def get_tags(self, owner: str, repo: str) -> List[Dict]:
@@ -72,8 +74,8 @@ class GitHubAPI:
         page = 1
         per_page = 100
         while True:
-            tags_url = f'https://api.github.com/repos/{owner}/{repo}/tags'
-            params = {'per_page': per_page, 'page': page}
+            tags_url = f"https://api.github.com/repos/{owner}/{repo}/tags"
+            params = {"per_page": per_page, "page": page}
             response = self.session.get(tags_url, params=params)
             if response.status_code == 200:
                 page_tags = response.json()
@@ -82,7 +84,9 @@ class GitHubAPI:
                 tags.extend(page_tags)
                 page += 1
             else:
-                logger.error(f"Failed to fetch tags for {owner}/{repo}: {response.status_code}")
+                logger.error(
+                    f"Failed to fetch tags for {owner}/{repo}: {response.status_code}"
+                )
                 break
         return tags
 
@@ -101,8 +105,8 @@ class GitHubAPI:
         """
         tags = self.get_tags(owner, repo)
         for tag in tags:
-            if tag.get('commit', {}).get('sha') == sha:
-                return tag.get('name')
+            if tag.get("commit", {}).get("sha") == sha:
+                return tag.get("name")
         return None
 
     def get_sha_for_ref(self, owner: str, repo: str, ref: str) -> Optional[str]:
@@ -119,12 +123,12 @@ class GitHubAPI:
         :rtype: str or None
         """
         # Attempt to resolve the ref as a branch
-        sha = self._get_sha_from_ref_type(owner, repo, ref_type='heads', ref=ref)
+        sha = self._get_sha_from_ref_type(owner, repo, ref_type="heads", ref=ref)
         if sha:
             return sha
 
         # Attempt to resolve the ref as a tag
-        sha = self._get_sha_from_ref_type(owner, repo, ref_type='tags', ref=ref)
+        sha = self._get_sha_from_ref_type(owner, repo, ref_type="tags", ref=ref)
         if sha:
             return sha
 
@@ -136,7 +140,9 @@ class GitHubAPI:
         logger.warning(f"Failed to resolve ref '{ref}' in {owner}/{repo}")
         return None
 
-    def _get_sha_from_ref_type(self, owner: str, repo: str, ref_type: str, ref: str) -> Optional[str]:
+    def _get_sha_from_ref_type(
+        self, owner: str, repo: str, ref_type: str, ref: str
+    ) -> Optional[str]:
         """
         Helper method to get SHA from a specific ref type (branch or tag).
 
@@ -151,18 +157,22 @@ class GitHubAPI:
         :return: The commit SHA if found, otherwise None.
         :rtype: str or None
         """
-        ref_url = f'https://api.github.com/repos/{owner}/{repo}/git/refs/{ref_type}/{ref}'
+        ref_url = (
+            f"https://api.github.com/repos/{owner}/{repo}/git/refs/{ref_type}/{ref}"
+        )
         response = self.session.get(ref_url)
         if response.status_code == 200:
             ref_data = response.json()
-            sha = ref_data.get('object', {}).get('sha')
+            sha = ref_data.get("object", {}).get("sha")
             # Handle annotated tags
-            if ref_type == 'tags' and ref_data.get('object', {}).get('type') == 'tag':
+            if ref_type == "tags" and ref_data.get("object", {}).get("type") == "tag":
                 sha = self._get_sha_for_annotated_tag(owner, repo, sha)
             return sha
         return None
 
-    def _get_sha_for_annotated_tag(self, owner: str, repo: str, tag_sha: str) -> Optional[str]:
+    def _get_sha_for_annotated_tag(
+        self, owner: str, repo: str, tag_sha: str
+    ) -> Optional[str]:
         """
         Resolve the commit SHA for an annotated tag.
 
@@ -175,11 +185,11 @@ class GitHubAPI:
         :return: The commit SHA if resolved, otherwise None.
         :rtype: str or None
         """
-        tag_url = f'https://api.github.com/repos/{owner}/{repo}/git/tags/{tag_sha}'
+        tag_url = f"https://api.github.com/repos/{owner}/{repo}/git/tags/{tag_sha}"
         response = self.session.get(tag_url)
         if response.status_code == 200:
             tag_data = response.json()
-            return tag_data.get('object', {}).get('sha')
+            return tag_data.get("object", {}).get("sha")
         return None
 
     def _validate_sha(self, owner: str, repo: str, sha_candidate: str) -> Optional[str]:
@@ -195,11 +205,13 @@ class GitHubAPI:
         :return: The commit SHA if valid, otherwise None.
         :rtype: str or None
         """
-        commit_url = f'https://api.github.com/repos/{owner}/{repo}/commits/{sha_candidate}'
+        commit_url = (
+            f"https://api.github.com/repos/{owner}/{repo}/commits/{sha_candidate}"
+        )
         response = self.session.get(commit_url)
         if response.status_code == 200:
             commit_data = response.json()
-            return commit_data.get('sha')
+            return commit_data.get("sha")
         return None
 
 
@@ -214,11 +226,11 @@ def update_workflow_file(file_path: str, github_api: GitHubAPI) -> None:
     """
     logger.info(f"\nProcessing workflow file: {file_path}")
 
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Regex pattern to find 'uses:' statements with any ref (SHA, tag, or branch)
-    pattern = r'(uses:\s*([^\s@]+)@([^\s#\n]+))'
+    pattern = r"(uses:\s*([^\s@]+)@([^\s#\n]+))"
 
     def replace_match(match):
         full_match = match.group(0)
@@ -227,9 +239,11 @@ def update_workflow_file(file_path: str, github_api: GitHubAPI) -> None:
         logger.info(f"Found action: {action}@{ref}")
 
         owner_repo = action
-        if '/' not in owner_repo:
-            owner_repo = 'actions/' + owner_repo  # Default to 'actions' org if not specified
-        owner_repo_parts = owner_repo.split('/')
+        if "/" not in owner_repo:
+            owner_repo = (
+                "actions/" + owner_repo
+            )  # Default to 'actions' org if not specified
+        owner_repo_parts = owner_repo.split("/")
         if len(owner_repo_parts) < 2:
             logger.warning(f"Invalid action format: {action}. Skipping.")
             return full_match
@@ -241,17 +255,19 @@ def update_workflow_file(file_path: str, github_api: GitHubAPI) -> None:
             tag = github_api.get_tag_for_sha(owner, repo, sha)
             version_info = tag if tag else "no tag found"
 
-            new_line = f'uses: {action}@{sha}  # {version_info}'
+            new_line = f"uses: {action}@{sha}  # {version_info}"
             logger.info(f"BEFORE: {full_match}")
             logger.info(f"AFTER:  {new_line}\n")
             return new_line
         else:
-            logger.warning(f"Could not resolve ref '{ref}' for {action}. Skipping update.\n")
+            logger.warning(
+                f"Could not resolve ref '{ref}' for {action}. Skipping update.\n"
+            )
             return full_match
 
     updated_content = re.sub(pattern, replace_match, content)
 
-    with open(file_path, 'w', encoding='utf-8') as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         f.write(updated_content)
     logger.info(f"Workflow file '{file_path}' updated successfully.")
 
@@ -265,8 +281,9 @@ def main():
         sys.exit(1)
 
     # Get all .yml and .yaml files in the workflows directory
-    yaml_files = glob.glob(os.path.join(WORKFLOWS_DIR, '*.yml')) + \
-                 glob.glob(os.path.join(WORKFLOWS_DIR, '*.yaml'))
+    yaml_files = glob.glob(os.path.join(WORKFLOWS_DIR, "*.yml")) + glob.glob(
+        os.path.join(WORKFLOWS_DIR, "*.yaml")
+    )
 
     if not yaml_files:
         logger.error(f"No workflow files found in '{WORKFLOWS_DIR}'")
@@ -281,5 +298,5 @@ def main():
             logger.error(f"An error occurred while processing '{yaml_file}': {e}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
