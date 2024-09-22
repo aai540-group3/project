@@ -58,7 +58,6 @@ def main(cfg: DictConfig) -> None:
             "roc_auc": roc_auc_score(y_test, y_pred),
         }
 
-<<<<<<< HEAD
         for metric, value in metrics.items():
             logger.info(f"{metric.capitalize()}: {value * 100:.2f}%")
 
@@ -70,14 +69,6 @@ def main(cfg: DictConfig) -> None:
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
         raise
-=======
-    # Log metrics using DVCLive
-    with Live(dir="dvclive_evaluate") as live:
-        live.log_metric("accuracy", accuracy)
-        live.log_metric("precision", precision)
-        live.log_metric("recall", recall)
-        live.log_metric("roc_auc", roc_auc)
->>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
 
 
 if __name__ == "__main__":
