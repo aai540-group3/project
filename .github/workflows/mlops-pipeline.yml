@@ -30,7 +30,6 @@ jobs:
   build-and-run-pipeline:
     runs-on: ubuntu-latest
     env:
-      # Set AWS credentials from GitHub Secrets
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
@@ -38,10 +37,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236  # v4.7.1
         with:
           python-version: "3.x"
 
@@ -71,7 +70,7 @@ jobs:
 
       - name: Commit and push changes
         if: always()
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842  # v5.0.1
         with:
           commit_message: "Update DVC artifacts and metrics"
           branch: ${{ github.ref }}
