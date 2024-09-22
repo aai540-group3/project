@@ -51,3 +51,55 @@ stages:
       hash: md5
       md5: 524b033b66640ebbab203855b05d1302
       size: 39327772
+  train:
+    cmd: python src/models/model1/train.py
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 524b033b66640ebbab203855b05d1302
+      size: 39327772
+    - path: src/models/model1/train.py
+      hash: md5
+      md5: 1615ddc6f78db5f44b0a41fdfcec7546
+      size: 3605
+    params:
+      params.yaml:
+        model.name: LogisticRegression
+        training.split.test_size: 0.2
+    outs:
+    - path: dvclive/plots/metrics/cv_accuracy.tsv
+      hash: md5
+      md5: f1592ab9703e874f61bb5794d54b4499
+      size: 38
+    - path: dvclive/plots/metrics/training_completed.tsv
+      hash: md5
+      md5: 6cf80a0d4a0cc84d5c2b34c7d316a663
+      size: 28
+    - path: models/trained_model.joblib
+      hash: md5
+      md5: ef2035f28a255d4b8bca9bf652eb049c
+      size: 109959
+  evaluate:
+    cmd: python src/visualization/evaluation.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 8c22e4812019b778211cc15ce89210d0
+      size: 9834187
+    - path: models/trained_model.joblib
+      hash: md5
+      md5: ef2035f28a255d4b8bca9bf652eb049c
+      size: 109959
+    - path: src/visualization/evaluation.py
+      hash: md5
+      md5: cfb596f6dc51c2d28600e95616d075d0
+      size: 1560
+    outs:
+    - path: dvclive_evaluate/plots/metrics/accuracy.tsv
+      hash: md5
+      md5: d5a4866a7995956c2e87948dc827a492
+      size: 35
+    - path: dvclive_evaluate/plots/metrics/precision.tsv
+      hash: md5
+      md5: c7bb2c88f91bda423a67bef136f1592b
+      size: 36

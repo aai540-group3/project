@@ -10,11 +10,9 @@ from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import (OneHotEncoder, PolynomialFeatures,
-                                   StandardScaler)
+from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
 
 from dvclive import Live
-
 
 @hydra.main(config_path="../../../conf", config_name="config", version_base=None)
 def main(cfg: DictConfig):
@@ -41,13 +39,10 @@ def main(cfg: DictConfig):
     ).columns.tolist()
 
     print("**Step 3: Creating preprocessing pipeline...**")
-    numerical_steps = [
-        ("imputer", SimpleImputer(strategy="mean")),
-        ("scaler", StandardScaler()),
-    ]
-
-    if feature_params.add_polynomial_features:
-        numerical_steps.append(
+    numerical_transformer = Pipeline(
+        steps=[
+            ("imputer", SimpleImputer(strategy="mean")),
+            ("scaler", StandardScaler()),
             (
                 "polynomial",
                 PolynomialFeatures(
@@ -55,10 +50,9 @@ def main(cfg: DictConfig):
                     interaction_only=True,
                     include_bias=False,
                 ),
-            )
-        )
-
-    numerical_transformer = Pipeline(steps=numerical_steps)
+            ) if feature_params.add_polynomial_features else ("noop", "passthrough"),
+        ]
+    )
 
     categorical_transformer = Pipeline(
         steps=[

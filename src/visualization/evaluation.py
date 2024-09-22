@@ -3,7 +3,8 @@ import joblib
 import pandas as pd
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig
-from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
+from sklearn.metrics import (accuracy_score, precision_score, recall_score,
+                             roc_auc_score)
 
 from dvclive import Live
 
@@ -37,7 +38,7 @@ def main(cfg: DictConfig):
     print(f"ROC-AUC Score: {roc_auc * 100:.2f}%")
 
     # Log metrics using DVCLive
-    with Live() as live:
+    with Live(dir="dvclive_evaluate") as live:
         live.log_metric("accuracy", accuracy)
         live.log_metric("precision", precision)
         live.log_metric("recall", recall)
