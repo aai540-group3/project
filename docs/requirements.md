@@ -9,17 +9,17 @@
 
 Throughout AAI-540, you will learn and practice the framework, methodology, and skills for machine learning operations (MLOps). For the course project, you will form small groups (2-3 members) and apply your knowledge of MLOps in a real-world ML project scenario. Over the span of the course, your team will iteratively design and develop the key components for a production-ready machine learning system. In each module, incorporate MLOps concepts into your team project plan and practice team workflows to iteratively design and build your machine learning system. In Module 7, your team will deliver a final ML System Design Document and codebase and demonstrate the operation of your ML system.
 
-#### **Project Scenario**
+### **Project Scenario**
 
 In the first module, beginning with the project data sets, you will consider a problem space, identify potential ML problems for your project scenario, and form small groups around ML project ideas. Your group will research a hypothetical company and business goal to serve as the impetus for the machine learning system product solution that your team will design and build. You will frame a problem that a machine learning system can solve. When selecting your problem, make sure your problem space meets the requirements of a machine learning system (see Module 1 presentations). Additionally, when selecting your data source, make sure that there is enough data to solve your problem (as a rule of thumb, the minimum dataset should be 3-5 files, with 2 files having at least 10,000 records in a raw dataset). If you are doing a classification problem, you should have a minimum of 10,000 labeled records per class that you are predicting.
 
-#### **Project Documents**
+### **Project Documents**
 
 1. Download the AAI-540 [Design Document Template](https://sandiego.instructure.com/courses/14123/files/1940576?wrap=1).
 
 2. Copy and share the AAI-540 [Project Tracker](https://docs.google.com/document/d/1ar3DZ6YA_bmo9P4Jq9UIJs788deCf1ReQ0HbyX1VgrU/template/preview).
 
-#### **Project Data Sets**
+### **Project Data Sets**
 
 * [Kaggle](https://www.kaggle.com/datasets)
 * [Yelp](https://www.yelp.com/dataset)
@@ -28,7 +28,7 @@ In the first module, beginning with the project data sets, you will consider a p
 * [US Census Data](https://www.census.gov/data/tables.html)
 * [Awesome Public Datasets](https://github.com/awesomedata/awesome-public-datasets)
 
-#### **Project Deliverables**
+### **Project Deliverables**
 
 Refer to the Requirements section and detailed descriptions of the deliverables due further below.
 
@@ -36,13 +36,13 @@ Refer to the Requirements section and detailed descriptions of the deliverables 
 2. Team Video + Script/Outline - video presentation with screencast demonstration of "ML System Operation Validation"
 3. Team Code - GitHub repository with the complete codebase for your ML system
 
-#### **Project Timeline**
+### **Project Timeline**
 
 In each module, you will learn new skills and knowledge to include in your team project. The recommended steps for each module are summarized in the module and [Project Tracker](https://docs.google.com/document/d/1ar3DZ6YA_bmo9P4Jq9UIJs788deCf1ReQ0HbyX1VgrU/template/preview). In Module 2, you will be prompted to create a team Asana board for planning your project and tracking team workflows. In each module, locate and read the Team Project Steps for the module week; these steps may be either required or recommended based on module topics. Note that in Module 2 and Module 4, your team will complete Team Project Check-Ins as graded assignments.
 
 Familiarize yourself with the project steps and deliverables of each module and update your Asana project board. Keep pace with the project; if you complete each piece week by week, the project will not be difficult. If you wait until the last week, the project will be tough to complete. You can proceed at your own pace, and you are welcome to go back and redo parts of the project.
 
-#### **Project Examples**
+### **Project Examples**
 
 An example of a student teamwork and deliverables from AAI-540 Spring 2024 is provided in Module 2:
 
@@ -56,28 +56,32 @@ Divide the work equally between the team members for the following steps, and ev
 
 There are three group deliverables due at the end of Module 7. Please read the requirements for each deliverable thoroughly, discuss team workflows for collaborative development, and plan time each week to progress toward the final deliverables.
 
-#### **Participation**
+### **Participation**
 
 This is designed as a *team* project and successful delivery will require *teamwork.* While students personal schedules may differ, equitable contributions, ongoing communication, and team project management is *required.* Team members who do not contribute to the Team Project iterations and outputs may receive point deductions. To support individual accountability and participation, in AAI-540 you will:
 
 1. Post weekly Project Updates using a [teamwork tracker](https://docs.google.com/document/d/1ar3DZ6YA_bmo9P4Jq9UIJs788deCf1ReQ0HbyX1VgrU/template/preview).
 2. Complete Peer Evaluations in Module 7 using this [Peer Evaluation Form](https://sandiego.instructure.com/courses/14123/files/1940545?wrap=1).
 
-#### **Lateness Policy**
+### **Lateness Policy**
 
 To avoid late penalty deductions, assignments should be submitted on or prior to the due date listed in the course. For each day after the deadline that an assignment is turned in late, its point value will be reduced by 10% per day. Work submitted after 48 hours/two days past the original due date will not be accepted and will receive a zero unless the matter is discussed with the instructor in advance.
 
 ---
 
-### **Deliverable #1: Design Document**
+## **Deliverable #1: Design Document**
 
-#### ML System Design
+### ML System Design
 
 1. Finalize the [ML System Design Document](https://sandiego.instructure.com/courses/14123/files/1940576?wrap=1) that you have drafted throughout the course for final submission to project stakeholders.
 2. In your final document, make sure you include the following:
+
     * Include a clearly defined problem statement. This should be one to two paragraphs.
+
     * Include a clear description of how you will measure the impact of your work; this should tie directly to the goals. This should be one to two paragraphs.
+
     * Complete the security checklist and describe any risks surrounding sensitive data, bias, and ethical concerns.
+
     * **Solution Overview.** Describe your implementation of the solution. Each section should be two to three paragraphs and should describe your findings from the code in your GitHub repository. Your answers should be detailed and explain your rationale for the decisions you have made.
         * Data Sources
         * Data Engineering
@@ -93,9 +97,9 @@ The ML Design Document is for a technical audience and must be written in a clea
 
 ---
 
-### **Deliverable #2: Video Demonstration**
+## **Deliverable #2: Video Demonstration**
 
-#### ML System Operation Validation
+### ML System Operation Validation
 
 1. Implement the project using AWS SageMaker.
 2. Validate ML system operation.
@@ -126,9 +130,9 @@ For this deliverable, your team will submit:
 
 ---
 
-### **Deliverable #3: Code**
+## **Deliverable #3: Code**
 
-#### Codebase GitHub Repository
+### Codebase GitHub Repository
 
 The final presentation and submission of your codebase should support your ML Design Document and reflect teamwork.
 
@@ -160,12 +164,12 @@ The final presentation and submission of your codebase should support your ML De
 
 ## Rubric
 
-| Criteria | Meets or Exceeds Expectations (Points) | Approaches Expectations (Points) | Below Expectations (Points) | Inadequate Attempt (Points) | Non-Performance (Points) |
-|---|---|---|---|---|---|
-| **ML Design Document (100 pts)** | An integrated and cohesive ML Design that connects a deep understanding of course knowledge and project requirements to a thoughtfully researched context and goal. Details reflect a dedicated and iterative process. Problem statement is clearly stated and is a ML problem. The design document is complete and communicates a depth and understanding of project ramifications and possible issues that extend beyond the assignment requirements. The solution details are documented clearly and the question(s) are technically adept and reflect industry-level analysis and implementation. Outlined requirements include details that are further reinforced and consistent with project demonstration and codebase. The document is effective, clear, free of all grammatical and spelling errors, and presentable to a technical audience in its current form. (100) | A somewhat cohesive ML Design that addresses project requirements, but may lack depth of context or understanding of the technical audience and needs. ML Problem is identified and described. Project objectives are met, and almost all sections of the technical design document are replete. Solution details are documented, and important question(s) are technically addressed in the report. Outlined requirements include details that are further reinforced and consistent with project demonstration and codebase.  The document is effective but contains a few minor grammatical and spelling errors. (90) | ML problem is not clearly identified and described. Project objectives are mostly met, but some sections of the technical design document are incomplete.  Solution details are reasonably documented, but technical aspects and details are absent. Outlined requirements include details that are not reinforced and consistent with project demonstration and codebase. The document poses challenges to a  technical audience requiring supporting detail. The document is not presentable to a professional technical audience because it is not clearly written and/or contains grammatical and spelling errors that detract from its effectiveness. (82) | Submission does not meet graduate level standards. (70) | Non-performance. (0) |
-| **ML Demonstration (80 pts)** | Demonstration is not over 10 minutes in length, includes an outline or transcript, and is presentable to business stakeholders in its current form. Functional details are contextualized to the outlined business problem and presented to a stakeholder audience as a defensible solution design. Screencast validates the operability of the ML system and demonstrates all listed ML system elements. Visual and narrated are planned or scripted, clear, and well-defined. Audio and video are edited to remove glitches and outtakes and represent a professional team output. Demonstration of the ML system components is equally and professionally presented by the entire team. (80) | Demonstration is between 10 to 15 minutes in length but does not demonstrate or include an outline or script. Presentation of the business context is lacking. Planning, coordination, and/or editing would make this demonstration a more polished presentation for business stakeholders. Screencast validates the operability of the ML system and most of the listed ML system elements. Visual and audio are reasonably clear, but contain a few glitches or outtakes that could have been edited for a professional audience.  Coordination and planning would improve overall communication of the team effort; components might not be presented equally or are not completely aligned with other project components. (72) | Presentation exceeds 15 minute maximum and requires coordination and planning to only present required details. Business context and audience is not represented effectively. Screencast is an incomplete validation of the operability of the ML system and missing several key  ML system elements. Visual and audio may lack clarity or plausibility; or there are so many glitches and outtakes that it is ineffective as a professional communication. Overall, the demonstration of the ML system components lacks professional credibility, and/or is not equally presented by the entire team. (65.6) | Submission does not meet graduate level standards. (56) | Non-performance. (0) |
-| **ML Code (140 pts)** | The codebase demonstrates all 8 of the eight listed requirements for Methods, ML Design, and Teamwork. (140) | The codebase demonstrates 6-7 of the eight listed requirements for Method, ML Design, and Teamwork. (126) | The codebase demonstrates 4-5 of the eight listed requirements for Method, ML Design, and Teamwork. (114.8) | Codebase demonstrates 3 or fewer listed requirements for Method, ML Design, and Teamwork. (98) | Non-performance. (0) |
+| Criteria                         | Meets or Exceeds Expectations (Points)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Approaches Expectations (Points)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Below Expectations (Points)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Inadequate Attempt (Points)                                                                    | Non-Performance (Points) |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------ |
+| **ML Design Document (100 pts)** | An integrated and cohesive ML Design that connects a deep understanding of course knowledge and project requirements to a thoughtfully researched context and goal. Details reflect a dedicated and iterative process. Problem statement is clearly stated and is a ML problem. The design document is complete and communicates a depth and understanding of project ramifications and possible issues that extend beyond the assignment requirements. The solution details are documented clearly and the question(s) are technically adept and reflect industry-level analysis and implementation. Outlined requirements include details that are further reinforced and consistent with project demonstration and codebase. The document is effective, clear, free of all grammatical and spelling errors, and presentable to a technical audience in its current form. (100) | A somewhat cohesive ML Design that addresses project requirements, but may lack depth of context or understanding of the technical audience and needs. ML Problem is identified and described. Project objectives are met, and almost all sections of the technical design document are replete. Solution details are documented, and important question(s) are technically addressed in the report. Outlined requirements include details that are further reinforced and consistent with project demonstration and codebase.  The document is effective but contains a few minor grammatical and spelling errors. (90)                                                                                                           | ML problem is not clearly identified and described. Project objectives are mostly met, but some sections of the technical design document are incomplete.  Solution details are reasonably documented, but technical aspects and details are absent. Outlined requirements include details that are not reinforced and consistent with project demonstration and codebase. The document poses challenges to a  technical audience requiring supporting detail. The document is not presentable to a professional technical audience because it is not clearly written and/or contains grammatical and spelling errors that detract from its effectiveness. (82) | Submission does not meet graduate level standards. (70)                                        | Non-performance. (0)     |
+| **ML Demonstration (80 pts)**    | Demonstration is not over 10 minutes in length, includes an outline or transcript, and is presentable to business stakeholders in its current form. Functional details are contextualized to the outlined business problem and presented to a stakeholder audience as a defensible solution design. Screencast validates the operability of the ML system and demonstrates all listed ML system elements. Visual and narrated are planned or scripted, clear, and well-defined. Audio and video are edited to remove glitches and outtakes and represent a professional team output. Demonstration of the ML system components is equally and professionally presented by the entire team. (80)                                                                                                                                                                                   | Demonstration is between 10 to 15 minutes in length but does not demonstrate or include an outline or script. Presentation of the business context is lacking. Planning, coordination, and/or editing would make this demonstration a more polished presentation for business stakeholders. Screencast validates the operability of the ML system and most of the listed ML system elements. Visual and audio are reasonably clear, but contain a few glitches or outtakes that could have been edited for a professional audience.  Coordination and planning would improve overall communication of the team effort; components might not be presented equally or are not completely aligned with other project components. (72) | Presentation exceeds 15 minute maximum and requires coordination and planning to only present required details. Business context and audience is not represented effectively. Screencast is an incomplete validation of the operability of the ML system and missing several key  ML system elements. Visual and audio may lack clarity or plausibility; or there are so many glitches and outtakes that it is ineffective as a professional communication. Overall, the demonstration of the ML system components lacks professional credibility, and/or is not equally presented by the entire team. (65.6)                                                   | Submission does not meet graduate level standards. (56)                                        | Non-performance. (0)     |
+| **ML Code (140 pts)**            | The codebase demonstrates all 8 of the eight listed requirements for Methods, ML Design, and Teamwork. (140)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | The codebase demonstrates 6-7 of the eight listed requirements for Method, ML Design, and Teamwork. (126)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | The codebase demonstrates 4-5 of the eight listed requirements for Method, ML Design, and Teamwork. (114.8)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Codebase demonstrates 3 or fewer listed requirements for Method, ML Design, and Teamwork. (98) | Non-performance. (0)     |
 
-**Total Points: 320**
+Total Points: 320
 
 ---
