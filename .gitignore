@@ -39,6 +39,7 @@ develop-eggs/
 dist/
 docs/_build/
 downloads/
+terraform/.terraform/providers/
 eggs/
 env/
 htmlcov/
