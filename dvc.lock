@@ -306,3 +306,34 @@ stages:
       hash: md5
       md5: d41d8cd98f00b204e9800998ecf8427e
       size: 0
+  evaluate@logistic_regression:
+    cmd: python src/models/logistic_regression/evaluate.py model=logistic_regression
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: cfd9fd8441b890900bee61eaaf60a7d8
+      size: 14026237
+    - path: models/logistic_regression/model.pkl
+      hash: md5
+      md5: 7ccc3e08cb52d965e66d3a9bc3dcfb54
+      size: 6159
+    - path: src/models/logistic_regression/evaluate.py
+      hash: md5
+      md5: af11a245d48ec60e751f8dbb5ab5ea90
+      size: 1987
+    params:
+      params.yaml:
+        dataset.path.processed: data/processed
+        model.logistic_regression:
+          name: logistic_regression
+          params:
+            penalty: l2
+            C: 1.0
+            solver: lbfgs
+            max_iter: 1000
+            random_state: 42
+    outs:
+    - path: reports/metrics/logistic_regression_metrics.json
+      hash: md5
+      md5: f61f3421261fd70b8bc1538716574622
+      size: 144
