@@ -2,13 +2,13 @@ import logging
 from pathlib import Path
 
 import hydra
-import numpy as np
 import pandas as pd
 from hydra.utils import to_absolute_path
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """Perform data cleaning operations."""
@@ -21,8 +21,16 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"Removed {original_shape[0] - df.shape[0]} duplicate rows")
 
     # Handle missing values in numerical columns
-    numerical_cols = ['time_in_hospital', 'num_lab_procedures', 'num_procedures', 'num_medications',
-                      'number_outpatient', 'number_emergency', 'number_inpatient', 'number_diagnoses']
+    numerical_cols = [
+        "time_in_hospital",
+        "num_lab_procedures",
+        "num_procedures",
+        "num_medications",
+        "number_outpatient",
+        "number_emergency",
+        "number_inpatient",
+        "number_diagnoses",
+    ]
 
     for col in numerical_cols:
         missing_count = df[col].isnull().sum()
@@ -31,15 +39,19 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
             df[col] = df[col].fillna(df[col].median())
 
     # Convert numerical columns to appropriate data types
-    df[numerical_cols] = df[numerical_cols].astype('float32')
+    df[numerical_cols] = df[numerical_cols].astype("float32")
 
     # Handle binary categorical variables
-    binary_cols = [col for col in df.columns if df[col].nunique() == 2 and col not in numerical_cols]
-    df[binary_cols] = df[binary_cols].astype('bool')
+    binary_cols = [
+        col
+        for col in df.columns
+        if df[col].nunique() == 2 and col not in numerical_cols
+    ]
+    df[binary_cols] = df[binary_cols].astype("bool")
 
     # Handle 'readmitted' column
-    if 'readmitted' in df.columns:
-        df['readmitted'] = df['readmitted'].astype('int32')
+    if "readmitted" in df.columns:
+        df["readmitted"] = df["readmitted"].astype("int32")
     else:
         logger.warning("'readmitted' column not found in the dataset")
 
@@ -47,16 +59,21 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     columns_to_drop = df.columns[df.isnull().mean() > 0.5]
     df = df.drop(columns=columns_to_drop)
     if len(columns_to_drop) > 0:
-        logger.info(f"Dropped columns with >50% missing values: {', '.join(columns_to_drop)}")
+        logger.info(
+            f"Dropped columns with >50% missing values: {', '.join(columns_to_drop)}"
+        )
 
     return df
 
-@hydra.main(config_path="../../conf", config_name="config", version_base=None)
+
+@hydra.main(config_path="../../configs", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
     try:
-        data_paths = cfg.data.path
-        raw_data_path = Path(to_absolute_path(f"{data_paths.raw}/data.csv"))
-        interim_data_path = Path(to_absolute_path(f"{data_paths.interim}/data.csv"))
+        logger.info("Configuration:")
+        logger.info(OmegaConf.to_yaml(cfg))
+
+        raw_data_path = Path(to_absolute_path(cfg.dataset.path.raw)) / "data.csv"
+        interim_data_path = Path(to_absolute_path(cfg.dataset.path.interim)) / "data.csv"
 
         logger.info("Loading raw data...")
         df = pd.read_csv(raw_data_path)
@@ -77,6 +94,7 @@ def main(cfg: DictConfig) -> None:
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
         raise
+
 
 if __name__ == "__main__":
     main()

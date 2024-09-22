@@ -26,6 +26,7 @@ EXCLUDE_FILES=(
     "test.sh"
     "Thumbs.db"
     "train.log"
+    "update_repository.sh"
     "visualize.log"
 )
 

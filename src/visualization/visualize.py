@@ -1,168 +1,60 @@
 import json
 import logging
-import math
 import os
 
 import hydra
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import seaborn as sns
 from hydra.utils import to_absolute_path
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-METRICS_TO_VISUALIZE = [
-    ("dvclive/plots/metrics/cv_accuracy.tsv", "cv_accuracy", "CV Accuracy"),
-    ("dvclive_evaluate/plots/metrics/accuracy.tsv", "accuracy", "Evaluation Accuracy"),
-    ("dvclive_evaluate/plots/metrics/precision.tsv", "precision", "Precision"),
-    ("dvclive_evaluate/plots/metrics/recall.tsv", "recall", "Recall"),
-    ("dvclive_evaluate/plots/metrics/roc_auc.tsv", "roc_auc", "ROC AUC"),
-]
 
-MAX_COLS_TO_PLOT = 20
-
-def sanitize_filename(filename: str) -> str:
-    """Replaces invalid characters in filenames with underscores."""
-    return "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in filename)
-
-def plot_metric(ax, df, metric_name, metric_label):
-    ax.plot(df["step"], df[metric_name], label=metric_label)
-    ax.set_xlabel("Step")
-    ax.set_ylabel(metric_label)
-    ax.set_title(f"{metric_label} Over Time")
-    ax.legend()
-
-def convert_column_type(series):
-    """Attempt to convert a series to numeric or datetime type."""
-    if series.dtype == "object":
-        # Try to convert to numeric
-        try:
-            return pd.to_numeric(series)
-        except ValueError:
-            pass
-
-        # Try to convert to datetime
-        try:
-            return pd.to_datetime(series)
-        except ValueError:
-            pass
-
-    return series
-
-def plot_distribution(ax, data, column):
-    series = convert_column_type(data[column])
-    if pd.api.types.is_numeric_dtype(series):
-        sns.histplot(data=series.dropna(), kde=True, ax=ax)
-        ax.set_xlabel(column)
-    elif pd.api.types.is_datetime64_any_dtype(series):
-        series.dropna().hist(ax=ax, bins=20)
-        ax.set_xlabel(column)
-    else:
-        value_counts = series.value_counts()
-        value_counts.plot(kind="bar", ax=ax)
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
-
-    ax.set_ylabel("Frequency")
-    ax.set_title(f"Distribution of {column}")
-
-def plot_feature_distributions(df, cols, output_dir):
-    n_cols = len(cols)
-    if n_cols == 0:
-        logger.info("No columns to plot.")
-        return
-
-    n_cols_per_fig = min(n_cols, MAX_COLS_TO_PLOT)
-    n_rows = math.ceil(n_cols_per_fig / 5)  # 5 columns per row
-    n_figs = math.ceil(n_cols / MAX_COLS_TO_PLOT)
-
-    for fig_num in range(n_figs):
-        fig, axes = plt.subplots(n_rows, 5, figsize=(20, 5 * n_rows))
-        axes = axes.flatten()
-
-        start_idx = fig_num * MAX_COLS_TO_PLOT
-        end_idx = min((fig_num + 1) * MAX_COLS_TO_PLOT, n_cols)
-
-        for idx, col in enumerate(cols[start_idx:end_idx]):
-            plot_distribution(axes[idx], df, col)
-            logger.info(f"Plotted distribution for column: {col}")
-
-        # Hide unused subplots
-        for j in range(idx + 1, len(axes)):
-            axes[j].set_visible(False)
-
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, f"feature_distributions_{fig_num+1}.png"))
-        plt.close()
-
-def process_metric_files(metrics_to_visualize):
-    processed_metrics = {}
-    for metric_file, metric_name, _ in metrics_to_visualize:
-        try:
-            df = pd.read_csv(to_absolute_path(metric_file), sep="\t")
-            processed_metrics[metric_file] = {
-                "data": df.to_dict(orient="records"),
-                "x": df.columns[0],
-                "y": metric_name,
-            }
-            logger.info(f"Successfully processed metric file: {metric_file}")
-        except FileNotFoundError:
-            logger.warning(f"Metric file not found: {metric_file}")
-        except Exception as e:
-            logger.error(f"Error processing metric file {metric_file}: {str(e)}")
-    return processed_metrics
-
-@hydra.main(config_path="../../conf", config_name="config", version_base=None)
+@hydra.main(config_path="../../configs", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
     try:
-        data_paths = cfg.data.path
+        logger.info("Configuration:")
+        logger.info(OmegaConf.to_yaml(cfg))
+
         output_dir = to_absolute_path("reports/figures")
         os.makedirs(output_dir, exist_ok=True)
+        models = cfg.models
+        metrics_list = []
 
-        # Process and save metrics for DVC Studio
-        processed_metrics = process_metric_files(METRICS_TO_VISUALIZE)
-        with open(os.path.join(output_dir, "dvc_metrics.json"), "w") as f:
-            json.dump(processed_metrics, f)
+        for model_name in models:
+            metrics_path = to_absolute_path(
+                f"reports/metrics/{model_name}_metrics.json"
+            )
+            if os.path.exists(metrics_path):
+                with open(metrics_path, "r") as f:
+                    metrics = json.load(f)
+                metrics["model"] = model_name
+                metrics_list.append(metrics)
+            else:
+                logger.warning(f"Metrics file not found for {model_name}")
 
-        # Plot metrics
-        fig, axes = plt.subplots(
-            len(METRICS_TO_VISUALIZE), 1, figsize=(10, 5 * len(METRICS_TO_VISUALIZE))
-        )
-        if len(METRICS_TO_VISUALIZE) == 1:
-            axes = [axes]
-        for idx, (metric_file, metric_name, metric_label) in enumerate(
-            METRICS_TO_VISUALIZE
-        ):
-            if metric_file in processed_metrics:
-                df = pd.DataFrame(processed_metrics[metric_file]["data"])
-                plot_metric(axes[idx], df, metric_name, metric_label)
-
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, "model_performance.png"))
-        plt.close()
-
-        # Load and visualize training data distribution
-        train_data_path = to_absolute_path(f"{data_paths.processed}/train.csv")
-        train_df = pd.read_csv(train_data_path)
-
-        # Visualize target variable distribution
-        plt.figure(figsize=(10, 5))
-        sns.countplot(x="readmitted", data=train_df)
-        plt.title("Distribution of Readmission in Training Data")
-        plt.savefig(os.path.join(output_dir, "readmission_distribution.png"))
-        plt.close()
-
-        # Visualize feature distributions
-        feature_cols = [col for col in train_df.columns if col != "readmitted"]
-        plot_feature_distributions(train_df, feature_cols, output_dir)
-
-        logger.info(f"All visualizations saved to {output_dir}")
+        if metrics_list:
+            metrics_df = pd.DataFrame(metrics_list)
+            metrics_df.set_index("model", inplace=True)
+            metrics_df.plot(kind="bar")
+            plt.title("Model Comparison")
+            plt.ylabel("Metric Score")
+            plt.xticks(rotation=0)
+            plt.ylim(0, 1)
+            plt.tight_layout()
+            plt.savefig(os.path.join(output_dir, "model_comparison.png"))
+            plt.close()
+            logger.info("Visualization completed.")
+        else:
+            logger.warning("No metrics to visualize.")
 
     except Exception as e:
-        logger.error(f"An error occurred: {str(e)}")
+        logger.error(f"An error occurred during visualization: {str(e)}")
+        logger.error(f"Configuration dump: {OmegaConf.to_yaml(cfg)}")
         raise
+
 
 if __name__ == "__main__":
     main()

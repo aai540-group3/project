@@ -4,31 +4,36 @@ from pathlib import Path
 import datasets
 import hydra
 from hydra.utils import to_absolute_path
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@hydra.main(config_path="../../conf", config_name="config", version_base=None)
+@hydra.main(config_path="../../configs", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
     try:
-        data_paths = cfg.data.path
-        dataset_name = cfg.data.dataset_name
-        data_output_path = Path(to_absolute_path(data_paths.raw))
+        logger.info("Configuration:")
+        logger.info(OmegaConf.to_yaml(cfg))
 
-        logger.info("Loading dataset...")
-        dataset = datasets.load_dataset(dataset_name, token=None)
+        if not cfg.dataset or not cfg.dataset.name:
+            raise ValueError("Dataset configuration is missing or incomplete")
+
+        dataset_name = cfg.dataset.name
+        data_output_path = Path(to_absolute_path(cfg.dataset.path.raw))
+
+        logger.info(f"Loading dataset: {dataset_name}")
+        dataset = datasets.load_dataset(dataset_name)
         df = dataset["train"].to_pandas()
 
         data_output_path.mkdir(parents=True, exist_ok=True)
         output_file = data_output_path / "data.csv"
 
-        logger.info("Saving raw data...")
+        logger.info(f"Saving raw data to {output_file}")
         df.to_csv(output_file, index=False)
-        logger.info(f"Data saved to {output_file}")
+        logger.info("Data ingestion completed successfully")
 
     except Exception as e:
-        logger.error(f"An error occurred: {str(e)}")
+        logger.error(f"An error occurred during data ingestion: {str(e)}")
         raise
 
 if __name__ == "__main__":

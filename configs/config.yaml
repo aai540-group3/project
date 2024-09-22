@@ -1,0 +1,30 @@
+defaults:
+  - data: diabetes
+  - training: base
+  - feature_engineering: base
+  - model: logistic_regression
+  - _self_
+
+dataset: ${data.dataset}
+models:
+  - logistic_regression
+  - autogluon
+
+model:
+  logistic_regression:
+    name: logistic_regression
+    params:
+      penalty: "l2"
+      C: 1.0
+      solver: "lbfgs"
+      max_iter: 1000
+      random_state: 42
+  autogluon:
+    name: autogluon
+    params:
+      presets: "best_quality"
+      time_limit: 3600
+      hyperparameters:
+        GBM:
+          num_boost_round: 100
+      verbosity: 2

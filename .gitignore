@@ -1,13 +1,16 @@
 __pycache__/
+!.dvc/*
+!.gitignore
 .cache
 .coverage
 .coverage.*
 .DS_Store
+.dvc/.gitignore
 .dvc/config.local
 .eggs/
 .env
 .hydra/
-.idea
+.idea/
 .installed.cfg
 .ipynb_checkpoints/
 .mypy_cache/
@@ -20,6 +23,7 @@ __pycache__/
 *.db
 *.egg
 *.egg-info/
+*.joblib
 *.log
 *.manifest
 *.mo
@@ -48,6 +52,7 @@ lib/
 lib64/
 models/
 nosetests.xml
+outputs/
 parts/
 pip-delete-this-directory.txt
 pip-log.txt

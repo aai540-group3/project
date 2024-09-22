@@ -68,6 +68,7 @@ def tts(
 
     return temp_file_path
 
+
 def main():
     """
     Main function to create and launch the Gradio interface.
@@ -248,7 +249,12 @@ def main():
             :rtype: str
             """
             audio_file = tts(
-                input_text, model.lower(), voice.lower(), api_key, response_format, speed
+                input_text,
+                model.lower(),
+                voice.lower(),
+                api_key,
+                response_format,
+                speed,
             )
             return audio_file
 
@@ -268,6 +274,7 @@ def main():
 
     # Launch the Gradio app with error display enabled
     demo.launch(show_error=True)
+
 
 if __name__ == "__main__":
     main()

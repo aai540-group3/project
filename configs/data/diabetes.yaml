@@ -1,0 +1,7 @@
+dataset:
+  name: "aai540-group3/diabetes-readmission"
+  path:
+    raw: data/raw
+    interim: data/interim
+    processed: data/processed
+    external: data/external

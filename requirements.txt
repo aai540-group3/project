@@ -1,9 +1,12 @@
+autogluon[all]
 black[jupyter]
 botocore
+dask[dataframe]
 datasets
-dvc[all]==3.55.2
+dvc[all]
 dvclive
-hydra-core==1.3.2
+hydra_colorlog
+hydra-core
 isort
 joblib
 numpy
