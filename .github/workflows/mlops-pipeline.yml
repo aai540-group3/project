@@ -22,6 +22,10 @@ on:
       - "requirements.txt"
       - ".github/workflows/mlops-pipeline.yml"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-run-pipeline:
     runs-on: ubuntu-latest
