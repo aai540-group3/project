@@ -1,5 +1,6 @@
 __pycache__/
 !.dvc/*
+!.gitkeep
 .cache
 .coverage
 .coverage.*
