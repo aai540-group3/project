@@ -1,11 +1,12 @@
 import hashlib
 import logging
-import shutil
 from pathlib import Path
 
 import hydra
+import joblib
 import pandas as pd
 from autogluon.tabular import TabularPredictor
+from dvclive import Live
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 
@@ -31,53 +32,78 @@ def main(cfg: DictConfig) -> None:
                 stored_hash = f.read().strip()
 
             if stored_hash == input_hash:
-                logger.info(f"Model already exists with the same input hash. Skipping training.")
+                logger.info("Model already exists with the same input hash. Skipping training.")
                 return
 
-        logger.info(f"Training new model autogluon...")
+        logger.info("Training new AutoGluon TabularPredictor model...")
 
+        # Load training data
         train_data = pd.read_csv(train_data_path)
 
-        predictor = TabularPredictor(
-            label="readmitted",
-            path=str(model_output_dir),
-            problem_type="binary"
-        )
+        # Initialize DVCLive
+        with Live() as live:
+            # Log training parameters
+            params_to_log = {
+                "model": "autogluon",
+                "label": "readmitted",
+                "problem_type": "binary",
+                "dataset_version": cfg.dataset.version
+            }
+            # Add flattened AutoGluon parameters
+            for key, value in cfg.model.params.items():
+                params_to_log[f"autogluon_{key}"] = value
 
-        predictor.fit(
-            train_data=train_data,
-            time_limit=cfg.model.autogluon.params.time_limit,
-            presets=cfg.model.autogluon.params.presets,
-        )
+            live.log_params(params_to_log)
 
-        # Copy the best model (WeightedEnsemble_L3) to model.pkl
-        best_model_path = model_output_dir / "models" / "WeightedEnsemble_L3"
-        if best_model_path.exists():
-            shutil.copy(best_model_path / "model.pkl", model_output_dir / "model.pkl")
-        else:
-            logger.warning("WeightedEnsemble_L3 not found. Using the default model.")
+            # Initialize and train the AutoGluon TabularPredictor
+            predictor = TabularPredictor(
+                label="readmitted",
+                path=str(model_output_dir),
+                problem_type="binary"
+            )
+
+            # Prepare hyperparameters
+            hyperparameters = {
+                'GBM': {'num_boost_round': cfg.model.params.gbm_num_boost_round}
+            }
+
+            predictor.fit(
+                train_data=train_data,
+                time_limit=cfg.model.params.time_limit,
+                presets=cfg.model.params.presets,
+                hyperparameters=hyperparameters,
+                verbosity=cfg.model.params.verbosity
+            )
+            logger.info("AutoGluon model training completed.")
+
+            # Save a reference to the predictor
+            model_pkl_path = model_output_dir / "model.pkl"
+            joblib.dump(predictor, model_pkl_path)
+            logger.info(f"AutoGluon predictor reference saved to {model_pkl_path}")
+
+            # Log the model.pkl as an artifact
+            live.log_artifact(str(model_pkl_path), type="model", name="autogluon_model")
 
         # Save the input hash
         with open(hash_file, "w") as f:
             f.write(input_hash)
-
-        logger.info(f"Model saved to {model_output_dir}")
+        logger.info(f"Input hash saved to {hash_file}")
 
     except Exception as e:
         logger.error(f"An error occurred during training: {str(e)}")
         logger.error(f"Configuration dump: {OmegaConf.to_yaml(cfg)}")
         raise
 
-def calculate_input_hash(data_path, cfg):
-    # Calculate hash of input data
+def calculate_input_hash(data_path: Path, cfg: DictConfig) -> str:
+    """Calculate a combined hash of the input data and configuration."""
     with open(data_path, "rb") as f:
         data_hash = hashlib.md5(f.read()).hexdigest()
 
-    # Calculate hash of configuration
-    config_hash = hashlib.md5(OmegaConf.to_yaml(cfg).encode()).hexdigest()
+    config_str = OmegaConf.to_yaml(cfg)
+    config_hash = hashlib.md5(config_str.encode()).hexdigest()
 
-    # Combine hashes
-    return hashlib.md5((data_hash + config_hash).encode()).hexdigest()
+    combined_hash = hashlib.md5((data_hash + config_hash).encode()).hexdigest()
+    return combined_hash
 
 if __name__ == "__main__":
     main()

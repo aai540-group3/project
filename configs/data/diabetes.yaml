@@ -1,5 +1,6 @@
 dataset:
   name: "aai540-group3/diabetes-readmission"
+  version: "v1.0"
   path:
     raw: data/raw
     interim: data/interim

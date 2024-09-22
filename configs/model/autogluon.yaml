@@ -1,9 +1,7 @@
 name: autogluon
 params:
   presets: "best_quality"
-  time_limit: 3600 # Time limit in seconds (1 hour)
-  hyperparameters:
-    GBM:
-      num_boost_round: 100
-      num_leaves: 31
+  time_limit: 60
   verbosity: 2
+  gbm_num_boost_round: 100
+class_labels: [0, 1]
