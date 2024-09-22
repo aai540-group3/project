@@ -78,9 +78,9 @@ jobs:
           dvc status -c | awk '/missing/{print $2}' | xargs -I {} sh -c 'dvc remove {} && dvc commit {}'
         shell: bash
 
-      - name: Pull data and models from DVC remotes
+      - name: Pull data from DVC remotes
         run: |
-          dvc pull --force
+          dvc pull data/ --force # Only pull data directories
 
       - name: Check if model exists
         id: check-model
