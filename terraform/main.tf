@@ -108,7 +108,7 @@ resource "aws_iam_group_membership" "org_users" {
   group = aws_iam_group.org_users.name
 }
 
-# Create an IAM policy for administrator access 
+# Create an IAM policy for administrator access
 resource "aws_iam_policy" "administrator_access_policy" {
   name        = "AdministratorAccessPolicy"
   description = "Policy granting administrator access"
@@ -493,139 +493,141 @@ resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
+# **REMOVED** MIGRATED TO GITHUB ACTIONS FOR MLOPS
+# ---------------------------------------------------------------------------------------------------------------------
 # EC2 INSTANCE FOR MLOPS PIPELINE
 # ---------------------------------------------------------------------------------------------------------------------
 
 # Create a VPC
-resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
+# resource "aws_vpc" "main" {
+#   cidr_block           = "10.0.0.0/16"
+#   enable_dns_hostnames = true
 
-  tags = {
-    Name        = "MLOps-VPC"
-    Project     = "MLOps-Pipeline"
-    Environment = "Development"
-  }
-}
+#   tags = {
+#     Name        = "MLOps-VPC"
+#     Project     = "MLOps-Pipeline"
+#     Environment = "Development"
+#   }
+# }
 
 # Create an Internet Gateway
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
+# resource "aws_internet_gateway" "main" {
+#   vpc_id = aws_vpc.main.id
 
-  tags = {
-    Name        = "MLOps-IGW"
-    Project     = "MLOps-Pipeline"
-    Environment = "Development"
-  }
-}
+#   tags = {
+#     Name        = "MLOps-IGW"
+#     Project     = "MLOps-Pipeline"
+#     Environment = "Development"
+#   }
+# }
 
 # Create subnets
-resource "aws_subnet" "main" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
-  map_public_ip_on_launch = true
+# resource "aws_subnet" "main" {
+#   vpc_id                  = aws_vpc.main.id
+#   cidr_block              = "10.0.1.0/24"
+#   map_public_ip_on_launch = true
 
-  tags = {
-    Name        = "MLOps-Subnet-Main"
-    Project     = "MLOps-Pipeline"
-    Environment = "Development"
-  }
-}
+#   tags = {
+#     Name        = "MLOps-Subnet-Main"
+#     Project     = "MLOps-Pipeline"
+#     Environment = "Development"
+#   }
+# }
 
 # Create a route table
-resource "aws_route_table" "main" {
-  vpc_id = aws_vpc.main.id
+# resource "aws_route_table" "main" {
+#   vpc_id = aws_vpc.main.id
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id
-  }
+#   route {
+#     cidr_block = "0.0.0.0/0"
+#     gateway_id = aws_internet_gateway.main.id
+#   }
 
-  tags = {
-    Name        = "MLOps-RouteTable"
-    Project     = "MLOps-Pipeline"
-    Environment = "Development"
-  }
-}
+#   tags = {
+#     Name        = "MLOps-RouteTable"
+#     Project     = "MLOps-Pipeline"
+#     Environment = "Development"
+#   }
+# }
 
 # Associate the route table with the main subnet
-resource "aws_route_table_association" "main" {
-  subnet_id      = aws_subnet.main.id
-  route_table_id = aws_route_table.main.id
-}
+# resource "aws_route_table_association" "main" {
+#   subnet_id      = aws_subnet.main.id
+#   route_table_id = aws_route_table.main.id
+# }
 
 # Create a NAT Gateway
-resource "aws_eip" "nat" {
-  domain = "vpc"
-}
+# resource "aws_eip" "nat" {
+#   domain = "vpc"
+# }
 
-resource "aws_nat_gateway" "main" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.main.id
+# resource "aws_nat_gateway" "main" {
+#   allocation_id = aws_eip.nat.id
+#   subnet_id     = aws_subnet.main.id
 
-  tags = {
-    Name        = "MLOps-NATGateway"
-    Project     = "MLOps-Pipeline"
-    Environment = "Development"
-  }
-}
+#   tags = {
+#     Name        = "MLOps-NATGateway"
+#     Project     = "MLOps-Pipeline"
+#     Environment = "Development"
+#   }
+# }
 
 # Create a security group
-resource "aws_security_group" "mlops_sg" {
-  name        = "mlops_sg"
-  description = "Security group for MLOps pipeline"
-  vpc_id      = aws_vpc.main.id
+# resource "aws_security_group" "mlops_sg" {
+#   name        = "mlops_sg"
+#   description = "Security group for MLOps pipeline"
+#   vpc_id      = aws_vpc.main.id
 
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["140.82.112.0/20", "185.199.108.0/22", "192.30.252.0/22"] # GitHub Codespaces IP ranges
-  }
+#   ingress {
+#     from_port   = 22
+#     to_port     = 22
+#     protocol    = "tcp"
+#     cidr_blocks = ["140.82.112.0/20", "185.199.108.0/22", "192.30.252.0/22"] # GitHub Codespaces IP ranges
+#   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
 
-  tags = {
-    Name        = "MLOps-SecurityGroup"
-    Project     = "MLOps-Pipeline"
-    Environment = "Development"
-  }
-}
+#   tags = {
+#     Name        = "MLOps-SecurityGroup"
+#     Project     = "MLOps-Pipeline"
+#     Environment = "Development"
+#   }
+# }
 
-# Create an EC2 instance
-resource "aws_instance" "mlops_instance" {
-  ami                    = "ami-0182f373e66f89c85" # Amazon Linux 2023 AMI 2023.5.20240903.0 x86_64 HVM kernel-6.1
-  instance_type          = "t2.micro"              # Free Tier eligible
-  subnet_id              = aws_subnet.main.id
-  vpc_security_group_ids = [aws_security_group.mlops_sg.id]
+# # Create an EC2 instance
+# resource "aws_instance" "mlops_instance" {
+#   ami                    = "ami-0182f373e66f89c85" # Amazon Linux 2023 AMI 2023.5.20240903.0 x86_64 HVM kernel-6.1
+#   instance_type          = "t2.micro"              # Free Tier eligible
+#   subnet_id              = aws_subnet.main.id
+#   vpc_security_group_ids = [aws_security_group.mlops_sg.id]
 
-  user_data = <<-EOF
-              #!/bin/bash
-              # Update and install dependencies
-              yum update -y
-              yum install -y docker git
+#   user_data = <<-EOF
+#               #!/bin/bash
+#               # Update and install dependencies
+#               yum update -y
+#               yum install -y docker git
 
-              # Start and enable Docker
-              systemctl start docker
-              systemctl enable docker
+#               # Start and enable Docker
+#               systemctl start docker
+#               systemctl enable docker
 
-              # Install Docker Compose
-              curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              chmod +x /usr/local/bin/docker-compose
+#               # Install Docker Compose
+#               curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+#               chmod +x /usr/local/bin/docker-compose
 
-              # Add ec2-user to docker group
-              usermod -aG docker ec2-user
-              EOF
+#               # Add ec2-user to docker group
+#               usermod -aG docker ec2-user
+#               EOF
 
-  tags = {
-    Name         = "MLOps-Instance"
-    Project      = "MLOps-Pipeline"
-    Environment  = "Development"
-    AutoShutdown = "true"
-  }
-}
+#   tags = {
+#     Name         = "MLOps-Instance"
+#     Project      = "MLOps-Pipeline"
+#     Environment  = "Development"
+#     AutoShutdown = "true"
+#   }
+# }
