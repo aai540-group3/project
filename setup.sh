@@ -33,6 +33,12 @@ if ! command_exists dvc ; then
     pip3 install --upgrade dvc[all]
 fi
 
+# Check for AWS CLI
+if ! command_exists aws ; then
+    echo "AWS CLI is not installed. Please install AWS CLI."
+    exit 1
+fi
+
 # 2. Set up the Python virtual environment
 echo "Setting up Python virtual environment..."
 
@@ -50,25 +56,19 @@ echo "Installing Python dependencies..."
 
 pip install -r requirements.txt
 
-# 4. Prompt the user for necessary tokens securely
-echo "Configuring authentication..."
+# 4. Configure AWS credentials
+echo "Configuring AWS credentials..."
 
-# Provide instructions on how to obtain the Hugging Face token
-echo ""
-echo "To run this project, you need a Hugging Face access token."
-echo "If you don't have one, follow these steps:"
-echo "1. Go to https://huggingface.co/settings/tokens"
-echo "2. Log in or create an account if you haven't already."
-echo "3. Click on 'New token' to create a new access token."
-echo "4. Give it a name and select the appropriate scopes (e.g., 'api', 'read', 'write')."
-echo "5. Click 'Generate' and copy the token."
-echo ""
-
-# Check if HF_TOKEN is already set
-if [ -z "$HF_TOKEN" ]; then
-    read -s -p "Enter your Hugging Face token (HF_TOKEN): " HF_TOKEN
+# Check if AWS credentials are configured
+if ! aws sts get-caller-identity >/dev/null 2>&1 ; then
     echo ""
+    echo "AWS credentials are not configured."
+    echo "Please configure your AWS credentials by running 'aws configure' and then re-run this script."
+    deactivate
+    exit 1
 fi
+
+echo "AWS credentials are configured."
 
 # Provide instructions on how to obtain the DVC Studio token
 echo ""
@@ -88,23 +88,20 @@ if [ -z "$DVC_STUDIO_TOKEN" ]; then
     echo ""
 fi
 
-# Export tokens for the current session
-export HF_TOKEN
+# Export token for the current session
 export DVC_STUDIO_TOKEN
 
-# 5. Configure DVC remotes with authentication
+# 5. Configure DVC remotes
 echo "Configuring DVC remotes..."
 
 # Remove any existing local config to prevent duplication
 rm -f .dvc/config.local
 
-# Configure models_remote
-dvc remote modify models_remote auth custom
-dvc remote modify models_remote --local custom_auth_header "Authorization: Bearer $HF_TOKEN"
-
-# Configure dataset_remote
-dvc remote modify dataset_remote auth custom
-dvc remote modify dataset_remote --local custom_auth_header "Authorization: Bearer $HF_TOKEN"
+# Optionally set AWS region for DVC remotes
+# Uncomment and set your AWS region if needed
+# AWS_REGION='your-aws-region'
+# dvc remote modify models_remote region $AWS_REGION
+# dvc remote modify datasets_remote region $AWS_REGION
 
 # 6. Initialize DVC (if not already initialized)
 if [ ! -d ".dvc" ]; then
@@ -122,17 +119,15 @@ echo "Bootstrap process completed successfully!"
 echo "To start working on the project:"
 echo "1. Activate the virtual environment with:"
 echo "   source .venv/bin/activate"
-echo "2. Ensure that HF_TOKEN and DVC_STUDIO_TOKEN are exported in your environment when running experiments."
+echo "2. Ensure that DVC_STUDIO_TOKEN is exported in your environment when running experiments."
 echo ""
-echo "Note: You can add the following lines to your shell profile (~/.bashrc or ~/.zshrc) to persist the tokens (optional):"
-echo "export HF_TOKEN=\"$HF_TOKEN\""
+echo "Note: You can add the following line to your shell profile (~/.bashrc or ~/.zshrc) to persist the token (optional):"
 echo "export DVC_STUDIO_TOKEN=\"$DVC_STUDIO_TOKEN\""
 echo ""
-echo "Alternatively, you can run 'source bootstrap-env' to export the tokens for your session."
+echo "Alternatively, you can run 'source bootstrap-env' to export the token for your session."
 
-# Create a script to export tokens for future sessions (optional)
-echo "export HF_TOKEN=\"$HF_TOKEN\"" > bootstrap-env
-echo "export DVC_STUDIO_TOKEN=\"$DVC_STUDIO_TOKEN\"" >> bootstrap-env
+# Create a script to export token for future sessions (optional)
+echo "export DVC_STUDIO_TOKEN=\"$DVC_STUDIO_TOKEN\"" > bootstrap-env
 
 # Deactivate virtual environment to prevent accidental usage
 deactivate
