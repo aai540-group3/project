@@ -1,0 +1,4 @@
+[core]
+    remote = hf
+['remote "hf"']
+    url = https://huggingface.co/aai540-group3/project
