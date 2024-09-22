@@ -1,5 +1,5 @@
 black[jupyter]
-botocore==1.35.24
+botocore
 datasets
 dvc[all]==3.55.2
 dvclive
