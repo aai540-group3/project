@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+cd ..
+
 # Define the output file
 OUTPUT_FILE="combined.txt"
 
