@@ -3,7 +3,8 @@ import joblib
 import pandas as pd
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig
-from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
+from sklearn.metrics import (accuracy_score, precision_score, recall_score,
+                             roc_auc_score)
 
 from dvclive import Live
 

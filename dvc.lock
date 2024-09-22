@@ -1,113 +1,113 @@
-schema: '2.0'
+schema: "2.0"
 stages:
   ingest:
     cmd: python src/data/ingestion.py
     deps:
-    - path: src/data/ingestion.py
-      hash: md5
-      md5: 4f0ca0b48f2234924e1464fcf53676d3
-      size: 818
+      - path: src/data/ingestion.py
+        hash: md5
+        md5: 4f0ca0b48f2234924e1464fcf53676d3
+        size: 818
     outs:
-    - path: data/raw/
-      hash: md5
-      md5: f49a697b6370fc83a46fce6297936b7a.dir
-      size: 49159045
-      nfiles: 1
+      - path: data/raw/
+        hash: md5
+        md5: f49a697b6370fc83a46fce6297936b7a.dir
+        size: 49159045
+        nfiles: 1
   clean:
     cmd: python src/data/cleaning.py
     deps:
-    - path: data/raw/
-      hash: md5
-      md5: f49a697b6370fc83a46fce6297936b7a.dir
-      size: 49159045
-      nfiles: 1
-    - path: src/data/cleaning.py
-      hash: md5
-      md5: 82c87fcecb42403199938df2c8bba498
-      size: 797
+      - path: data/raw/
+        hash: md5
+        md5: f49a697b6370fc83a46fce6297936b7a.dir
+        size: 49159045
+        nfiles: 1
+      - path: src/data/cleaning.py
+        hash: md5
+        md5: 82c87fcecb42403199938df2c8bba498
+        size: 797
     outs:
-    - path: data/interim/
-      hash: md5
-      md5: f49a697b6370fc83a46fce6297936b7a.dir
-      size: 49159045
-      nfiles: 1
+      - path: data/interim/
+        hash: md5
+        md5: f49a697b6370fc83a46fce6297936b7a.dir
+        size: 49159045
+        nfiles: 1
   split:
     cmd: python src/data/splitting.py
     deps:
-    - path: data/interim/data.csv
-      hash: md5
-      md5: dbfe12c203805ccf7fdb683042c46ab3
-      size: 49159045
-    - path: src/data/splitting.py
-      hash: md5
-      md5: a0edc527db113b46839d818b08dc413c
-      size: 1340
+      - path: data/interim/data.csv
+        hash: md5
+        md5: dbfe12c203805ccf7fdb683042c46ab3
+        size: 49159045
+      - path: src/data/splitting.py
+        hash: md5
+        md5: a0edc527db113b46839d818b08dc413c
+        size: 1340
     outs:
-    - path: data/processed/test.csv
-      hash: md5
-      md5: 8c22e4812019b778211cc15ce89210d0
-      size: 9834187
-    - path: data/processed/train.csv
-      hash: md5
-      md5: 524b033b66640ebbab203855b05d1302
-      size: 39327772
+      - path: data/processed/test.csv
+        hash: md5
+        md5: 8c22e4812019b778211cc15ce89210d0
+        size: 9834187
+      - path: data/processed/train.csv
+        hash: md5
+        md5: 524b033b66640ebbab203855b05d1302
+        size: 39327772
   train:
     cmd: python src/models/model1/train.py
     deps:
-    - path: data/processed/train.csv
-      hash: md5
-      md5: 524b033b66640ebbab203855b05d1302
-      size: 39327772
-    - path: src/models/model1/train.py
-      hash: md5
-      md5: c9d6065f18d5752c93943e839d06dce9
-      size: 3536
+      - path: data/processed/train.csv
+        hash: md5
+        md5: 524b033b66640ebbab203855b05d1302
+        size: 39327772
+      - path: src/models/model1/train.py
+        hash: md5
+        md5: c9d6065f18d5752c93943e839d06dce9
+        size: 3536
     params:
       params.yaml:
         model.name: LogisticRegression
         training.split.test_size: 0.2
     outs:
-    - path: dvclive/plots/metrics/cv_accuracy.tsv
-      hash: md5
-      md5: f1592ab9703e874f61bb5794d54b4499
-      size: 38
-    - path: dvclive/plots/metrics/training_completed.tsv
-      hash: md5
-      md5: 6cf80a0d4a0cc84d5c2b34c7d316a663
-      size: 28
-    - path: models/trained_model.joblib
-      hash: md5
-      md5: ef2035f28a255d4b8bca9bf652eb049c
-      size: 109959
+      - path: dvclive/plots/metrics/cv_accuracy.tsv
+        hash: md5
+        md5: f1592ab9703e874f61bb5794d54b4499
+        size: 38
+      - path: dvclive/plots/metrics/training_completed.tsv
+        hash: md5
+        md5: 6cf80a0d4a0cc84d5c2b34c7d316a663
+        size: 28
+      - path: models/trained_model.joblib
+        hash: md5
+        md5: ef2035f28a255d4b8bca9bf652eb049c
+        size: 109959
   evaluate:
     cmd: python src/visualization/evaluation.py
     deps:
-    - path: data/processed/test.csv
-      hash: md5
-      md5: 8c22e4812019b778211cc15ce89210d0
-      size: 9834187
-    - path: models/trained_model.joblib
-      hash: md5
-      md5: ef2035f28a255d4b8bca9bf652eb049c
-      size: 109959
-    - path: src/visualization/evaluation.py
-      hash: md5
-      md5: 5ee1d125815f1e45f462d45f5f8ec882
-      size: 1590
+      - path: data/processed/test.csv
+        hash: md5
+        md5: 8c22e4812019b778211cc15ce89210d0
+        size: 9834187
+      - path: models/trained_model.joblib
+        hash: md5
+        md5: ef2035f28a255d4b8bca9bf652eb049c
+        size: 109959
+      - path: src/visualization/evaluation.py
+        hash: md5
+        md5: 5ee1d125815f1e45f462d45f5f8ec882
+        size: 1590
     outs:
-    - path: dvclive_evaluate/plots/metrics/accuracy.tsv
-      hash: md5
-      md5: d5a4866a7995956c2e87948dc827a492
-      size: 35
-    - path: dvclive_evaluate/plots/metrics/precision.tsv
-      hash: md5
-      md5: c7bb2c88f91bda423a67bef136f1592b
-      size: 36
-    - path: dvclive_evaluate/plots/metrics/recall.tsv
-      hash: md5
-      md5: 57b070fcc465420902e5a33345338f79
-      size: 33
-    - path: dvclive_evaluate/plots/metrics/roc_auc.tsv
-      hash: md5
-      md5: 3609b19c5039e624dc614b9b8ebceab8
-      size: 34
+      - path: dvclive_evaluate/plots/metrics/accuracy.tsv
+        hash: md5
+        md5: d5a4866a7995956c2e87948dc827a492
+        size: 35
+      - path: dvclive_evaluate/plots/metrics/precision.tsv
+        hash: md5
+        md5: c7bb2c88f91bda423a67bef136f1592b
+        size: 36
+      - path: dvclive_evaluate/plots/metrics/recall.tsv
+        hash: md5
+        md5: 57b070fcc465420902e5a33345338f79
+        size: 33
+      - path: dvclive_evaluate/plots/metrics/roc_auc.tsv
+        hash: md5
+        md5: 3609b19c5039e624dc614b9b8ebceab8
+        size: 34

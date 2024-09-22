@@ -63,7 +63,7 @@ stages:
           cache: false
 
   visualize:
-    cmd: python src/visualization/visualize.py
+    cmd: python src/visualization/visualization.py
     deps:
       - src/visualization/visualize.py
       - dvclive/plots/metrics/cv_accuracy.tsv

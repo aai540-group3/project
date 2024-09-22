@@ -10,11 +10,9 @@ from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import (OneHotEncoder, PolynomialFeatures,
-                                   StandardScaler)
+from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
 
 from dvclive import Live
-
 
 @hydra.main(config_path="../../../conf", config_name="config", version_base=None)
 def main(cfg: DictConfig):
