@@ -17,6 +17,7 @@ EXCLUDE_FILES=(
     "combined.yaml"
     "dvc.lock"
     "evaluation.log"
+    "evaluate.log"
     "ingestion.log"
     "LICENSE"
     "Makefile"
