@@ -1,10 +1,12 @@
+# Final Project
+
 [![Deploy HF Space: OpenAI TTS](https://github.com/aai540-group3/project/actions/workflows/deploy-tts-space.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/deploy-tts-space.yml)
 
-# Final Project
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## General Project Repository Organization
 
-```
+```text
 project/
 ├── .github
 │   └── workflows                    # GitHub Actions workflows
