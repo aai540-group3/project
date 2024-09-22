@@ -32,13 +32,12 @@ def main(cfg: DictConfig) -> None:
 
         model = joblib.load(model_path)
         y_pred = model.predict(X_test)
-        y_pred_proba = model.predict_proba(X_test)
-
+        y_pred_proba = model.predict_proba(X_test)[:, 1]
         metrics = {
             "accuracy": accuracy_score(y_true, y_pred),
             "precision": precision_score(y_true, y_pred, average='weighted'),
             "recall": recall_score(y_true, y_pred, average='weighted'),
-            "roc_auc": roc_auc_score(y_true, y_pred_proba, multi_class='ovr', average='weighted'),
+            "roc_auc": roc_auc_score(y_true, y_pred_proba, average='weighted'),
         }
 
         metrics_path.parent.mkdir(parents=True, exist_ok=True)
