@@ -23,7 +23,7 @@ model:
     name: autogluon
     params:
       presets: "best_quality"
-      time_limit: 3600
+      time_limit: 60
       hyperparameters:
         GBM:
           num_boost_round: 100

@@ -174,36 +174,23 @@ stages:
   visualize:
     cmd: python src/visualization/visualize.py
     deps:
-    - path: dvclive/plots/metrics/cv_accuracy.tsv
+    - path: reports/metrics/autogluon_metrics.json
       hash: md5
-      md5: 4d0bc13cde2eb70acf1a4df58689bc5a
-      size: 38
-    - path: dvclive_evaluate/plots/metrics/accuracy.tsv
+      md5: dbe2a8a9a151fdbf598bd7ec2dbfe4f9
+      size: 144
+    - path: reports/metrics/logistic_regression_metrics.json
       hash: md5
-      md5: a33c947ddbb4d684c1313aa07bb9ced7
-      size: 35
-    - path: dvclive_evaluate/plots/metrics/precision.tsv
-      hash: md5
-      md5: f6b04717d3223371bec6fa5e42054a2e
-      size: 36
-    - path: dvclive_evaluate/plots/metrics/recall.tsv
-      hash: md5
-      md5: 6c5598ac67fdaca5779f443ca209ad14
-      size: 34
-    - path: dvclive_evaluate/plots/metrics/roc_auc.tsv
-      hash: md5
-      md5: e82254312f2488397743c189dfa5db87
-      size: 34
+      md5: f61f3421261fd70b8bc1538716574622
+      size: 144
     - path: src/visualization/visualize.py
       hash: md5
-      md5: a75be6717a0478c3e359f98276cc323f
-      size: 5974
+      md5: 6b07487068c422fd7d3f4718f44787c6
+      size: 1906
     outs:
-    - path: reports/figures
+    - path: reports/figures/model_comparison.png
       hash: md5
-      md5: 4efb63a7e0ed88406e31dfa863c1abaa.dir
-      size: 2361145
-      nfiles: 11
+      md5: f7b85219595a3bf4510dbbef516ead93
+      size: 19548
   preprocess@logistic_regression:
     cmd: python src/models/logistic_regression/preprocessing.py model=logistic_regression
     deps:
@@ -291,8 +278,8 @@ stages:
       size: 47491440
     - path: src/models/autogluon/train.py
       hash: md5
-      md5: 3f42a97036eb739c72fb92f5f95339b7
-      size: 1960
+      md5: 45fe34e55216b768297e5312500e1673
+      size: 2790
     params:
       params.yaml:
         dataset.path.processed: data/processed
@@ -304,8 +291,8 @@ stages:
     outs:
     - path: models/autogluon/model.pkl
       hash: md5
-      md5: d41d8cd98f00b204e9800998ecf8427e
-      size: 0
+      md5: 765ae204be40e78fd05f126e4c2aa7b3
+      size: 6818
   evaluate@logistic_regression:
     cmd: python src/models/logistic_regression/evaluate.py model=logistic_regression
     deps:
@@ -336,4 +323,32 @@ stages:
     - path: reports/metrics/logistic_regression_metrics.json
       hash: md5
       md5: f61f3421261fd70b8bc1538716574622
+      size: 144
+  evaluate@autogluon:
+    cmd: python src/models/autogluon/evaluate.py model=autogluon
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: cfd9fd8441b890900bee61eaaf60a7d8
+      size: 14026237
+    - path: models/autogluon/model.pkl
+      hash: md5
+      md5: 765ae204be40e78fd05f126e4c2aa7b3
+      size: 6818
+    - path: src/models/autogluon/evaluate.py
+      hash: md5
+      md5: 231ef96f2efb713a0fe689284c8b7083
+      size: 2183
+    params:
+      params.yaml:
+        dataset.path.processed: data/processed
+        model.autogluon:
+          name: autogluon
+          params:
+            presets: best_quality
+            eval_metric: accuracy
+    outs:
+    - path: reports/metrics/autogluon_metrics.json
+      hash: md5
+      md5: dbe2a8a9a151fdbf598bd7ec2dbfe4f9
       size: 144

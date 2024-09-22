@@ -22,6 +22,7 @@ def main(cfg: DictConfig) -> None:
         data_paths = cfg.dataset.path
         test_data_path = Path(to_absolute_path(f"{data_paths.processed}/test.csv"))
         model_dir = Path(to_absolute_path(f"models/{cfg.model.name}"))
+        metrics_output_path = Path(to_absolute_path(f"reports/metrics/{cfg.model.name}_metrics.json"))
 
         logger.info(f"Evaluating model {cfg.model.name}...")
 
@@ -33,16 +34,17 @@ def main(cfg: DictConfig) -> None:
         y_pred = predictor.predict(X_test)
         y_pred_proba = predictor.predict_proba(X_test)
 
+        # Get the probability of the positive class
+        y_pred_proba_positive = y_pred_proba[y_pred_proba.columns[1]]
+
         metrics = {
             "accuracy": accuracy_score(y_true, y_pred),
             "precision": precision_score(y_true, y_pred, average='weighted'),
             "recall": recall_score(y_true, y_pred, average='weighted'),
-            "roc_auc": roc_auc_score(y_true, y_pred_proba, multi_class='ovr', average='weighted'),
+            "roc_auc": roc_auc_score(y_true, y_pred_proba_positive, average='weighted'),
         }
 
-        metrics_output_path = Path(to_absolute_path(f"reports/metrics/{cfg.model.name}_metrics.json"))
         metrics_output_path.parent.mkdir(parents=True, exist_ok=True)
-
         with open(metrics_output_path, "w") as f:
             json.dump(metrics, f, indent=4)
 

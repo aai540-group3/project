@@ -12,7 +12,6 @@ from omegaconf import DictConfig, OmegaConf
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 @hydra.main(config_path="../../../configs", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
     try:
@@ -22,13 +21,12 @@ def main(cfg: DictConfig) -> None:
         data_paths = cfg.dataset.path
         train_data_path = Path(to_absolute_path(f"{data_paths.processed}/train.csv"))
         model_output_dir = Path(to_absolute_path("models/autogluon"))
-        final_model_dir = Path(to_absolute_path("models/autogluon_final"))
 
         # Calculate hash of input data and configuration
         input_hash = calculate_input_hash(train_data_path, cfg)
-        hash_file = final_model_dir / "input_hash.txt"
+        hash_file = model_output_dir / "input_hash.txt"
 
-        if final_model_dir.exists() and hash_file.exists():
+        if model_output_dir.exists() and hash_file.exists():
             with open(hash_file, "r") as f:
                 stored_hash = f.read().strip()
 
@@ -52,21 +50,18 @@ def main(cfg: DictConfig) -> None:
             presets=cfg.model.autogluon.params.presets,
         )
 
-        # Copy the best model (WeightedEnsemble_L3) to the final model directory
-        final_model_dir.mkdir(parents=True, exist_ok=True)
+        # Copy the best model (WeightedEnsemble_L3) to model.pkl
         best_model_path = model_output_dir / "models" / "WeightedEnsemble_L3"
         if best_model_path.exists():
-            shutil.copytree(best_model_path, final_model_dir / "WeightedEnsemble_L3", dirs_exist_ok=True)
-
-        # Copy necessary files for loading the model
-        shutil.copy(model_output_dir / "predictor.pkl", final_model_dir / "predictor.pkl")
-        shutil.copy(model_output_dir / "learner.pkl", final_model_dir / "learner.pkl")
+            shutil.copy(best_model_path / "model.pkl", model_output_dir / "model.pkl")
+        else:
+            logger.warning("WeightedEnsemble_L3 not found. Using the default model.")
 
         # Save the input hash
         with open(hash_file, "w") as f:
             f.write(input_hash)
 
-        logger.info(f"Best model saved to {final_model_dir}")
+        logger.info(f"Model saved to {model_output_dir}")
 
     except Exception as e:
         logger.error(f"An error occurred during training: {str(e)}")
