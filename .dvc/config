@@ -1,4 +1,6 @@
 [core]
     remote = hf
+[hydra]
+    enabled = True
 ['remote "hf"']
     url = https://huggingface.co/aai540-group3/project
