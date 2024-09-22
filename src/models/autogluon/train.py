@@ -6,9 +6,10 @@ import hydra
 import joblib
 import pandas as pd
 from autogluon.tabular import TabularPredictor
-from dvclive import Live
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
+
+from dvclive import Live
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

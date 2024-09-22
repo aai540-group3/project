@@ -5,10 +5,11 @@ from pathlib import Path
 import hydra
 import joblib
 import pandas as pd
-from dvclive import Live
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 from sklearn.linear_model import LogisticRegression
+
+from dvclive import Live
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

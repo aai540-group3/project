@@ -7,12 +7,13 @@ import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from dvclive import Live
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 from sklearn.metrics import (accuracy_score, auc, confusion_matrix,
                              precision_score, recall_score, roc_auc_score,
                              roc_curve)
+
+from dvclive import Live
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
