@@ -1,24 +1,9 @@
 {
     "training_completed": 1,
-<<<<<<< HEAD
-<<<<<<< HEAD
     "cv_accuracy": 0.6312168905950096,
     "cv_fold_1_accuracy": 0.6331669865642994,
     "cv_fold_2_accuracy": 0.6298656429942419,
     "cv_fold_3_accuracy": 0.6349328214971209,
     "cv_fold_4_accuracy": 0.6302495201535508,
     "cv_fold_5_accuracy": 0.6278694817658349
-=======
-=======
->>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
-    "cv_accuracy": 0.6111042595158127,
-    "cv_fold_1_accuracy": 0.6074005834484877,
-    "cv_fold_2_accuracy": 0.6169967756794104,
-    "cv_fold_3_accuracy": 0.6107016735759251,
-    "cv_fold_4_accuracy": 0.6092898272552784,
-    "cv_fold_5_accuracy": 0.6111324376199616
-<<<<<<< HEAD
->>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
-=======
->>>>>>> 0d36faa1fb918e7545f7e86c86aa138460e9b94c
 }
