@@ -75,13 +75,9 @@ To avoid late penalty deductions, assignments should be submitted on or prior to
 
 1. Finalize the [ML System Design Document](https://sandiego.instructure.com/courses/14123/files/1940576?wrap=1) that you have drafted throughout the course for final submission to project stakeholders.
 2. In your final document, make sure you include the following:
-
     * Include a clearly defined problem statement. This should be one to two paragraphs.
-
     * Include a clear description of how you will measure the impact of your work; this should tie directly to the goals. This should be one to two paragraphs.
-
     * Complete the security checklist and describe any risks surrounding sensitive data, bias, and ethical concerns.
-
     * **Solution Overview.** Describe your implementation of the solution. Each section should be two to three paragraphs and should describe your findings from the code in your GitHub repository. Your answers should be detailed and explain your rationale for the decisions you have made.
         * Data Sources
         * Data Engineering
