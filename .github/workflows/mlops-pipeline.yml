@@ -8,6 +8,7 @@ on:
       - "src/**"
       - "conf/**"
       - "dvc.yaml"
+      - "params.yaml"
       - "dvc.lock"
       - "requirements.txt"
       - ".github/workflows/mlops-pipeline.yml"
@@ -18,6 +19,7 @@ on:
       - "src/**"
       - "conf/**"
       - "dvc.yaml"
+      - "params.yaml"
       - "dvc.lock"
       - "requirements.txt"
       - ".github/workflows/mlops-pipeline.yml"
@@ -37,10 +39,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+        uses: actions/checkout@v4.1.7
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
+        uses: actions/setup-python@v5.2.0
         with:
           python-version: "3.x"
 
@@ -61,16 +63,22 @@ jobs:
 
       - name: Run DVC pipeline
         run: |
-          dvc exp run
+          dvc exp run --queue
 
       - name: Push data and models to DVC remotes
         if: always()
         run: |
           dvc push
 
+      - name: Apply queued experiments and push changes
+        if: always()
+        run: |
+          dvc exp apply
+          dvc push
+
       - name: Commit and push changes
         if: always()
-        uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842  # v5.0.1
+        uses: stefanzweifel/git-auto-commit-action@v5.0.1
         with:
           commit_message: "Update DVC artifacts and metrics"
           branch: ${{ github.ref }}
