@@ -1,0 +1,75 @@
+name: MLOps Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "conf/**"
+      - "dvc.yaml"
+      - "dvc.lock"
+      - "requirements.txt"
+      - ".github/workflows/mlops-pipeline.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "conf/**"
+      - "dvc.yaml"
+      - "dvc.lock"
+      - "requirements.txt"
+      - ".github/workflows/mlops-pipeline.yml"
+
+jobs:
+  build-and-run-pipeline:
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      DVC_STUDIO_TOKEN: ${{ secrets.DVC_STUDIO_TOKEN }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+
+      - name: Set up Python
+        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Configure DVC remotes
+        run: |
+          dvc remote modify models_remote auth custom
+          dvc remote modify models_remote --local custom_auth_header "Authorization: Bearer $HF_TOKEN"
+          dvc remote modify dataset_remote auth custom
+          dvc remote modify dataset_remote --local custom_auth_header "Authorization: Bearer $HF_TOKEN"
+
+      - name: Pull data and models from DVC remotes
+        run: |
+          dvc pull
+
+      - name: Run DVC pipeline
+        run: |
+          dvc exp run
+
+      - name: Push data and models to DVC remotes
+        if: always()
+        run: |
+          dvc push
+
+      - name: Commit and push changes
+        if: always()
+        uses: stefanzweifel/git-auto-commit-action@3ea6ae190baf489ba007f7c92608f33ce20ef04a # v4.16.0
+        with:
+          commit_message: "Update DVC artifacts and metrics"
+          branch: ${{ github.ref }}
+          file_pattern: |
+            dvc.lock
+            dvclive/*
+            reports/metrics.json
