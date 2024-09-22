@@ -1,6 +1,10 @@
 [core]
-    remote = models_remote
+    remote = datasets_remote
 [hydra]
     enabled = True
 [studio]
     url = https://studio.iterative.ai
+['remote "datasets_remote"']
+    url = s3://mlops-artifacts-aai540-group3/datasets
+['remote "models_remote"']
+    url = s3://mlops-artifacts-aai540-group3/models
