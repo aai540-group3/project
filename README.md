@@ -323,19 +323,21 @@ The modeling phase involved training two distinct models: Logistic Regression an
 
 Both models were evaluated on the test set, yielding the following results:
 
-| Metric    | Logistic Regression | AutoGluon |
-| --------- | ------------------- | --------- |
-| Accuracy  | 63.29%              | 76.45%    |
-| Precision | 63.18%              | 75.21%    |
-| Recall    | 63.29%              | 76.52%    |
-| F1-Score  | 63.29%              | 75.86%    |
-| ROC-AUC   | 68.08%              | 83.27%    |
+| **Metric** | **Logistic Regression** | **AutoGluon**          |
+|------------|-------------------------|------------------------|
+| Accuracy   | 46.01%                  | 63.30%                |
+| Precision  | 69.49%                  | 63.18%                |
+| Recall     | 46.01%                  | 63.30%                |
+| F1-Score   | 46.01%                  | 63.30%                |
+| ROC-AUC    | 64.65%                  | 68.09%                |
 
 **Analysis**:
 
-- **AutoGluon Performance**: Outperformed Logistic Regression across all metrics, indicating a superior ability to capture complex patterns in the data.
-- **Logistic Regression**: Provided a strong baseline but showed limitations in capturing non-linear relationships and feature interactions.
-- **ROC-AUC Improvement**: The higher ROC-AUC score for AutoGluon suggests enhanced discriminative ability, crucial for accurately identifying high-risk patients.
+- **AutoGluon Performance**: Demonstrated superior performance across most metrics compared to Logistic Regression. The higher accuracy and ROC-AUC indicate better overall predictive ability.
+- **Logistic Regression**: Achieved higher precision, suggesting it was better at predicting positive cases when it predicted them but had lower recall and overall accuracy.
+- **ROC-AUC Improvement**: AutoGluon's ROC-AUC of 68.09% shows better discrimination between classes compared to Logistic Regression's 64.65%.
+
+The results indicate that while both models have room for improvement, AutoGluon provides a better foundation for further development due to its higher accuracy and balanced performance across metrics.
 
 #### Visualizations
 
