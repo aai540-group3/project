@@ -1,5 +1,5 @@
 model_name: autogluon
-metrics_output_path: /home/user/project/reports/metrics/autogluon_metrics.json
-test_data_path: /home/user/project/data/processed/test.csv
-evaluation_date: '2024-09-22T19:40:00.754869'
+metrics_output_path: /home/runner/work/project/project/reports/metrics/autogluon_metrics.json
+test_data_path: /home/runner/work/project/project/data/processed/test.csv
+evaluation_date: '2024-09-23T01:41:30.593676'
 dataset_version: v1.0
