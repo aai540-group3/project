@@ -35,8 +35,20 @@ fi
 
 # Check for AWS CLI
 if ! command_exists aws ; then
-    echo "AWS CLI is not installed. Please install AWS CLI."
-    exit 1
+    echo "AWS CLI is not installed. Installing AWS CLI..."
+
+    # Determine the OS and install AWS CLI accordingly
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # For Debian/Ubuntu-based distributions
+        sudo apt update
+        sudo apt install -y awscli
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        # For macOS
+        brew install awscli
+    else
+        echo "Unsupported OS. Please install AWS CLI manually."
+        exit 1
+    fi
 fi
 
 # 2. Set up the Python virtual environment
