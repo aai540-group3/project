@@ -40,6 +40,7 @@ jobs:
 
       - name: Generate PDFs
         shell: bash
+        working-directory: docs/design-document
         run: |
           sudo apt-get update
           sudo apt-get -y install \
@@ -50,23 +51,15 @@ jobs:
             texlive-bibtex-extra \
             texlive-science
 
-          for file in docs/design-document/*.tex
-          do
-            dir=$(dirname "$file")
-            base=$(basename "$file")
-            base_no_ext="${base%.*}"
-            pushd "$dir" > /dev/null
-            rm -f "${base_no_ext}.pdf"
-            pdflatex -interaction=nonstopmode "$base"
-            biber "$base_no_ext"
-            pdflatex -interaction=nonstopmode "$base"
-            pdflatex -interaction=nonstopmode "$base"
-            popd > /dev/null
-          done
-
-      - name: Move PDF
-        run: |
-          cp docs/design-document/Final_Project_Team_3_Deliverable_3.pdf ..
+          file="Final_Project_Team_3_Deliverable_1.tex"
+          base=$(basename "$file")
+          base_no_ext="${base%.*}"
+          rm -f "${base_no_ext}.pdf"
+          pdflatex -interaction=nonstopmode "$base"
+          biber "$base_no_ext"
+          pdflatex -interaction=nonstopmode "$base"
+          pdflatex -interaction=nonstopmode "$base"
+          cp Final_Project_Team_3_Deliverable_1.pdf ../..
 
       - name: Commit and Push Files
         run: |
@@ -74,5 +67,5 @@ jobs:
             *.pdf \
             *.tex \
             *.bib
-          git commit -m "Push Final_Project_Team_3_Deliverable_3.pdf and source files"
+          git commit -m "Push PDF and source files"
           git push
