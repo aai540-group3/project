@@ -31,6 +31,7 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write # Add permission to create PRs
 
 jobs:
   run-mlops-pipeline:
@@ -43,12 +44,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
         with:
           fetch-depth: 0
 
       - name: Cache Python dependencies
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -56,7 +57,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
         with:
           python-version: "3.11"
 
@@ -71,7 +72,7 @@ jobs:
           dvc remote modify datasets_remote region $AWS_DEFAULT_REGION
 
       - name: Cache DVC cache directory
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
         with:
           path: .dvc/cache
           key: ${{ runner.os }}-dvc-cache-${{ hashFiles('dvc.lock') }}
@@ -98,7 +99,9 @@ jobs:
 
       - name: Commit and push changes
         if: always()
-        uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842 # v5.0.1
+        id: commit_and_push
+        continue-on-error: true
+        uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842  # v5.0.1
         with:
           commit_message: "Update DVC artifacts and metrics"
           branch: ${{ github.ref_name }}
@@ -107,3 +110,15 @@ jobs:
             dvclive/
             dvclive_evaluate/
             reports/metrics.json
+
+      - name: Create Pull Request if push failed
+        if: steps.commit_and_push.outcome == 'failure'
+        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f  # v7.0.5
+        with:
+          commit-message: "Update DVC artifacts and metrics"
+          branch: "auto/update-dvc-artifacts-${{ github.run_id }}"
+          delete-branch: true
+          title: "Update DVC artifacts and metrics"
+          body: "This PR updates the DVC artifacts and metrics."
+          labels: "automated-pr"
+          base: ${{ github.ref_name }}
