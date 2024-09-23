@@ -69,4 +69,5 @@ jobs:
             *.tex \
             *.bib
           git commit -m "Push PDF and source files"
+          git pull
           git push
