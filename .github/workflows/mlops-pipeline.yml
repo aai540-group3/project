@@ -81,7 +81,7 @@ jobs:
 
       - name: Run DVC pipeline
         run: |
-          dvc exp run --run-all
+          dvc repro
 
       - name: Push data and models to DVC remotes
         if: always()
