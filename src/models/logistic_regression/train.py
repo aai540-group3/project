@@ -85,35 +85,40 @@ def main(cfg: DictConfig) -> None:
 
         # Initialize DVCLive
         with Live() as live:
-            # Log training parameters
-            params_to_log = {
-                "model": cfg.model.name,
-                "label": "readmitted",
-                "problem_type": "binary",
-                "dataset_version": cfg.dataset.version,
-            }
-            # Flatten logistic regression parameters
-            for key, value in cfg.model.logistic_regression.params.items():
-                params_to_log[f"logistic_regression_{key}"] = value
+            try:
+                # Log training parameters
+                params_to_log = {
+                    "model": cfg.model.name,
+                    "label": "readmitted",
+                    "problem_type": "binary",
+                    "dataset_version": cfg.dataset.version,
+                }
+                # Flatten logistic regression parameters
+                for key, value in cfg.model.logistic_regression.params.items():
+                    params_to_log[f"logistic_regression_{key}"] = value
 
-            live.log_params(params_to_log)
+                live.log_params(params_to_log)
 
-            # Initialize and train the Logistic Regression model
-            model = LogisticRegression(**cfg.model.logistic_regression.params)
-            model.fit(X_train, y_train)
-            logger.info("Model training completed.")
+                # Initialize and train the Logistic Regression model
+                model = LogisticRegression(**cfg.model.logistic_regression.params)
+                model.fit(X_train, y_train)
+                logger.info("Model training completed.")
 
-            # Log the trained model as an artifact
-            model_output_path = model_output_dir / "model.pkl"
-            joblib.dump(model, model_output_path)
-            live.log_artifact(
-                str(model_output_path),
-                type="model",
-                name=f"{cfg.model.name}_model",
-            )
-            logger.info(
-                f"Model saved and logged as artifact at {model_output_path}"
-            )
+                # Log the trained model as an artifact
+                model_output_path = model_output_dir / "model.pkl"
+                joblib.dump(model, model_output_path)
+                live.log_artifact(
+                    str(model_output_path),
+                    type="model",
+                    name=f"{cfg.model.name}_model",
+                )
+                logger.info(
+                    f"Model saved and logged as artifact at {model_output_path}"
+                )
+
+            finally:
+                # Always end the DVC Live run
+                live.end()
 
         # Save the input hash to prevent redundant trainings
         with open(hash_file, "w") as f:

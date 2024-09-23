@@ -80,63 +80,68 @@ def main(cfg: DictConfig) -> None:
 
         # Initialize DVCLive
         with Live() as live:
-            # Log training parameters
-            params_to_log = {
-                "model": "autogluon",
-                "label": "readmitted",
-                "problem_type": "binary",
-                "dataset_version": cfg.dataset.version,
-            }
-            # Add flattened AutoGluon parameters
-            for key, value in cfg.model.params.items():
-                params_to_log[f"autogluon_{key}"] = value
-
-            live.log_params(params_to_log)
-
-            # Initialize and train the AutoGluon TabularPredictor
-            predictor = TabularPredictor(
-                label="readmitted",
-                path=str(model_output_dir),
-                problem_type="binary",
-            )
-
-            # Prepare hyperparameters
-            hyperparameters = {
-                "GBM": {"num_boost_round": cfg.model.params.gbm_num_boost_round}
-            }
-
-            predictor.fit(
-                train_data=train_data,
-                time_limit=cfg.model.params.time_limit,
-                presets=cfg.model.params.presets,
-                hyperparameters=hyperparameters,
-                verbosity=cfg.model.params.verbosity,
-            )
-            logger.info("AutoGluon model training completed.")
-
             try:
-                # Save a reference to the predictor
-                joblib.dump(predictor, model_pkl_path)
-                logger.info(
-                    f"AutoGluon predictor reference saved to {model_pkl_path}"
+                # Log training parameters
+                params_to_log = {
+                    "model": "autogluon",
+                    "label": "readmitted",
+                    "problem_type": "binary",
+                    "dataset_version": cfg.dataset.version,
+                }
+                # Add flattened AutoGluon parameters
+                for key, value in cfg.model.params.items():
+                    params_to_log[f"autogluon_{key}"] = value
+
+                live.log_params(params_to_log)
+
+                # Initialize and train the AutoGluon TabularPredictor
+                predictor = TabularPredictor(
+                    label="readmitted",
+                    path=str(model_output_dir),
+                    problem_type="binary",
                 )
 
-                # Log the model.pkl as an artifact
-                live.log_artifact(
-                    str(model_pkl_path), type="model", name="autogluon_model"
+                # Prepare hyperparameters
+                hyperparameters = {
+                    "GBM": {"num_boost_round": cfg.model.params.gbm_num_boost_round}
+                }
+
+                predictor.fit(
+                    train_data=train_data,
+                    time_limit=cfg.model.params.time_limit,
+                    presets=cfg.model.params.presets,
+                    hyperparameters=hyperparameters,
+                    verbosity=cfg.model.params.verbosity,
                 )
+                logger.info("AutoGluon model training completed.")
 
-                # Only save the hash if model saving was successful
-                with open(hash_file, "w") as f:
-                    f.write(input_hash)
-                logger.info(f"Input hash saved to {hash_file}")
+                try:
+                    # Save a reference to the predictor
+                    joblib.dump(predictor, model_pkl_path)
+                    logger.info(
+                        f"AutoGluon predictor reference saved to {model_pkl_path}"
+                    )
 
-            except Exception as e:
-                logger.error(f"Error saving model or hash: {e}")
-                # Optionally, delete the hash file if model saving failed
-                if hash_file.exists():
-                    hash_file.unlink()
-                raise
+                    # Log the model.pkl as an artifact
+                    live.log_artifact(
+                        str(model_pkl_path), type="model", name="autogluon_model"
+                    )
+
+                    # Only save the hash if model saving was successful
+                    with open(hash_file, "w") as f:
+                        f.write(input_hash)
+                    logger.info(f"Input hash saved to {hash_file}")
+
+                except Exception as e:
+                    logger.error(f"Error saving model or hash: {e}")
+                    # Delete the hash file if model saving failed
+                    if hash_file.exists():
+                        hash_file.unlink()
+                    raise
+
+            finally:
+                # Always end the DVC Live run
+                live.end()
 
         return predictor  # Return the trained predictor
 
