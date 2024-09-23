@@ -109,13 +109,11 @@ echo "Configuring DVC remotes..."
 # Remove any existing local config to prevent duplication
 rm -f .dvc/config.local
 
-# Optionally set AWS region for DVC remotes
-# Uncomment and set your AWS region if needed
-# AWS_REGION='your-aws-region'
-# dvc remote modify models_remote region $AWS_REGION
-# dvc remote modify datasets_remote region $AWS_REGION
+AWS_REGION='us-east-1'
+dvc remote modify models_remote region $AWS_REGION
+dvc remote modify datasets_remote region $AWS_REGION
 
-# 6. Initialize DVC (if not already initialized)
+# 6. Initialize DVC
 if [ ! -d ".dvc" ]; then
     dvc init
 fi
@@ -138,7 +136,7 @@ echo "export DVC_STUDIO_TOKEN=\"$DVC_STUDIO_TOKEN\""
 echo ""
 echo "Alternatively, you can run 'source bootstrap-env' to export the token for your session."
 
-# Create a script to export token for future sessions (optional)
+# Create a script to export token for future sessions
 echo "export DVC_STUDIO_TOKEN=\"$DVC_STUDIO_TOKEN\"" > bootstrap-env
 
 # Deactivate virtual environment to prevent accidental usage
