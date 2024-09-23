@@ -49,7 +49,7 @@ jobs:
             texlive-bibtex-extra \
             texlive-science
 
-          for file in *.tex
+          for file in docs/design-document/*.tex
           do
             dir=$(dirname "$file")
             base=$(basename "$file")
@@ -65,10 +65,9 @@ jobs:
 
       - name: Move PDF
         run: |
-          cp *.pdf ..
+          cp docs/design-document/Final_Project_Team_3_Deliverable_3.pdf ..
 
       - name: Commit and Push Files
-        working-directory: .
         run: |
           git add \
             *.pdf \
