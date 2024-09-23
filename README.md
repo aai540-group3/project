@@ -551,12 +551,6 @@ This structure ensures:
 
 ## Architecture Diagrams
 
-Visual representations of the system components and workflows help in understanding the overall architecture.
-
-### System Overview Diagram
-
-*Refer to Figure 1 in the Solution Overview section.*
-
 ### Data Processing Pipeline
 
 ```mermaid
