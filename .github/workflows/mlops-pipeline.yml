@@ -29,6 +29,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   run-mlops-pipeline:
     runs-on: ubuntu-latest
