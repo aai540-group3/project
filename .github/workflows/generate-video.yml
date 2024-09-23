@@ -1,0 +1,87 @@
+name: Generate Video
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  generate-video:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main branch
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Git LFS pull
+        run: |
+          sudo apt-get install git-lfs
+          git lfs pull --include="stock/*"
+          git lfs pull --include="assets/*"
+
+      - name: Cache pip packages
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Cache apt packages
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
+      - name: Generate Video
+        id: generate-video
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install \
+              bc \
+              ffmpeg \
+              libreoffice \
+              poppler-utils
+
+          python3 -m pip install --upgrade pip
+          python3 -m pip install \
+              google-cloud-texttospeech \
+              gTTS  \
+              moviepy \
+              numpy \
+              pdf2image  \
+              Pillow==6.2.2 \
+              python-pptx
+
+          rm -f ${{ vars.PROJECT }}.mp4
+          echo "${{ secrets.KEYFILE }}" | base64 --decode > keyfile.json
+          python3 scripts/pptx2video.py ${{ vars.PROJECT }}.pptx --keyfile keyfile.json
+
+          # GET TOTAL VIDEO DURATION
+          total_seconds=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 ${{ vars.PROJECT }}.mp4)
+          hours=$(bc <<< "${total_seconds}/3600")
+          minutes=$(bc <<< "(${total_seconds}%3600)/60")
+          seconds=$(printf "%.0f" $(bc <<< "${total_seconds}%60"))
+          humanized_duration="${hours}h ${minutes}m ${seconds}s"
+          echo "duration=$humanized_duration" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to Vimeo via Python API
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install PyVimeo
+          python3 scripts/upload-video.py
+        env:
+          VIMEO_CLIENT_ID: ${{ secrets.VIMEO_CLIENT_ID }}
+          VIMEO_CLIENT_SECRET: ${{ secrets.VIMEO_CLIENT_SECRET }}
+          VIMEO_ACCESS_TOKEN: ${{ secrets.VIMEO_ACCESS_TOKEN }}
+          VIMEO_VIDEO_ID: ${{ secrets.VIMEO_VIDEO_ID }}
+          VIDEO_PATH: ${{ vars.PROJECT }}.mp4

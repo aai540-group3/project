@@ -1,0 +1,78 @@
+name: Generate PDFs
+
+on:
+  push:
+    paths:
+      - "docs/design-document/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  generate-pdfs:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs/design-document
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 1
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Cache apt packages
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
+      - name: Generate PDFs
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install \
+            biber \
+            texlive \
+            texlive-latex-extra \
+            texlive-fonts-extra \
+            texlive-bibtex-extra \
+            texlive-science
+
+          for file in *.tex
+          do
+            dir=$(dirname "$file")
+            base=$(basename "$file")
+            base_no_ext="${base%.*}"
+            pushd "$dir" > /dev/null
+            rm -f "${base_no_ext}.pdf"
+            pdflatex -interaction=nonstopmode "$base"
+            biber "$base_no_ext"
+            pdflatex -interaction=nonstopmode "$base"
+            pdflatex -interaction=nonstopmode "$base"
+            popd > /dev/null
+          done
+
+      - name: Move PDF
+        run: |
+          cp *.pdf ..
+
+      - name: Commit and Push Files
+        working-directory: .
+        run: |
+          git add \
+            *.pdf \
+            *.tex \
+            *.bib
+          git commit -m "Push Final_Project_Team_3_Deliverable_3.pdf and source files"
+          git push

@@ -1,6 +1,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![MLOps Pipeline](https://github.com/aai540-group3/project/actions/workflows/mlops-pipeline.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/mlops-pipeline.yml) [![Deploy HF Space: OpenAI TTS](https://github.com/aai540-group3/project/actions/workflows/deploy-tts-space.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/deploy-tts-space.yml)
 
-# Predicting 30-Day Hospital Readmissions for Diabetic Patients
+# Diabetic Readmission Risk Prediction
 
 ## ML System Design Document
 
@@ -12,7 +12,7 @@ Hospital readmissions within 30 days pose significant challenges to healthcare s
 
 ## Table of Contents
 
-- [Predicting 30-Day Hospital Readmissions for Diabetic Patients](#predicting-30-day-hospital-readmissions-for-diabetic-patients)
+- [Diabetic Readmission Risk Prediction](#diabetic-readmission-risk-prediction)
   - [ML System Design Document](#ml-system-design-document)
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)

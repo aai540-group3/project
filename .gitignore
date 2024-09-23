@@ -17,6 +17,7 @@ __pycache__/
 .tox/
 .venv/
 .vscode/
+*.bbl
 *.cover
 *.db
 *.egg
@@ -32,6 +33,7 @@ __pycache__/
 *.spec
 *.swo
 *.swp
+*.synctex.gz
 *.temp
 *.tmp
 build/
