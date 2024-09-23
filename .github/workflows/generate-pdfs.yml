@@ -60,7 +60,8 @@ jobs:
           biber "$base_no_ext"
           pdflatex -interaction=nonstopmode "$base"
           pdflatex -interaction=nonstopmode "$base"
-          cp Final_Project_Team_3_Deliverable_1.pdf ../..
+          ls -al
+          cp *.pdf ../..
 
       - name: Commit and Push Files
         run: |
