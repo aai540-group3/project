@@ -1,4 +1,4 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![MLOps Pipeline](https://github.com/aai540-group3/project/actions/workflows/mlops-pipeline.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/mlops-pipeline.yml) [![Deploy HF Space: OpenAI TTS](https://github.com/aai540-group3/project/actions/workflows/deploy-tts-space.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/deploy-tts-space.yml) 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![MLOps Pipeline](https://github.com/aai540-group3/project/actions/workflows/mlops-pipeline.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/mlops-pipeline.yml) [![Deploy HF Space: OpenAI TTS](https://github.com/aai540-group3/project/actions/workflows/deploy-tts-space.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/deploy-tts-space.yml)
 
 # Predicting 30-Day Hospital Readmissions for Diabetic Patients
 
@@ -323,13 +323,13 @@ The modeling phase involved training two distinct models: Logistic Regression an
 
 Both models were evaluated on the test set, yielding the following results:
 
-| **Metric** | **Logistic Regression** | **AutoGluon**          |
-|------------|-------------------------|------------------------|
-| Accuracy   | 46.01%                  | 63.30%                |
-| Precision  | 69.49%                  | 63.18%                |
-| Recall     | 46.01%                  | 63.30%                |
-| F1-Score   | 46.01%                  | 63.30%                |
-| ROC-AUC    | 64.65%                  | 68.09%                |
+| **Metric** | **Logistic Regression** | **AutoGluon** |
+| ---------- | ----------------------- | ------------- |
+| Accuracy   | 46.01%                  | 63.30%        |
+| Precision  | 69.49%                  | 63.18%        |
+| Recall     | 46.01%                  | 63.30%        |
+| F1-Score   | 46.01%                  | 63.30%        |
+| ROC-AUC    | 64.65%                  | 68.09%        |
 
 **Analysis**:
 
@@ -452,15 +452,15 @@ flowchart TD
     subgraph "Trigger"
         A[Code Push / PR Merge]
     end
-    
+
     A --> B(GitHub Actions Pipeline)
-    
+
     subgraph "Build & Test"
         B --> C{Checkout Code}
         C --> D[Set Up Environment]
         D --> E(Install Dependencies)
     end
-    
+
     E --> F{Configure DVC Remotes}
     F --> G(Pull Data & Models)
     G --> H[Execute DVC Pipeline]
@@ -484,7 +484,7 @@ flowchart TD
 The repository is organized to promote clarity and ease of navigation, adhering to standard practices for ML projects.
 
 ```plaintext
-project/ 
+project/
 ├── .github/                          # GitHub repository configurations
 │   └── workflows/                    # GitHub Actions workflows
 │       └── mlops-pipeline.yml        # CI/CD workflow configuration (GitHub Actions)
@@ -520,7 +520,7 @@ project/
 │   │   └── splitting.py              # Data splitting (train/test/validation)
 │   ├── models/                       # Model training and evaluation modules
 │   │   ├── __init__.py               # Makes models a Python package
-│   │   ├── logistic_regression/      # Logistic Regression model 
+│   │   ├── logistic_regression/      # Logistic Regression model
 │   │   │   ├── train.py              # Training script for Logistic Regression
 │   │   │   ├── evaluate.py           # Evaluation script for Logistic Regression
 │   │   │   └── preprocessing.py      # Preprocessing specific to Logistic Regression
@@ -538,7 +538,7 @@ project/
 ├── Makefile                          # Makefile for automation tasks (e.g., build, test)
 └── terraform/                        # Infrastructure as Code (IaC) using Terraform
     ├── main.tf                       # Main Terraform configuration file
-    └── variables.tf                  # Terraform variables 
+    └── variables.tf                  # Terraform variables
 ```
 
 This structure ensures:
@@ -562,16 +562,16 @@ Visual representations of the system components and workflows help in understand
 ```mermaid
 flowchart TD
     subgraph "Data Preparation"
-      A[Data Ingestion] --> 
-      B[Data Cleaning] --> 
-      C[Feature Engineering] --> 
-      D[Data Splitting] 
+      A[Data Ingestion] -->
+      B[Data Cleaning] -->
+      C[Feature Engineering] -->
+      D[Data Splitting]
     end
 
     D --> E[Model Preprocessing]
     E --> F[Model Training]
     F --> G[Model Evaluation]
-    G --> H[Model Deployment] 
+    G --> H[Model Deployment]
 ```
 
 *Figure 4: Data Processing Pipeline showing the progression from raw data ingestion to model deployment.*

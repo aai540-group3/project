@@ -1,11 +1,12 @@
-.PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3
+.PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3 preprocess train evaluate visualize \
+        dvc_init dvc_add dvc_push dvc_pull dvc_repro
 
 #################################################################################
 # GLOBALS                                                                       #
 #################################################################################
 
 PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-BUCKET = [OPTIONAL] your-bucket-for-syncing-data (do not include 's3://')
+BUCKET = mlops-artifacts-aai540-group3  # Your S3 bucket name
 PROFILE = default
 PROJECT_NAME = aai540-group3
 PYTHON_INTERPRETER = python3
@@ -25,9 +26,31 @@ requirements: test_environment
 	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
 
-## Make Dataset
+## Ingest, Clean, Feature Engineer, and Split Data
 data: requirements
-	$(PYTHON_INTERPRETER) src/data/make_dataset.py data/raw data/processed
+	$(PYTHON_INTERPRETER) src/data/ingestion.py
+	$(PYTHON_INTERPRETER) src/data/cleaning.py
+	$(PYTHON_INTERPRETER) src/data/build_features.py
+	$(PYTHON_INTERPRETER) src/data/splitting.py
+
+## Preprocess data for each model
+preprocess:
+	$(PYTHON_INTERPRETER) src/models/logistic_regression/preprocessing.py
+	$(PYTHON_INTERPRETER) src/models/autogluon/preprocessing.py
+
+## Train models
+train:
+	$(PYTHON_INTERPRETER) src/models/logistic_regression/train.py
+	$(PYTHON_INTERPRETER) src/models/autogluon/train.py
+
+## Evaluate models
+evaluate:
+	$(PYTHON_INTERPRETER) src/models/logistic_regression/evaluate.py
+	$(PYTHON_INTERPRETER) src/models/autogluon/evaluate.py
+
+## Visualize results
+visualize:
+	$(PYTHON_INTERPRETER) src/visualization/visualize.py
 
 ## Delete all compiled Python files
 clean:
@@ -38,7 +61,27 @@ clean:
 lint:
 	flake8 src
 
-## Upload Data to S3
+## Initialize DVC
+dvc_init:
+	dvc init
+
+## Add data to DVC
+dvc_add:
+	dvc add data/
+
+## Push data to remote storage
+dvc_push:
+	dvc push -r datasets_remote
+
+## Pull data from remote storage
+dvc_pull:
+	dvc pull -r datasets_remote
+
+## Reproduce the entire pipeline
+dvc_repro:
+	dvc repro
+
+## Upload Data to S3 (using AWS CLI)
 sync_data_to_s3:
 ifeq (default,$(PROFILE))
 	aws s3 sync data/ s3://$(BUCKET)/data/
@@ -46,7 +89,7 @@ else
 	aws s3 sync data/ s3://$(BUCKET)/data/ --profile $(PROFILE)
 endif
 
-## Download Data from S3
+## Download Data from S3 (using AWS CLI)
 sync_data_from_s3:
 ifeq (default,$(PROFILE))
 	aws s3 sync s3://$(BUCKET)/data/ data/
