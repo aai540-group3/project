@@ -194,6 +194,25 @@ flowchart TB
 
 *Figure 1: System Overview Diagram illustrating the flow from data sources through model deployment to clinical application and feedback integration.*
 
+### Data Processing Pipeline
+
+```mermaid
+flowchart TD
+    subgraph "Data Preparation"
+      A[Data Ingestion] -->
+      B[Data Cleaning] -->
+      C[Feature Engineering] -->
+      D[Data Splitting]
+    end
+
+    D --> E[Model Preprocessing]
+    E --> F[Model Training]
+    F --> G[Model Evaluation]
+    G --> H[Model Deployment]
+```
+
+*Figure 2: Data Processing Pipeline showing the progression from raw data ingestion to model deployment.*
+
 ### Data Sources
 
 We utilize the **Diabetes 130-US hospitals for years 1999-2008 Data Set** from the UCI Machine Learning Repository, accessed via the Hugging Face Datasets library under the identifier `aai540-group3/diabetes-readmission`.
@@ -386,7 +405,7 @@ To gain deeper insights into model behavior, we generated several visualizations
         G --> I["Feedback Loop"] --> A
   ```
 
-  *Figure 2: Deployment Architecture Diagram showing the transition from model artifacts to deployment and integration with clinical applications.*
+  *Figure 3: Deployment Architecture Diagram showing the transition from model artifacts to deployment and integration with clinical applications.*
 
 - **Endpoint Exposure**:
   - Plan to deploy the model as a RESTful API, making it accessible for integration with hospital systems.
@@ -469,7 +488,7 @@ flowchart TD
     J --> K[(Pipeline Complete)]
 ```
 
-*Figure 3: CI/CD Pipeline Diagram illustrating the automated steps from code changes to updated models and data in the repository.*
+*Figure 4: CI/CD Pipeline Diagram illustrating the automated steps from code changes to updated models and data in the repository.*
 
 #### Benefits
 
@@ -546,37 +565,6 @@ This structure ensures:
 - **Separation of Concerns**: Code, configurations, data, models, and documentation are organized into distinct directories.
 - **Version Control**: Git tracks code changes, while DVC handles large data files and models.
 - **Reproducibility**: Scripts are parameterized and configurable via YAML files, promoting consistent execution across environments.
-
----
-
-## Architecture Diagrams
-
-### Data Processing Pipeline
-
-```mermaid
-flowchart TD
-    subgraph "Data Preparation"
-      A[Data Ingestion] -->
-      B[Data Cleaning] -->
-      C[Feature Engineering] -->
-      D[Data Splitting]
-    end
-
-    D --> E[Model Preprocessing]
-    E --> F[Model Training]
-    F --> G[Model Evaluation]
-    G --> H[Model Deployment]
-```
-
-*Figure 4: Data Processing Pipeline showing the progression from raw data ingestion to model deployment.*
-
-### CI/CD Pipeline
-
-*Refer to Figure 3 in the Continuous Integration and Continuous Deployment section.*
-
-### Model Deployment Architecture
-
-*Refer to Figure 2 in the Model Deployment section.*
 
 ---
 
