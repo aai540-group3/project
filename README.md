@@ -375,7 +375,7 @@ To gain deeper insights into model behavior, we generated several visualizations
         subgraph "Deployment Pipeline"
             A["Model Artifacts"] --> B["Containerization"]
             B --> C["Docker Image"]
-            C --> D["Deployment Service (e.g., AWS SageMaker)"]
+            C --> D["Deployment Service"]
             D --> E["API Endpoint"]
         end
         subgraph "Integration"
