@@ -6,7 +6,7 @@
 #################################################################################
 
 PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-BUCKET = mlops-artifacts-aai540-group3  # Your S3 bucket name
+BUCKET = mlops-artifacts-aai540-group3
 PROFILE = default
 PROJECT_NAME = aai540-group3
 PYTHON_INTERPRETER = python3
