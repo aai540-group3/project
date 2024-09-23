@@ -38,9 +38,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-apt-
 
-      - name: Generate PDFs
-        shell: bash
-        working-directory: ${{ github.workspace }}/docs/design-document
+      - name: Install TeX
         run: |
           sudo apt-get update
           sudo apt-get -y install \
@@ -51,6 +49,9 @@ jobs:
             texlive-bibtex-extra \
             texlive-science
 
+      - name: Generate PDFs
+        working-directory: ${{ github.workspace }}/docs/design-document
+        run: |
           file="Final_Project_Team_3_Deliverable_1.tex"
           base=$(basename "$file")
           base_no_ext="${base%.*}"
