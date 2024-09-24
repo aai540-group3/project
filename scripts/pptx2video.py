@@ -30,6 +30,8 @@ import shutil
 import subprocess
 import tempfile
 from typing import List
+import multiprocessing
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import aiohttp
 import openai
@@ -322,64 +324,83 @@ class PPTXtoVideo:
         """
         Creates individual video files for each slide, combining slide images and TTS audio.
         """
-        # Convert PPTX to images
-        image_files = self.convert_pptx_to_images()
+        # Convert PPTX to images in parallel
+        with multiprocessing.Pool() as pool:
+            image_files = pool.map(self.convert_slide_to_image, range(len(self.slides)))
 
-        for i, image_file in enumerate(image_files):
-            text = self.voiceover_texts[i]
-            if len(text) > MAX_CHARS:
-                logger.warning(
-                    f"Text for slide {i+1} exceeds {MAX_CHARS} characters. "
-                    "It will be split into multiple audio files."
-                )
+        # Generate TTS audio for all slides in parallel
+        with ThreadPoolExecutor(max_workers=min(32, os.cpu_count() + 4)) as executor:
+            audio_futures = {
+                executor.submit(self.generate_audio_for_slide, i, text): i
+                for i, text in enumerate(self.voiceover_texts)
+            }
 
-            # Generate TTS audio for the slide
-            slide_audio_filename = os.path.join(self.temp_dir, f"voice_{i}.mp3")
-            self.text_to_speech(text, slide_audio_filename)
+            audio_files = [None] * len(self.voiceover_texts)
+            for future in as_completed(audio_futures):
+                i = audio_futures[future]
+                audio_files[i] = future.result()
 
-            # Get audio duration
-            duration = self.get_audio_duration(slide_audio_filename)
+        # Create videos in parallel
+        with multiprocessing.Pool() as pool:
+            self.video_files = pool.starmap(
+                self.create_video_for_slide,
+                zip(range(len(image_files)), image_files, audio_files)
+            )
 
-            # Create video file combining image and audio
-            slide_video_filename = os.path.join(self.temp_dir, f"video_{i}.mp4")
-
-            # Get image dimensions
-            with Image.open(image_file) as img:
-                width, height = img.size
-
-            # Adjust width to be divisible by 2
-            adjusted_width = width if width % 2 == 0 else width - 1
-
-            # FFmpeg command to create video from image and audio
-            ffmpeg_cmd = [
-                "ffmpeg",
-                "-y",
-                "-loop", "1",
-                "-i", image_file,
-                "-i", slide_audio_filename,
-                "-c:v", "libx264",
-                "-tune", "stillimage",
-                "-c:a", "aac",
-                "-b:a", "192k",
-                "-pix_fmt", "yuv420p",
-                "-vf", f"scale={adjusted_width}:-2",  # Adjust width and maintain aspect ratio
-                "-shortest",
-                slide_video_filename,
-            ]
-
-            try:
-                self._run_ffmpeg_command(ffmpeg_cmd)
-            except RuntimeError as e:
-                logger.error(f"Error creating video for slide {i+1}: {e}")
-                continue  # Skip to the next slide if there's an error
-
-            # Append video file to the list
-            self.video_files.append(slide_video_filename)
-
-            logger.info(f"Created video for slide {i+1}: {slide_video_filename}")
+        # Remove None values (failed video creations)
+        self.video_files = [v for v in self.video_files if v]
 
         if not self.video_files:
             raise RuntimeError("No video files were created successfully.")
+
+    def convert_slide_to_image(self, i):
+        image_path = os.path.join(self.temp_dir, f"slide_{i}.png")
+        # Extract image from PDF for this slide and save it
+        images = convert_from_path(self.pdf_filename, first_page=i+1, last_page=i+1, dpi=300)
+        if images:
+            images[0].save(image_path, "PNG")
+        return image_path
+
+    def generate_audio_for_slide(self, i, text):
+        slide_audio_filename = os.path.join(self.temp_dir, f"voice_{i}.mp3")
+        self.text_to_speech(text, slide_audio_filename)
+        return slide_audio_filename
+
+    def create_video_for_slide(self, i, image_file, audio_file):
+        slide_video_filename = os.path.join(self.temp_dir, f"video_{i}.mp4")
+
+        # Get image dimensions
+        with Image.open(image_file) as img:
+            width, height = img.size
+
+        # Adjust width to be divisible by 2
+        adjusted_width = width if width % 2 == 0 else width - 1
+
+        # FFmpeg command to create video from image and audio
+        ffmpeg_cmd = [
+            "ffmpeg",
+            "-y",
+            "-loop", "1",
+            "-i", image_file,
+            "-i", audio_file,
+            "-c:v", "libx264",
+            "-tune", "stillimage",
+            "-c:a", "aac",
+            "-b:a", "192k",
+            "-pix_fmt", "yuv420p",
+            "-vf", f"scale={adjusted_width}:-2",
+            "-shortest",
+            slide_video_filename,
+        ]
+
+        try:
+            self._run_ffmpeg_command(ffmpeg_cmd)
+        except RuntimeError as e:
+            logger.error(f"Error creating video for slide {i+1}: {e}")
+            return None
+
+        logger.info(f"Created video for slide {i+1}: {slide_video_filename}")
+        return slide_video_filename
 
     def combine_videos(self):
         """
