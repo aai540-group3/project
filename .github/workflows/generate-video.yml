@@ -83,7 +83,8 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git add Final_Project_Team_3_Deliverable_2.mp4
           git commit -m "Updated video - video duration: ${{ steps.duration.outputs.duration }}" || echo "No changes to commit"
-          git push
+          git pull origin main --rebase
+          git push origin main
 
       - name: Report failure (Redundant - workflow will fail if video generation fails)
         if: steps.check_video.outputs.video_created == 'false'
