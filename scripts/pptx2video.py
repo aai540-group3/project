@@ -186,7 +186,8 @@ class PPTXtoVideo:
         self.output_file = os.path.splitext(pptx_filename)[0] + ".mp4"
         self.presentation = Presentation(pptx_filename)
         self.slides = self.presentation.slides
-        self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = os.path.join(os.getcwd(), "temp_video_assets")
+        os.makedirs(self.temp_dir, exist_ok=True)
         self.api_key = os.environ.get("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY not found in environment variables.")
@@ -199,7 +200,8 @@ class PPTXtoVideo:
 
     def __del__(self):
         """Cleans up the temporary directory upon deletion of the instance."""
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
         logger.debug(f"Cleaned up temporary directory: {self.temp_dir}")
 
     def _convert_to_pdf(self):
