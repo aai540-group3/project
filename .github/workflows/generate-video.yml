@@ -55,7 +55,7 @@ jobs:
         id: generate
         run: |
           python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Check video creation
         id: check_video
@@ -64,6 +64,7 @@ jobs:
             echo "video_created=true" >> $GITHUB_OUTPUT
           else
             echo "video_created=false" >> $GITHUB_OUTPUT
+            echo "::error title=Video generation failed::Video file not found." # Set error status
           fi
 
       - name: Get video duration
@@ -84,7 +85,7 @@ jobs:
           git commit -m "Updated video - video duration: ${{ steps.duration.outputs.duration }}" || echo "No changes to commit"
           git push
 
-      - name: Report failure
+      - name: Report failure (Redundant - workflow will fail if video generation fails)
         if: steps.check_video.outputs.video_created == 'false'
         run: |
           echo "Video generation failed. Please check the logs for errors."
