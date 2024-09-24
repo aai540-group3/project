@@ -40,7 +40,8 @@ jobs:
               bc \
               ffmpeg \
               libreoffice \
-              poppler-utils
+              poppler-utils \
+              rsync
 
       - name: Install Python dependencies
         run: |
@@ -80,17 +81,29 @@ jobs:
           seconds=$(printf "%.0f" $(echo "$duration%60" | bc))
           echo "duration=${minutes}m ${seconds}s" >> $GITHUB_OUTPUT
 
-      - name: Save assets
+      - name: Update assets
         if: steps.check_video.outputs.video_created == 'true'
         run: |
-          mkdir -p video-assets
-          cp Final_Project_Team_3_Deliverable_2.pdf video-assets/
-          cp Final_Project_Team_3_Deliverable_2.mp4 video-assets/
+          # Create a temporary directory for new assets
+          mkdir -p temp_assets
+
+          # Copy main assets
+          cp Final_Project_Team_3_Deliverable_2.pdf temp_assets/
+          cp Final_Project_Team_3_Deliverable_2.mp4 temp_assets/
+
+          # Copy intermediate files if they exist
           if [ -d "/tmp" ]; then
-            find /tmp -name "slide_*.png" -exec cp {} video-assets/ \;
-            find /tmp -name "voice_*.mp3" -exec cp {} video-assets/ \;
-            find /tmp -name "video_*.mp4" -exec cp {} video-assets/ \;
+            find /tmp -name "slide_*.png" -exec cp {} temp_assets/ \;
+            find /tmp -name "voice_*.mp3" -exec cp {} temp_assets/ \;
+            find /tmp -name "video_*.mp4" -exec cp {} temp_assets/ \;
           fi
+
+          # Use rsync to update video-assets directory
+          # --delete option removes files in video-assets that don't exist in temp_assets
+          rsync -av --delete temp_assets/ video-assets/
+
+          # Clean up temporary directory
+          rm -rf temp_assets
 
       - name: Commit and push changes
         if: steps.check_video.outputs.video_created == 'true'
