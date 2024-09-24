@@ -2,7 +2,7 @@ name: Generate Video
 on:
   push:
     paths:
-      - 'Final_Project_Team_3_Deliverable_2.pptx'
+      - "Final_Project_Team_3_Deliverable_2.pptx"
   workflow_dispatch:
 
 concurrency:
@@ -29,15 +29,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
-          python-version: '3.11'
-
-      - name: Cache pip packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -47,11 +39,18 @@ jobs:
           pip install openai python-pptx Pillow numpy
 
       - name: Generate Video
+        id: generate
         run: |
           python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
+          if [ -f "Final_Project_Team_3_Deliverable_2.mp4" ]; then
+            echo "video_created=true" >> $GITHUB_OUTPUT
+          else
+            echo "video_created=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Get video duration
         id: duration
+        if: steps.generate.outputs.video_created == 'true'
         run: |
           duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 Final_Project_Team_3_Deliverable_2.mp4)
           minutes=$(printf "%.0f" $(echo "$duration/60" | bc))
@@ -59,9 +58,16 @@ jobs:
           echo "duration=${minutes}m ${seconds}s" >> $GITHUB_OUTPUT
 
       - name: Commit and push changes
+        if: steps.generate.outputs.video_created == 'true'
         run: |
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git add Final_Project_Team_3_Deliverable_2.mp4
           git commit -m "Updated video - video duration: ${{ steps.duration.outputs.duration }}" || echo "No changes to commit"
           git push
+
+      - name: Report failure
+        if: steps.generate.outputs.video_created == 'false'
+        run: |
+          echo "Video generation failed. Please check the pptx2video.py script for errors."
+          exit 1
