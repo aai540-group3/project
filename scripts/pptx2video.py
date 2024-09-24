@@ -35,7 +35,7 @@ import os
 import shutil
 import subprocess
 import tempfile
-from typing import List
+from typing import List, Optional
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 import functools
@@ -48,7 +48,7 @@ from PIL import Image
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 MAX_CONCURRENT_CALLS = 5  # Maximum number of concurrent API calls
@@ -76,10 +76,15 @@ async def tts_async(
     :param response_format: The audio format of the output file, defaults to 'mp3'.
     :param speed: The speed of the synthesized speech (0.25 to 4.0), defaults to 1.0.
     :return: Audio content as bytes.
-    :raises RuntimeError: If input parameters are invalid or API call fails.
+    :raises ValueError: If input parameters are invalid.
+    :raises RuntimeError: If API call fails.
     """
-    if not api_key.strip() or not input_text.strip():
-        raise ValueError("API key and input text are required.")
+    if not api_key.strip():
+        raise ValueError("API key is required.")
+    if not input_text.strip():
+        raise ValueError("Input text cannot be empty.")
+
+    logger.debug(f"Sending TTS request for text: {input_text[:50]}...")  # Log first 50 chars of input text
 
     async with aiohttp.ClientSession() as session:
         async with session.post(
@@ -111,9 +116,12 @@ def convert_slide_to_image(pdf_filename: str, temp_dir: str, i: int) -> str:
     images = convert_from_path(pdf_filename, first_page=i+1, last_page=i+1, dpi=300)
     if images:
         images[0].save(image_path, "PNG")
+        logger.debug(f"Converted slide {i+1} to image: {image_path}")
+    else:
+        logger.warning(f"Failed to convert slide {i+1} to image")
     return image_path
 
-async def generate_audio_for_slide(text: str, temp_dir: str, i: int, api_key: str) -> str:
+async def generate_audio_for_slide(text: str, temp_dir: str, i: int, api_key: str) -> Optional[str]:
     """
     Generate audio for a single slide using the TTS function.
 
@@ -121,20 +129,22 @@ async def generate_audio_for_slide(text: str, temp_dir: str, i: int, api_key: st
     :param temp_dir: Directory to store temporary files.
     :param i: Slide index.
     :param api_key: OpenAI API key.
-    :return: Path to the generated audio file.
+    :return: Path to the generated audio file or None if generation fails.
     """
     slide_audio_filename = os.path.join(temp_dir, f"voice_{i}.mp3")
     try:
+        logger.debug(f"Generating audio for slide {i+1} with text: {text[:50]}...")  # Log first 50 chars of text
         audio_content = await tts_async(text, "tts-1-hd", "echo", api_key)
         with open(slide_audio_filename, "wb") as f:
             f.write(audio_content)
+        logger.debug(f"Generated audio for slide {i+1}: {slide_audio_filename}")
         return slide_audio_filename
     except Exception as e:
-        logger.error(f"Error generating audio for slide {i}: {e}")
-        raise
+        logger.error(f"Error generating audio for slide {i+1}: {e}")
+        return None
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-def create_video_for_slide(image_file: str, audio_file: str, temp_dir: str, i: int) -> str:
+def create_video_for_slide(image_file: str, audio_file: str, temp_dir: str, i: int) -> Optional[str]:
     """
     Create a video for a single slide by combining image and audio.
 
@@ -144,6 +154,10 @@ def create_video_for_slide(image_file: str, audio_file: str, temp_dir: str, i: i
     :param i: Slide index.
     :return: Path to the generated video file, or None if creation fails.
     """
+    if audio_file is None:
+        logger.warning(f"Skipping video creation for slide {i+1} due to missing audio")
+        return None
+
     slide_video_filename = os.path.join(temp_dir, f"video_{i}.mp4")
 
     with Image.open(image_file) as img:
@@ -205,12 +219,11 @@ class PPTXtoVideo:
         self.api_key = os.environ.get("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY not found in environment variables.")
-        self.voiceover_texts = [
-            slide.notes_slide.notes_text_frame.text.strip()
-            if slide.has_notes_slide
-            else ""
-            for slide in self.slides
-        ]
+        self.voiceover_texts = []
+        for i, slide in enumerate(self.slides):
+            text = slide.notes_slide.notes_text_frame.text.strip() if slide.has_notes_slide else ""
+            self.voiceover_texts.append(text)
+            logger.debug(f"Slide {i+1} text: {text[:50]}...")  # Log first 50 chars of each slide's text
         self.video_files = []
 
     def __del__(self):
@@ -264,6 +277,9 @@ class PPTXtoVideo:
         async def generate_all_audio():
             semaphore = asyncio.Semaphore(MAX_CONCURRENT_CALLS)
             async def bounded_generate(text, i):
+                if not text.strip():
+                    logger.warning(f"Skipping audio generation for slide {i+1} due to empty text.")
+                    return None
                 async with semaphore:
                     return await generate_audio_for_slide(text, self.temp_dir, i, self.api_key)
             return await asyncio.gather(*[bounded_generate(text, i) for i, text in enumerate(self.voiceover_texts)])
