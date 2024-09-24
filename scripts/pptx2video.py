@@ -36,9 +36,8 @@ import multiprocessing
 import os
 import shutil
 import subprocess
-import tempfile
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from typing import List, Optional
+from concurrent.futures import ProcessPoolExecutor
+from typing import Optional
 
 import aiohttp
 import openai
