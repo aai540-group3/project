@@ -37,7 +37,7 @@ import os
 import shutil
 import subprocess
 import tempfile
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from typing import List, Optional
 
 import aiohttp
@@ -45,12 +45,8 @@ import openai
 from pdf2image import convert_from_path
 from PIL import Image
 from pptx import Presentation
-from tenacity import (
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
+from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
+                      wait_exponential)
 
 # Configure logging
 logging.basicConfig(
