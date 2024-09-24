@@ -2,191 +2,170 @@
 import argparse
 import os
 import shutil
+import tempfile
 import subprocess
 from typing import List
+import re
 
 import numpy as np
-from google.cloud import texttospeech as tts
-from gtts import gTTS
-from moviepy.audio.AudioClip import AudioArrayClip
-from moviepy.editor import (
-    AudioFileClip,
-    ImageClip,
-    VideoFileClip,
-    concatenate_audioclips,
-    concatenate_videoclips,
-)
-from moviepy.video.compositing.transitions import crossfadein, crossfadeout
-from pdf2image import convert_from_path
 from pptx import Presentation
+from PIL import Image
+import io
+import openai
 
+MAX_CHARS = 4096  # Maximum characters allowed for OpenAI TTS API
 
 class PPTXtoVideo:
-    """
-    A class to automate the creation of a video presentation from a PowerPoint file.
-    """
-
     def __init__(self, pptx_filename: str):
         self.pptx_filename = pptx_filename
-        self.pdf_filename = pptx_filename.replace(".pptx", ".pdf")
         self.output_file = pptx_filename.replace(".pptx", ".mp4")
         self.presentation = Presentation(pptx_filename)
         self.slides = self.presentation.slides
         self.voiceover_texts = [
             slide.notes_slide.notes_text_frame.text for slide in self.slides
         ]
+        self.temp_dir = tempfile.mkdtemp()
 
-    def text_to_wav(
-        self, text: str, filename: str, voice_name: str = "en-US-Standard-J"
-    ):
-        """
-        Converts the given text to speech and saves it as a .wav file.
+        # Ensure OpenAI API key is available
+        if 'OPENAI_API_KEY' not in os.environ:
+            raise ValueError("OPENAI_API_KEY not found in environment variables. Please set it before running the script.")
+        openai.api_key = os.environ['OPENAI_API_KEY']
 
-        If the GOOGLE_APPLICATION_CREDENTIALS environment variable is set, this method uses
-        Google Cloud Text-to-Speech to generate the speech. Otherwise, it uses gTTS.
+    def __del__(self):
+        shutil.rmtree(self.temp_dir)
 
-        Args:
-            text (str): The text to convert to speech.
-            filename (str): The name of the .wav file to save the speech to.
-            voice_name (str, optional): The name of the voice to use for speech generation.
-                This should be a voice name from Google Cloud Text-to-Speech (e.g., "en-US-Standard-J").
-                Defaults to "en-US-Standard-J".
-        """
-        # USE PROFESSIONAL VOICES FROM GOOGLE CLOUD
-        if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
-            language_code = "-".join(voice_name.split("-")[:2])
-            text_input = tts.SynthesisInput(text=text)
-            voice_params = tts.VoiceSelectionParams(
-                language_code=language_code, name=voice_name
-            )
-            audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.LINEAR16)
-            client = tts.TextToSpeechClient()
+    def split_text(self, text: str) -> List[str]:
+        """Split text into chunks, preferring to split at sentence boundaries."""
+        chunks = []
+        current_chunk = ""
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+        
+        for sentence in sentences:
+            if len(current_chunk) + len(sentence) <= MAX_CHARS:
+                current_chunk += sentence + " "
+            else:
+                if current_chunk:
+                    chunks.append(current_chunk.strip())
+                    current_chunk = ""
+                
+                # If a single sentence is longer than MAX_CHARS, split it
+                if len(sentence) > MAX_CHARS:
+                    words = sentence.split()
+                    for word in words:
+                        if len(current_chunk) + len(word) <= MAX_CHARS:
+                            current_chunk += word + " "
+                        else:
+                            if current_chunk:
+                                chunks.append(current_chunk.strip())
+                            current_chunk = word + " "
+                else:
+                    current_chunk = sentence + " "
+        
+        if current_chunk:
+            chunks.append(current_chunk.strip())
+        
+        return chunks
 
-            response = client.synthesize_speech(
-                input=text_input,
-                voice=voice_params,
-                audio_config=audio_config,
-            )
+    def text_to_speech(self, text: str, filename: str):
+        try:
+            text_chunks = self.split_text(text)
+            temp_audio_files = []
 
-            with open(filename, "wb") as out:
-                out.write(response.audio_content)
-        # USE FREE NON-PROFESSIONAL VOICES FROM GTTS
-        else:
-            voice = gTTS(text=text, lang="en", slow=False)
-            voice.save(filename)
+            for i, chunk in enumerate(text_chunks):
+                response = openai.audio.speech.create(
+                    model="tts-1-hd",
+                    voice="echo",
+                    input=chunk
+                )
+                temp_file = os.path.join(self.temp_dir, f"temp_audio_{i}.mp3")
+                with open(temp_file, 'wb') as f:
+                    f.write(response.content)
+                temp_audio_files.append(temp_file)
 
-    def format_duration(self, duration: int) -> str:
-        """
-        Formats a duration in seconds into a string in the format 'mm:ss'.
+            # Combine audio chunks using FFmpeg
+            input_files = '|'.join(temp_audio_files)
+            ffmpeg_cmd = [
+                'ffmpeg', '-i', f"concat:{input_files}", '-acodec', 'copy', filename
+            ]
+            subprocess.run(ffmpeg_cmd, check=True)
 
-        Args:
-            duration (int): Duration in seconds.
+            # Clean up temporary files
+            for file in temp_audio_files:
+                os.remove(file)
 
-        Returns:
-            str: Formatted duration string.
-        """
-        minutes, seconds = divmod(int(duration), 60)
-        return f"{minutes}:{seconds:02}"
+        except Exception as e:
+            raise RuntimeError(f"Error in text-to-speech conversion: {e}")
 
-    def write_metadata(self, videos: List[AudioFileClip]):
-        """
-        Writes metadata to a text file.
+    def extract_slide_image(self, slide, dpi=300):
+        image_stream = io.BytesIO()
+        slide.save(image_stream, format='PNG')
+        image_stream.seek(0)
+        image = Image.open(image_stream)
+        image = image.resize((int(image.width * dpi / 72), int(image.height * dpi / 72)), Image.LANCZOS)
+        return image
 
-        Args:
-            videos (List[AudioFileClip]): List of video clips.
-        """
-        total_duration = sum(video.duration for video in videos)
-        with open(self.pptx_filename.replace(".pptx", ".txt"), "w") as f:
-            f.write(f"Total duration: {self.format_duration(total_duration)}\n")
-            for i, video in enumerate(videos):
-                f.write(f"\nSlide {i+1}:\n")
-                f.write(f"Duration: {self.format_duration(video.duration)}\n")
-                f.write(f"Voiceover: {self.voiceover_texts[i]}\n")
-
-    def convert_to_pdf(self):
-        """
-        Converts the .pptx file to a .pdf file using LibreOffice.
-        """
-        cmd = f"libreoffice --headless --convert-to pdf {self.pptx_filename}"
-        subprocess.run(cmd, shell=True, check=True)
-
-    def create_videos(self) -> List[AudioFileClip]:
-        """
-        Creates a video for each slide with a voiceover.
-
-        Returns:
-            List[AudioFileClip]: List of video clips.
-        """
-        videos = []
-        assets_dir = "assets"
-        if os.path.exists(assets_dir):
-            shutil.rmtree(assets_dir)
-        os.makedirs(assets_dir, exist_ok=True)
-        for i, _ in enumerate(self.slides):
+    def create_videos(self):
+        for i, slide in enumerate(self.slides):
             text = self.voiceover_texts[i]
-            images = convert_from_path(self.pdf_filename, dpi=300)
-            images[i].save(f"{assets_dir}/slide_{i}.png", "PNG")
-            voice_filename = f"{assets_dir}/voice_{i}.wav"
-            self.text_to_wav(text, voice_filename)
-            audio = AudioFileClip(voice_filename)
-            # Create a silent audio clip of 0.5 seconds
-            silence = AudioArrayClip(np.array([[0], [0]]), fps=44100).set_duration(0.5)
-            # Add silence to the beginning and end of the audio
-            audio = concatenate_audioclips([silence, audio, silence])
-            img_clip = ImageClip(f"{assets_dir}/slide_{i}.png", duration=audio.duration)
-            video = img_clip.set_audio(audio)
-            videos.append(video)
-        return videos
+            if len(text) > MAX_CHARS:
+                print(f"Warning: Text for slide {i+1} exceeds {MAX_CHARS} characters. It will be split into multiple audio files.")
+            
+            image = self.extract_slide_image(slide)
+            image_filename = os.path.join(self.temp_dir, f"slide_{i}.png")
+            image.save(image_filename, "PNG")
+            
+            voice_filename = os.path.join(self.temp_dir, f"voice_{i}.mp3")
+            self.text_to_speech(text, voice_filename)
 
-    def combine_videos(self, videos: List[AudioFileClip]):
-        """
-        Combines all the videos into one video.
+    def combine_videos(self):
+        # Create a text file with input files for FFmpeg
+        input_file = os.path.join(self.temp_dir, 'input.txt')
+        with open(input_file, 'w') as f:
+            for i in range(len(self.slides)):
+                f.write(f"file '{os.path.join(self.temp_dir, f'slide_{i}.png')}'\n")
+                f.write(f"duration {self.get_audio_duration(os.path.join(self.temp_dir, f'voice_{i}.mp3'))}\n")
 
-        Args:
-            videos (List[AudioFileClip]): List of video clips.
-        """
-        intro_clip = VideoFileClip("stock/intro.mp4")
-        final_clip = concatenate_videoclips(videos, method="compose")
-        final_clip.write_videofile(self.output_file, fps=24)
+        # Use FFmpeg to combine images and audio into a video
+        ffmpeg_cmd = [
+            'ffmpeg', '-f', 'concat', '-safe', '0', '-i', input_file, '-i',
+            os.path.join(self.temp_dir, 'voice_*.mp3'), '-filter_complex',
+            '[1:a]concat=n=' + str(len(self.slides)) + ':v=0:a=1[aout]',
+            '-map', '0:v', '-map', '[aout]', '-c:v', 'libx264', '-r', '24',
+            '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k',
+            '-shortest', self.output_file
+        ]
+        subprocess.run(ffmpeg_cmd, check=True)
+
+    def get_audio_duration(self, audio_file):
+        ffprobe_cmd = [
+            'ffprobe', '-v', 'error', '-show_entries', 'format=duration',
+            '-of', 'default=noprint_wrappers=1:nokey=1', audio_file
+        ]
+        result = subprocess.run(ffprobe_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        return float(result.stdout)
 
     def convert(self):
-        """
-        Converts the PowerPoint presentation to a video.
-        """
-        self.convert_to_pdf()
-        videos = self.create_videos()
-        self.write_metadata(videos)
-        self.combine_videos(videos)
-
+        self.create_videos()
+        self.combine_videos()
 
 def main():
-    """
-    Main function to test the PPTXtoVideo class.
-    """
     parser = argparse.ArgumentParser(
         description="Convert a PowerPoint presentation to a video."
     )
-
     parser.add_argument(
         "pptx",
         type=str,
         help="The name of the PowerPoint file to convert.",
     )
-
-    parser.add_argument(
-        "--keyfile",
-        type=str,
-        help="The path to the Google service account JSON file.",
-        required=False,
-    )
-
     args = parser.parse_args()
 
-    if args.keyfile:
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = args.keyfile
-
-    PPTXtoVideo(args.pptx).convert()
-
+    try:
+        PPTXtoVideo(args.pptx).convert()
+    except ValueError as e:
+        print(f"Error: {e}")
+        print("Please set the OPENAI_API_KEY environment variable before running the script.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     main()
