@@ -1,5 +1,5 @@
 aiohttp
-autogluon[all]
+autogluon.tabular[all]
 black[jupyter]
 botocore
 dask[dataframe]

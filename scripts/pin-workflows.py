@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 """
+.. module:: scripts.pin-workflows
+   :synopsis: Update GitHub Actions workflow files to pin action references to specific commit SHAs or the latest release tag.
+
 This script scans GitHub Actions workflow files and updates action references by pinning them to specific
 commit SHAs or the latest release tag. It replaces the action references with their corresponding commit SHAs or
 tag names and adds any associated tags as comments. This practice enhances security by ensuring that workflows

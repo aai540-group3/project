@@ -1,21 +1,27 @@
 #!/usr/bin/env bash
-# -----------------------------------------------------------------------------
-# Script Name: install-terraform.sh
-# Description: This script installs Terraform if it is not already installed.
-# Version: 1.0
-# -----------------------------------------------------------------------------
+#===============================================================================
+# Title           :install-terraform.sh
+# Description     :This script installs Terraform if it is not already installed.
+# Version         :1.0
+# Usage           :./install-terraform.sh [OPTIONS]
+# Notes           :Requires sudo privileges to install packages
+#===============================================================================
+
 set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
-script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
-# Default Terraform version
+#---------------------------------------
+# Configuration Variables
+#---------------------------------------
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 DEFAULT_TERRAFORM_VERSION="latest"
 TERRAFORM_VERSION="${TERRAFORM_VERSION:-$DEFAULT_TERRAFORM_VERSION}"
 
-# -----------------------------------------------------------------------------
+#---------------------------------------
 # Function: usage
-# Description: Prints the help message.
-# -----------------------------------------------------------------------------
+# Description:
+#   Prints the help message.
+#---------------------------------------
 usage() {
   cat <<EOF
 Usage: install-terraform.sh [OPTIONS]
@@ -36,18 +42,25 @@ Examples:
 EOF
 }
 
-# -----------------------------------------------------------------------------
+#---------------------------------------
 # Function: msg
-# Description: Prints a message to the console with a timestamp.
-# -----------------------------------------------------------------------------
+# Description:
+#   Prints a message to the console with a timestamp.
+# Arguments:
+#   $1 - Message to print
+#---------------------------------------
 msg() {
   echo >&2 -e "[$(date +'%Y-%m-%d %H:%M:%S')] ${1-}"
 }
 
-# -----------------------------------------------------------------------------
+#---------------------------------------
 # Function: die
-# Description: Prints an error message and exits the script.
-# -----------------------------------------------------------------------------
+# Description:
+#   Prints an error message and exits the script.
+# Arguments:
+#   $1 - Error message
+#   $2 - Exit code (optional, default: 1)
+#---------------------------------------
 die() {
   local msg=$1
   local code=${2-1} # default exit status 1
@@ -55,19 +68,21 @@ die() {
   exit "$code"
 }
 
-# -----------------------------------------------------------------------------
+#---------------------------------------
 # Function: cleanup
-# Description: Cleans up temporary files and processes.
-# -----------------------------------------------------------------------------
+# Description:
+#   Cleans up temporary files and processes.
+#---------------------------------------
 cleanup() {
   trap - SIGINT SIGTERM ERR EXIT
   # Add cleanup code here if needed
 }
 
-# -----------------------------------------------------------------------------
+#---------------------------------------
 # Function: check_dependencies
-# Description: Checks if required dependencies are installed.
-# -----------------------------------------------------------------------------
+# Description:
+#   Checks if required dependencies are installed.
+#---------------------------------------
 check_dependencies() {
   if ! command -v wget &>/dev/null; then
     die "wget is not installed. Please install it and try again."
@@ -80,10 +95,11 @@ check_dependencies() {
   fi
 }
 
-# -----------------------------------------------------------------------------
+#---------------------------------------
 # Function: add_hashicorp_repo
-# Description: Adds the HashiCorp repository to the system.
-# -----------------------------------------------------------------------------
+# Description:
+#   Adds the HashiCorp repository to the system.
+#---------------------------------------
 add_hashicorp_repo() {
   msg "Adding HashiCorp GPG key..."
   wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -92,10 +108,11 @@ add_hashicorp_repo() {
   echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
 }
 
-# -----------------------------------------------------------------------------
+#---------------------------------------
 # Function: install_terraform
-# Description: Installs Terraform if it is not already installed.
-# -----------------------------------------------------------------------------
+# Description:
+#   Installs Terraform if it is not already installed.
+#---------------------------------------
 install_terraform() {
   if ! terraform_installed; then
     add_hashicorp_repo
@@ -116,7 +133,7 @@ install_terraform() {
     fi
   fi
 
-  sudo ln -sf /usr/bin/terraform /usr/local/bin/terraform 
+  sudo ln -sf /usr/bin/terraform /usr/local/bin/terraform
   if [[ $? -ne 0 ]]; then
     die "Failed to create symbolic link for Terraform."
   fi
@@ -125,26 +142,29 @@ install_terraform() {
   msg "INSTALLED: Terraform $version"
 }
 
-# -----------------------------------------------------------------------------
+#---------------------------------------
 # Function: terraform_installed
-# Description: Checks if Terraform is already installed.
-# -----------------------------------------------------------------------------
+# Description:
+#   Checks if Terraform is already installed.
+#---------------------------------------
 terraform_installed() {
   command -v terraform &>/dev/null
 }
 
-# -----------------------------------------------------------------------------
+#---------------------------------------
 # Function: print_version
-# Description: Prints the installed Terraform version.
-# -----------------------------------------------------------------------------
+# Description:
+#   Prints the installed Terraform version.
+#---------------------------------------
 print_version() {
   terraform version | head -n 1 | cut -d 'v' -f 2
 }
 
-# -----------------------------------------------------------------------------
+#---------------------------------------
 # Function: parse_params
-# Description: Parses command-line parameters.
-# -----------------------------------------------------------------------------
+# Description:
+#   Parses command-line parameters.
+#---------------------------------------
 parse_params() {
   while :; do
     case "${1-}" in
@@ -169,9 +189,9 @@ parse_params() {
   return 0
 }
 
-# -----------------------------------------------------------------------------
-# Main script logic
-# -----------------------------------------------------------------------------
+#---------------------------------------
+# Main Script Logic
+#---------------------------------------
 main() {
   parse_params "$@"
   check_dependencies

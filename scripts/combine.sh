@@ -1,13 +1,28 @@
 #!/usr/bin/env bash
+#===============================================================================
+# Title           :combine.sh
+# Description     :This script combines the contents of multiple files into a
+#                  single output file, excluding specified files and directories.
+# Version         :1.0
+# Usage           :./combine.sh
+# Notes           :This script should be run from the 'scripts' directory.
+#===============================================================================
 
 set -euo pipefail
 
+#---------------------------------------
+# Change to parent directory
+#---------------------------------------
 cd ..
 
-# Define the output file
+#---------------------------------------
+# Configuration Variables
+#---------------------------------------
 OUTPUT_FILE="combined.txt"
 
-# Define exclusions
+#---------------------------------------
+# Exclusion Lists
+#---------------------------------------
 EXCLUDE_FILES=(
     ".DS_Store"
     "build_features.log"
@@ -56,7 +71,15 @@ EXCLUDE_PATTERNS=(
     "*.pyc"
 )
 
-# Function to get the appropriate comment syntax based on file extension
+#---------------------------------------
+# Function: get_comment_syntax
+# Description:
+#   Determines the appropriate comment syntax based on file extension.
+# Arguments:
+#   $1 - File name
+# Returns:
+#   Comment start syntax
+#---------------------------------------
 get_comment_syntax() {
     local ext="${1##*.}"
     case "$ext" in
@@ -70,7 +93,15 @@ get_comment_syntax() {
     esac
 }
 
-# Function to get the appropriate comment closing syntax
+#---------------------------------------
+# Function: get_comment_close
+# Description:
+#   Determines the appropriate comment closing syntax based on file extension.
+# Arguments:
+#   $1 - File name
+# Returns:
+#   Comment end syntax
+#---------------------------------------
 get_comment_close() {
     local ext="${1##*.}"
     case "$ext" in
@@ -79,6 +110,10 @@ get_comment_close() {
         *) echo "" ;;
     esac
 }
+
+#---------------------------------------
+# Main Script Logic
+#---------------------------------------
 
 # Remove any existing output file
 rm -f "$OUTPUT_FILE"
@@ -95,7 +130,7 @@ for file in "${EXCLUDE_FILES[@]}"; do
     FIND_PRUNE_FILES+=("-name" "$file" "-o")
 done
 
-# Build the find command
+# Build the find command and process files
 find . \( \
     "${FIND_PRUNE_DIRS[@]}" -false \) -prune -o \
     \( "${FIND_PRUNE_FILES[@]}" -false \) -prune -o \

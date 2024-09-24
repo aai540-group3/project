@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 """
+.. module:: scripts.update-nvidia-gpu
+   :synopsis: Update NVIDIA GPU accelerator type detection in Ray for UTF-16BE encoded device names.
+
 This script updates the NVIDIA GPU accelerator type detection in the Ray library to handle UTF-16BE encoded device names.
 It locates the nvidia_gpu.py file within the project's virtual environment and modifies the
 get_current_node_accelerator_type method to include a fallback decoding mechanism.
