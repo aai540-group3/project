@@ -22,14 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out main branch
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@v4.1.7
         with:
           ref: main
           fetch-depth: 1
           lfs: true
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        uses: actions/setup-python@v5.2.0
         with:
           python-version: "3.11"
 
@@ -68,7 +68,7 @@ jobs:
             echo "video_created=true" >> $GITHUB_OUTPUT
           else
             echo "video_created=false" >> $GITHUB_OUTPUT
-            echo "::error title=Video generation failed::Video file not found." # Set error status
+            echo "::error title=Video generation failed::Video file not found."
           fi
 
       - name: Get video duration
@@ -80,13 +80,25 @@ jobs:
           seconds=$(printf "%.0f" $(echo "$duration%60" | bc))
           echo "duration=${minutes}m ${seconds}s" >> $GITHUB_OUTPUT
 
+      - name: Save assets
+        if: steps.check_video.outputs.video_created == 'true'
+        run: |
+          mkdir -p video-assets
+          cp Final_Project_Team_3_Deliverable_2.pdf video-assets/
+          cp Final_Project_Team_3_Deliverable_2.mp4 video-assets/
+          if [ -d "/tmp" ]; then
+            find /tmp -name "slide_*.png" -exec cp {} video-assets/ \;
+            find /tmp -name "voice_*.mp3" -exec cp {} video-assets/ \;
+            find /tmp -name "video_*.mp4" -exec cp {} video-assets/ \;
+          fi
+
       - name: Commit and push changes
         if: steps.check_video.outputs.video_created == 'true'
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git add Final_Project_Team_3_Deliverable_2.mp4
-          git commit -m "Updated video - video duration: ${{ steps.duration.outputs.duration }}" || echo "No changes to commit"
+          git add Final_Project_Team_3_Deliverable_2.mp4 video-assets
+          git commit -m "Updated video and assets - video duration: ${{ steps.duration.outputs.duration }}" || echo "No changes to commit"
           git pull origin main --rebase
           git push origin main
 
