@@ -150,7 +150,7 @@ class PPTXtoVideo:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Convert a PowerPoint presentation to a video."
+        description="Convert a PowerPoint presentation to a video using OpenAI TTS (Echo voice, tts-1-hd model) and FFmpeg."
     )
     parser.add_argument(
         "pptx",
