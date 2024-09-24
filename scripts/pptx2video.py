@@ -43,7 +43,7 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 MAX_CHARS = 4096  # Maximum characters allowed for OpenAI TTS API per request
-MAX_CONCURRENT_CALLS = 3  # Maximum number of concurrent API calls
+MAX_CONCURRENT_CALLS = 5  # Maximum number of concurrent API calls
 
 
 class PPTXtoVideo:
