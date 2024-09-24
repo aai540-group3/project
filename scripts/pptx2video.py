@@ -28,9 +28,14 @@ import tempfile
 import subprocess
 from typing import List
 import re
+import glob
+import logging
 
 from pptx import Presentation
 import openai
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 MAX_CHARS = 4096  # Maximum characters allowed for OpenAI TTS API per request
 
@@ -39,17 +44,19 @@ class PPTXtoVideo:
     A class to convert a PowerPoint presentation to a video using OpenAI TTS and FFmpeg.
     """
 
-    def __init__(self, pptx_filename: str):
+    def __init__(self, pptx_filename: str, keep_temp: bool = False):
         """
         Initializes the PPTXtoVideo instance.
 
         Args:
             pptx_filename (str): The path to the PowerPoint (.pptx) file.
+            keep_temp (bool): Whether to keep the temporary directory after conversion.
         """
         self.pptx_filename = pptx_filename
         self.output_file = os.path.splitext(pptx_filename)[0] + ".mp4"
         self.presentation = Presentation(pptx_filename)
         self.slides = self.presentation.slides
+        self.keep_temp = keep_temp
 
         # Extract voiceover texts from slide notes
         self.voiceover_texts = [
@@ -71,7 +78,8 @@ class PPTXtoVideo:
 
     def __del__(self):
         """Cleans up the temporary directory upon deletion of the instance."""
-        shutil.rmtree(self.temp_dir)
+        if not self.keep_temp:
+            shutil.rmtree(self.temp_dir)
 
     def split_text(self, text: str) -> List[str]:
         """
@@ -136,7 +144,7 @@ class PPTXtoVideo:
                 # Save the audio content to a temporary file
                 temp_file = os.path.join(self.temp_dir, f"temp_audio_{i}.mp3")
                 with open(temp_file, 'wb') as f:
-                    f.write(response.content)  # Assuming 'response.content' contains the audio bytes
+                    f.write(response.content)
                 temp_audio_files.append(temp_file)
 
             # Combine audio chunks using FFmpeg
@@ -151,14 +159,20 @@ class PPTXtoVideo:
                     'ffmpeg', '-y', '-f', 'concat', '-safe', '0', '-i', concat_file,
                     '-c', 'copy', filename
                 ]
-                subprocess.run(ffmpeg_cmd, check=True)
+                self._run_ffmpeg_command(ffmpeg_cmd)
 
                 # Clean up temporary audio chunk files
                 for temp_file in temp_audio_files:
                     os.remove(temp_file)
 
+        except openai.error.APIError as e:
+            raise RuntimeError(f"OpenAI API error: {e}")
         except Exception as e:
             raise RuntimeError(f"Error in text-to-speech conversion: {e}")
+
+        # Check if audio file was created successfully
+        if not os.path.exists(filename) or os.path.getsize(filename) == 0:
+            raise RuntimeError(f"Failed to create audio file: {filename}")
 
     def get_audio_duration(self, audio_file: str) -> float:
         """
@@ -196,11 +210,15 @@ class PPTXtoVideo:
         ]
         subprocess.run(cmd, check=True)
 
-        # Collect the generated image files
+        # Collect the generated image files using glob
         image_files = sorted(
-            [os.path.join(self.temp_dir, f) for f in os.listdir(self.temp_dir) if f.endswith('.png')],
+            glob.glob(os.path.join(self.temp_dir, "*.png")),
             key=lambda x: int(re.search(r'(\d+)', os.path.basename(x)).group(1))
         )
+
+        if not image_files:
+            raise RuntimeError(f"No images were extracted from {self.pptx_filename}. "
+                               "Check LibreOffice installation and PPTX file.")
         return image_files
 
     def create_videos(self):
@@ -213,28 +231,28 @@ class PPTXtoVideo:
         for i, image_file in enumerate(image_files):
             text = self.voiceover_texts[i]
             if len(text) > MAX_CHARS:
-                print(f"Warning: Text for slide {i+1} exceeds {MAX_CHARS} characters. "
-                      f"It will be split into multiple audio files.")
+                logging.warning(f"Text for slide {i+1} exceeds {MAX_CHARS} characters. "
+                                f"It will be split into multiple audio files.")
 
             # Generate TTS audio for the slide
-            voice_filename = os.path.join(self.temp_dir, f'voice_{i}.mp3')
-            self.text_to_speech(text, voice_filename)
+            slide_audio_filename = os.path.join(self.temp_dir, f'voice_{i}.mp3')
+            self.text_to_speech(text, slide_audio_filename)
 
             # Get audio duration
-            duration = self.get_audio_duration(voice_filename)
+            duration = self.get_audio_duration(slide_audio_filename)
 
             # Create video file combining image and audio
-            video_filename = os.path.join(self.temp_dir, f'video_{i}.mp4')
+            slide_video_filename = os.path.join(self.temp_dir, f'video_{i}.mp4')
             # FFmpeg command to create video from image and audio
             ffmpeg_cmd = [
-                'ffmpeg', '-y', '-loop', '1', '-i', image_file, '-i', voice_filename,
+                'ffmpeg', '-y', '-loop', '1', '-i', image_file, '-i', slide_audio_filename,
                 '-c:v', 'libx264', '-tune', 'stillimage', '-c:a', 'aac', '-b:a', '192k',
-                '-pix_fmt', 'yuv420p', '-shortest', video_filename
+                '-pix_fmt', 'yuv420p', '-shortest', slide_video_filename
             ]
-            subprocess.run(ffmpeg_cmd, check=True)
+            self._run_ffmpeg_command(ffmpeg_cmd)
 
             # Append video file to the list
-            self.video_files.append(video_filename)
+            self.video_files.append(slide_video_filename)
 
     def combine_videos(self):
         """
@@ -251,15 +269,31 @@ class PPTXtoVideo:
             'ffmpeg', '-y', '-f', 'concat', '-safe', '0', '-i', list_file,
             '-c', 'copy', self.output_file
         ]
-        subprocess.run(ffmpeg_cmd, check=True)
+        self._run_ffmpeg_command(ffmpeg_cmd)
+
+    def _run_ffmpeg_command(self, cmd):
+        """
+        Runs an FFmpeg command and handles errors.
+        """
+        result = subprocess.run(cmd, check=False,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"FFmpeg error: {result.stderr}")
 
     def convert(self):
         """
         Converts the PowerPoint presentation to a video.
         """
-        self.create_videos()
-        self.combine_videos()
-        print(f"Video created successfully: {self.output_file}")
+        try:
+            self.create_videos()
+            self.combine_videos()
+            logging.info(f"Video created successfully: {self.output_file}")
+        except Exception as e:
+            logging.error(f"An error occurred during conversion: {e}")
+            # Clean up temporary files on error
+            if not self.keep_temp:
+                shutil.rmtree(self.temp_dir)
+            raise
 
 def main():
     """
@@ -273,16 +307,21 @@ def main():
         type=str,
         help="The path to the PowerPoint (.pptx) file to convert.",
     )
+    parser.add_argument(
+        "--keep_temp",
+        action="store_true",
+        help="Keep the temporary directory after conversion (for debugging).",
+    )
     args = parser.parse_args()
 
     try:
-        converter = PPTXtoVideo(args.pptx)
+        converter = PPTXtoVideo(args.pptx, keep_temp=args.keep_temp)
         converter.convert()
     except ValueError as e:
-        print(f"Error: {e}")
-        print("Please set the OPENAI_API_KEY environment variable before running the script.")
+        logging.error(f"Error: {e}")
+        logging.error("Please set the OPENAI_API_KEY environment variable before running the script.")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.exception(f"An unexpected error occurred: {e}")
 
 if __name__ == "__main__":
     main()
