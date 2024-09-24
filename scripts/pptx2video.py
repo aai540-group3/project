@@ -26,22 +26,22 @@ Note:
 
 import argparse
 import asyncio
+import functools
 import logging
+import multiprocessing
 import os
 import re
 import shutil
 import subprocess
 import tempfile
-from typing import List
-import multiprocessing
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import functools
+from typing import List
 
 import aiohttp
 import openai
 from pdf2image import convert_from_path
-from pptx import Presentation
 from PIL import Image
+from pptx import Presentation
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Configure logging
@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
 
 MAX_CHARS = 4096  # Maximum characters allowed for OpenAI TTS API per request
 MAX_CONCURRENT_CALLS = 5  # Maximum number of concurrent API calls
+
 
 def convert_slide_to_image(pdf_filename: str, temp_dir: str, i: int) -> str:
     """
@@ -61,10 +62,11 @@ def convert_slide_to_image(pdf_filename: str, temp_dir: str, i: int) -> str:
     :return: Path to the saved image file.
     """
     image_path = os.path.join(temp_dir, f"slide_{i}.png")
-    images = convert_from_path(pdf_filename, first_page=i+1, last_page=i+1, dpi=300)
+    images = convert_from_path(pdf_filename, first_page=i + 1, last_page=i + 1, dpi=300)
     if images:
         images[0].save(image_path, "PNG")
     return image_path
+
 
 def generate_audio_for_slide(text: str, temp_dir: str, i: int, api_key: str) -> str:
     """
@@ -80,7 +82,10 @@ def generate_audio_for_slide(text: str, temp_dir: str, i: int, api_key: str) -> 
     text_to_speech(text, slide_audio_filename, api_key)
     return slide_audio_filename
 
-def create_video_for_slide(image_file: str, audio_file: str, temp_dir: str, i: int) -> str:
+
+def create_video_for_slide(
+    image_file: str, audio_file: str, temp_dir: str, i: int
+) -> str:
     """
     Creates a video for a single slide by combining image and audio.
 
@@ -100,15 +105,24 @@ def create_video_for_slide(image_file: str, audio_file: str, temp_dir: str, i: i
     ffmpeg_cmd = [
         "ffmpeg",
         "-y",
-        "-loop", "1",
-        "-i", image_file,
-        "-i", audio_file,
-        "-c:v", "libx264",
-        "-tune", "stillimage",
-        "-c:a", "aac",
-        "-b:a", "192k",
-        "-pix_fmt", "yuv420p",
-        "-vf", f"scale={adjusted_width}:-2",
+        "-loop",
+        "1",
+        "-i",
+        image_file,
+        "-i",
+        audio_file,
+        "-c:v",
+        "libx264",
+        "-tune",
+        "stillimage",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-pix_fmt",
+        "yuv420p",
+        "-vf",
+        f"scale={adjusted_width}:-2",
         "-shortest",
         slide_video_filename,
     ]
@@ -122,6 +136,7 @@ def create_video_for_slide(image_file: str, audio_file: str, temp_dir: str, i: i
     logger.info(f"Created video for slide {i+1}: {slide_video_filename}")
     return slide_video_filename
 
+
 def run_ffmpeg_command(cmd: List[str]):
     """
     Runs an FFmpeg command and handles errors.
@@ -134,6 +149,7 @@ def run_ffmpeg_command(cmd: List[str]):
     )
     if result.returncode != 0:
         raise RuntimeError(f"FFmpeg error: {result.stderr}")
+
 
 def split_text(text: str) -> List[str]:
     """
@@ -178,6 +194,7 @@ def split_text(text: str) -> List[str]:
     logger.info(f"Split text into {len(chunks)} chunks.")
     return chunks
 
+
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 async def _make_tts_api_call(session, chunk: str, i: int, api_key: str) -> str:
     """
@@ -190,15 +207,8 @@ async def _make_tts_api_call(session, chunk: str, i: int, api_key: str) -> str:
     :return: Path to the temporary audio file.
     """
     url = "https://api.openai.com/v1/audio/speech"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "model": "tts-1-hd",
-        "voice": "echo",
-        "input": chunk
-    }
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    payload = {"model": "tts-1-hd", "voice": "echo", "input": chunk}
 
     async with session.post(url, json=payload, headers=headers) as response:
         if response.status != 200:
@@ -210,6 +220,7 @@ async def _make_tts_api_call(session, chunk: str, i: int, api_key: str) -> str:
         f.write(content)
     return temp_file
 
+
 async def _process_chunks(text_chunks: List[str], api_key: str) -> List[str]:
     """
     Process text chunks asynchronously, limiting concurrent API calls.
@@ -220,12 +231,14 @@ async def _process_chunks(text_chunks: List[str], api_key: str) -> List[str]:
     """
     async with aiohttp.ClientSession() as session:
         semaphore = asyncio.Semaphore(MAX_CONCURRENT_CALLS)
+
         async def bounded_api_call(chunk, i):
             async with semaphore:
                 return await _make_tts_api_call(session, chunk, i, api_key)
 
         tasks = [bounded_api_call(chunk, i) for i, chunk in enumerate(text_chunks)]
         return await asyncio.gather(*tasks)
+
 
 def text_to_speech(text: str, filename: str, api_key: str):
     """
@@ -277,6 +290,7 @@ def text_to_speech(text: str, filename: str, api_key: str):
     if not os.path.exists(filename) or os.path.getsize(filename) == 0:
         raise RuntimeError(f"Failed to create audio file: {filename}")
 
+
 class PPTXtoVideo:
     """
     A class to convert a PowerPoint presentation to a video using OpenAI TTS and FFmpeg.
@@ -298,9 +312,11 @@ class PPTXtoVideo:
 
         # Extract voiceover texts from slide notes
         self.voiceover_texts = [
-            slide.notes_slide.notes_text_frame.text.strip()
-            if slide.has_notes_slide
-            else ""
+            (
+                slide.notes_slide.notes_text_frame.text.strip()
+                if slide.has_notes_slide
+                else ""
+            )
             for slide in self.slides
         ]
 
@@ -368,7 +384,7 @@ class PPTXtoVideo:
             "pdf",
             "--outdir",
             project_dir,
-            self.pptx_filename
+            self.pptx_filename,
         ]
 
         try:
@@ -397,12 +413,16 @@ class PPTXtoVideo:
 
         # Convert PPTX to images in parallel
         with multiprocessing.Pool() as pool:
-            convert_func = functools.partial(convert_slide_to_image, self.pdf_filename, self.temp_dir)
+            convert_func = functools.partial(
+                convert_slide_to_image, self.pdf_filename, self.temp_dir
+            )
             image_files = pool.map(convert_func, range(len(self.slides)))
 
         # Generate TTS audio for all slides in parallel
         with ThreadPoolExecutor(max_workers=min(32, os.cpu_count() + 4)) as executor:
-            generate_audio_func = functools.partial(generate_audio_for_slide, temp_dir=self.temp_dir, api_key=self.api_key)
+            generate_audio_func = functools.partial(
+                generate_audio_for_slide, temp_dir=self.temp_dir, api_key=self.api_key
+            )
             audio_futures = {
                 executor.submit(generate_audio_func, text, i): i
                 for i, text in enumerate(self.voiceover_texts)
@@ -415,10 +435,12 @@ class PPTXtoVideo:
 
         # Create videos in parallel
         with multiprocessing.Pool() as pool:
-            create_video_func = functools.partial(create_video_for_slide, temp_dir=self.temp_dir)
+            create_video_func = functools.partial(
+                create_video_for_slide, temp_dir=self.temp_dir
+            )
             self.video_files = pool.starmap(
                 create_video_func,
-                zip(image_files, audio_files, range(len(image_files)))
+                zip(image_files, audio_files, range(len(image_files))),
             )
 
         # Remove None values (failed video creations)
@@ -468,6 +490,7 @@ class PPTXtoVideo:
                 shutil.rmtree(self.temp_dir)
             raise
 
+
 def main():
     """
     Main function to parse arguments and execute conversion.
@@ -495,6 +518,7 @@ def main():
         )
     except Exception as e:
         logger.exception(f"An unexpected error occurred: {e}")
+
 
 if __name__ == "__main__":
     main()
