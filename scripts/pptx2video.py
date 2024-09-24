@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 This script converts a PowerPoint presentation (.pptx) into a video (.mp4) by:
-- Extracting slides as images.
+- Extracting slides as images (via PDF intermediate).
 - Generating voiceover audio using OpenAI TTS API based on slide notes.
 - Combining images and audio into video segments per slide.
 - Concatenating the slide videos into a final video.
@@ -12,7 +12,7 @@ Usage:
 Requirements:
     - Python 3.x
     - Install required packages:
-        pip install python-pptx Pillow numpy openai
+        pip install python-pptx Pillow numpy openai pdf2image
     - LibreOffice must be installed and accessible in the system PATH.
     - FFmpeg must be installed and accessible in the system PATH.
     - Set the 'OPENAI_API_KEY' environment variable with your OpenAI API key.
@@ -32,6 +32,7 @@ import tempfile
 from typing import List
 
 import openai
+from pdf2image import convert_from_path
 from pptx import Presentation
 
 # Configure logging
@@ -56,6 +57,7 @@ class PPTXtoVideo:
         :type keep_temp: bool
         """
         self.pptx_filename = pptx_filename
+        self.pdf_filename = os.path.splitext(pptx_filename)[0] + ".pdf"  # Add PDF filename
         self.output_file = os.path.splitext(pptx_filename)[0] + ".mp4"
         self.presentation = Presentation(pptx_filename)
         self.slides = self.presentation.slides
@@ -225,37 +227,32 @@ class PPTXtoVideo:
 
     def convert_pptx_to_images(self):
         """
-        Converts the PowerPoint presentation to images using LibreOffice.
+        Converts the PowerPoint presentation to images using LibreOffice (via PDF).
 
         :return: A list of image file paths corresponding to the slides.
         :rtype: List[str]
         """
-        # Use LibreOffice to convert PPTX to PNG images
-        cmd = [
-            "libreoffice",
-            "--headless",
-            "--convert-to",
-            "png",
-            "--outdir",
-            self.temp_dir,
-            self.pptx_filename,
-        ]
-        subprocess.run(cmd, check=True)
+        # Convert PPTX to PDF
+        self._convert_to_pdf()
 
-        # Collect the generated image files using glob
-        image_files = sorted(
-            glob.glob(os.path.join(self.temp_dir, "*.png")),
-            key=lambda x: int(re.search(r"(\d+)", os.path.basename(x)).group(1)),
-        )
+        # Extract images from PDF
+        images = convert_from_path(self.pdf_filename, dpi=300)
 
-        if not image_files:
-            raise RuntimeError(
-                f"No images were extracted from {self.pptx_filename}. "
-                "Check LibreOffice installation and PPTX file."
-            )
+        image_files = []
+        for i, image in enumerate(images):
+            image_path = os.path.join(self.temp_dir, f"slide_{i}.png")
+            image.save(image_path, "PNG")
+            image_files.append(image_path)
 
-        logger.info(f"Extracted {len(image_files)} images from PPTX.")
+        logger.info(f"Extracted {len(image_files)} images from PPTX (via PDF).")
         return image_files
+
+    def _convert_to_pdf(self):
+        """
+        Converts the .pptx file to a .pdf file using LibreOffice.
+        """
+        cmd = f"libreoffice --headless --convert-to pdf {self.pptx_filename} --outdir {self.temp_dir}"
+        subprocess.run(cmd, shell=True, check=True)
 
     def create_videos(self):
         """
