@@ -57,7 +57,7 @@ class PPTXtoVideo:
         :type keep_temp: bool
         """
         self.pptx_filename = pptx_filename
-        self.pdf_filename = os.path.splitext(pptx_filename)[0] + ".pdf"  # Add PDF filename
+        self.pdf_filename = os.path.splitext(pptx_filename)[0] + ".pdf"
         self.output_file = os.path.splitext(pptx_filename)[0] + ".mp4"
         self.presentation = Presentation(pptx_filename)
         self.slides = self.presentation.slides
@@ -88,7 +88,10 @@ class PPTXtoVideo:
     def __del__(self):
         """Cleans up the temporary directory upon deletion of the instance."""
         if not self.keep_temp:
-            shutil.rmtree(self.temp_dir)
+            try:
+                shutil.rmtree(self.temp_dir)
+            except Exception as e:
+                logger.warning(f"Failed to remove temporary directory: {e}")
 
     def split_text(self, text: str) -> List[str]:
         """
@@ -192,7 +195,7 @@ class PPTXtoVideo:
                 for temp_file in temp_audio_files:
                     os.remove(temp_file)
 
-        except openai.error.APIError as e:
+        except openai.OpenAIError as e:
             raise RuntimeError(f"OpenAI API error: {e}")
         except Exception as e:
             raise RuntimeError(f"Error in text-to-speech conversion: {e}")
@@ -252,35 +255,39 @@ class PPTXtoVideo:
         Converts the .pptx file to a .pdf file using LibreOffice.
         Saves the PDF file in the project directory (top level).
         """
-        project_dir = os.path.dirname(self.pptx_filename)  # Get the project directory
-        pdf_path = os.path.join(project_dir, self.pdf_filename)  # PDF path at the top level
+        project_dir = os.path.dirname(os.path.abspath(self.pptx_filename))
+        pdf_path = os.path.join(project_dir, os.path.basename(self.pdf_filename))
+
+        # Ensure the output directory exists
+        os.makedirs(project_dir, exist_ok=True)
 
         # Construct the command as a list of arguments
         cmd = [
             "libreoffice",
             "--headless",
-            "--convert-to", "pdf",
-            "--outdir", project_dir,
+            "--convert-to",
+            "pdf",
+            "--outdir",
+            project_dir,
             self.pptx_filename
         ]
 
         try:
             # Run the command
             result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-
-            # Print the output for debugging
-            print("Command output:", result.stdout)
-            print("Command error:", result.stderr)
-
+            logger.info("PDF conversion command output: " + result.stdout)
+            logger.info("PDF conversion command error: " + result.stderr)
         except subprocess.CalledProcessError as e:
-            print(f"Command failed with return code {e.returncode}")
-            print("Command output:", e.output)
-            print("Command error:", e.stderr)
+            logger.error(f"Command failed with return code {e.returncode}")
+            logger.error("Command output: " + e.output)
+            logger.error("Command error: " + e.stderr)
             raise RuntimeError(f"Failed to convert PPTX to PDF: {e}")
 
         # Verify if the PDF file was created successfully
         if not os.path.exists(pdf_path):
             raise RuntimeError(f"Failed to create PDF file: {pdf_path}")
+
+        self.pdf_filename = pdf_path  # Update the pdf_filename attribute
 
     def create_videos(self):
         """
