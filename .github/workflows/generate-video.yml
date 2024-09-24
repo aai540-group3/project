@@ -52,7 +52,7 @@ jobs:
               numpy \
               openai \
               pdf2image \
-              Pillow==6.2.2 \
+              Pillow \
               python-pptx \
               tenacity
 
@@ -91,18 +91,21 @@ jobs:
           mkdir -p temp_assets
 
           # Copy intermediate files if they exist
-          if [ -d "/tmp" ]; then
-            find /tmp -name "slide_*.png" -exec cp {} temp_assets/ \;
-            find /tmp -name "voice_*.mp3" -exec cp {} temp_assets/ \;
-            find /tmp -name "video_*.mp4" -exec cp {} temp_assets/ \;
-          fi
+          # Use find with -readable to only process files we have permission to read
+          find /tmp -readable -type f \( -name "slide_*.png" -o -name "voice_*.mp3" -o -name "video_*.mp4" \) -exec cp {} temp_assets/ \; 2>/dev/null || true
 
           # Use rsync to update video-assets directory
           # --delete option removes files in video-assets that don't exist in temp_assets
+          mkdir -p video-assets
           rsync -av --delete temp_assets/ video-assets/
 
           # Clean up temporary directory
           rm -rf temp_assets
+
+          # List contents of video-assets for verification
+          echo "Contents of video-assets directory:"
+          ls -la video-assets/
+        shell: /usr/bin/bash -e {0}
 
       - name: Commit and push changes
         if: steps.check_video.outputs.video_created == 'true'
