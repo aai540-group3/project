@@ -22,7 +22,6 @@ Note:
 """
 
 import argparse
-import glob
 import logging
 import os
 import re
@@ -34,6 +33,7 @@ from typing import List
 import openai
 from pdf2image import convert_from_path
 from pptx import Presentation
+from PIL import Image
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -89,7 +89,8 @@ class PPTXtoVideo:
         """Cleans up the temporary directory upon deletion of the instance."""
         if not self.keep_temp:
             try:
-                shutil.rmtree(self.temp_dir)
+                if os.path.exists(self.temp_dir):
+                    shutil.rmtree(self.temp_dir)
             except Exception as e:
                 logger.warning(f"Failed to remove temporary directory: {e}")
 
@@ -195,7 +196,7 @@ class PPTXtoVideo:
                 for temp_file in temp_audio_files:
                     os.remove(temp_file)
 
-        except openai.OpenAIError as e:
+        except openai.error.APIError as e:
             raise RuntimeError(f"OpenAI API error: {e}")
         except Exception as e:
             raise RuntimeError(f"Error in text-to-speech conversion: {e}")
@@ -313,35 +314,44 @@ class PPTXtoVideo:
 
             # Create video file combining image and audio
             slide_video_filename = os.path.join(self.temp_dir, f"video_{i}.mp4")
+
+            # Get image dimensions
+            with Image.open(image_file) as img:
+                width, height = img.size
+
+            # Adjust width to be divisible by 2
+            adjusted_width = width if width % 2 == 0 else width - 1
+
             # FFmpeg command to create video from image and audio
             ffmpeg_cmd = [
                 "ffmpeg",
                 "-y",
-                "-loop",
-                "1",
-                "-i",
-                image_file,
-                "-i",
-                slide_audio_filename,
-                "-c:v",
-                "libx264",
-                "-tune",
-                "stillimage",
-                "-c:a",
-                "aac",
-                "-b:a",
-                "192k",
-                "-pix_fmt",
-                "yuv420p",
+                "-loop", "1",
+                "-i", image_file,
+                "-i", slide_audio_filename,
+                "-c:v", "libx264",
+                "-tune", "stillimage",
+                "-c:a", "aac",
+                "-b:a", "192k",
+                "-pix_fmt", "yuv420p",
+                "-vf", f"scale={adjusted_width}:-2",  # Adjust width and maintain aspect ratio
                 "-shortest",
                 slide_video_filename,
             ]
-            self._run_ffmpeg_command(ffmpeg_cmd)
+
+            try:
+                self._run_ffmpeg_command(ffmpeg_cmd)
+            except RuntimeError as e:
+                logger.error(f"Error creating video for slide {i+1}: {e}")
+                continue  # Skip to the next slide if there's an error
 
             # Append video file to the list
             self.video_files.append(slide_video_filename)
 
             logger.info(f"Created video for slide {i+1}: {slide_video_filename}")
+
+        if not self.video_files:
+            raise RuntimeError("No video files were created successfully.")
 
     def combine_videos(self):
         """
