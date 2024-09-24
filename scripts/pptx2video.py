@@ -250,9 +250,17 @@ class PPTXtoVideo:
     def _convert_to_pdf(self):
         """
         Converts the .pptx file to a .pdf file using LibreOffice.
+        Saves the PDF file in the project directory (top level).
         """
-        cmd = f"libreoffice --headless --convert-to pdf {self.pptx_filename} --outdir {self.temp_dir}"
+        project_dir = os.path.dirname(self.pptx_filename)  # Get the project directory
+        pdf_path = os.path.join(project_dir, self.pdf_filename)  # PDF path at the top level
+
+        cmd = f"libreoffice --headless --convert-to pdf {self.pptx_filename} --outdir {project_dir}"
         subprocess.run(cmd, shell=True, check=True)
+
+        # Verify if the PDF file was created successfully
+        if not os.path.exists(pdf_path):
+            raise RuntimeError(f"Failed to create PDF file: {pdf_path}")
 
     def create_videos(self):
         """
