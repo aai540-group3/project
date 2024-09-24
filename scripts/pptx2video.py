@@ -255,8 +255,28 @@ class PPTXtoVideo:
         project_dir = os.path.dirname(self.pptx_filename)  # Get the project directory
         pdf_path = os.path.join(project_dir, self.pdf_filename)  # PDF path at the top level
 
-        cmd = f"libreoffice --headless --convert-to pdf {self.pptx_filename} --outdir {project_dir}"
-        subprocess.run(cmd, shell=True, check=True)
+        # Construct the command as a list of arguments
+        cmd = [
+            "libreoffice",
+            "--headless",
+            "--convert-to", "pdf",
+            "--outdir", project_dir,
+            self.pptx_filename
+        ]
+
+        try:
+            # Run the command
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+
+            # Print the output for debugging
+            print("Command output:", result.stdout)
+            print("Command error:", result.stderr)
+
+        except subprocess.CalledProcessError as e:
+            print(f"Command failed with return code {e.returncode}")
+            print("Command output:", e.output)
+            print("Command error:", e.stderr)
+            raise RuntimeError(f"Failed to convert PPTX to PDF: {e}")
 
         # Verify if the PDF file was created successfully
         if not os.path.exists(pdf_path):
