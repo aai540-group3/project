@@ -12,7 +12,7 @@ Usage:
 Requirements:
     - Python 3.x
     - Install required packages:
-        pip install python-pptx Pillow numpy openai pdf2image
+        pip install python-pptx Pillow numpy openai pdf2image aiohttp tenacity
     - LibreOffice must be installed and accessible in the system PATH.
     - FFmpeg must be installed and accessible in the system PATH.
     - Set the 'OPENAI_API_KEY' environment variable with your OpenAI API key.
@@ -22,6 +22,7 @@ Note:
 """
 
 import argparse
+import asyncio
 import logging
 import os
 import re
@@ -30,16 +31,19 @@ import subprocess
 import tempfile
 from typing import List
 
+import aiohttp
 import openai
 from pdf2image import convert_from_path
 from pptx import Presentation
 from PIL import Image
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 MAX_CHARS = 4096  # Maximum characters allowed for OpenAI TTS API per request
+MAX_CONCURRENT_CALLS = 3  # Maximum number of concurrent API calls
 
 
 class PPTXtoVideo:
@@ -139,6 +143,45 @@ class PPTXtoVideo:
         logger.info(f"Split text into {len(chunks)} chunks.")
         return chunks
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    async def _make_tts_api_call(self, session, chunk, i):
+        """
+        Make an asynchronous API call to OpenAI TTS API with retry logic.
+        """
+        url = "https://api.openai.com/v1/audio/speech"
+        headers = {
+            "Authorization": f"Bearer {openai.api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "tts-1-hd",
+            "voice": "echo",
+            "input": chunk
+        }
+
+        async with session.post(url, json=payload, headers=headers) as response:
+            if response.status != 200:
+                raise Exception(f"API call failed with status {response.status}")
+            content = await response.read()
+
+        temp_file = os.path.join(self.temp_dir, f"temp_audio_{i}.mp3")
+        with open(temp_file, "wb") as f:
+            f.write(content)
+        return temp_file
+
+    async def _process_chunks(self, text_chunks):
+        """
+        Process text chunks asynchronously, limiting concurrent API calls.
+        """
+        async with aiohttp.ClientSession() as session:
+            semaphore = asyncio.Semaphore(MAX_CONCURRENT_CALLS)
+            async def bounded_api_call(chunk, i):
+                async with semaphore:
+                    return await self._make_tts_api_call(session, chunk, i)
+
+            tasks = [bounded_api_call(chunk, i) for i, chunk in enumerate(text_chunks)]
+            return await asyncio.gather(*tasks)
+
     def text_to_speech(self, text: str, filename: str):
         """
         Converts text to speech using OpenAI TTS API and saves it as an audio file.
@@ -150,24 +193,11 @@ class PPTXtoVideo:
         """
         try:
             text_chunks = self.split_text(text)
-            temp_audio_files = []
-
             logger.info(f"Converting text to speech for file: {filename}")
             logger.info(f"Number of chunks: {len(text_chunks)}")
 
-            for i, chunk in enumerate(text_chunks):
-                logger.debug(f"Processing chunk {i+1}: {chunk}")
-
-                # Make the API call to OpenAI TTS API
-                response = openai.audio.speech.create(
-                    model="tts-1-hd", voice="echo", input=chunk
-                )
-
-                # Save the audio content to a temporary file
-                temp_file = os.path.join(self.temp_dir, f"temp_audio_{i}.mp3")
-                with open(temp_file, "wb") as f:
-                    f.write(response.content)
-                temp_audio_files.append(temp_file)
+            # Use asyncio to run the API calls
+            temp_audio_files = asyncio.run(self._process_chunks(text_chunks))
 
             # Combine audio chunks using FFmpeg
             if len(temp_audio_files) == 1:
@@ -196,8 +226,6 @@ class PPTXtoVideo:
                 for temp_file in temp_audio_files:
                     os.remove(temp_file)
 
-        except openai.error.APIError as e:
-            raise RuntimeError(f"OpenAI API error: {e}")
         except Exception as e:
             raise RuntimeError(f"Error in text-to-speech conversion: {e}")
 
