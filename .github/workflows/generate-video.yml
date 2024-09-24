@@ -1,6 +1,8 @@
 name: Generate Video
-
 on:
+  push:
+    paths:
+      - 'Final_Project_Team_3_Deliverable_2.pptx'
   workflow_dispatch:
 
 concurrency:
@@ -9,6 +11,9 @@ concurrency:
 
 permissions:
   contents: write
+
+env:
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
 jobs:
   generate-video:
@@ -19,12 +24,12 @@ jobs:
         with:
           ref: main
           fetch-depth: 1
+          lfs: true
 
-      - name: Git LFS pull
-        run: |
-          sudo apt-get install git-lfs
-          git lfs pull --include="stock/*"
-          git lfs pull --include="assets/*"
+      - name: Set up Python
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        with:
+          python-version: '3.11'
 
       - name: Cache pip packages
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
@@ -34,42 +39,29 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Cache apt packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-
-
-      - name: Generate Video
-        id: generate-video
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y install \
-              bc \
-              ffmpeg \
-              libreoffice \
-              poppler-utils
+          sudo apt-get install -y ffmpeg
+          python -m pip install --upgrade pip
+          pip install openai python-pptx Pillow numpy
 
-          python3 -m pip install --upgrade pip
-          python3 -m pip install \
-              google-cloud-texttospeech \
-              gTTS  \
-              moviepy \
-              numpy \
-              pdf2image  \
-              Pillow==6.2.2 \
-              python-pptx
+      - name: Generate Video
+        run: |
+          python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
 
-          rm -f ${{ vars.PROJECT }}.mp4
-          echo "${{ secrets.KEYFILE }}" | base64 --decode > keyfile.json
-          python3 scripts/pptx2video.py ${{ vars.PROJECT }}.pptx --keyfile keyfile.json
+      - name: Get video duration
+        id: duration
+        run: |
+          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 Final_Project_Team_3_Deliverable_2.mp4)
+          minutes=$(printf "%.0f" $(echo "$duration/60" | bc))
+          seconds=$(printf "%.0f" $(echo "$duration%60" | bc))
+          echo "duration=${minutes}m ${seconds}s" >> $GITHUB_OUTPUT
 
-          # GET TOTAL VIDEO DURATION
-          total_seconds=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 ${{ vars.PROJECT }}.mp4)
-          hours=$(bc <<< "${total_seconds}/3600")
-          minutes=$(bc <<< "(${total_seconds}%3600)/60")
-          seconds=$(printf "%.0f" $(bc <<< "${total_seconds}%60"))
-          humanized_duration="${hours}h ${minutes}m ${seconds}s"
-          echo "duration=$humanized_duration" >> "$GITHUB_OUTPUT"
+      - name: Commit and push changes
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add Final_Project_Team_3_Deliverable_2.mp4
+          git commit -m "Updated video - video duration: ${{ steps.duration.outputs.duration }}" || echo "No changes to commit"
+          git push
