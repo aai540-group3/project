@@ -16,12 +16,9 @@ permissions:
 jobs:
   generate-pdfs:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: docs/design-document
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
 
@@ -31,7 +28,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
 
       - name: Cache apt packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
@@ -50,23 +47,19 @@ jobs:
             texlive-science
 
       - name: Generate PDFs
-        working-directory: ${{ github.workspace }}/docs/design-document
         run: |
-          file="Final_Project_Team_3_Deliverable_1.tex"
-          base=$(basename "$file")
-          base_no_ext="${base%.*}"
-          rm -f "${base_no_ext}.pdf"
-          pdflatex -interaction=nonstopmode "$base"
-          biber "$base_no_ext"
-          pdflatex -interaction=nonstopmode "$base"
-          pdflatex -interaction=nonstopmode "$base"
+          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error -debug -output-format=dvi docs/design-document/Final_Project_Team_3_Deliverable_1.tex
+          biber --debug -t biber,backend,config,data,filter,io docs/design-document/Final_Project_Team_3_Deliverable_1
+          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error -debug -output-format=dvi docs/design-document/Final_Project_Team_3_Deliverable_1.tex
+          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error -debug -output-format=dvi docs/design-document/Final_Project_Team_3_Deliverable_1.tex
+
+      - name: Move PDF to root
+        run: |
+          cp Final_Project_Team_3_Deliverable_1.pdf ../..
 
       - name: Commit and Push Files
         run: |
-          git add \
-            *.pdf \
-            *.tex \
-            *.bib
+          git add Final_Project_Team_3_Deliverable_1.pdf
           git commit -m "Push PDF and source files"
-          git pull
-          git push
+          git pull origin main --rebase
+          git push origin main
