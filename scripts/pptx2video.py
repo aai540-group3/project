@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-.. module:: pptx2video
+.. module:: scripts.pptx2video
    :synopsis: Convert PowerPoint presentations to video with AI-generated voiceovers.
 
 This script converts a PowerPoint presentation (.pptx) into a video (.mp4) by:
@@ -253,7 +253,7 @@ class PPTXtoVideo:
 
         if not os.path.exists(self.pdf_filename):
             raise RuntimeError(f"Failed to create PDF file: {self.pdf_filename}")
-        
+
         self.state["pdf_created"] = True
         self._save_state()
         logger.info(f"PDF created successfully: {self.pdf_filename}")
@@ -304,7 +304,7 @@ class PPTXtoVideo:
             for i, (image_file, audio_file) in enumerate(zip(image_files, audio_files)):
                 if i not in self.state["videos_created"]:
                     futures.append(executor.submit(create_video_for_slide, image_file, audio_file, self.temp_dir, i))
-            
+
             for i, future in enumerate(futures):
                 video_file = future.result()
                 if video_file:
