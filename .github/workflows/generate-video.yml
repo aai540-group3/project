@@ -84,12 +84,11 @@ jobs:
       - name: Update assets
         if: steps.check_video.outputs.video_created == 'true'
         run: |
-          # Create a temporary directory for new assets
-          mkdir -p temp_assets
+          # Ensure PDF and MP4 are in the top-level directory
+          # (They should already be there from the video generation step)
 
-          # Copy main assets
-          cp Final_Project_Team_3_Deliverable_2.pdf temp_assets/
-          cp Final_Project_Team_3_Deliverable_2.mp4 temp_assets/
+          # Create a temporary directory for other assets
+          mkdir -p temp_assets
 
           # Copy intermediate files if they exist
           if [ -d "/tmp" ]; then
@@ -110,7 +109,7 @@ jobs:
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git add Final_Project_Team_3_Deliverable_2.mp4 video-assets
+          git add Final_Project_Team_3_Deliverable_2.pdf Final_Project_Team_3_Deliverable_2.mp4 video-assets
           git commit -m "Updated video and assets - video duration: ${{ steps.duration.outputs.duration }}" || echo "No changes to commit"
           git pull origin main --rebase
           git push origin main
