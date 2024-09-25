@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - ".dvcignore"
+      - ".env.template"
       - ".gitattributes"
       - ".github/workflows/mlops-pipeline.yml"
       - ".gitignore"
@@ -37,6 +38,7 @@ jobs:
         run: |
           cat << EOF > files_to_zip.txt
           .dvcignore
+          .env.template
           .gitattributes
           .github/workflows/mlops-pipeline.yml
           .gitignore
