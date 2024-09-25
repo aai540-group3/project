@@ -10,6 +10,7 @@ on:
       - "configs/**"
       - "dvc.lock"
       - "dvc.yaml"
+      - "dvcline/**"
       - "LICENSE"
       - "params.yaml"
       - "README.md"
@@ -34,19 +35,20 @@ jobs:
       - name: Create file list
         run: |
           cat << EOF > files_to_zip.txt
-          configs
-          .github/workflows/mlops-pipeline.yml
-          src
-          terraform
           .dvcignore
           .gitattributes
+          .github/workflows/mlops-pipeline.yml
           .gitignore
-          LICENSE
-          README.md
+          configs
           dvc.lock
           dvc.yaml
+          dvclive
+          LICENSE
           params.yaml
+          README.md
           requirement.txt
+          src
+          terraform
           EOF
 
       - name: Zip repository
