@@ -6,7 +6,9 @@
 
 ---
 
-Hospital readmissions within 30 days pose significant challenges to healthcare systems, leading to increased costs and compromised patient outcomes. Diabetic patients are particularly susceptible due to the chronic and complex nature of diabetes management. This document presents a comprehensive design of a machine learning (ML) system aimed at predicting 30-day hospital readmissions among diabetic patients. Leveraging historical patient data and advanced analytical techniques, the proposed system seeks to identify high-risk individuals, enabling proactive interventions and contributing to improved healthcare efficiency.
+Hospital readmissions are a critical issue affecting healthcare systems globally. Frequent readmissions, particularly within 30 days of discharge, not only escalate healthcare costs but also negatively impact patient satisfaction and clinical outcomes. Among chronic diseases, diabetes mellitus is prevalent and poses significant management challenges, leading to higher readmission rates. Effective strategies to predict and reduce readmissions among diabetic patients are essential for enhancing patient care and optimizing healthcare resources.
+
+Machine learning offers robust tools to analyze large datasets and uncover patterns that may not be apparent through traditional statistical methods. By developing an ML system specifically designed to predict 30-day readmissions among diabetic patients, we aim to reduce unnecessary hospitalizations, lower healthcare costs, and improve patient outcomes. This document outlines the design and implementation of such a system, covering data sourcing, engineering, modeling, deployment, and monitoring, ensuring that each component aligns with industry best practices and ethical considerations.
 
 ---
 
@@ -62,14 +64,6 @@ Hospital readmissions within 30 days pose significant challenges to healthcare s
     - [Model Deployment Architecture](#model-deployment-architecture)
   - [Conclusion](#conclusion)
   - [References](#references)
-
----
-
-## Introduction
-
-Hospital readmissions are a critical issue affecting healthcare systems globally. Frequent readmissions, particularly within 30 days of discharge, not only escalate healthcare costs but also negatively impact patient satisfaction and clinical outcomes. Among chronic diseases, diabetes mellitus is prevalent and poses significant management challenges, leading to higher readmission rates. Effective strategies to predict and reduce readmissions among diabetic patients are essential for enhancing patient care and optimizing healthcare resources.
-
-Machine learning offers robust tools to analyze large datasets and uncover patterns that may not be apparent through traditional statistical methods. By developing an ML system specifically designed to predict 30-day readmissions among diabetic patients, we aim to reduce unnecessary hospitalizations, lower healthcare costs, and improve patient outcomes. This document outlines the design and implementation of such a system, covering data sourcing, engineering, modeling, deployment, and monitoring, ensuring that each component aligns with industry best practices and ethical considerations.
 
 ---
 
