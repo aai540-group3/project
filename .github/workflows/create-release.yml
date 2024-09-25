@@ -24,21 +24,22 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          name: Final Project Deliverables ${{ steps.tag_version.outputs.new_tag }}
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          make_latest: true
           files: |
             Final_Project_Team_3_Deliverable_1.pdf
             Final_Project_Team_3_Deliverable_2.mp4
             Final_Project_Team_3_Deliverable_3.zip
-          name: Final Project Deliverables ${{ steps.tag_version.outputs.new_tag }}
-          tag_name: ${{ steps.tag_version.outputs.new_tag }}
           body: |
             DELIVERABLES:
               - [Final_Project_Team_3_Deliverable_1.pdf](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_1.pdf)
               - [Final_Project_Team_3_Deliverable_2.mp4](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_2.mp4)
               - [Final_Project_Team_3_Deliverable_3.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_3.zip)
-          generate_release_notes: true
-          draft: false
-          prerelease: false
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
