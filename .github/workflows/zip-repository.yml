@@ -39,6 +39,7 @@ jobs:
               - [Final_Project_Team_3_Deliverable_3.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_3.zip)
 
           draft: false
-          prerelease: true
+          prerelease: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
