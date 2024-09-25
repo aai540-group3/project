@@ -16,16 +16,34 @@ jobs:
       - name: Install pigz
         run: sudo apt-get install -y pigz
 
+      - name: Create file list
+        run: |
+          cat << EOF > files_to_zip.txt
+          configs
+          .github/workflows/mlops-pipeline.yml
+          src
+          terraform
+          .dvcignore
+          .gitattributes
+          .gitignore
+          Final_Project_Team_3_Deliverable_1.pdf
+          Final_Project_Team_3_Deliverable_2.mp3
+          LICENSE
+          Makefile
+          README.md
+          dvc.lock
+          dvc.yaml
+          params.yaml
+          requirement.txt
+          EOF
+
       - name: Zip repository
         run: |
-          # Create a list of files to include (everything except .git)
-          find . -type f -not -path './.git/*' > files_to_zip.txt
+          zip -r - $(cat files_to_zip.txt) | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
 
-          # Use pigz to compress the files
-          tar -c --files-from files_to_zip.txt | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
-
-          # Clean up
-          rm files_to_zip.txt
+      - name: Cleanup
+        if: always()
+        run: rm -f files_to_zip.txt
 
       - name: Check zip file size
         run: ls -lh Final_Project_Team_3_Deliverable_3.zip
@@ -37,6 +55,12 @@ jobs:
 
       - name: Commit and push zip file
         run: |
+          # Pull latest changes
+          git pull --rebase --strategy-option=ours
+
+          # Add and commit the zip file
           git add Final_Project_Team_3_Deliverable_3.zip
           git commit -m "Update Final_Project_Team_3_Deliverable_3.zip" || echo "No changes to commit"
-          git push
+
+          # Push changes
+          git push || (git pull --rebase --strategy-option=ours && git push)
