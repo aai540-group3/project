@@ -1,6 +1,23 @@
 name: Zip Repository
 
 on:
+  push:
+    paths:
+      - ".dvcignore"
+      - ".gitattributes"
+      - ".github/workflows/mlops-pipeline.yml"
+      - ".gitignore"
+      - "configs/**"
+      - "dvc.lock"
+      - "dvc.yaml"
+      - "Final_Project_Team_3_Deliverable_1.pdf"
+      - "Final_Project_Team_3_Deliverable_2.mp4"
+      - "LICENSE"
+      - "params.yaml"
+      - "README.md"
+      - "requirement.txt"
+      - "src/**"
+      - "terraform/**"
   workflow_dispatch:
 
 jobs:
@@ -27,7 +44,7 @@ jobs:
           .gitattributes
           .gitignore
           Final_Project_Team_3_Deliverable_1.pdf
-          Final_Project_Team_3_Deliverable_2.mp3
+          Final_Project_Team_3_Deliverable_2.mp4
           LICENSE
           README.md
           dvc.lock
