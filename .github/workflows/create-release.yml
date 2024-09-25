@@ -29,7 +29,7 @@ jobs:
             Final_Project_Team_3_Deliverable_1.pdf
             Final_Project_Team_3_Deliverable_2.mp4
             Final_Project_Team_3_Deliverable_3.zip
-          name: Final Project Deliverables
+          name: Final Project Deliverables ${{ steps.tag_version.outputs.new_tag }}
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
           body: |
             DELIVERABLES:
