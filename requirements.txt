@@ -21,3 +21,4 @@ python-pptx
 scikit-learn
 seaborn
 tenacity
+vimeo

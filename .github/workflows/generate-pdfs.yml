@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "docs/design-document/**"
+      - "docs/design-document/Final_Project_Team_3_Deliverable_1.tex"
+      - "docs/design-document/references.bib"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

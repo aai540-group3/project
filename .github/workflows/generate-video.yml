@@ -22,14 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out main branch
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           ref: main
           fetch-depth: 1
           lfs: true
 
       - name: Set up Python
-        uses: actions/setup-python@v5.2.0
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.11"
 
@@ -37,19 +37,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get -y install \
-              bc \
               ffmpeg \
               libreoffice \
-              poppler-utils \
-              rsync
+              poppler-utils
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install \
               aiohttp \
-              moviepy \
-              numpy \
               openai \
               pdf2image \
               Pillow \
@@ -58,8 +54,7 @@ jobs:
 
       - name: Generate Video
         id: generate
-        run: |
-          python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
+        run: python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
         continue-on-error: false
 
       - name: Check video creation
@@ -81,41 +76,42 @@ jobs:
           seconds=$(printf "%.0f" $(echo "$duration%60" | bc))
           echo "duration=${minutes}m ${seconds}s" >> $GITHUB_OUTPUT
 
-      - name: Update assets
+      - name: Create video-assets directory
+        if: steps.check_video.outputs.video_created == 'true'
+        run: mkdir -p video-assets
+
+      - name: Copy intermediate files
         if: steps.check_video.outputs.video_created == 'true'
         run: |
-          # Ensure PDF and MP4 are in the top-level directory
-          # (They should already be there from the video generation step)
+          if [ -d "video-assets-current" ]; then
+            cp -r video-assets-current/* video-assets/
+          fi
 
-          # Create a temporary directory for other assets
-          mkdir -p temp_assets
-
-          # Copy intermediate files if they exist
-          # Use find with -readable to only process files we have permission to read
-          find /tmp -readable -type f \( -name "slide_*.png" -o -name "voice_*.mp3" -o -name "video_*.mp4" \) -exec cp {} temp_assets/ \; 2>/dev/null || true
-
-          # Use rsync to update video-assets directory
-          # --delete option removes files in video-assets that don't exist in temp_assets
-          mkdir -p video-assets
-          rsync -av --delete temp_assets/ video-assets/
-
-          # Clean up temporary directory
-          rm -rf temp_assets
-
-          # List contents of video-assets for verification
+      - name: List video-assets contents
+        if: steps.check_video.outputs.video_created == 'true'
+        run: |
           echo "Contents of video-assets directory:"
           ls -la video-assets/
-        shell: /usr/bin/bash -e {0}
 
-      - name: Commit and push changes
+      - name: Configure Git
         if: steps.check_video.outputs.video_created == 'true'
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git add Final_Project_Team_3_Deliverable_2.pdf Final_Project_Team_3_Deliverable_2.mp4 video-assets
-          git commit -m "Updated video and assets - video duration: ${{ steps.duration.outputs.duration }}" || echo "No changes to commit"
-          git pull origin main --rebase
-          git push origin main
+
+      - name: Commit changes
+        if: steps.check_video.outputs.video_created == 'true'
+        run: |
+          git add Final_Project_Team_3_Deliverable_2.mp4 video-assets
+          git commit -m "Updated Video and Assets - Video Duration: ${{ steps.duration.outputs.duration }}" || echo "No changes to commit"
+
+      - name: Pull and rebase
+        if: steps.check_video.outputs.video_created == 'true'
+        run: git pull origin ${{ github.ref_name }} --rebase
+
+      - name: Push changes
+        if: steps.check_video.outputs.video_created == 'true'
+        run: git push origin ${{ github.ref_name }}
 
       - name: Check for failure
         if: steps.check_video.outputs.video_created == 'false'

@@ -38,9 +38,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      DATASETS_REMOTE: ${{ secrets.DATASETS_REMOTE }}
       DVC_STUDIO_TOKEN: ${{ secrets.DVC_STUDIO_TOKEN }}
+      MODELS_REMOTE: ${{ secrets.MODELS_REMOTE }}
 
     steps:
       - name: Checkout code
@@ -66,8 +68,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Configure DVC remotes
+      - name: Configure DVC
         run: |
+          dvc config core.autostage true
+          dvc config hydra.enabled true
+          dvc config studio.url https://studio.iterative.ai
+          dvc remote add datasets_remote $DATASETS_REMOTE -d
+          dvc remote add models_remote $MODELS_REMOTE
           dvc remote modify models_remote region $AWS_DEFAULT_REGION
           dvc remote modify datasets_remote region $AWS_DEFAULT_REGION
 
@@ -80,17 +87,14 @@ jobs:
             ${{ runner.os }}-dvc-cache-
 
       - name: Pull data and models from DVC remotes
-        run: |
-          dvc pull
+        run: dvc pull
 
       - name: Run DVC pipeline
-        run: |
-          dvc repro
+        run: dvc repro
 
       - name: Push data and models to DVC remotes
         if: always()
-        run: |
-          dvc push
+        run: dvc push
 
       - name: Configure Git
         run: |
@@ -101,24 +105,32 @@ jobs:
         if: always()
         id: commit_and_push
         continue-on-error: true
-        uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842  # v5.0.1
-        with:
-          commit_message: "Update DVC artifacts and metrics"
-          branch: ${{ github.ref_name }}
-          file_pattern: |
-            dvc.lock
-            dvclive/
-            dvclive_evaluate/
-            reports/metrics.json
+        run: |
+          git add dvc.lock dvclive/ dvclive_evaluate/ reports/metrics.json
+          git commit -m "Update DVC artifacts and metrics"
+          git pull origin ${{ github.ref_name }} --rebase
+          git push origin ${{ github.ref_name }}
 
       - name: Create Pull Request if push failed
-        if: steps.commit_and_push.outcome == 'failure'
-        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f  # v7.0.5
-        with:
-          commit-message: "Update DVC artifacts and metrics"
-          branch: "auto/update-dvc-artifacts-${{ github.run_id }}"
-          delete-branch: true
-          title: "Update DVC artifacts and metrics"
-          body: "This PR updates the DVC artifacts and metrics."
-          labels: "automated-pr"
-          base: ${{ github.ref_name }}
+        if: failure() && steps.commit_and_push.outcome == 'failure'
+        run: |
+          # Create a new branch
+          NEW_BRANCH="auto/update-dvc-artifacts-${{ github.run_id }}"
+          git checkout -b $NEW_BRANCH
+
+          # Add and commit changes
+          git add dvc.lock dvclive/ dvclive_evaluate/ reports/metrics.json
+          git commit -m "Update DVC artifacts and metrics"
+
+          # Push the new branch
+          git push origin $NEW_BRANCH
+
+          # Create a pull request using GitHub CLI
+          gh pr create \
+            --title "Update DVC artifacts and metrics" \
+            --body "This PR updates the DVC artifacts and metrics." \
+            --label "automated-pr" \
+            --base ${{ github.ref_name }} \
+            --head $NEW_BRANCH
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
