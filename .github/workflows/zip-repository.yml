@@ -1,77 +1,44 @@
-name: Zip Repository
+name: Create Release
 
 on:
   push:
     paths:
-      - ".dvcignore"
-      - ".gitattributes"
-      - ".github/workflows/mlops-pipeline.yml"
-      - ".gitignore"
-      - "configs/**"
-      - "dvc.lock"
-      - "dvc.yaml"
       - "Final_Project_Team_3_Deliverable_1.pdf"
       - "Final_Project_Team_3_Deliverable_2.mp4"
-      - "LICENSE"
-      - "params.yaml"
-      - "README.md"
-      - "requirement.txt"
-      - "src/**"
-      - "terraform/**"
+      - "Final_Project_Team_3_Deliverable_3.zip"
   workflow_dispatch:
 
 jobs:
-  zip-repo:
+  release:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: anothrNick/github-tag-action@1.67.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          PRERELEASE: true
+          DEFAULT_BUMP: minor
+
+      - name: Release
+        uses: softprops/action-gh-release@v0.1.15
         with:
-          fetch-depth: 0
+          files: |
+            Final_Project_Team_3_Deliverable_1.pdf
+            Final_Project_Team_3_Deliverable_2.mp4
+            Final_Project_Team_3_Deliverable_3.zip
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          body: |
+            DELIVERABLES:
+              - [Final_Project_Team_3_Deliverable_1.pdf](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_1.pdf)
+              - [Final_Project_Team_3_Deliverable_2.mp4](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_2.mp4)
+              - [Final_Project_Team_3_Deliverable_3.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_3.zip)
 
-      - name: Install pigz
-        run: sudo apt-get install -y pigz
-
-      - name: Create file list
-        run: |
-          cat << EOF > files_to_zip.txt
-          configs
-          .github/workflows/mlops-pipeline.yml
-          src
-          terraform
-          .dvcignore
-          .gitattributes
-          .gitignore
-          Final_Project_Team_3_Deliverable_1.pdf
-          Final_Project_Team_3_Deliverable_2.mp4
-          LICENSE
-          README.md
-          dvc.lock
-          dvc.yaml
-          params.yaml
-          requirement.txt
-          EOF
-
-      - name: Zip repository
-        run: |
-          zip -r - $(cat files_to_zip.txt) | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
-
-      - name: Cleanup
-        if: always()
-        run: rm -f files_to_zip.txt
-
-      - name: Check zip file size
-        run: ls -lh Final_Project_Team_3_Deliverable_3.zip
-
-      - name: Configure Git
-        run: |
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-
-      - name: Commit and push zip file
-        run: |
-          git add Final_Project_Team_3_Deliverable_3.zip
-          git commit --allow-empty -m "Update Final_Project_Team_3_Deliverable_3.zip"
-          git pull
-          git push
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
