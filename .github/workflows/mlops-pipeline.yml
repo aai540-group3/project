@@ -73,10 +73,11 @@ jobs:
           dvc config core.autostage true
           dvc config hydra.enabled true
           dvc config studio.url https://studio.iterative.ai
-          dvc remote add datasets_remote $DATASETS_REMOTE -d
-          dvc remote add models_remote $MODELS_REMOTE
-          dvc remote modify models_remote region $AWS_DEFAULT_REGION
+          dvc remote add -f datasets_remote $DATASETS_REMOTE -d
+          dvc remote add -f models_remote $MODELS_REMOTE
           dvc remote modify datasets_remote region $AWS_DEFAULT_REGION
+          dvc remote modify models_remote region $AWS_DEFAULT_REGION
+          dvc remote list
 
       - name: Cache DVC cache directory
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2

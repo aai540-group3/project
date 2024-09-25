@@ -2,7 +2,7 @@
     remote = datasets_remote
     autostage = true
 [hydra]
-    enabled = True
+    enabled = true
 [studio]
     url = https://studio.iterative.ai
 ['remote "datasets_remote"']
