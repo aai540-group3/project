@@ -1,0 +1,42 @@
+name: Zip Repository
+
+on:
+  workflow_dispatch:
+
+jobs:
+  zip-repo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install pigz
+        run: sudo apt-get install -y pigz
+
+      - name: Zip repository
+        run: |
+          # Create a list of files to include (everything except .git)
+          find . -type f -not -path './.git/*' > files_to_zip.txt
+
+          # Use pigz to compress the files
+          tar -c --files-from files_to_zip.txt | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
+
+          # Clean up
+          rm files_to_zip.txt
+
+      - name: Check zip file size
+        run: ls -lh Final_Project_Team_3_Deliverable_3.zip
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Commit and push zip file
+        run: |
+          git add Final_Project_Team_3_Deliverable_3.zip
+          git commit -m "Update Final_Project_Team_3_Deliverable_3.zip" || echo "No changes to commit"
+          git push
