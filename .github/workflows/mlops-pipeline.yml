@@ -46,12 +46,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
 
       - name: Cache Python dependencies
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -59,7 +59,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.11"
 
@@ -79,7 +79,7 @@ jobs:
           dvc remote modify datasets_remote region $AWS_DEFAULT_REGION
 
       - name: Cache DVC cache directory
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: .dvc/cache
           key: ${{ runner.os }}-dvc-cache-${{ hashFiles('dvc.lock') }}
@@ -106,31 +106,58 @@ jobs:
         id: commit_and_push
         continue-on-error: true
         run: |
-          git add dvc.lock dvclive/ dvclive_evaluate/ reports/metrics.json
-          git commit -m "Update DVC artifacts and metrics"
-          git pull origin ${{ github.ref_name }} --rebase
-          git push origin ${{ github.ref_name }}
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          # Add files only if they exist
+          [ -f dvc.lock ] && git add dvc.lock
+          [ -d dvclive ] && git add dvclive
+          [ -d dvclive_evaluate ] && git add dvclive_evaluate
+          [ -f reports/metrics.json ] && git add reports/metrics.json
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update DVC artifacts and metrics"
+            git pull origin ${{ github.ref_name }} --rebase
+            git push origin ${{ github.ref_name }}
+          fi
 
       - name: Create Pull Request if push failed
         if: failure() && steps.commit_and_push.outcome == 'failure'
         run: |
+          # Configure git
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
           # Create a new branch
           NEW_BRANCH="auto/update-dvc-artifacts-${{ github.run_id }}"
           git checkout -b $NEW_BRANCH
 
-          # Add and commit changes
-          git add dvc.lock dvclive/ dvclive_evaluate/ reports/metrics.json
-          git commit -m "Update DVC artifacts and metrics"
+          # Add files only if they exist
+          [ -f dvc.lock ] && git add dvc.lock
+          [ -d dvclive ] && git add dvclive
+          [ -d dvclive_evaluate ] && git add dvclive_evaluate
+          [ -f reports/metrics.json ] && git add reports/metrics.json
 
-          # Push the new branch
-          git push origin $NEW_BRANCH
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit. Skipping PR creation."
+          else
+            # Commit changes
+            git commit -m "Update DVC artifacts and metrics"
 
-          # Create a pull request using GitHub CLI
-          gh pr create \
-            --title "Update DVC artifacts and metrics" \
-            --body "This PR updates the DVC artifacts and metrics." \
-            --label "automated-pr" \
-            --base ${{ github.ref_name }} \
-            --head $NEW_BRANCH
+            # Push the new branch
+            git push origin $NEW_BRANCH
+
+            # Create a pull request using GitHub CLI
+            gh pr create \
+              --title "Update DVC artifacts and metrics" \
+              --body "This PR updates the DVC artifacts and metrics." \
+              --label "automated-pr" \
+              --base ${{ github.ref_name }} \
+              --head $NEW_BRANCH
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
