@@ -1,4 +1,3 @@
-# aiohttp
 autogluon.tabular[all]
 black[jupyter]
 botocore
@@ -11,14 +10,9 @@ hydra_colorlog
 hydra-core
 isort
 joblib
-# moviepy
 numpy
 openai
 pandas
-# pdf2image
-# Pillow
-# python-pptx
 scikit-learn
 seaborn
 tenacity
-# vimeo
