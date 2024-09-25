@@ -14,6 +14,7 @@ on:
       - "LICENSE"
       - "params.yaml"
       - "README.md"
+      - "reports/**"
       - "requirement.txt"
       - "src/**"
       - "terraform/**"
@@ -46,6 +47,7 @@ jobs:
           LICENSE
           params.yaml
           README.md
+          reports
           requirement.txt
           src
           terraform
