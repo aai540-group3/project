@@ -9,7 +9,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
 
@@ -29,7 +29,6 @@ jobs:
           Final_Project_Team_3_Deliverable_1.pdf
           Final_Project_Team_3_Deliverable_2.mp3
           LICENSE
-          Makefile
           README.md
           dvc.lock
           dvc.yaml
