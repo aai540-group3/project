@@ -71,12 +71,7 @@ jobs:
 
       - name: Commit and push zip file
         run: |
-          # Pull latest changes
-          git pull --rebase --strategy-option=ours
-
-          # Add and commit the zip file
           git add Final_Project_Team_3_Deliverable_3.zip
-          git commit -m "Update Final_Project_Team_3_Deliverable_3.zip" || echo "No changes to commit"
-
-          # Push changes
-          git push || (git pull --rebase --strategy-option=ours && git push)
+          git commit --allow-empty -m "Update Final_Project_Team_3_Deliverable_3.zip"
+          git pull
+          git push
