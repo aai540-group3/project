@@ -1,12 +1,10 @@
 name: Create Release
 
 on:
-  push:
-    paths:
-      - "Final_Project_Team_3_Deliverable_1.pdf"
-      - "Final_Project_Team_3_Deliverable_2.mp4"
-      - "Final_Project_Team_3_Deliverable_3.zip"
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   release:
@@ -17,7 +15,7 @@ jobs:
 
       - name: Bump version and push tag
         id: tag_version
-        uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297 # v1
+        uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297 # v1.71.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
@@ -31,7 +29,7 @@ jobs:
             Final_Project_Team_3_Deliverable_1.pdf
             Final_Project_Team_3_Deliverable_2.mp4
             Final_Project_Team_3_Deliverable_3.zip
-          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          tag_name: Final Project Deliverables v${{ steps.tag_version.outputs.new_tag }}
           body: |
             DELIVERABLES:
               - [Final_Project_Team_3_Deliverable_1.pdf](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_1.pdf)
