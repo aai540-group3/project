@@ -2,15 +2,21 @@ name: Validate AWS IAM policies in Terraform templates using Policy Validator
 
 on:
   push:
-    branches: ["main", "develop"]
+    branches:
+      - main
+    paths:
+      - "terraform/**"
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
+    paths:
+      - "terraform/**"
 
 env:
   AWS_ROLE: arn:aws:iam::864899865811:role/GitHub-Actions-PolicyValidator
   REGION: us-east-1
-  TEMPLATE_PATH: 'terraform/**/*.tf'
-  ACTIONS: 's3:PutObject,s3:GetObject,s3:ListBucket,dynamodb:GetItem,dynamodb:PutItem,dynamodb:DeleteItem,iam:*,access-analyzer:*,organizations:*'
+  TEMPLATE_PATH: "terraform/**/*.tf"
+  ACTIONS: "s3:PutObject,s3:GetObject,s3:ListBucket,dynamodb:GetItem,dynamodb:PutItem,dynamodb:DeleteItem,iam:*,access-analyzer:*,organizations:*"
   RESOURCES: >-
     arn:aws:s3:::terraform-state-bucket-eeb973f4/*,
     arn:aws:s3:::terraform-state-bucket-eeb973f4,
@@ -65,7 +71,7 @@ env:
         }
       ]
     }
-  REFERENCE_POLICY_TYPE: 'INLINE'
+  REFERENCE_POLICY_TYPE: "INLINE"
 
 jobs:
   policy-validator:
