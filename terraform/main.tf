@@ -1,93 +1,3 @@
-variable "s3_bucket_name" {
-  description = "Name of the S3 bucket for Terraform state"
-  type        = string
-}
-
-variable "dynamodb_table_name" {
-  description = "Name of the DynamoDB table for Terraform state locking"
-  type        = string
-}
-
-variable "aws_region" {
-  description = "AWS region to deploy resources"
-  type        = string
-}
-
-variable "org_users" {
-  description = "List of email addresses for organization users"
-  type        = list(string)
-}
-
-variable "iam_group_name" {
-  description = "Name of the IAM group for organization users"
-  type        = string
-}
-
-variable "admin_policy_name" {
-  description = "Name of the administrator access policy"
-  type        = string
-}
-
-variable "budget_name" {
-  description = "Name of the AWS budget"
-  type        = string
-}
-
-variable "budget_limit_amount" {
-  description = "Limit amount for the AWS budget"
-  type        = string
-}
-
-variable "budget_limit_unit" {
-  description = "Limit unit for the AWS budget"
-  type        = string
-}
-
-variable "cloudwatch_alarm_name" {
-  description = "Name of the CloudWatch alarm for Free Tier usage"
-  type        = string
-}
-
-variable "cloudwatch_threshold" {
-  description = "Threshold for the CloudWatch alarm"
-  type        = string
-}
-
-variable "free_tier_alerts_topic_name" {
-  description = "Name of the SNS topic for Free Tier alerts"
-  type        = string
-}
-
-variable "mlops_bucket_name" {
-  description = "Name of the S3 bucket for MLOps artifacts"
-  type        = string
-}
-
-variable "github_actions_role_name" {
-  description = "Name of the IAM role for GitHub Actions"
-  type        = string
-}
-
-variable "github_org" {
-  description = "Name of the GitHub organization"
-  type        = string
-}
-
-variable "github_repo" {
-  description = "Name of the GitHub repository"
-  type        = string
-}
-
-variable "aws_account_id" {
-  description = "AWS account ID"
-  type        = string
-}
-
-variable "access_analyzer_policy_name" {
-  description = "Name of the Access Analyzer policy"
-  type        = string
-}
-
 # ---------------------------------------------------------------------------------------------------------------------
 # TERRAFORM CONFIGURATION
 # ---------------------------------------------------------------------------------------------------------------------
@@ -122,17 +32,7 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
-}
-
-# ---------------------------------------------------------------------------------------------------------------------
-# LOCALS
-# ---------------------------------------------------------------------------------------------------------------------
-# Locals are named values that can be used throughout your Terraform configuration.
-
-locals {
-  # List of email addresses for the users
-  emails = var.org_users
+  region = "us-east-1"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -149,44 +49,76 @@ resource "aws_organizations_organization" "org" {
 # ---------------------------------------------------------------------------------------------------------------------
 # IAM is a web service that helps you securely control access to AWS resources.
 
-# Create IAM users
-resource "aws_iam_user" "users" {
-  count = length(local.emails)                     # Create a user for each email in the list
-  name  = split("@", local.emails[count.index])[0] # Use the part before @ as the username
-
+# Create IAM user - jagustin
+resource "aws_iam_user" "jagustin" {
+  name = "jagustin"
   tags = {
-    Email       = local.emails[count.index]
+    Email       = "jagustin@sandiego.edu"
+    Environment = "Management"
+    ManagedBy   = "Terraform"
+  }
+}
+
+# Create IAM user - lvo
+resource "aws_iam_user" "lvo" {
+  name = "lvo"
+  tags = {
+    Email       = "lvo@sandiego.edu"
+    Environment = "Management"
+    ManagedBy   = "Terraform"
+  }
+}
+
+# Create IAM user - zrobertson
+resource "aws_iam_user" "zrobertson" {
+  name = "zrobertson"
+  tags = {
+    Email       = "zrobertson@sandiego.edu"
     Environment = "Management"
     ManagedBy   = "Terraform"
   }
 }
 
 # Set up login profiles for the IAM users
-resource "aws_iam_user_login_profile" "users" {
-  count                   = length(local.emails)
-  user                    = aws_iam_user.users[count.index].name
-  password_reset_required = true # Force users to change password on first login
+resource "aws_iam_user_login_profile" "jagustin" {
+  user                    = aws_iam_user.jagustin.name
+  password_reset_required = true
+  lifecycle {
+    ignore_changes = [password_reset_required]
+  }
+}
 
+resource "aws_iam_user_login_profile" "lvo" {
+  user                    = aws_iam_user.lvo.name
+  password_reset_required = true
+  lifecycle {
+    ignore_changes = [password_reset_required]
+  }
+}
+
+resource "aws_iam_user_login_profile" "zrobertson" {
+  user                    = aws_iam_user.zrobertson.name
+  password_reset_required = true
   lifecycle {
     ignore_changes = [password_reset_required]
   }
 }
 
 # Create an IAM group
-resource "aws_iam_group" "org_users" {
-  name = var.iam_group_name
+resource "aws_iam_group" "organization_users" {
+  name = "OrganizationUsers"
 }
 
 # Add users to the IAM group
-resource "aws_iam_group_membership" "org_users" {
-  name  = "${var.iam_group_name}Membership"
-  users = aws_iam_user.users[*].name
-  group = aws_iam_group.org_users.name
+resource "aws_iam_group_membership" "organization_users" {
+  name  = "OrganizationUsersMembership"
+  users = [aws_iam_user.jagustin.name, aws_iam_user.lvo.name, aws_iam_user.zrobertson.name]
+  group = aws_iam_group.organization_users.name
 }
 
 # Create an IAM policy for administrator access
 resource "aws_iam_policy" "administrator_access_policy" {
-  name        = var.admin_policy_name
+  name        = "AdministratorAccessPolicy"
   description = "Policy granting administrator access"
 
   policy = jsonencode({
@@ -203,7 +135,7 @@ resource "aws_iam_policy" "administrator_access_policy" {
 
 # Attach the administrator access policy to the IAM group
 resource "aws_iam_group_policy_attachment" "administrator_access_policy_attachment" {
-  group      = aws_iam_group.org_users.name
+  group      = aws_iam_group.organization_users.name
   policy_arn = aws_iam_policy.administrator_access_policy.arn
 }
 
@@ -213,7 +145,7 @@ resource "aws_iam_group_policy_attachment" "administrator_access_policy_attachme
 # Amazon S3 is an object storage service offering industry-leading scalability, data availability, security, and performance.
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = var.s3_bucket_name
+  bucket = "terraform-state-bucket-eeb973f4"
 
   tags = {
     Name        = "Terraform State"
@@ -287,7 +219,7 @@ resource "aws_s3_bucket_policy" "terraform_state_policy" {
 
 # DynamoDB table for Terraform state locking
 resource "aws_dynamodb_table" "terraform_locks" {
-  name         = var.dynamodb_table_name
+  name         = "terraform-state-lock-eeb973f4"
   billing_mode = "PAY_PER_REQUEST" # Pay only for what you use
   hash_key     = "LockID"
 
@@ -343,10 +275,10 @@ resource "aws_dynamodb_resource_policy" "terraform_locks_policy" {
 # AWS Budgets gives you the ability to set custom budgets that alert you when your costs or usage exceed your budgeted amount.
 
 resource "aws_budgets_budget" "shared_user_budget" {
-  name         = var.budget_name
+  name         = "SharedFreeTierBudget"
   budget_type  = "COST"
-  limit_amount = var.budget_limit_amount
-  limit_unit   = var.budget_limit_unit
+  limit_amount = "1"
+  limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
   # Notification when actual spend reaches 20% of the budget
@@ -355,7 +287,7 @@ resource "aws_budgets_budget" "shared_user_budget" {
     threshold                  = 20
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = local.emails
+    subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
 
   # Notification when actual spend reaches 40% of the budget
@@ -364,7 +296,7 @@ resource "aws_budgets_budget" "shared_user_budget" {
     threshold                  = 40
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = local.emails
+    subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
 
   # Notification when actual spend reaches 60% of the budget
@@ -373,7 +305,7 @@ resource "aws_budgets_budget" "shared_user_budget" {
     threshold                  = 60
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = local.emails
+    subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
 
   # Notification when actual spend reaches 80% of the budget
@@ -382,7 +314,7 @@ resource "aws_budgets_budget" "shared_user_budget" {
     threshold                  = 80
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = local.emails
+    subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
 
   # Notification when actual spend reaches 90% of the budget
@@ -391,7 +323,7 @@ resource "aws_budgets_budget" "shared_user_budget" {
     threshold                  = 90
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = local.emails
+    subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
 
   # Notification when forecasted spend reaches 100% of the budget
@@ -400,11 +332,11 @@ resource "aws_budgets_budget" "shared_user_budget" {
     threshold                  = 100
     threshold_type             = "PERCENTAGE"
     notification_type          = "FORECASTED"
-    subscriber_email_addresses = local.emails
+    subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
 
   lifecycle {
-    # prevent_destroy = true   # Prevent accidental deletion of this budget
+    prevent_destroy = true   # Prevent accidental deletion of this budget
     ignore_changes = [name] # Ignore changes to the budget name
   }
 }
@@ -416,31 +348,67 @@ resource "aws_budgets_budget" "shared_user_budget" {
 # and application-to-person (A2P) communication. It enables decoupled microservices, distributed systems, and serverless
 # applications to communicate with each other and with users.
 
-# Create an SNS topic for each user
-resource "aws_sns_topic" "user_notifications" {
-  count = length(local.emails)
-  name  = "user-notifications-${split("@", local.emails[count.index])[0]}"
+
+# Create an SNS topic for jagustin
+resource "aws_sns_topic" "jagustin_notifications" {
+  name = "user-notifications-jagustin"
 
   tags = {
     Name        = "User Notifications"
     Environment = "Management"
     ManagedBy   = "Terraform"
-    User        = split("@", local.emails[count.index])[0]
+    User        = "jagustin"
   }
 }
 
-# Subscribe each user's email to their respective SNS topic
-resource "aws_sns_topic_subscription" "user_email_subscriptions" {
-  count     = length(local.emails)
-  topic_arn = aws_sns_topic.user_notifications[count.index].arn
-  protocol  = "email"
-  endpoint  = local.emails[count.index]
+# Create an SNS topic for lvo
+resource "aws_sns_topic" "lvo_notifications" {
+  name = "user-notifications-lvo"
+
+  tags = {
+    Name        = "User Notifications"
+    Environment = "Management"
+    ManagedBy   = "Terraform"
+    User        = "lvo"
+  }
 }
 
-# Define a policy document that allows CloudWatch to publish to each SNS topic
-data "aws_iam_policy_document" "sns_topic_policy" {
-  count = length(local.emails)
+# Create an SNS topic for zrobertson
+resource "aws_sns_topic" "zrobertson_notifications" {
+  name = "user-notifications-zrobertson"
 
+  tags = {
+    Name        = "User Notifications"
+    Environment = "Management"
+    ManagedBy   = "Terraform"
+    User        = "zrobertson"
+  }
+}
+
+# Subscribe jagustin's email to their respective SNS topic
+resource "aws_sns_topic_subscription" "jagustin_email_subscriptions" {
+  topic_arn = aws_sns_topic.jagustin_notifications.arn
+  protocol  = "email"
+  endpoint  = "jagustin@sandiego.edu"
+}
+
+# Subscribe lvo's email to their respective SNS topic
+resource "aws_sns_topic_subscription" "lvo_email_subscriptions" {
+  topic_arn = aws_sns_topic.lvo_notifications.arn
+  protocol  = "email"
+  endpoint  = "lvo@sandiego.edu"
+}
+
+# Subscribe zrobertson's email to their respective SNS topic
+resource "aws_sns_topic_subscription" "zrobertson_email_subscriptions" {
+  topic_arn = aws_sns_topic.zrobertson_notifications.arn
+  protocol  = "email"
+  endpoint  = "zrobertson@sandiego.edu"
+}
+
+
+# Define a policy document that allows CloudWatch to publish to each SNS topic
+data "aws_iam_policy_document" "sns_topic_policy_jagustin" {
   statement {
     effect  = "Allow"
     actions = ["SNS:Publish"]
@@ -450,16 +418,55 @@ data "aws_iam_policy_document" "sns_topic_policy" {
       identifiers = ["cloudwatch.amazonaws.com"]
     }
 
-    resources = [aws_sns_topic.user_notifications[count.index].arn]
+    resources = [aws_sns_topic.jagustin_notifications.arn]
+  }
+}
+
+data "aws_iam_policy_document" "sns_topic_policy_lvo" {
+  statement {
+    effect  = "Allow"
+    actions = ["SNS:Publish"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudwatch.amazonaws.com"]
+    }
+
+    resources = [aws_sns_topic.lvo_notifications.arn]
+  }
+}
+
+data "aws_iam_policy_document" "sns_topic_policy_zrobertson" {
+  statement {
+    effect  = "Allow"
+    actions = ["SNS:Publish"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudwatch.amazonaws.com"]
+    }
+
+    resources = [aws_sns_topic.zrobertson_notifications.arn]
   }
 }
 
 # Attach the policy to each SNS topic
-resource "aws_sns_topic_policy" "default" {
-  count  = length(local.emails)
-  arn    = aws_sns_topic.user_notifications[count.index].arn
-  policy = data.aws_iam_policy_document.sns_topic_policy[count.index].json
+resource "aws_sns_topic_policy" "jagustin_default" {
+  arn    = aws_sns_topic.jagustin_notifications.arn
+  policy = data.aws_iam_policy_document.sns_topic_policy_jagustin.json
 }
+
+resource "aws_sns_topic_policy" "lvo_default" {
+  arn    = aws_sns_topic.lvo_notifications.arn
+  policy = data.aws_iam_policy_document.sns_topic_policy_lvo.json
+}
+
+resource "aws_sns_topic_policy" "zrobertson_default" {
+  arn    = aws_sns_topic.zrobertson_notifications.arn
+  policy = data.aws_iam_policy_document.sns_topic_policy_zrobertson.json
+}
+
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # CLOUDWATCH ALARM FOR FREE TIER USAGE
@@ -467,14 +474,14 @@ resource "aws_sns_topic_policy" "default" {
 # Amazon CloudWatch is a monitoring and observability service that provides data and actionable insights for AWS resources.
 
 resource "aws_cloudwatch_metric_alarm" "free_tier_usage_alarm" {
-  alarm_name          = var.cloudwatch_alarm_name
+  alarm_name          = "FreeTierUsageAlarm"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "EstimatedCharges"
   namespace           = "AWS/Billing"
   period              = "300"
   statistic           = "Maximum"
-  threshold           = var.cloudwatch_threshold
+  threshold           = "1.00"
   actions_enabled     = true
   alarm_actions       = [aws_sns_topic.free_tier_alerts.arn]
 
@@ -485,23 +492,37 @@ resource "aws_cloudwatch_metric_alarm" "free_tier_usage_alarm" {
 
 # Create an SNS topic for Free Tier alerts
 resource "aws_sns_topic" "free_tier_alerts" {
-  name = var.free_tier_alerts_topic_name
+  name = "free-tier-alerts"
 }
 
-# Subscribe emails to the Free Tier alerts SNS topic
-resource "aws_sns_topic_subscription" "free_tier_alerts_email" {
-  count     = length(local.emails)
+# Subscribe jagustin's email to the Free Tier alerts SNS topic
+resource "aws_sns_topic_subscription" "free_tier_alerts_email_jagustin" {
   topic_arn = aws_sns_topic.free_tier_alerts.arn
   protocol  = "email"
-  endpoint  = local.emails[count.index]
+  endpoint  = "jagustin@sandiego.edu"
 }
+
+# Subscribe lvo's email to the Free Tier alerts SNS topic
+resource "aws_sns_topic_subscription" "free_tier_alerts_email_lvo" {
+  topic_arn = aws_sns_topic.free_tier_alerts.arn
+  protocol  = "email"
+  endpoint  = "lvo@sandiego.edu"
+}
+
+# Subscribe zrobertson's email to the Free Tier alerts SNS topic
+resource "aws_sns_topic_subscription" "free_tier_alerts_email_zrobertson" {
+  topic_arn = aws_sns_topic.free_tier_alerts.arn
+  protocol  = "email"
+  endpoint  = "zrobertson@sandiego.edu"
+}
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # S3 BUCKET FOR MLOPS PIPELINE
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_s3_bucket" "mlops_artifacts" {
-  bucket = var.mlops_bucket_name
+  bucket = "mlops-artifacts-aai540-group3"
 
   tags = {
     Name        = "MLOps Artifacts"
@@ -573,7 +594,7 @@ resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_iam_role" "github_actions_policy_validator" {
-  name = var.github_actions_role_name
+  name = "GitHub-Actions-PolicyValidator"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -581,13 +602,13 @@ resource "aws_iam_role" "github_actions_policy_validator" {
       {
         Effect = "Allow",
         Principal = {
-          Federated = "arn:aws:iam::${var.aws_account_id}:oidc-provider/token.actions.githubusercontent.com"
+          Federated = "arn:aws:iam::864899865811:oidc-provider/token.actions.githubusercontent.com"
         },
         Action = "sts:AssumeRoleWithWebIdentity",
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com",
-            "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:sub" = "repo:aai540-group3/project:ref:refs/heads/main"
           }
         }
       }
@@ -596,7 +617,7 @@ resource "aws_iam_role" "github_actions_policy_validator" {
 }
 
 resource "aws_iam_policy" "access_analyzer_policy" {
-  name        = var.access_analyzer_policy_name
+  name        = "AccessAnalyzerPolicy"
   path        = "/"
   description = "IAM policy for Access Analyzer"
 

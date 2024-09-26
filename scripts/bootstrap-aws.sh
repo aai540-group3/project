@@ -5,21 +5,16 @@
 #                  such as S3 buckets for state storage and DynamoDB tables for
 #                  state locking.
 # Version         :1.0
-# Usage           :./aws_bootstrap.sh [undo]
+# Usage           :./aws_bootstrap.sh
 #===============================================================================
 set -e
-
-#---------------------------------------
-# Generate a random 8-character hash
-#---------------------------------------
-RANDOM_HASH=$(openssl rand -hex 4)
 
 #---------------------------------------
 # Configuration Variables
 #---------------------------------------
 AWS_REGION='us-east-1'
-S3_BUCKET_NAME=${S3_BUCKET_NAME:-"terraform-state-bucket-$RANDOM_HASH"}
-DYNAMODB_TABLE_NAME=${DYNAMODB_TABLE_NAME:-"terraform-state-lock-$RANDOM_HASH"}
+S3_BUCKET_NAME=${S3_BUCKET_NAME:-"terraform-state-bucket-eeb973f4"}
+DYNAMODB_TABLE_NAME=${DYNAMODB_TABLE_NAME:-"terraform-state-lock-eeb973f4"}
 CREDENTIALS_FILE="$HOME/.aws/credentials"
 CONFIG_FILE="$HOME/.aws/config"
 
@@ -97,78 +92,14 @@ EOF
     echo "---- AWS BOOTSTRAP COMPLETE ----"
     echo "S3 Bucket Name: $S3_BUCKET_NAME"
     echo "DynamoDB Table Name: $DYNAMODB_TABLE_NAME"
-
-    # Save the resource names to a file for future reference
-    cat << EOF > aws_resources.env
-S3_BUCKET_NAME=$S3_BUCKET_NAME
-DYNAMODB_TABLE_NAME=$DYNAMODB_TABLE_NAME
-EOF
-    echo "Resource names saved to aws_resources.env"
-
-    # Save the resource names to a file for Terraform
-    cat << EOF > terraform.tfvars
-s3_bucket_name = "$S3_BUCKET_NAME"
-dynamodb_table_name = "$DYNAMODB_TABLE_NAME"
-EOF
-    echo "Resource names saved to terraform.tfvars"
 }
-
-#---------------------------------------
-# Function: undo_changes
-# Description:
-#   Reverts the changes made by create_resources function.
-#   - Deletes the S3 bucket.
-#   - Deletes the DynamoDB table.
-#   - Removes AWS credentials and config files.
-#   - Removes generated resource files.
-#---------------------------------------
-undo_changes() {
-    echo "---- STARTING UNDO PROCESS ----"
-
-    # Load resource names if available
-    if [ -f aws_resources.env ]; then
-        # shellcheck disable=SC1091
-        source aws_resources.env
-    fi
-
-    # Remove S3 bucket
-    if [ -n "$S3_BUCKET_NAME" ] && aws s3api head-bucket --bucket "$S3_BUCKET_NAME" 2>/dev/null; then
-        echo "Deleting S3 bucket: $S3_BUCKET_NAME"
-        aws s3 rb "s3://$S3_BUCKET_NAME" --force
-    else
-        echo "S3 bucket $S3_BUCKET_NAME does not exist or is not accessible"
-    fi
-
-    # Remove DynamoDB table
-    if [ -n "$DYNAMODB_TABLE_NAME" ] && aws dynamodb describe-table --table-name "$DYNAMODB_TABLE_NAME" &> /dev/null; then
-        echo "Deleting DynamoDB table: $DYNAMODB_TABLE_NAME"
-        aws dynamodb delete-table --table-name "$DYNAMODB_TABLE_NAME"
-    else
-        echo "DynamoDB table $DYNAMODB_TABLE_NAME does not exist or is not accessible"
-    fi
-
-    # Remove AWS config files
-    rm -f "$CREDENTIALS_FILE" "$CONFIG_FILE"
-    echo "Removed AWS credential and config files"
-
-    # Remove the resource names file
-    rm -f aws_resources.env terraform.tfvars
-    echo "Removed aws_resources.env and terraform.tfvars files"
-
-    echo "---- UNDO PROCESS COMPLETE ----"
-}
-
 #---------------------------------------
 # Main Script Logic
 #---------------------------------------
-if [ "$1" = "undo" ]; then
-    undo_changes
-else
-    # Ensure required AWS CLI tools are installed
-    if ! command -v aws &> /dev/null; then
-        echo "ERROR: AWS CLI is not installed. Please install it before running this script."
-        exit 1
-    fi
-
+# Ensure required AWS CLI tools are installed
+if ! command -v aws &> /dev/null; then
+    echo "ERROR: AWS CLI is not installed. Please install it before running this script."
+    exit 1
+fi
     create_resources
 fi
