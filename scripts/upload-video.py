@@ -49,5 +49,4 @@ try:
     response = client.replace(VIDEO_URI, filename=VIDEO_PATH)
     print(f"Video successfully replaced. New video URI: {response}")
 except Exception as e:
-    # Handle any errors that occur during the replacement process
     print(f"Failed to replace video: {e}")
