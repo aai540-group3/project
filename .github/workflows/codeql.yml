@@ -2,11 +2,15 @@ name: "CodeQL Advanced"
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
+    paths:
+      - "**.py"
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
+    paths:
+      - "**.py"
   schedule:
-    - cron: '23 8 * * 6'
+    - cron: "23 8 * * 6" # Run this job at 8:23 PM every Saturday
 
 jobs:
   analyze:
@@ -22,20 +26,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - language: python
-          build-mode: none
+          - language: python
+            build-mode: none
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
-        build-mode: ${{ matrix.build-mode }}
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        category: "/language:${{matrix.language}}"
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"

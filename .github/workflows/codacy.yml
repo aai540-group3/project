@@ -2,11 +2,11 @@ name: Codacy Security Scan
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   schedule:
-    - cron: '39 21 * * 0'
+    - cron: "39 21 * * 0" # Run this job at 9:39 PM every Sunday
 
 permissions:
   contents: read
