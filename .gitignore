@@ -3,8 +3,7 @@ __pycache__/
 .coverage
 .coverage.*
 .DS_Store
-.dvc/.gitignore
-.dvc/config.local
+.dvc/
 .eggs/
 .env
 .hydra/
@@ -61,6 +60,5 @@ target/
 terraform/.terraform/providers/
 var/
 
-!.dvc/*
 !.gitkeep
 !src/models/
