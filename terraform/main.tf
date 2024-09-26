@@ -8,6 +8,86 @@ variable "dynamodb_table_name" {
   type        = string
 }
 
+variable "aws_region" {
+  description = "AWS region to deploy resources"
+  type        = string
+}
+
+variable "org_users" {
+  description = "List of email addresses for organization users"
+  type        = list(string)
+}
+
+variable "iam_group_name" {
+  description = "Name of the IAM group for organization users"
+  type        = string
+}
+
+variable "admin_policy_name" {
+  description = "Name of the administrator access policy"
+  type        = string
+}
+
+variable "budget_name" {
+  description = "Name of the AWS budget"
+  type        = string
+}
+
+variable "budget_limit_amount" {
+  description = "Limit amount for the AWS budget"
+  type        = string
+}
+
+variable "budget_limit_unit" {
+  description = "Limit unit for the AWS budget"
+  type        = string
+}
+
+variable "cloudwatch_alarm_name" {
+  description = "Name of the CloudWatch alarm for Free Tier usage"
+  type        = string
+}
+
+variable "cloudwatch_threshold" {
+  description = "Threshold for the CloudWatch alarm"
+  type        = string
+}
+
+variable "free_tier_alerts_topic_name" {
+  description = "Name of the SNS topic for Free Tier alerts"
+  type        = string
+}
+
+variable "mlops_bucket_name" {
+  description = "Name of the S3 bucket for MLOps artifacts"
+  type        = string
+}
+
+variable "github_actions_role_name" {
+  description = "Name of the IAM role for GitHub Actions"
+  type        = string
+}
+
+variable "github_org" {
+  description = "Name of the GitHub organization"
+  type        = string
+}
+
+variable "github_repo" {
+  description = "Name of the GitHub repository"
+  type        = string
+}
+
+variable "aws_account_id" {
+  description = "AWS account ID"
+  type        = string
+}
+
+variable "access_analyzer_policy_name" {
+  description = "Name of the Access Analyzer policy"
+  type        = string
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # TERRAFORM CONFIGURATION
 # ---------------------------------------------------------------------------------------------------------------------
@@ -42,7 +122,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -52,11 +132,7 @@ provider "aws" {
 
 locals {
   # List of email addresses for the users
-  emails = [
-    "jagustin@sandiego.edu",
-    "lvo@sandiego.edu",
-    "zrobertson@sandiego.edu"
-  ]
+  emails = var.org_users
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -98,19 +174,19 @@ resource "aws_iam_user_login_profile" "users" {
 
 # Create an IAM group
 resource "aws_iam_group" "org_users" {
-  name = "OrganizationUsers"
+  name = var.iam_group_name
 }
 
 # Add users to the IAM group
 resource "aws_iam_group_membership" "org_users" {
-  name  = "OrganizationUsersMembership"
+  name  = "${var.iam_group_name}Membership"
   users = aws_iam_user.users[*].name
   group = aws_iam_group.org_users.name
 }
 
 # Create an IAM policy for administrator access
 resource "aws_iam_policy" "administrator_access_policy" {
-  name        = "AdministratorAccessPolicy"
+  name        = var.admin_policy_name
   description = "Policy granting administrator access"
 
   policy = jsonencode({
@@ -267,10 +343,10 @@ resource "aws_dynamodb_resource_policy" "terraform_locks_policy" {
 # AWS Budgets gives you the ability to set custom budgets that alert you when your costs or usage exceed your budgeted amount.
 
 resource "aws_budgets_budget" "shared_user_budget" {
-  name         = "SharedFreeTierBudget"
+  name         = var.budget_name
   budget_type  = "COST"
-  limit_amount = "1"
-  limit_unit   = "USD"
+  limit_amount = var.budget_limit_amount
+  limit_unit   = var.budget_limit_unit
   time_unit    = "MONTHLY"
 
   # Notification when actual spend reaches 20% of the budget
@@ -391,14 +467,14 @@ resource "aws_sns_topic_policy" "default" {
 # Amazon CloudWatch is a monitoring and observability service that provides data and actionable insights for AWS resources.
 
 resource "aws_cloudwatch_metric_alarm" "free_tier_usage_alarm" {
-  alarm_name          = "FreeTierUsageAlarm"
+  alarm_name          = var.cloudwatch_alarm_name
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "EstimatedCharges"
   namespace           = "AWS/Billing"
   period              = "300"
   statistic           = "Maximum"
-  threshold           = "1.00"
+  threshold           = var.cloudwatch_threshold
   actions_enabled     = true
   alarm_actions       = [aws_sns_topic.free_tier_alerts.arn]
 
@@ -409,7 +485,7 @@ resource "aws_cloudwatch_metric_alarm" "free_tier_usage_alarm" {
 
 # Create an SNS topic for Free Tier alerts
 resource "aws_sns_topic" "free_tier_alerts" {
-  name = "free-tier-alerts"
+  name = var.free_tier_alerts_topic_name
 }
 
 # Subscribe emails to the Free Tier alerts SNS topic
@@ -425,7 +501,7 @@ resource "aws_sns_topic_subscription" "free_tier_alerts_email" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "aws_s3_bucket" "mlops_artifacts" {
-  bucket = "mlops-artifacts-aai540-group3"
+  bucket = var.mlops_bucket_name
 
   tags = {
     Name        = "MLOps Artifacts"
@@ -493,141 +569,57 @@ resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
-# **REMOVED** MIGRATED TO GITHUB ACTIONS FOR MLOPS
-# ---------------------------------------------------------------------------------------------------------------------
-# EC2 INSTANCE FOR MLOPS PIPELINE
+# IAM ROLE FOR GITHUB ACTIONS POLICY VALIDATION
 # ---------------------------------------------------------------------------------------------------------------------
 
-# Create a VPC
-# resource "aws_vpc" "main" {
-#   cidr_block           = "10.0.0.0/16"
-#   enable_dns_hostnames = true
+resource "aws_iam_role" "github_actions_policy_validator" {
+  name = var.github_actions_role_name
 
-#   tags = {
-#     Name        = "MLOps-VPC"
-#     Project     = "MLOps-Pipeline"
-#     Environment = "Development"
-#   }
-# }
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Federated = "arn:aws:iam::${var.aws_account_id}:oidc-provider/token.actions.githubusercontent.com"
+        },
+        Action = "sts:AssumeRoleWithWebIdentity",
+        Condition = {
+          StringEquals = {
+            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com",
+            "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"
+          }
+        }
+      }
+    ]
+  })
+}
 
-# Create an Internet Gateway
-# resource "aws_internet_gateway" "main" {
-#   vpc_id = aws_vpc.main.id
+resource "aws_iam_policy" "access_analyzer_policy" {
+  name        = var.access_analyzer_policy_name
+  path        = "/"
+  description = "IAM policy for Access Analyzer"
 
-#   tags = {
-#     Name        = "MLOps-IGW"
-#     Project     = "MLOps-Pipeline"
-#     Environment = "Development"
-#   }
-# }
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "access-analyzer:*",
+          "iam:GetRole",
+          "iam:ListRoles",
+          "organizations:DescribeAccount",
+          "organizations:DescribeOrganization",
+          "organizations:ListAccounts"
+        ]
+        Resource = "*"
+      },
+    ]
+  })
+}
 
-# Create subnets
-# resource "aws_subnet" "main" {
-#   vpc_id                  = aws_vpc.main.id
-#   cidr_block              = "10.0.1.0/24"
-#   map_public_ip_on_launch = true
-
-#   tags = {
-#     Name        = "MLOps-Subnet-Main"
-#     Project     = "MLOps-Pipeline"
-#     Environment = "Development"
-#   }
-# }
-
-# Create a route table
-# resource "aws_route_table" "main" {
-#   vpc_id = aws_vpc.main.id
-
-#   route {
-#     cidr_block = "0.0.0.0/0"
-#     gateway_id = aws_internet_gateway.main.id
-#   }
-
-#   tags = {
-#     Name        = "MLOps-RouteTable"
-#     Project     = "MLOps-Pipeline"
-#     Environment = "Development"
-#   }
-# }
-
-# Associate the route table with the main subnet
-# resource "aws_route_table_association" "main" {
-#   subnet_id      = aws_subnet.main.id
-#   route_table_id = aws_route_table.main.id
-# }
-
-# Create a NAT Gateway
-# resource "aws_eip" "nat" {
-#   domain = "vpc"
-# }
-
-# resource "aws_nat_gateway" "main" {
-#   allocation_id = aws_eip.nat.id
-#   subnet_id     = aws_subnet.main.id
-
-#   tags = {
-#     Name        = "MLOps-NATGateway"
-#     Project     = "MLOps-Pipeline"
-#     Environment = "Development"
-#   }
-# }
-
-# Create a security group
-# resource "aws_security_group" "mlops_sg" {
-#   name        = "mlops_sg"
-#   description = "Security group for MLOps pipeline"
-#   vpc_id      = aws_vpc.main.id
-
-#   ingress {
-#     from_port   = 22
-#     to_port     = 22
-#     protocol    = "tcp"
-#     cidr_blocks = ["140.82.112.0/20", "185.199.108.0/22", "192.30.252.0/22"] # GitHub Codespaces IP ranges
-#   }
-
-#   egress {
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-
-#   tags = {
-#     Name        = "MLOps-SecurityGroup"
-#     Project     = "MLOps-Pipeline"
-#     Environment = "Development"
-#   }
-# }
-
-# # Create an EC2 instance
-# resource "aws_instance" "mlops_instance" {
-#   ami                    = "ami-0182f373e66f89c85" # Amazon Linux 2023 AMI 2023.5.20240903.0 x86_64 HVM kernel-6.1
-#   instance_type          = "t2.micro"              # Free Tier eligible
-#   subnet_id              = aws_subnet.main.id
-#   vpc_security_group_ids = [aws_security_group.mlops_sg.id]
-
-#   user_data = <<-EOF
-#               #!/bin/bash
-#               # Update and install dependencies
-#               yum update -y
-#               yum install -y docker git
-
-#               # Start and enable Docker
-#               systemctl start docker
-#               systemctl enable docker
-
-#               # Install Docker Compose
-#               curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-#               chmod +x /usr/local/bin/docker-compose
-
-#               # Add ec2-user to docker group
-#               usermod -aG docker ec2-user
-#               EOF
-
-#   tags = {
-#     Name         = "MLOps-Instance"
-#     Project      = "MLOps-Pipeline"
-#     Environment  = "Development"
-#     AutoShutdown = "true"
-#   }
-# }
+resource "aws_iam_role_policy_attachment" "access_analyzer_attachment" {
+  role       = aws_iam_role.github_actions_policy_validator.name
+  policy_arn = aws_iam_policy.access_analyzer_policy.arn
+}
