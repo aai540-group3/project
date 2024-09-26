@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Bump version and push tag
         id: tag_version
-        uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297  # v1
+        uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297 # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
@@ -23,22 +23,22 @@ jobs:
           DEFAULT_BUMP: minor
 
       - name: Release
-        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191  # v2.0.8
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          name: Final Project Deliverables ${{ steps.tag_version.outputs.new_tag }}
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          make_latest: true
           files: |
             Final_Project_Team_3_Deliverable_1.pdf
             Final_Project_Team_3_Deliverable_2.mp4
             Final_Project_Team_3_Deliverable_3.zip
-          name: Final Project Deliverables ${{ steps.tag_version.outputs.new_tag }}
-          tag_name: ${{ steps.tag_version.outputs.new_tag }}
           body: |
             DELIVERABLES:
               - [Final_Project_Team_3_Deliverable_1.pdf](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_1.pdf)
               - [Final_Project_Team_3_Deliverable_2.mp4](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_2.mp4)
               - [Final_Project_Team_3_Deliverable_3.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_3.zip)
-          generate_release_notes: true
-          draft: false
-          prerelease: false
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
