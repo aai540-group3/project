@@ -9,19 +9,128 @@
 #   output file, excluding specified files and directories. It also
 #   generates a tree structure of the directory.
 #
+#   Features:
+#     - Excludes specified files and directories from the combined output.
+#     - Generates a tree structure of the directory, excluding specified
+#       files and directories.
+#     - Adds separator lines between files in the combined output for
+#       better readability.
+#     - Handles various file types with appropriate comment syntax for
+#       separator lines.
+#     - Stores all outputs in a dedicated 'debug' folder.
+#     - Provides detailed debug logging for troubleshooting.
+#
 # USAGE: ./combine.sh
 #
 # NOTES:
-#   - This script should be run from the project root directory.
+#   - This script should be run from the 'scripts' directory.
 #   - Customize the exclusion lists and configuration variables as needed.
 #
-# VERSION: 6.0
+# VERSION: 5.5
+#
+# AUTHOR: Drenskapur
 #
 #===============================================================================
 
+# Set shell options for strict error checking and better pipeline behavior
 set -euo pipefail
-shopt -s extglob
-shopt -s globstar
+
+#-------------------------------------------------------------------------------
+# Exclusion Lists
+#-------------------------------------------------------------------------------
+
+readonly EXCLUDE_FILES=(
+    ".DS_Store"
+    "build_features.log"
+    "cleaning.log"
+    "combine.sh"
+    "combined.txt"
+    "combined.yaml"
+    "dvc.lock"
+    "evaluation.log"
+    "evaluate.log"
+    "ingestion.log"
+    "LICENSE"
+    "Makefile"
+    "preprocessing.log"
+    "README.md"
+    "splitting.log"
+    "test.sh"
+    "Thumbs.db"
+    "train.log"
+    "update_repository.sh"
+    "visualize.log"
+)
+
+readonly EXCLUDE_FOLDERS=(
+    "__pycache__"
+    ".devcontainer"
+    ".dvc"
+    ".git"
+    ".gitea"
+    ".github"
+    ".temp"
+    ".venv"
+    ".vscode"
+    "data"
+    "docs"
+    "huggingface"
+    "node_modules"
+    "notebooks"
+    "scripts"
+    "terraform"
+    "venv"
+)
+
+readonly EXCLUDE_PATTERNS=(
+    "*.log"
+    "*.pyc"
+    "*.mp3"
+    "*.mp4"
+    "*.pdf"
+    "*.pkl"
+)
+
+#-------------------------------------------------------------------------------
+# Function: get_project_root
+#   Determines the project root directory.
+#
+# Returns:
+#   The path to the project root directory.
+#-------------------------------------------------------------------------------
+get_project_root() {
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local current_dir="$script_dir"
+    local max_depth=10
+
+    # Try to find Git root
+    if git -C "$script_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        git -C "$script_dir" rev-parse --show-toplevel
+        return
+    fi
+
+    # If not in a Git repo, traverse up the directory tree
+    while [[ $max_depth -gt 0 ]]; do
+        # Check for common project root indicators
+        if [[ -f "$current_dir/package.json" ]] ||
+           [[ -f "$current_dir/setup.py" ]] ||
+           [[ -f "$current_dir/Makefile" ]] ||
+           [[ -f "$current_dir/README.md" ]]; then
+            echo "$current_dir"
+            return
+        fi
+
+        # Move up one directory
+        current_dir="$(dirname "$current_dir")"
+        ((max_depth--))
+
+        # Stop if we've reached the filesystem root
+        [[ "$current_dir" == "/" ]] && break
+    done
+
+    # If no project root found, use the script's parent directory
+    echo "$(dirname "$script_dir")"
+}
 
 #-------------------------------------------------------------------------------
 # Configuration Variables
@@ -30,8 +139,8 @@ shopt -s globstar
 # Determine script directory path
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Determine project root (assuming the script is in a 'scripts' subdirectory)
-readonly PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+# Determine project root
+readonly PROJECT_ROOT="$(get_project_root)"
 
 # Set paths for output and debug files
 readonly DEBUG_DIR="$PROJECT_ROOT/debug"
@@ -39,108 +148,24 @@ readonly OUTPUT_FILE="$DEBUG_DIR/combined.txt"
 readonly TREE_FILE="$DEBUG_DIR/tree.txt"
 readonly DEBUG_FILE="$DEBUG_DIR/debug.log"
 
+#-------------------------------------------------------------------------------
+# File Size Exclusion
+#-------------------------------------------------------------------------------
+
 # Maximum file size (in KB) to include in the combined output
 readonly MAX_FILE_SIZE_KB=10240  # Exclude files larger than 10 MiB
 
 #-------------------------------------------------------------------------------
-# Exclusion Lists
-#-------------------------------------------------------------------------------
-
-EXCLUDE_FILES=(
-    ".DS_Store"
-    "combine.sh"
-    "combined.txt"
-    "combined.yaml"
-    "dvc.lock"
-    "LICENSE"
-    "Makefile"
-    "README.md"
-    "test.sh"
-    "Thumbs.db"
-    "update_repository.sh"
-)
-
-EXCLUDE_FOLDERS=(
-    "__pycache__"
-    ".devcontainer"
-    ".dvc"
-    ".git"
-    ".temp"
-    ".venv"
-    ".vscode"
-    "docs"
-    "huggingface"
-    "node_modules"
-    "notebooks"
-    "outputs"
-    "scripts"
-    "terraform"
-    "venv"
-)
-
-EXCLUDE_PATTERNS=(
-    "*.log"
-    "*.mp3"
-    "*.mp4"
-    "*.pdf"
-    "*.pkl"
-    "*.png"
-    "*.pptx"
-    "*.pyc"
-    "*.pyi"
-    "*.zip"
-    "/data/**"
-    "/models/**"
-)
-
-#-------------------------------------------------------------------------------
 # Function: debug_log
 #   Logs debug messages to the debug file.
+#
+# Arguments:
+#   $1 - The debug message to log.
 #-------------------------------------------------------------------------------
 debug_log() {
     echo "[DEBUG] $1" >> "$DEBUG_FILE"
 }
 
-#-------------------------------------------------------------------------------
-# Function: is_excluded
-#   Determines if a path should be excluded based on the exclusion lists and patterns.
-#
-# Arguments:
-#   $1 - The path to check.
-#
-# Returns:
-#   0 if the path should be excluded, 1 otherwise.
-#-------------------------------------------------------------------------------
-is_excluded() {
-    local abs_path="$1"
-    local rel_path="${abs_path#$PROJECT_ROOT/}"
-    local name=$(basename "$abs_path")
-
-    # Check exclusion lists
-    for exclude in "${EXCLUDE_FILES[@]}" "${EXCLUDE_FOLDERS[@]}"; do
-        if [[ "$name" == "$exclude" ]]; then
-            debug_log "Excluding based on name: $abs_path"
-            return 0
-        fi
-    done
-
-    # Check exclusion patterns
-    for pattern in "${EXCLUDE_PATTERNS[@]}"; do
-        if [[ "$pattern" == /* ]]; then
-            # Absolute pattern (from project root)
-            if [[ "/$rel_path" == $pattern || "/$rel_path"/ == $pattern* ]]; then
-                debug_log "Excluding based on absolute pattern: $abs_path (matched $pattern)"
-                return 0
-            fi
-        elif [[ "$name" == $pattern || "$rel_path" == *$pattern* ]]; then
-            # Filename or partial path pattern
-            debug_log "Excluding based on pattern: $abs_path (matched $pattern)"
-            return 0
-        fi
-    done
-
-    return 1
-}
 #-------------------------------------------------------------------------------
 # Function: get_comment_syntax
 #   Determines the appropriate comment syntax for a given file based on its
@@ -246,95 +271,174 @@ get_comment_close() {
 
 #-------------------------------------------------------------------------------
 # Function: generate_separator_line
-#   Generates a separator line with appropriate comment syntax for a given file.
+#   Generates a separator line with appropriate comment syntax.
 #
 # Arguments:
-#   $1 - The file path.
+#   $1 - The comment start string.
+#   $2 - The comment end string (optional).
 #
 # Returns:
-#   The separator line string.
+#   The generated separator line string.
 #-------------------------------------------------------------------------------
 generate_separator_line() {
-    local file="$1"
-    local comment_start
-    local comment_end
+    local comment_start="$1"
+    local comment_end="$2"
+    local total_length=80
+    local content_length=$((${#comment_start} + ${#comment_end}))
+    local num_dashes=$((total_length - content_length))
+    local dashes
 
-    comment_start=$(get_comment_syntax "$file")
-    comment_end=$(get_comment_close "$file")
+    if (( num_dashes > 0 )); then
+        dashes=$(printf '%*s' "$num_dashes" '' | tr ' ' '-')
+    else
+        dashes=""
+    fi
 
     if [[ -n "$comment_end" ]]; then
-        echo "${comment_start} ==================== ${file} ==================== ${comment_end}"
+        printf "%s%s%s\n" "$comment_start" "$dashes" "$comment_end"
     else
-        echo "${comment_start} ==================== ${file} ===================="
+        printf "%s%s\n" "$comment_start" "$dashes"
     fi
 }
 
 #-------------------------------------------------------------------------------
-# Function: process_directory
-#   Recursively processes a directory, combining file contents and generating
-#   a tree structure while respecting exclusion rules.
-#
-# Arguments:
-#   $1 - The directory to process.
-#   $2 - The current depth (for indentation in tree output).
+# Function: setup_environment
+#   Sets up the environment for the script execution.
 #-------------------------------------------------------------------------------
-process_directory() {
-    local dir="$1"
-    local depth="${2:-0}"
-    local indent=$(printf '%*s' "$depth" | tr ' ' '  ')
+setup_environment() {
+    # Create debug directory if it doesn't exist
+    mkdir -p "$DEBUG_DIR"
+    debug_log "Created debug directory: $DEBUG_DIR"
 
-    debug_log "Processing directory: $dir"
+    # Change to the project root directory
+    cd "$PROJECT_ROOT" || exit 1 # Exit with error if cd fails
+    debug_log "Changed to directory: $PROJECT_ROOT"
 
-    # Check if the directory itself should be excluded
-    if is_excluded "$dir"; then
-        debug_log "Skipping excluded directory: $dir"
-        return
-    fi
-
-    echo "${indent}$(basename "$dir")/" >> "$TREE_FILE"
-
-    while IFS= read -r -d '' entry; do
-        if is_excluded "$entry"; then
-            debug_log "Skipping excluded item: $entry"
-            continue
-        fi
-
-        if [[ -d "$entry" ]]; then
-            process_directory "$entry" $((depth + 1))
-        elif [[ -f "$entry" ]]; then
-            local file_size_kb=$(du -k "$entry" | cut -f1)
-            if (( file_size_kb > MAX_FILE_SIZE_KB )); then
-                debug_log "Skipping large file: $entry (size: ${file_size_kb}KB)"
-                echo "${indent}  $(basename "$entry") (too large: ${file_size_kb}KB)" >> "$TREE_FILE"
-                continue
-            fi
-
-            debug_log "Adding file to output: $entry"
-            echo "${indent}  $(basename "$entry")" >> "$TREE_FILE"
-
-            local separator_line=$(generate_separator_line "$entry")
-            echo "$separator_line" >> "$OUTPUT_FILE"
-            cat "$entry" >> "$OUTPUT_FILE"
-            echo "" >> "$OUTPUT_FILE"
-        fi
-    done < <(find "$dir" -mindepth 1 -maxdepth 1 -print0 | sort -z)
+    # Remove any existing output files
+    rm -f "$OUTPUT_FILE" "$TREE_FILE" "$DEBUG_FILE"
 }
 
 #-------------------------------------------------------------------------------
-# Main Script Execution
+# Function: combine_files
+#   Combines the contents of all files within the project directory into a
+#   single output file, excluding specified files and directories.
 #-------------------------------------------------------------------------------
+combine_files() {
+    local first_file=true
 
-# Create debug directory if it doesn't exist
-mkdir -p "$DEBUG_DIR"
+    # Build find expressions for excluded directories
+    local -a FIND_PRUNE_DIRS
+    for dir in "${EXCLUDE_FOLDERS[@]}"; do
+        FIND_PRUNE_DIRS+=("-path" "./$dir" "-o")
+    done
 
-# Clear previous output files
-> "$OUTPUT_FILE"
-> "$TREE_FILE"
-> "$DEBUG_FILE"
+    # Remove the last "-o" if present
+    [[ ${#FIND_PRUNE_DIRS[@]} -gt 0 ]] && unset 'FIND_PRUNE_DIRS[${#FIND_PRUNE_DIRS[@]}-1]'
 
-# Process the entire project
-process_directory "$PROJECT_ROOT"
+    # Build find expressions for excluded files
+    local -a FIND_PRUNE_FILES
+    for file in "${EXCLUDE_FILES[@]}"; do
+        FIND_PRUNE_FILES+=("-name" "$file" "-o")
+    done
 
-echo "Combined file created at: $OUTPUT_FILE"
-echo "Directory tree created at: $TREE_FILE"
-echo "Debug log created at: $DEBUG_FILE"
+    # Remove the last "-o" if present
+    [[ ${#FIND_PRUNE_FILES[@]} -gt 0 ]] && unset 'FIND_PRUNE_FILES[${#FIND_PRUNE_FILES[@]}-1]'
+
+    # Build the find command and process files
+    find . \( \
+        "${FIND_PRUNE_DIRS[@]}" -false \) -prune -o \
+        \( "${FIND_PRUNE_FILES[@]}" -false \) -prune -o \
+        \( -type f \
+        $(printf " ! -name '%s'" "${EXCLUDE_PATTERNS[@]}") \
+        -size -"$MAX_FILE_SIZE_KB"k \
+        \) -print0 |
+    while IFS= read -r -d '' file; do
+        comment_start=$(get_comment_syntax "$file")
+        comment_end=$(get_comment_close "$file")
+
+        # Generate separator line even for the first file:
+        separator_line=$(generate_separator_line "$comment_start" "$comment_end")
+
+        if ! "$first_file"; then
+            # Add extra newline before separator for subsequent files
+            echo -e "\n\n$separator_line" >> "$OUTPUT_FILE"
+        else
+            # Just the separator for the first file
+            echo -e "$separator_line" >> "$OUTPUT_FILE"
+            first_file=false
+        fi
+
+        {
+            printf '%s Source: %s %s\n\n' "$comment_start" "$file" "$comment_end"
+            cat "$file"
+        } >> "$OUTPUT_FILE"
+        debug_log "Added to combined file: $file"
+    done
+
+    echo "File concatenation complete. Output saved to $OUTPUT_FILE"
+}
+
+#-------------------------------------------------------------------------------
+# Function: generate_tree_structure
+#   Generates a tree structure of the project directory, excluding specified
+#   files and directories.
+#-------------------------------------------------------------------------------
+generate_tree_structure() {
+    echo "Generating tree structure..."
+
+    # Build the exclude pattern for the tree command
+    local TREE_EXCLUDE_PATTERN=$(printf "|%s" "${EXCLUDE_FILES[@]}" "${EXCLUDE_FOLDERS[@]}")
+    TREE_EXCLUDE_PATTERN=${TREE_EXCLUDE_PATTERN:1} # Remove leading '|'
+
+    # Add EXCLUDE_PATTERNS to the tree exclude pattern
+    for pattern in "${EXCLUDE_PATTERNS[@]}"; do
+        TREE_EXCLUDE_PATTERN="$TREE_EXCLUDE_PATTERN|$pattern"
+    done
+
+    # Generate the tree structure and redirect stderr to debug file
+    tree -a -I "$TREE_EXCLUDE_PATTERN" > "$TREE_FILE" 2>>"$DEBUG_FILE"
+
+    # Replace the '.' at the top of the tree output with the full path
+    sed -i "1s|^\.$|$PWD|" "$TREE_FILE"
+
+    debug_log "Tree command used: tree -a -I \"$TREE_EXCLUDE_PATTERN\""
+
+    echo "Tree structure saved to $TREE_FILE"
+
+    # Cat the tree.txt to the top of combined.txt
+    echo "" > temp
+    cat "$TREE_FILE" temp "$OUTPUT_FILE" > combined_temp && mv combined_temp "$OUTPUT_FILE"
+    rm temp
+    debug_log "Added tree structure to the top of the combined file: $TREE_FILE"
+}
+
+#-------------------------------------------------------------------------------
+# Function: display_results
+#   Displays the results of the script execution.
+#-------------------------------------------------------------------------------
+display_results() {
+    # Display debug information
+    cat "$DEBUG_FILE"
+
+    echo ""
+    echo ""
+    echo ""
+
+    # Display the contents of the tree file
+    cat "$TREE_FILE"
+
+    echo -e "\nAll output files are located in the debug folder: $DEBUG_DIR"
+}
+
+#-------------------------------------------------------------------------------
+# Main function
+#-------------------------------------------------------------------------------
+main() {
+    setup_environment
+    combine_files
+    generate_tree_structure
+    display_results
+}
+
+# Execute the main function
+main
