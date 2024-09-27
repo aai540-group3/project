@@ -1,0 +1,51 @@
+engines:
+  # Disable eslint for JavaScript/TypeScript analysis
+  eslint:
+    enabled: false
+  
+  # Disable Scala analysis engine
+  scalastyle:
+    enabled: false
+  
+  # Enable Python analysis engines
+  flake8:
+    enabled: true
+  pylint:
+    enabled: true
+  bandit:
+    enabled: true
+  mypy:
+    enabled: true
+  pydocstyle:
+    enabled: true
+
+files:
+  include:
+    - "src/**"
+    - "scripts/**"
+    - "configs/**"
+  exclude:
+    - "tests/**"
+    - "docs/**"
+    - ".venv/**"
+    - "data/**"
+    - "models/**"
+    - "notebooks/**"
+    - ".ipynb_checkpoints/**"
+    - "**/__pycache__/**"
+    - "*.egg-info/**"
+    - "*.egg/**"
+
+tools:
+  flake8:
+    config: .flake8
+  pylint:
+    config: .pylintrc
+  mypy:
+    config: mypy.ini
+  pydocstyle:
+    enabled: true
+
+ignore:
+  - "**/migrations/**"
+  - "**/settings.py"
