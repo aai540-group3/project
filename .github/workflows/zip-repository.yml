@@ -2,6 +2,8 @@ name: Zip Repository
 
 on:
   push:
+    branches:
+      - main
     paths:
       - ".dvcignore"
       - ".env.template"
