@@ -31,9 +31,6 @@ jobs:
           format: sarif
           gh-code-scanning-compat: true
           max-allowed-issues: 2147483647
-          engines: |
-            eslint:
-              enabled: false
 
       - name: Upload SARIF results file
         uses: github/codeql-action/upload-sarif@v3
