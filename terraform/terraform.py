@@ -2,9 +2,8 @@
 
 import argparse
 import logging
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 import json
-import re
 
 import boto3
 import hcl2
@@ -68,7 +67,7 @@ RESOURCE_MAPPINGS = {
         "client": "budgets",
         "check_method": "describe_budget",
         "create_method": "create_budget",
-        "id_param": "BudgetName",  # Assuming you want to import by budget name
+        "id_param": "BudgetName",
     },
     "aws_sns_topic": {
         "client": "sns",
@@ -319,8 +318,7 @@ class ResourceImporter:
                         address = f"{resource_type}.{resource_name}"
                         endpoint = resource_config.get("endpoint")
                         topic_arn = resource_config.get("topic_arn")
-                        # You may need to modify this part based on how you identify the subscription
-                        resource_id = f"{topic_arn}:{endpoint}"  # Example: combine topic ARN and endpoint
+                        resource_id = f"{topic_arn}:{endpoint}"
                         self.import_or_create(address, resource_id, resource_type)
 
                 else:

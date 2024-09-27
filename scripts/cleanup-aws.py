@@ -22,7 +22,6 @@ Note:
     This script will delete resources permanently. Use with caution and ensure your Terraform
     state file is up to date before running this script.
 """
-
 import boto3
 from botocore.exceptions import ClientError
 import logging
@@ -30,7 +29,6 @@ import sys
 import concurrent.futures
 import json
 
-# Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,6 @@
 # This section specifies the Terraform settings and required providers.
 
 terraform {
-  # Define the required providers and their versions
   required_providers {
     aws = {
       source  = "hashicorp/aws" # The source of the AWS provider
@@ -41,7 +40,7 @@ provider "aws" {
 # AWS Organizations is a service that enables you to centrally manage and govern multiple AWS accounts.
 
 resource "aws_organizations_organization" "org" {
-  feature_set = "ALL" # Enable all features of AWS Organizations
+  feature_set = "ALL"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -53,7 +52,6 @@ resource "aws_organizations_organization" "org" {
 resource "aws_iam_user" "jagustin" {
   name = "jagustin"
   tags = {
-    Email       = "jagustin@sandiego.edu"
     Environment = "Management"
     ManagedBy   = "Terraform"
   }
@@ -63,7 +61,6 @@ resource "aws_iam_user" "jagustin" {
 resource "aws_iam_user" "lvo" {
   name = "lvo"
   tags = {
-    Email       = "lvo@sandiego.edu"
     Environment = "Management"
     ManagedBy   = "Terraform"
   }
@@ -73,7 +70,6 @@ resource "aws_iam_user" "lvo" {
 resource "aws_iam_user" "zrobertson" {
   name = "zrobertson"
   tags = {
-    Email       = "zrobertson@sandiego.edu"
     Environment = "Management"
     ManagedBy   = "Terraform"
   }
@@ -120,7 +116,6 @@ resource "aws_iam_group_membership" "organization_users" {
 resource "aws_iam_policy" "administrator_access_policy" {
   name        = "AdministratorAccessPolicy"
   description = "Policy granting administrator access"
-
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -154,8 +149,8 @@ resource "aws_s3_bucket" "terraform_state" {
   }
 
   lifecycle {
-    # prevent_destroy = true     # Prevent accidental deletion of this bucket
-    ignore_changes = [bucket] # Ignore changes to the bucket name
+    prevent_destroy = true     # Prevent accidental deletion of this bucket
+    ignore_changes  = [bucket] # Ignore changes to the bucket name
   }
 }
 
@@ -170,7 +165,6 @@ resource "aws_s3_bucket_versioning" "enabled" {
 # Enable server-side encryption for the S3 bucket
 resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
   bucket = aws_s3_bucket.terraform_state.id
-
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -190,7 +184,6 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
 # Add a policy to enforce SSL-only access to the S3 bucket
 resource "aws_s3_bucket_policy" "terraform_state_policy" {
   bucket = aws_s3_bucket.terraform_state.id
-
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -216,8 +209,8 @@ resource "aws_s3_bucket_policy" "terraform_state_policy" {
 # DYNAMODB TABLE FOR TERRAFORM STATE LOCKING
 # ---------------------------------------------------------------------------------------------------------------------
 # Amazon DynamoDB is a key-value and document database that delivers single-digit millisecond performance at any scale.
-
 # DynamoDB table for Terraform state locking
+
 resource "aws_dynamodb_table" "terraform_locks" {
   name         = "terraform-state-lock-eeb973f4"
   billing_mode = "PAY_PER_REQUEST" # Pay only for what you use
@@ -235,8 +228,8 @@ resource "aws_dynamodb_table" "terraform_locks" {
   }
 
   lifecycle {
-    # prevent_destroy = true   # Prevent accidental deletion of this table
-    ignore_changes = [name] # Ignore changes to the table name
+    prevent_destroy = true   # Prevent accidental deletion of this table
+    ignore_changes  = [name] # Ignore changes to the table name
   }
 
   server_side_encryption {
@@ -273,7 +266,6 @@ resource "aws_dynamodb_resource_policy" "terraform_locks_policy" {
 # AWS BUDGETS
 # ---------------------------------------------------------------------------------------------------------------------
 # AWS Budgets gives you the ability to set custom budgets that alert you when your costs or usage exceed your budgeted amount.
-
 resource "aws_budgets_budget" "shared_user_budget" {
   name         = "SharedFreeTierBudget"
   budget_type  = "COST"
@@ -334,10 +326,9 @@ resource "aws_budgets_budget" "shared_user_budget" {
     notification_type          = "FORECASTED"
     subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
-
   lifecycle {
     prevent_destroy = true   # Prevent accidental deletion of this budget
-    ignore_changes = [name] # Ignore changes to the budget name
+    ignore_changes  = [name] # Ignore changes to the budget name
   }
 }
 
@@ -348,11 +339,9 @@ resource "aws_budgets_budget" "shared_user_budget" {
 # and application-to-person (A2P) communication. It enables decoupled microservices, distributed systems, and serverless
 # applications to communicate with each other and with users.
 
-
 # Create an SNS topic for jagustin
 resource "aws_sns_topic" "jagustin_notifications" {
   name = "user-notifications-jagustin"
-
   tags = {
     Name        = "User Notifications"
     Environment = "Management"
@@ -364,7 +353,6 @@ resource "aws_sns_topic" "jagustin_notifications" {
 # Create an SNS topic for lvo
 resource "aws_sns_topic" "lvo_notifications" {
   name = "user-notifications-lvo"
-
   tags = {
     Name        = "User Notifications"
     Environment = "Management"
@@ -376,7 +364,6 @@ resource "aws_sns_topic" "lvo_notifications" {
 # Create an SNS topic for zrobertson
 resource "aws_sns_topic" "zrobertson_notifications" {
   name = "user-notifications-zrobertson"
-
   tags = {
     Name        = "User Notifications"
     Environment = "Management"
@@ -406,18 +393,15 @@ resource "aws_sns_topic_subscription" "zrobertson_email_subscriptions" {
   endpoint  = "zrobertson@sandiego.edu"
 }
 
-
 # Define a policy document that allows CloudWatch to publish to each SNS topic
 data "aws_iam_policy_document" "sns_topic_policy_jagustin" {
   statement {
     effect  = "Allow"
     actions = ["SNS:Publish"]
-
     principals {
       type        = "Service"
       identifiers = ["cloudwatch.amazonaws.com"]
     }
-
     resources = [aws_sns_topic.jagustin_notifications.arn]
   }
 }
@@ -426,12 +410,10 @@ data "aws_iam_policy_document" "sns_topic_policy_lvo" {
   statement {
     effect  = "Allow"
     actions = ["SNS:Publish"]
-
     principals {
       type        = "Service"
       identifiers = ["cloudwatch.amazonaws.com"]
     }
-
     resources = [aws_sns_topic.lvo_notifications.arn]
   }
 }
@@ -440,17 +422,14 @@ data "aws_iam_policy_document" "sns_topic_policy_zrobertson" {
   statement {
     effect  = "Allow"
     actions = ["SNS:Publish"]
-
     principals {
       type        = "Service"
       identifiers = ["cloudwatch.amazonaws.com"]
     }
-
     resources = [aws_sns_topic.zrobertson_notifications.arn]
   }
 }
 
-# Attach the policy to each SNS topic
 resource "aws_sns_topic_policy" "jagustin_default" {
   arn    = aws_sns_topic.jagustin_notifications.arn
   policy = data.aws_iam_policy_document.sns_topic_policy_jagustin.json
@@ -466,13 +445,10 @@ resource "aws_sns_topic_policy" "zrobertson_default" {
   policy = data.aws_iam_policy_document.sns_topic_policy_zrobertson.json
 }
 
-
-
 # ---------------------------------------------------------------------------------------------------------------------
 # CLOUDWATCH ALARM FOR FREE TIER USAGE
 # ---------------------------------------------------------------------------------------------------------------------
 # Amazon CloudWatch is a monitoring and observability service that provides data and actionable insights for AWS resources.
-
 resource "aws_cloudwatch_metric_alarm" "free_tier_usage_alarm" {
   alarm_name          = "FreeTierUsageAlarm"
   comparison_operator = "GreaterThanThreshold"
@@ -484,7 +460,6 @@ resource "aws_cloudwatch_metric_alarm" "free_tier_usage_alarm" {
   threshold           = "1.00"
   actions_enabled     = true
   alarm_actions       = [aws_sns_topic.free_tier_alerts.arn]
-
   dimensions = {
     Currency = "USD"
   }
@@ -516,14 +491,11 @@ resource "aws_sns_topic_subscription" "free_tier_alerts_email_zrobertson" {
   endpoint  = "zrobertson@sandiego.edu"
 }
 
-
 # ---------------------------------------------------------------------------------------------------------------------
 # S3 BUCKET FOR MLOPS PIPELINE
 # ---------------------------------------------------------------------------------------------------------------------
-
 resource "aws_s3_bucket" "mlops_artifacts" {
   bucket = "mlops-artifacts-aai540-group3"
-
   tags = {
     Name        = "MLOps Artifacts"
     Environment = "Development"
@@ -531,8 +503,8 @@ resource "aws_s3_bucket" "mlops_artifacts" {
   }
 
   lifecycle {
-    # prevent_destroy = true     # Prevent accidental deletion of this bucket
-    ignore_changes = [bucket] # Ignore changes to the bucket name
+    # prevent_destroy = true
+    ignore_changes = [bucket]
   }
 }
 
@@ -547,7 +519,6 @@ resource "aws_s3_bucket_versioning" "mlops_versioning" {
 # Enable server-side encryption for the S3 bucket
 resource "aws_s3_bucket_server_side_encryption_configuration" "mlops_encryption" {
   bucket = aws_s3_bucket.mlops_artifacts.id
-
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -567,7 +538,6 @@ resource "aws_s3_bucket_public_access_block" "mlops_public_access" {
 # Add a policy to enforce SSL-only access to the S3 bucket
 resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
   bucket = aws_s3_bucket.mlops_artifacts.id
-
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -592,10 +562,8 @@ resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
 # ---------------------------------------------------------------------------------------------------------------------
 # IAM ROLE FOR GITHUB ACTIONS POLICY VALIDATION
 # ---------------------------------------------------------------------------------------------------------------------
-
 resource "aws_iam_role" "github_actions_policy_validator" {
   name = "GitHub-Actions-PolicyValidator"
-
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -620,7 +588,6 @@ resource "aws_iam_policy" "access_analyzer_policy" {
   name        = "AccessAnalyzerPolicy"
   path        = "/"
   description = "IAM policy for Access Analyzer"
-
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
