@@ -11,6 +11,7 @@ on:
       - "**.py"
   schedule:
     - cron: "23 8 * * 6" # Run this job at 8:23 PM every Saturday
+  workflow_dispatch:
 
 jobs:
   analyze:

@@ -11,6 +11,7 @@ on:
       - main
     paths:
       - "terraform/**"
+  workflow_dispatch:
 
 env:
   AWS_ROLE: arn:aws:iam::864899865811:role/GitHub-Actions-PolicyValidator
