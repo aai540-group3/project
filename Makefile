@@ -1,5 +1,5 @@
 # Define variables for directories and file patterns
-CLEAN_TARGETS := build debug __pycache__ *.pyc *.pyo *.log combined.txt
+CLEAN_TARGETS := build debug __pycache__ *.pyc *.pyo *.log combined.txt outputs
 
 # Default target (runs when you just type 'make')
 all:
