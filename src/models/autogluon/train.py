@@ -163,13 +163,14 @@ def calculate_input_hash(data_path: Path, cfg: DictConfig) -> str:
     :rtype: str
     """
     with open(data_path, "rb") as f:
-        data_hash = hashlib.md5(f.read()).hexdigest()
+        data_hash = hashlib.md5(f.read(), usedforsecurity=False).hexdigest()
 
     config_str = OmegaConf.to_yaml(cfg)
-    config_hash = hashlib.md5(config_str.encode()).hexdigest()
+    config_hash = hashlib.md5(config_str.encode(), usedforsecurity=False).hexdigest()
 
     combined_hash = hashlib.md5(
-        (data_hash + config_hash).encode()
+        (data_hash + config_hash).encode(),
+        usedforsecurity=False
     ).hexdigest()
     return combined_hash
 
