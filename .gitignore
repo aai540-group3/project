@@ -1,4 +1,7 @@
+
 __pycache__/
+!.gitkeep
+!src/models/
 .cache
 .coverage
 .coverage.*
@@ -39,6 +42,7 @@ build/
 combined.txt
 coverage.xml
 data/
+debug/
 develop-eggs/
 dist/
 docs/_build/
@@ -58,7 +62,5 @@ pip-log.txt
 sdist/
 target/
 terraform/.terraform/providers/
+tree.txt
 var/
-
-!.gitkeep
-!src/models/
