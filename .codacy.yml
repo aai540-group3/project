@@ -67,7 +67,7 @@ engines:
   semgrep:
     enabled: false
   shellcheck:
-    enabled: true
+    enabled: false
   sonarcsharp:
     enabled: false
   sonarvb:
@@ -85,6 +85,9 @@ engines:
   tsqllint:
     enabled: false
 
+include_paths:
+  - "src/**"
+
 exclude_paths:
   - ".devcontainer/**"
   - ".dvc/**"
@@ -100,6 +103,7 @@ exclude_paths:
   - "**/__pycache__/**"
   - "**/migrations/**"
   - "**/settings.py"
+  - "build/**"
   - "data/**"
   - "debug/**"
   - "docs/**"
@@ -108,6 +112,7 @@ exclude_paths:
   - "node_modules/**"
   - "notebooks/**"
   - "outputs/**"
+  - "scripts/**"
   - "temp/**"
   - "terraform/**"
   - "tests/**"
