@@ -1,27 +1,83 @@
 ---
 engines:
+  ameba:
+    enabled: false
   bandit:
     enabled: true
+  brakeman:
+    enabled: false
+  checkov:
+    enabled: false
+  checkstyle:
+    enabled: false
+  codacy-scalameta-pro:
+    enabled: false
+  codenarc:
+    enabled: false
+  coffeelint:
+    enabled: false
+  cppcheck:
+    enabled: false
+  credo:
+    enabled: false
+  dartanalyzer:
+    enabled: false
+  detekt:
+    enabled: false
   duplication:
     enabled: false
   eslint-8:
     enabled: false
-  flake8:
-    enabled: true
+  flawfinder:
+    enabled: false
+  hadolint:
+    enabled: false
   jacksonlinter:
     enabled: false
   markdownlint:
     enabled: true
-  metrics:
+  phpcs:
     enabled: false
-  mypy:
-    enabled: true
+  phpmd:
+    enabled: false
+  pmd:
+    enabled: false
   pmdcpd:
+    enabled: false
+  prospector:
+    enabled: true
+  psscriptanalyzer:
     enabled: false
   pylintpython3:
     enabled: true
+  remark-lint:
+    enabled: false
+  revive:
+    enabled: false
+  rubocop:
+    enabled: false
+  scalastyle:
+    enabled: false
+  semgrep:
+    enabled: false
+  shellcheck:
+    enabled: true
+  sonarcsharp:
+    enabled: false
+  sonarvb:
+    enabled: false
+  spectral:
+    enabled: false
+  SQLint:
+    enabled: false
+  stylelint:
+    enabled: false
+  swiftlint:
+    enabled: false
   trivy:
     enabled: true
+  tsqllint:
+    enabled: false
 
 exclude_paths:
   - "tests/**"
