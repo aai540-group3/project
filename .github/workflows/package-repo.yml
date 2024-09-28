@@ -49,7 +49,9 @@ jobs:
         run: |
           echo "REPO_ROOT=$GITHUB_WORKSPACE" >> $GITHUB_ENV
           echo "TEMP_DIR=$GITHUB_WORKSPACE/temp_repo" >> $GITHUB_ENV
-          echo "ZIP_FILENAME=$GITHUB_WORKSPACE/Final_Project_Team_3_Deliverable_3.zip" >> $GITHUB_ENV
+          echo "ZIP_FILENAME=Final_Project_Team_3_Deliverable_3.zip" >> $GITHUB_ENV
+          echo "ZIP_FILEPATH=$GITHUB_WORKSPACE/$ZIP_FILENAME" >> $GITHUB_ENV
+          echo "GZIPPED_ZIP_FILEPATH=$ZIP_FILEPATH.gz" >> $GITHUB_ENV
           echo "FILES_LIST=$GITHUB_WORKSPACE/files_to_zip.txt" >> $GITHUB_ENV
 
       - name: Print Environment Variables
@@ -57,6 +59,8 @@ jobs:
           echo "REPO_ROOT: $REPO_ROOT"
           echo "TEMP_DIR: $TEMP_DIR"
           echo "ZIP_FILENAME: $ZIP_FILENAME"
+          echo "ZIP_FILEPATH: $ZIP_FILEPATH"
+          echo "GZIPPED_ZIP_FILEPATH: $GZIPPED_ZIP_FILEPATH"
           echo "FILES_LIST: $FILES_LIST"
           echo "Current directory: $(pwd)"
           ls -la
@@ -74,8 +78,11 @@ jobs:
 
       - name: Delete Old Zipfile
         run: |
-          if [ -f "$ZIP_FILENAME" ]; then
-            rm "$ZIP_FILENAME"
+          if [ -f "$GZIPPED_ZIP_FILEPATH" ]; then
+            rm "$GZIPPED_ZIP_FILEPATH"
+            echo "Deleted previous zipped Zipfile"
+          elif [ -f "$ZIP_FILEPATH" ]; then
+            rm "$ZIP_FILEPATH"
             echo "Deleted previous Zipfile"
           else
             echo "No previous Zipfile found"
@@ -86,14 +93,13 @@ jobs:
           cat << EOF > "$FILES_LIST"
           .dvcignore
           .env.template
-          .gitattributes
           .github/workflows/mlops-pipeline.yml
-          .gitignore
           configs/
           dvc.lock
           dvc.yaml
           dvclive/
           LICENSE
+          notebooks/
           params.yaml
           README.md
           reports/
@@ -122,21 +128,24 @@ jobs:
           echo "Contents of TEMP_DIR:"
           ls -R "$TEMP_DIR"
 
+      - name: Remove Unwanted Files
+        run: |
+          find "$TEMP_DIR" -type f \( -name '.gitignore' -o -name '.gitattributes' -o -name '.gitkeep' \) -exec rm -f {} +
+          echo "Contents of TEMP_DIR after removing unwanted files:"
+          find "$TEMP_DIR"
+
       - name: Zip Repository
         run: |
           cd "$TEMP_DIR"
-          zip -r -0 "$ZIP_FILENAME" .
-          pigz -9 "$ZIP_FILENAME"
-
-      - name: Move Zip to Root
-        run: mv "$TEMP_DIR/$ZIP_FILENAME.gz" "$ZIP_FILENAME.gz"
+          zip -r -0 "$ZIP_FILEPATH" .
+          pigz -9 "$ZIP_FILEPATH"
 
       - name: Cleanup
         run: rm -rf "$TEMP_DIR"
 
       - name: Get Zipfile Size
         run: |
-          FILESIZE=$(du -h "$ZIP_FILENAME.gz" | cut -f1)
+          FILESIZE=$(du -h "$GZIPPED_ZIP_FILEPATH" | cut -f1)
           echo "FILESIZE=$FILESIZE" >> $GITHUB_ENV
 
       - name: Configure Git
@@ -146,7 +155,7 @@ jobs:
 
       - name: Push to Remote
         run: |
-          git add "$ZIP_FILENAME.gz"
+          git add "$GZIPPED_ZIP_FILEPATH"
           git commit -m "Size: $FILESIZE"
           git pull --rebase
           git push
