@@ -48,7 +48,7 @@ jobs:
 
       - name: Create File List
         run: |
-          cat << EOF > files_to_zip.txt
+          cat << EOF > files.txt
           .dvcignore
           .env.template
           .gitattributes
@@ -69,7 +69,7 @@ jobs:
           EOF
 
       - name: Zip Repository
-        run: zip -r -0 $(cat files_to_zip.txt) | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
+        run: zip -r -0 $(cat files.txt) | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
 
       - name: Cleanup
         run: rm -f files_to_zip.txt
