@@ -28,7 +28,6 @@ jobs:
         uses: codacy/codacy-analysis-cli-action@d840f886c4bd4edc059706d09c6a1586111c540b
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          tool: flake8
           verbose: true
           output: results.sarif
           format: sarif
