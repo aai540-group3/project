@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - "huggingface/spaces/openai-tts"
+      - "huggingface/spaces/openai-tts/**"
 
 jobs:
   deploy:
@@ -15,39 +15,42 @@ jobs:
       HF_TRANSFER_ENABLED: "1"
       REPO_ID: ${{ secrets.REPO_ID }}
       REMOTE_DIR: "."
+      REPO_ROOT: ${{ github.workspace }}
+
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@v4
 
       - name: Set Environment Variables
         run: |
-          echo "REPO_ROOT=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-          echo "LOCAL_DIR=$GITHUB_WORKSPACE/huggingface/spaces/openai-tts" >> $GITHUB_ENV
+          echo "LOCAL_DIR=$REPO_ROOT/huggingface/spaces/openai-tts" >> $GITHUB_ENV
 
       - name: Print Environment Variables
         run: |
-          echo "REPO_ROOT: ${{ env.REPO_ROOT }}"
-          echo "LOCAL_DIR: ${{ env.LOCAL_DIR }}"
+          echo "REPO_ROOT: $REPO_ROOT"
+          echo "LOCAL_DIR: $LOCAL_DIR"
           echo "Current directory: $(pwd)"
           ls -la
           echo "Contents of LOCAL_DIR:"
-          ls -la ${{ env.LOCAL_DIR }}
+          ls -la "$LOCAL_DIR"
 
       - name: Setup Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install Hugging Face CLI
-        run: pip install -U "huggingface_hub[cli,hf_transfer]"
-
       - name: Cache Python Dependencies
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+
+      - name: Install Hugging Face CLI
+        run: |
+          pip install --upgrade pip
+          pip install -U "huggingface_hub[cli,hf_transfer]"
 
       - name: Hugging Face Login
         run: huggingface-cli login --token "${{ secrets.HUGGINGFACE_TOKEN }}"

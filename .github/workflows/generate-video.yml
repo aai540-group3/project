@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      REPO_NAME: ${{ secrets.REPO_NAME }}
-      EVENT_TYPE: create-release
       REPO_ROOT: ${{ github.workspace }}
       BASE_NAME: Final_Project_Team_3_Deliverable_2
+      REPO_NAME: ${{ secrets.REPO_NAME }}
+      EVENT_TYPE: create-release
 
     steps:
       - name: Check out main branch
