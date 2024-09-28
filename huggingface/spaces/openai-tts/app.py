@@ -53,6 +53,7 @@ def tts(
         )
         # Save the audio content to a temporary file
         allowed_formats = ["mp3", "opus", "aac", "flac", "wav"]
+        response_format = response_format.lower()
         if response_format not in allowed_formats:
             raise ValueError(f"Invalid response format: {response_format}")
         file_extension = f".{response_format}"
