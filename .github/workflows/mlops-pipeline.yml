@@ -5,24 +5,24 @@ on:
     branches:
       - main
     paths:
-      - "src/**"
+      - ".github/workflows/mlops-pipeline.yml"
       - "conf/**"
+      - "dvc.lock"
       - "dvc.yaml"
       - "params.yaml"
-      - "dvc.lock"
       - "requirements.txt"
-      - ".github/workflows/mlops-pipeline.yml"
+      - "src/**"
   pull_request:
     branches:
       - main
     paths:
-      - "src/**"
+      - ".github/workflows/mlops-pipeline.yml"
       - "conf/**"
+      - "dvc.lock"
       - "dvc.yaml"
       - "params.yaml"
-      - "dvc.lock"
       - "requirements.txt"
-      - ".github/workflows/mlops-pipeline.yml"
+      - "src/**"
   workflow_dispatch:
 
 concurrency:
@@ -50,6 +50,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up environment variables
+        run: |
+          echo "REPO_ROOT=$(git rev-parse --show-toplevel)" >> $GITHUB_ENV
+          echo "REQUIREMENTS_FILE=$REPO_ROOT/requirements.txt" >> $GITHUB_ENV
+          echo "DVC_LOCK_FILE=$REPO_ROOT/dvc.lock" >> $GITHUB_ENV
+          echo "DVC_CACHE_DIR=$REPO_ROOT/.dvc/cache" >> $GITHUB_ENV
+          echo "DVCLIVE_DIR=$REPO_ROOT/dvclive" >> $GITHUB_ENV
+          echo "DVCLIVE_EVALUATE_DIR=$REPO_ROOT/dvclive_evaluate" >> $GITHUB_ENV
+          echo "METRICS_JSON=$REPO_ROOT/reports/metrics.json" >> $GITHUB_ENV
+
       - name: Cache Python dependencies
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
@@ -66,7 +76,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r $REQUIREMENTS_FILE
 
       - name: Configure DVC
         run: |
@@ -83,7 +93,7 @@ jobs:
       - name: Cache DVC cache directory
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
-          path: .dvc/cache
+          path: ${{ env.DVC_CACHE_DIR }}
           key: ${{ runner.os }}-dvc-cache-${{ hashFiles('dvc.lock') }}
           restore-keys: |
             ${{ runner.os }}-dvc-cache-
@@ -108,16 +118,13 @@ jobs:
         id: commit_and_push
         continue-on-error: true
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-
           # Add files only if they exist
-          [ -f dvc.lock ] && git add dvc.lock
-          [ -d dvclive ] && git add dvclive
-          [ -d dvclive_evaluate ] && git add dvclive_evaluate
-          [ -f reports/metrics.json ] && git add reports/metrics.json
+          [ -f $DVC_LOCK_FILE ] && git add $DVC_LOCK_FILE
+          [ -d $DVCLIVE_DIR ] && git add $DVCLIVE_DIR
+          [ -d $DVCLIVE_EVALUATE_DIR ] && git add $DVCLIVE_EVALUATE_DIR
+          [ -f $METRICS_JSON ] && git add $METRICS_JSON
 
-          # Check if there are changes to commit
+          # Check for changes to commit
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
@@ -126,24 +133,21 @@ jobs:
             git push
           fi
 
-      - name: Create Pull Request if push failed
+      - name: Create Pull Request If Push Failed
         if: failure() && steps.commit_and_push.outcome == 'failure'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Configure git
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-
-          # Create a new branch
           NEW_BRANCH="auto/update-dvc-artifacts-${{ github.run_id }}"
           git checkout -b $NEW_BRANCH
 
           # Add files only if they exist
-          [ -f dvc.lock ] && git add dvc.lock
-          [ -d dvclive ] && git add dvclive
-          [ -d dvclive_evaluate ] && git add dvclive_evaluate
-          [ -f reports/metrics.json ] && git add reports/metrics.json
+          [ -f $DVC_LOCK_FILE ] && git add $DVC_LOCK_FILE
+          [ -d $DVCLIVE_DIR ] && git add $DVCLIVE_DIR
+          [ -d $DVCLIVE_EVALUATE_DIR ] && git add $DVCLIVE_EVALUATE_DIR
+          [ -f $METRICS_JSON ] && git add $METRICS_JSON
 
-          # Check if there are changes to commit
+          # Check for changes to commit
           if git diff --staged --quiet; then
             echo "No changes to commit. Skipping PR creation."
           else
@@ -158,5 +162,3 @@ jobs:
               --base ${{ github.ref_name }} \
               --head $NEW_BRANCH
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
