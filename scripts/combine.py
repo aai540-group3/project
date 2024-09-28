@@ -357,6 +357,7 @@ def main():
         r".*\.pptx",
         r".*\.pyc",
         r".*\.wav",
+        r".*\.zip",
     ]
 
     args = parse_arguments()
