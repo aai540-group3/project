@@ -1,81 +1,80 @@
 name: Zip Repository
 
 on:
-    push:
-        branches:
-            - main
-        paths:
-            - ".dvcignore"
-            - ".env.template"
-            - ".gitattributes"
-            - ".github/workflows/mlops-pipeline.yml"
-            - ".gitignore"
-            - "configs/**"
-            - "dvc.lock"
-            - "dvc.yaml"
-            - "dvcline/**"
-            - "LICENSE"
-            - "params.yaml"
-            - "README.md"
-            - "reports/**"
-            - "requirement.txt"
-            - "src/**"
-            - "terraform/**"
-    workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".dvcignore"
+      - ".env.template"
+      - ".gitattributes"
+      - ".github/workflows/mlops-pipeline.yml"
+      - ".github/workflows/zip-repository.yml"
+      - ".gitignore"
+      - "configs/**"
+      - "dvc.lock"
+      - "dvc.yaml"
+      - "dvclive/**"
+      - "LICENSE"
+      - "params.yaml"
+      - "README.md"
+      - "reports/**"
+      - "requirements.txt"
+      - "src/**"
+      - "terraform/**"
+  workflow_dispatch:
 
 jobs:
-    zip-repo:
-        runs-on: ubuntu-latest
+  zip-repo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-              with:
-                  fetch-depth: 0
+      - name: Install pigz
+        run: sudo apt-get install -y pigz
 
-            - name: Install pigz
-              run: sudo apt-get install -y pigz
+      - name: Create file list
+        run: |
+          cat << EOF > files_to_zip.txt
+          .dvcignore
+          .env.template
+          .gitattributes
+          .github/workflows/mlops-pipeline.yml
+          .gitignore
+          configs/
+          dvc.lock
+          dvc.yaml
+          dvclive/
+          LICENSE
+          params.yaml
+          README.md
+          reports/
+          requirements.txt
+          src/
+          terraform/
+          EOF
 
-            - name: Create file list
-              run: |
-                  cat << EOF > files_to_zip.txt
-                  .dvcignore
-                  .env.template
-                  .gitattributes
-                  .github/workflows/mlops-pipeline.yml
-                  .gitignore
-                  configs
-                  dvc.lock
-                  dvc.yaml
-                  dvclive
-                  LICENSE
-                  params.yaml
-                  README.md
-                  reports
-                  requirement.txt
-                  src
-                  terraform
-                  EOF
+      - name: Zip repository
+        run: zip -r -0 $(cat files_to_zip.txt) | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
 
-            - name: Zip repository
-              run: |
-                  zip -r - $(cat files_to_zip.txt) | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
+      - name: Cleanup
+        run: rm -f files_to_zip.txt
 
-            - name: Cleanup
-              if: always()
-              run: rm -f files_to_zip.txt
+      - name: Check zip file size
+        run: ls -lh Final_Project_Team_3_Deliverable_3.zip
 
-            - name: Check zip file size
-              run: ls -lh Final_Project_Team_3_Deliverable_3.zip
+      - name: Configure Git
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
 
-            - name: Configure Git
-              run: |
-                  git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-                  git config --global user.name "github-actions[bot]"
-
-            - name: Commit and push zip file
-              run: |
-                  git add Final_Project_Team_3_Deliverable_3.zip
-                  git commit --allow-empty -m "Update Final_Project_Team_3_Deliverable_3.zip"
-                  git pull
-                  git push
+      - name: Commit and push zip file
+        run: |
+          git add Final_Project_Team_3_Deliverable_3.zip
+          git commit -m "Update Final_Project_Team_3_Deliverable_3.zip"
+          git push origin main # Specify branch
