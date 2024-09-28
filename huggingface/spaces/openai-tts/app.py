@@ -52,6 +52,9 @@ def tts(
             speed=speed,
         )
         # Save the audio content to a temporary file
+        allowed_formats = ["mp3", "opus", "aac", "flac", "wav"]
+        if response_format not in allowed_formats:
+            raise ValueError(f"Invalid response format: {response_format}")
         file_extension = f".{response_format}"
         with tempfile.NamedTemporaryFile(
             suffix=file_extension, delete=False, mode="wb"
