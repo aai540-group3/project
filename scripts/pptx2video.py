@@ -46,13 +46,12 @@ from pptx import Presentation
 from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
                       wait_exponential)
 
-# Configure logging
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-MAX_CONCURRENT_CALLS = 5  # Maximum number of concurrent API calls
+MAX_CONCURRENT_CALLS = 5  # Maximum number of concurrent OPENAI API calls
 
 
 @retry(
@@ -239,9 +238,7 @@ class PPTXtoVideo:
             raise ValueError("OPENAI_API_KEY not found in environment variables.")
         self.voiceover_texts = self._extract_slide_texts()
         self.video_files = []
-        self.state_file = os.path.join(
-            self.output_dir, f"conversion_state_{self.pptx_hash[:8]}.json"
-        )
+        self.state_file = os.path.join(self.output_dir, "conversion_state.json")
         self.state = self._load_state()
 
     def _compute_file_hash(self, filename: str) -> str:
@@ -278,19 +275,19 @@ class PPTXtoVideo:
 
     def _load_state(self) -> dict:
         """
-        Load the conversion state from a file.
-
-        :return: Dictionary containing the conversion state.
+        Load the conversion state from a file.  Handles missing file gracefully.
+        :return: Dictionary containing the conversion state, or an empty dict if the file is missing.
         """
-        if os.path.exists(self.state_file):
+        try:
             with open(self.state_file, "r") as f:
-                return json.load(f)
-        return {
-            "pdf_created": False,
-            "images_created": [],
-            "audio_created": [],
-            "videos_created": [],
-        }
+                state = json.load(f)
+                # Check for pptx hash match -  if it doesn't match, reset the state.
+                if state.get("pptx_hash") != self.pptx_hash:
+                    state = {"pptx_hash": self.pptx_hash, "pdf_created": False, "images_created": [], "audio_created": [], "videos_created": []}
+                return state
+        except (FileNotFoundError, json.JSONDecodeError):
+            return {"pptx_hash": self.pptx_hash, "pdf_created": False, "images_created": [], "audio_created": [], "videos_created": []}
+
 
     def _save_state(self):
         """Save the current conversion state to a file."""
