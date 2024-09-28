@@ -31,22 +31,34 @@ jobs:
           fetch-depth: 1
           lfs: true
 
-      - name: Set up environment variables
+      - name: Set Environment Variables
         run: |
-          echo "REPO_ROOT=$(git rev-parse --show-toplevel)" >> $GITHUB_ENV
-          echo "PPTX_FILE=$REPO_ROOT/Final_Project_Team_3_Deliverable_2.pptx" >> $GITHUB_ENV
-          echo "PDF_FILE=$REPO_ROOT/Final_Project_Team_3_Deliverable_2.pdf" >> $GITHUB_ENV
-          echo "MP4_FILE=$REPO_ROOT/Final_Project_Team_3_Deliverable_2.mp4" >> $GITHUB_ENV
-          echo "ASSETS_DIR=$REPO_ROOT/video-assets" >> $GITHUB_ENV
-          echo "ASSETS_PDF=$REPO_ROOT/video-assets/Final_Project_Team_3_Deliverable_2.pdf" >> $GITHUB_ENV
-          echo "ASSETS_MP4=$REPO_ROOT/video-assets/Final_Project_Team_3_Deliverable_2.mp4" >> $GITHUB_ENV
+          echo "REPO_ROOT=${{ github.workspace }}" >> $GITHUB_ENV
+          echo "PPTX_FILE=${{ github.workspace }}/Final_Project_Team_3_Deliverable_2.pptx" >> $GITHUB_ENV
+          echo "PDF_FILE=${{ github.workspace }}/Final_Project_Team_3_Deliverable_2.pdf" >> $GITHUB_ENV
+          echo "MP4_FILE=${{ github.workspace }}/Final_Project_Team_3_Deliverable_2.mp4" >> $GITHUB_ENV
+          echo "ASSETS_DIR=${{ github.workspace }}/video-assets" >> $GITHUB_ENV
+          echo "ASSETS_PDF=${{ github.workspace }}/video-assets/Final_Project_Team_3_Deliverable_2.pdf" >> $GITHUB_ENV
+          echo "ASSETS_MP4=${{ github.workspace }}/video-assets/Final_Project_Team_3_Deliverable_2.mp4" >> $GITHUB_ENV
+
+      - name: Print Environment Variables
+        run: |
+          echo "REPO_ROOT: ${{ env.REPO_ROOT }}"
+          echo "PPTX_FILE: ${{ env.PPTX_FILE }}"
+          echo "PDF_FILE: ${{ env.PDF_FILE }}"
+          echo "MP4_FILE: ${{ env.MP4_FILE }}"
+          echo "ASSETS_DIR: ${{ env.ASSETS_DIR }}"
+          echo "ASSETS_PDF: ${{ env.ASSETS_PDF }}"
+          echo "ASSETS_MP4: ${{ env.ASSETS_MP4 }}"
+          echo "Current directory: $(pwd)"
+          ls -la
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install system dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get -y install \
@@ -54,7 +66,7 @@ jobs:
               libreoffice \
               poppler-utils
 
-      - name: Install Python dependencies
+      - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install \
@@ -65,14 +77,14 @@ jobs:
               python-pptx \
               tenacity
 
-      - name: Check if PPTX file exists
+      - name: Check For PowerPoint
         run: |
           if [ ! -f "$PPTX_FILE" ]; then
             echo "::error::PPTX file not found: $PPTX_FILE"
             exit 1
           fi
 
-      - name: Delete old files
+      - name: Delete Old Files
         run: |
           rm -rf $MP4_FILE
           rm -rf $PDF_FILE
@@ -83,7 +95,7 @@ jobs:
         id: generate
         run: python scripts/pptx2video.py "$PPTX_FILE"
 
-      - name: Check video creation
+      - name: Check Video
         id: check_video
         run: |
           if [ ! -f "$ASSETS_MP4" ]; then
@@ -91,20 +103,20 @@ jobs:
             exit 1
           fi
 
-      - name: Copy PDF to root directory
+      - name: Copy PDF to Top-Level Repo Directory
         run: |
           if [ -f "$ASSETS_PDF" ]; then
             cp $ASSETS_PDF $REPO_ROOT
-            echo "Copied PDF to root directory"
+            echo "Copied PDF to Top-Level Repo Directory"
           else
             echo "::error::PDF file not found in $ASSETS_DIR directory"
             exit 1
           fi
 
-      - name: Move MP4 to root directory
+      - name: Move MP4 to Top-Level Repo Directory
         run: |
           mv $ASSETS_MP4 $REPO_ROOT
-          echo "Moved MP4 to root directory"
+          echo "Moved MP4 to Top-Level Repo Directory"
 
       - name: Get video duration
         id: duration
@@ -121,7 +133,7 @@ jobs:
 
       - name: Commit changes
         run: |
-          git add $PDF_FILE $MP4_FILE
+          git add "$PDF_FILE" "$MP4_FILE"
           git commit --allow-empty -m "$DURATION out of 15 minutes"
           git pull origin main
           git push origin main
