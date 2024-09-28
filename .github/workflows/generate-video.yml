@@ -61,6 +61,14 @@ jobs:
             exit 1
           fi
 
+      - name: Cache Apt Packages
+        uses: actions/cache@v3
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
       - name: Install System Dependencies
         run: |
           sudo apt-get update
@@ -69,14 +77,6 @@ jobs:
               libreoffice \
               poppler-utils \
               bc
-
-      - name: Cache Apt Packages
-        uses: actions/cache@v3
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -94,13 +94,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install \
-              aiohttp \
-              openai \
-              pdf2image \
-              Pillow \
-              python-pptx \
-              tenacity
+          pip install -r scripts/requirements.txt
 
       - name: Delete Old Files
         run: |
@@ -131,8 +125,13 @@ jobs:
 
       - name: Move MP4 to Top-Level Repo Directory
         run: |
-          mv "$ASSETS_MP4" "$REPO_ROOT"
-          echo "Moved MP4 to Top-Level Repo Directory"
+          if [ -f "$ASSETS_MP4" ]; then
+            mv "$ASSETS_MP4" "$REPO_ROOT"
+            echo "Moved MP4 to Top-Level Repo Directory"
+          else
+            echo "::error::MP4 file not found in $ASSETS_DIR directory"
+            exit 1
+          fi
 
       - name: Get Video Duration
         run: |
@@ -158,5 +157,5 @@ jobs:
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
-          repository: ${{ env.REPO_NAME }}
+          repository: ${{ secrets.REPO_NAME }}
           event-type: ${{ env.EVENT_TYPE }}
