@@ -22,14 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out main branch
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           ref: main
           fetch-depth: 1
           lfs: true
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.11"
 
@@ -52,10 +52,33 @@ jobs:
               python-pptx \
               tenacity
 
+      - name: Recreate video-assets directory
+        run: |
+          rm -rf video-assets
+          mkdir -p video-assets
+
       - name: Generate Video
         id: generate
         run: python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
         continue-on-error: false
+
+      - name: Copy PDF to root directory
+        run: |
+          if [ -f "video-assets/Final_Project_Team_3_Deliverable_2.pdf" ]; then
+            cp video-assets/Final_Project_Team_3_Deliverable_2.pdf ./
+            echo "Copied PDF to root directory"
+          else
+            echo "PDF file not found in video-assets directory"
+          fi
+
+      - name: Copy MP4 to root directory
+        run: |
+          if [ -f "video-assets/Final_Project_Team_3_Deliverable_2.mp4" ]; then
+            cp video-assets/Final_Project_Team_3_Deliverable_2.mp4 ./
+            echo "Copied MP4 to root directory"
+          else
+            echo "MP4 file not found in video-assets directory"
+          fi
 
       - name: Check video creation
         id: check_video
@@ -76,22 +99,13 @@ jobs:
           seconds=$(printf "%.0f" $(echo "$duration%60" | bc))
           echo "duration=${minutes}m ${seconds}s" >> $GITHUB_OUTPUT
 
-      - name: Create video-assets directory
-        if: steps.check_video.outputs.video_created == 'true'
-        run: mkdir -p video-assets
-
-      - name: Copy intermediate files
-        if: steps.check_video.outputs.video_created == 'true'
-        run: |
-          if [ -d "video-assets-current" ]; then
-            cp -r video-assets-current/* video-assets/
-          fi
-
-      - name: List video-assets contents
+      - name: List directory contents
         if: steps.check_video.outputs.video_created == 'true'
         run: |
           echo "Contents of video-assets directory:"
           ls -la video-assets/
+          echo "Contents of root directory:"
+          ls -la
 
       - name: Configure Git
         if: steps.check_video.outputs.video_created == 'true'
@@ -102,16 +116,22 @@ jobs:
       - name: Commit changes
         if: steps.check_video.outputs.video_created == 'true'
         run: |
-          git add Final_Project_Team_3_Deliverable_2.mp4 video-assets
-          git commit -m "Updated Video and Assets - Video Duration: ${{ steps.duration.outputs.duration }}" || echo "No changes to commit"
+          git add Final_Project_Team_3_Deliverable_2.pdf
+          git commit -m "Update PDF file" || echo "No changes to commit for PDF"
 
-      - name: Pull and rebase
-        if: steps.check_video.outputs.video_created == 'true'
-        run: git pull origin ${{ github.ref_name }} --rebase
+          git add Final_Project_Team_3_Deliverable_2.mp4
+          git commit -m "Update MP4 file - Video Duration: ${{ steps.duration.outputs.duration }}" || echo "No changes to commit for MP4"
 
-      - name: Push changes
+          git add video-assets
+          git commit -m "Update video assets" || echo "No changes to commit for video assets"
+
+      - name: Pull
         if: steps.check_video.outputs.video_created == 'true'
-        run: git push origin ${{ github.ref_name }}
+        run: git pull
+
+      - name: Push
+        if: steps.check_video.outputs.video_created == 'true'
+        run: git push
 
       - name: Check for failure
         if: steps.check_video.outputs.video_created == 'false'
