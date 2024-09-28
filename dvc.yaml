@@ -69,7 +69,8 @@ stages:
         - dataset.path.processed
         - model.${item}
       outs:
-        - models/${item}/model.pkl
+        - models/${item}/model.pkl:
+            persist: true
 
   evaluate:
     foreach: ${models}
@@ -92,12 +93,17 @@ stages:
       - src/visualization/visualize.py
       - reports/metrics/logistic_regression_metrics.json
       - reports/metrics/autogluon_metrics.json
-    metrics:
+    outs:
       - reports/figures/model_comparison.png:
           cache: false
+    plots:
+      - reports/figures/model_comparison.png:
+          cache: false
+          title: Model Comparison
 
 params:
   - dvclive/params.yaml
+
 artifacts:
   logistic_regression_model:
     path: models/logistic_regression/model.pkl
@@ -111,8 +117,10 @@ artifacts:
   autogluon_metrics:
     path: reports/metrics/autogluon_metrics.json
     type: metrics
+
 metrics:
   - dvclive/metrics.json
+
 plots:
   - dvclive/plots/metrics:
       x: step
