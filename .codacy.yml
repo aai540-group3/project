@@ -1,5 +1,13 @@
 ---
 engines:
+  duplication:
+    enabled: false
+    minTokenMatch: 20
+    skipLexicalErrors: false
+    ignoreLiterals: false
+    ignoreIdentifiers: true
+    ignoreAnnotations: false
+    ignoreUsings: false
   ameba:
     enabled: false
   bandit:
@@ -23,8 +31,6 @@ engines:
   dartanalyzer:
     enabled: false
   detekt:
-    enabled: false
-  duplication:
     enabled: false
   eslint-8:
     enabled: false
@@ -107,16 +113,10 @@ exclude_paths:
   - "tests/**"
   - "video-assets/**"
 
-tools:
-  flake8:
-    config: .flake8
-  pylintpython3:
-    config: .pylintrc
-  mypy:
-    config: mypy.ini
-
 languages:
   python:
-    extensions:
-      - ".py"
-      - ".pyi"
+    enabled: true
+  javascript:
+    enabled: false
+  typescript:
+    enabled: false
