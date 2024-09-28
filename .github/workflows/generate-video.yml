@@ -150,12 +150,12 @@ jobs:
         run: |
           git add "$PDF_FILE" "$MP4_FILE"
           git commit --allow-empty -m "$DURATION out of 15 minutes"
-          git pull
-          git push
+          git pull origin main
+          git push origin main
 
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
-          repository: ${{ secrets.REPO_NAME }}
-          event-type: ${{ env.EVENT_TYPE }}
+          repository: aai540-group3/project
+          event-type: create-release
