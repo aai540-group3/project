@@ -1,9 +1,14 @@
 name: Create Release
+
 on:
   repository_dispatch:
     types:
       - create-release
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   release:
@@ -13,27 +18,37 @@ jobs:
       id-token: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Bump Version
         id: tag_version
-        uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297  # v1
+        uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297 # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
           PRERELEASE: true
           DEFAULT_BUMP: minor
 
-      - name: Generate attestations
-        uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c  # v1.4.3
+      - name: Generate attestation for Deliverable 1
+        id: attestation1
+        uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c # v1.4.3
         with:
-          subject-paths: |
-            Final_Project_Team_3_Deliverable_1.pdf
-            Final_Project_Team_3_Deliverable_2.mp4
-            Final_Project_Team_3_Deliverable_3.zip
+          subject-path: Final_Project_Team_3_Deliverable_1.pdf
+
+      - name: Generate attestation for Deliverable 2
+        id: attestation2
+        uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c # v1.4.3
+        with:
+          subject-path: Final_Project_Team_3_Deliverable_2.mp4
+
+      - name: Generate attestation for Deliverable 3
+        id: attestation3
+        uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c # v1.4.3
+        with:
+          subject-path: Final_Project_Team_3_Deliverable_3.zip
 
       - name: Release
-        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191  # v2.0.8
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -47,10 +62,18 @@ jobs:
             Final_Project_Team_3_Deliverable_1.pdf
             Final_Project_Team_3_Deliverable_2.mp4
             Final_Project_Team_3_Deliverable_3.zip
-            build-provenance-attestation.json
+            ${{ steps.attestation1.outputs.attestation-path }}
+            ${{ steps.attestation2.outputs.attestation-path }}
+            ${{ steps.attestation3.outputs.attestation-path }}
           body: |
             DELIVERABLES:
               - [Final_Project_Team_3_Deliverable_1.pdf](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_1.pdf)
               - [Final_Project_Team_3_Deliverable_2.mp4](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_2.mp4)
               - [Final_Project_Team_3_Deliverable_3.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_3.zip)
-              - [build-provenance-attestation.json](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/build-provenance-attestation.json)
+
+            ATTESTATIONS:
+              - [Attestation for Deliverable 1](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/${{ steps.attestation1.outputs.attestation-name }})
+              - [Attestation for Deliverable 2](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/${{ steps.attestation2.outputs.attestation-name }})
+              - [Attestation for Deliverable 3](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/${{ steps.attestation3.outputs.attestation-name }})
+
+            This release includes build provenance attestations for each deliverable for supply chain security verification.
