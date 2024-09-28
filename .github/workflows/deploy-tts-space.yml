@@ -15,14 +15,14 @@ jobs:
       REMOTE_DIR: "."
     steps:
       - name: Checkout code
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938  # v4.2.0
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: Set Environment Variables
         run: |
           echo "REPO_ROOT=${{ github.workspace }}" >> $GITHUB_ENV
           echo "LOCAL_DIR=${{ github.workspace }}/huggingface/spaces/openai-tts" >> $GITHUB_ENV
 
-      - name: Debug environment variables
+      - name: Print Environment Variables
         run: |
           echo "REPO_ROOT: ${{ env.REPO_ROOT }}"
           echo "LOCAL_DIR: ${{ env.LOCAL_DIR }}"
@@ -32,7 +32,7 @@ jobs:
           ls -la ${{ env.LOCAL_DIR }}
 
       - name: Setup Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.11"
 
@@ -40,7 +40,7 @@ jobs:
         run: pip install -U "huggingface_hub[cli,hf_transfer]"
 
       - name: Cache Python dependencies
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -50,7 +50,7 @@ jobs:
       - name: Hugging Face Login
         run: huggingface-cli login --token "${{ secrets.HUGGINGFACE_TOKEN }}"
 
-      - name: Upload Space
+      - name: Upload to Remote
         run: |
           echo "Uploading files from $LOCAL_DIR to $REPO_ID at $REMOTE_DIR"
           huggingface-cli upload "$REPO_ID" "$LOCAL_DIR" "$REMOTE_DIR" --repo-type space
