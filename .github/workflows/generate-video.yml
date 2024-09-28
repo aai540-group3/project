@@ -24,7 +24,6 @@ jobs:
       BASE_NAME: Final_Project_Team_3_Deliverable_2
       REPO_NAME: ${{ secrets.REPO_NAME }}
       EVENT_TYPE: create-release
-
     steps:
       - name: Check out main branch
         uses: actions/checkout@v4
