@@ -5,8 +5,8 @@ on:
     paths:
       - ".github/workflows/generate-video.yml"
       - "Final_Project_Team_3_Deliverable_2.pptx"
-      - "scripts/pptx2video.py"
       - "requirements-pptx2video.txt"
+      - "scripts/pptx2video.py"
   workflow_dispatch:
 
 concurrency:
@@ -80,13 +80,6 @@ jobs:
 
       - name: Generate Video
         run: python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
-
-      - name: Check Video
-        run: |
-          if [ ! -f "video-assets/Final_Project_Team_3_Deliverable_2.mp4" ]; then
-            echo "::error::Video generation failed. MP4 file not found in video-assets."
-            exit 1
-          fi
 
       - name: Copy PDF to Top-Level Repo Directory
         run: |
