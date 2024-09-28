@@ -1,39 +1,78 @@
-name: "Deploy HF Space: OpenAI TTS"
+name: Deploy HF Space
 
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     paths:
-      - "huggingface/spaces/openai-tts/**"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  REPO_ID: aai540-group3/openai-tts
+      - "huggingface/spaces/**"
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      HF_TRANSFER_ENABLED: "1"
+      REPO_ID: ${{ secrets.REPO_ID }}
+      LOCAL_DIR: "./huggingface/spaces/openai-tts"
+      REMOTE_DIR: "."
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          fetch-depth: 1
+          python-version: "3.11"
 
       - name: Install Hugging Face CLI
         run: pip install -U "huggingface_hub[cli,hf_transfer]"
 
-      - name: Login to Hugging Face
+      - name: Hugging Face Login
         run: huggingface-cli login --token "${{ secrets.HUGGINGFACE_TOKEN }}"
 
-      - name: Upload Files to Hugging Face Space
-        env:
-          HF_HUB_ENABLE_HF_TRANSFER: 1
+      - name: Upload Space
+        if: always()
+        continue-on-error: true
         run: |
-          huggingface-cli upload \
-            "${{ env.REPO_ID }}" \
-            ./huggingface/spaces/openai-tts \
-            . \
-            --repo-type space
+          echo "Uploading files from ${{ env.LOCAL_DIR }} to ${{ env.REPO_ID }} at ${{ env.REMOTE_DIR }}"
+          huggingface-cli upload "${{ env.REPO_ID }}" "${{ env.LOCAL_DIR }}" "${{ env.REMOTE_DIR }}" --repo-type space
+
+  wait:
+    needs: deploy
+    runs-on: ubuntu-latest
+    env:
+      REPO_ID: ${{ secrets.REPO_ID }}
+      HF_SPACE_API_URL: "https://api.huggingface.co/spaces/${{ secrets.REPO_ID }}"
+    steps:
+      - name: Wait for Deployment
+        run: |
+          MAX_RETRIES=30
+          RETRY_COUNT=0
+          DEPLOYMENT_STATUS=""
+
+          while [[ "$DEPLOYMENT_STATUS" != "RUNNING" && "$DEPLOYMENT_STATUS" != "ERROR" && $RETRY_COUNT -lt $MAX_RETRIES ]]; do
+            RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.HUGGINGFACE_TOKEN }}" "${{ env.HF_SPACE_API_URL }}" -o /dev/null -w %{http_code})
+            if [[ $RESPONSE -ne 200 ]]; then
+              echo "Error: HTTP status code $RESPONSE. Check token and space ID."
+              exit 1
+            fi
+            RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.HUGGINGFACE_TOKEN }}" "${{ env.HF_SPACE_API_URL }}")
+            DEPLOYMENT_STATUS=$(echo "$RESPONSE" | jq -r '.runtime.stage') || DEPLOYMENT_STATUS=""
+            echo "Space status: $DEPLOYMENT_STATUS. Retry: $((RETRY_COUNT+1))/$MAX_RETRIES"
+            sleep 10
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+          done
+
+          if [[ $RETRY_COUNT -ge $MAX_RETRIES ]]; then
+            echo "Error: Deployment timed out after $MAX_RETRIES retries."
+            exit 1
+          fi
+
+          if [[ "$DEPLOYMENT_STATUS" == "ERROR" ]]; then
+            echo "Error: Space deployment failed. Check Hugging Face Space logs."
+            exit 1
+          fi
+
+          echo "Space deployed successfully!"
+          echo "::set-output name=space_url::https://${{ secrets.REPO_ID }}.hf.space"
