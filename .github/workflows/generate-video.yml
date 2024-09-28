@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - "Final_Project_Team_3_Deliverable_2.pptx"
-      - "./.github/workflows/generate-video.yml"
+      - ".github/workflows/generate-video.yml"
       - "scripts/pptx2video.py"
   workflow_dispatch:
 
