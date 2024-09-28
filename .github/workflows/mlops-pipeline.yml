@@ -51,7 +51,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up environment variables
+      - name: Set Environment Variables
         run: |
           echo "REQUIREMENTS_FILE=$REPO_ROOT/requirements.txt" >> $GITHUB_ENV
           echo "DVC_LOCK_FILE=$REPO_ROOT/dvc.lock" >> $GITHUB_ENV
@@ -60,7 +60,7 @@ jobs:
           echo "DVCLIVE_EVALUATE_DIR=$REPO_ROOT/dvclive_evaluate" >> $GITHUB_ENV
           echo "METRICS_JSON=$REPO_ROOT/reports/metrics.json" >> $GITHUB_ENV
 
-      - name: Debug environment variables
+      - name: Print Environment Variables
         run: |
           echo "REPO_ROOT: $REPO_ROOT"
           echo "REQUIREMENTS_FILE: $REQUIREMENTS_FILE"
