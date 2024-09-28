@@ -124,7 +124,7 @@ jobs:
         run: |
           git add "$ROOT_PDF_FILE"
           git commit -m "WORDS: $WORD_COUNT | PAGES: $PAGES"
-          git pull --rebase
+          git pull
           git push
 
       - name: Repository Dispatch
