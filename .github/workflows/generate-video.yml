@@ -76,14 +76,6 @@ jobs:
         run: |
           python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
 
-      - name: Get Video Duration
-        run: |
-          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "Final_Project_Team_3_Deliverable_2.mp4")
-          minutes=$(echo "$duration / 60" | bc)
-          seconds=$(printf "%.0f" $(echo "$duration % 60" | bc))
-          DURATION="${minutes}m ${seconds}s"
-          echo "DURATION=$DURATION" >> $GITHUB_ENV
-
       - name: Attest
         uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c # v1.4.3
         id: attestation
@@ -91,11 +83,13 @@ jobs:
           subject-path: Final_Project_Team_3_Deliverable_2.mp4
           subject-name: Final_Project_Team_3_Deliverable_2.mp4
 
-      - name: Upload Attestation as Artifact
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
-        with:
-          name: attestation
-          path: ${{ steps.attestation.outputs.bundle-path }}
+      - name: Get Video Duration
+        run: |
+          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "Final_Project_Team_3_Deliverable_2.mp4")
+          minutes=$(echo "$duration / 60" | bc)
+          seconds=$(printf "%.0f" $(echo "$duration % 60" | bc))
+          DURATION="${minutes}m ${seconds}s"
+          echo "DURATION=$DURATION" >> $GITHUB_ENV
 
       - name: Configure Git
         run: |
@@ -119,3 +113,9 @@ jobs:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: aai540-group3/project
           event-type: create-release
+
+      - name: Upload Attestation as Artifact
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: attestation
+          path: ${{ steps.attestation.outputs.bundle-path }}
