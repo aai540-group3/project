@@ -64,3 +64,10 @@ jobs:
           git commit -m "Push PDF and source files"
           git pull origin main --rebase
           git push origin main
+
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
+          repository: aai540-group3/project
+          event-type: create-release

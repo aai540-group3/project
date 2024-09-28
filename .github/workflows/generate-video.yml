@@ -140,3 +140,10 @@ jobs:
         run: |
           echo "Video generation failed. Please check the logs for errors."
           exit 1
+
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
+          repository: aai540-group3/project
+          event-type: create-release

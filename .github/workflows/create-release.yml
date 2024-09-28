@@ -1,9 +1,11 @@
 name: Create Release
 
 on:
-  push:
-    branches:
-      - main
+  repository_dispatch:
+    types:
+      - video-generated
+      - pdf-generated
+      - zip-generated
   workflow_dispatch:
 
 jobs:

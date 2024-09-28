@@ -33,7 +33,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Install pigz
         run: sudo apt-get install -y pigz
@@ -77,4 +77,11 @@ jobs:
         run: |
           git add Final_Project_Team_3_Deliverable_3.zip
           git commit -m "Update Final_Project_Team_3_Deliverable_3.zip"
-          git push origin main # Specify branch
+          git push origin main
+
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
+          repository: aai540-group3/project
+          event-type: create-release
