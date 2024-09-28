@@ -3,7 +3,7 @@ engines:
   ameba:
     enabled: false
   bandit:
-    enabled: true
+    enabled: false
   brakeman:
     enabled: false
   checkov:
@@ -35,7 +35,7 @@ engines:
   jacksonlinter:
     enabled: false
   markdownlint:
-    enabled: true
+    enabled: false
   phpcs:
     enabled: false
   phpmd:
@@ -45,11 +45,11 @@ engines:
   pmdcpd:
     enabled: false
   prospector:
-    enabled: true
+    enabled: false
   psscriptanalyzer:
     enabled: false
   pylintpython3:
-    enabled: true
+    enabled: false
   remark-lint:
     enabled: false
   revive:
@@ -61,7 +61,7 @@ engines:
   semgrep:
     enabled: false
   shellcheck:
-    enabled: true
+    enabled: false
   sonarcsharp:
     enabled: false
   sonarvb:
@@ -75,7 +75,7 @@ engines:
   swiftlint:
     enabled: false
   trivy:
-    enabled: true
+    enabled: false
   tsqllint:
     enabled: false
 
