@@ -71,9 +71,7 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install \
             biber \
-            detex \
             poppler-utils \
-            texcount \
             texlive \
             texlive-bibtex-extra \
             texlive-extra-utils \
@@ -109,7 +107,7 @@ jobs:
 
       - name: Get Word Count
         run: |
-          WORD_COUNT=$(detex "$TEX_FILE" | wc -w)
+          WORD_COUNT=$(texcount -1 -sum "$TEX_FILE")
           echo "WORD_COUNT=$WORD_COUNT" >> $GITHUB_ENV
 
       - name: Get Page Count
