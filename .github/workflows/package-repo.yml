@@ -167,7 +167,7 @@ jobs:
         run: |
           git add "$GZIPPED_ZIP_FILEPATH"
           git commit -m "Size: $FILESIZE"
-          git pull --rebase
+          git pull
           git push
 
       - name: Repository Dispatch
