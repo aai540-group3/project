@@ -49,7 +49,7 @@ engines:
   psscriptanalyzer:
     enabled: false
   pylintpython3:
-    enabled: false
+    enabled: true
   remark-lint:
     enabled: false
   revive:
