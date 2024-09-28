@@ -12,6 +12,8 @@ engines:
     enabled: false
   markdownlint:
     enabled: true
+  metrics:
+    enabled: false
   mypy:
     enabled: true
   pmdcpd:
