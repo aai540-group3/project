@@ -1,5 +1,4 @@
 name: Create Release
-
 on:
   repository_dispatch:
     types:
@@ -9,6 +8,9 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -21,6 +23,14 @@ jobs:
           WITH_V: true
           PRERELEASE: true
           DEFAULT_BUMP: minor
+
+      - name: Generate attestations
+        uses: actions/attest-build-provenance@v1.4.3
+        with:
+          subject-paths: |
+            Final_Project_Team_3_Deliverable_1.pdf
+            Final_Project_Team_3_Deliverable_2.mp4
+            Final_Project_Team_3_Deliverable_3.zip
 
       - name: Release
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
@@ -37,8 +47,10 @@ jobs:
             Final_Project_Team_3_Deliverable_1.pdf
             Final_Project_Team_3_Deliverable_2.mp4
             Final_Project_Team_3_Deliverable_3.zip
+            build-provenance-attestation.json
           body: |
             DELIVERABLES:
               - [Final_Project_Team_3_Deliverable_1.pdf](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_1.pdf)
               - [Final_Project_Team_3_Deliverable_2.mp4](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_2.mp4)
               - [Final_Project_Team_3_Deliverable_3.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_3.zip)
+              - [build-provenance-attestation.json](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/build-provenance-attestation.json)
