@@ -14,7 +14,6 @@ __pycache__
 .vscode/
 *.avi
 *.bak
-*.csv
 *.doc
 *.docx
 *.ear
@@ -52,16 +51,11 @@ __pycache__
 *.xlsx
 *.zip
 *~
-/data
 /dvclive
-/models
 /notebooks
 /outputs
 /processed_data
 /raw_data
-/reports/figures
-/reports/figures/model_comparison.png
-/reports/metrics/*_metrics.json
 bin
 build
 build/

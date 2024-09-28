@@ -2,107 +2,94 @@ stages:
   ingest:
     cmd: python src/data/ingestion.py
     deps:
-      - src/data/ingestion.py
+    - src/data/ingestion.py
     params:
-      - dataset.name
-      - dataset.path.raw
+    - dataset.name
+    - dataset.path.raw
     outs:
-      - ${dataset.path.raw}/data.csv
+    - ${dataset.path.raw}/data.csv
 
   clean:
     cmd: python src/data/cleaning.py
     deps:
-      - src/data/cleaning.py
-      - ${dataset.path.raw}/data.csv
+    - src/data/cleaning.py
+    - ${dataset.path.raw}/data.csv
     params:
-      - dataset.path.raw
-      - dataset.path.interim
+    - dataset.path.raw
+    - dataset.path.interim
     outs:
-      - ${dataset.path.interim}/data.csv
+    - ${dataset.path.interim}/data.csv
 
   feature_engineering:
     cmd: python src/data/build_features.py
     deps:
-      - src/data/build_features.py
-      - ${dataset.path.interim}/data.csv
+    - src/data/build_features.py
+    - ${dataset.path.interim}/data.csv
     params:
-      - dataset.path.interim
-      - dataset.path.processed
-      - feature_engineering
+    - dataset.path.interim
+    - dataset.path.processed
+    - feature_engineering
     outs:
-      - ${dataset.path.processed}/data_featured.csv
+    - ${dataset.path.processed}/data_featured.csv
 
   split:
     cmd: python src/data/splitting.py
     deps:
-      - src/data/splitting.py
-      - ${dataset.path.interim}/data.csv
+    - src/data/splitting.py
+    - ${dataset.path.interim}/data.csv
     params:
-      - dataset.path.interim
-      - dataset.path.processed
-      - training.split
+    - dataset.path.interim
+    - dataset.path.processed
+    - training.split
     outs:
-      - ${dataset.path.processed}/train.csv
-      - ${dataset.path.processed}/test.csv
+    - ${dataset.path.processed}/train.csv
+    - ${dataset.path.processed}/test.csv
 
   preprocess:
     foreach: ${models}
     do:
       cmd: python src/models/${item}/preprocessing.py model=${item}
       deps:
-        - src/models/${item}/preprocessing.py
-        - ${dataset.path.processed}/train.csv
+      - src/models/${item}/preprocessing.py
+      - ${dataset.path.processed}/train.csv
       params:
-        - dataset.path.processed
-        - model.${item}
+      - dataset.path.processed
+      - model.${item}
       outs:
-        - ${dataset.path.processed}/${item}/train_preprocessed.csv
+      - ${dataset.path.processed}/${item}/train_preprocessed.csv
 
   train:
     foreach: ${models}
     do:
       cmd: python src/models/${item}/train.py model=${item}
       deps:
-        - src/models/${item}/train.py
-        - ${dataset.path.processed}/${item}/train_preprocessed.csv
+      - src/models/${item}/train.py
+      - ${dataset.path.processed}/${item}/train_preprocessed.csv
       params:
-        - dataset.path.processed
-        - model.${item}
+      - dataset.path.processed
+      - model.${item}
       outs:
-        - models/${item}/model.pkl:
-            persist: true
+      - models/${item}/model.pkl:
+          persist: true
 
   evaluate:
     foreach: ${models}
     do:
       cmd: python src/models/${item}/evaluate.py model=${item}
       deps:
-        - src/models/${item}/evaluate.py
-        - models/${item}/model.pkl
-        - ${dataset.path.processed}/test.csv
+      - src/models/${item}/evaluate.py
+      - models/${item}/model.pkl
+      - ${dataset.path.processed}/test.csv
       params:
-        - dataset.path.processed
-        - model.${item}
+      - dataset.path.processed
+      - model.${item}
       metrics:
-        - reports/metrics/${item}_metrics.json:
-            cache: false
-
-  visualize:
-    cmd: python src/visualization/visualize.py
-    deps:
-      - src/visualization/visualize.py
-      - reports/metrics/logistic_regression_metrics.json
-      - reports/metrics/autogluon_metrics.json
-    outs:
-      - reports/figures/model_comparison.png:
+      - reports/metrics/${item}_metrics.json:
           cache: false
-    plots:
-      - reports/figures/model_comparison.png:
-          cache: false
-          title: Model Comparison
 
 params:
-  - dvclive/params.yaml
+- params.yaml
+- dvclive/params.yaml
 
 artifacts:
   logistic_regression_model:
@@ -119,9 +106,9 @@ artifacts:
     type: metrics
 
 metrics:
-  - dvclive/metrics.json
+- dvclive/metrics.json
 
 plots:
-  - dvclive/plots/metrics:
-      x: step
-  - dvclive/plots/images
+- dvclive/plots/metrics:
+    x: step
+- dvclive/plots/images

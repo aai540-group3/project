@@ -171,26 +171,6 @@ stages:
       hash: md5
       md5: 29f2a2819fc232dc5595ada12e3eec84
       size: 83829868
-  visualize:
-    cmd: python src/visualization/visualize.py
-    deps:
-    - path: reports/metrics/autogluon_metrics.json
-      hash: md5
-      md5: 9fab3e3b70c0ebeaaac2bfaa2bcaae87
-      size: 179
-    - path: reports/metrics/logistic_regression_metrics.json
-      hash: md5
-      md5: e71750b133aa7399768c7ac9e7863481
-      size: 180
-    - path: src/visualization/visualize.py
-      hash: md5
-      md5: 08fd134cd212e76908771431c4b9a01b
-      size: 2647
-    outs:
-    - path: reports/figures/model_comparison.png
-      hash: md5
-      md5: 4ca23c67fc68bfbb85ac65fda387c00f
-      size: 20701
   preprocess@logistic_regression:
     cmd: python src/models/logistic_regression/preprocessing.py model=logistic_regression
     deps:
