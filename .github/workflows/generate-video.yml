@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 1
           lfs: true
 
-      - name: Check for PowerPoint file
+      - name: Confirm PowerPoint Existence
         run: |
           if [ ! -f "Final_Project_Team_3_Deliverable_2.pptx" ]; then
             echo "::error::PPTX file not found: Final_Project_Team_3_Deliverable_2.pptx"
@@ -80,26 +80,6 @@ jobs:
 
       - name: Generate Video
         run: python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
-
-      - name: Copy PDF to Top-Level Repo Directory
-        run: |
-          if [ -f "video-assets/Final_Project_Team_3_Deliverable_2.pdf" ]; then
-            cp video-assets/Final_Project_Team_3_Deliverable_2.pdf "$GITHUB_WORKSPACE"
-            echo "Copied PDF to Top-Level Repo Directory"
-          else
-            echo "::error::PDF file not found in video-assets directory"
-            exit 1
-          fi
-
-      - name: Move MP4 to Top-Level Repo Directory
-        run: |
-          if [ -f "video-assets/Final_Project_Team_3_Deliverable_2.mp4" ]; then
-            mv "video-assets/Final_Project_Team_3_Deliverable_2.mp4" "$GITHUB_WORKSPACE"
-            echo "Moved MP4 to Top-Level Repo Directory"
-          else
-            echo "::error::MP4 file not found in video-assets directory"
-            exit 1
-          fi
 
       - name: Get Video Duration
         run: |
