@@ -23,8 +23,8 @@ jobs:
       BIB_FILE: ${{ github.workspace }}/docs/design-document/references.bib
       PDF_FILE: ${{ github.workspace }}/docs/design-document/Final_Project_Team_3_Deliverable_1.pdf
       ROOT_PDF_FILE: ${{ github.workspace }}/Final_Project_Team_3_Deliverable_1.pdf
-      REPO_NAME: aai540-group3/project #Added repository name
-      EVENT_TYPE: create-release # Added event type
+      REPO_NAME: aai540-group3/project
+      EVENT_TYPE: create-release
 
     steps:
       - name: Checkout Repository
