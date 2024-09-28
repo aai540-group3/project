@@ -1,6 +1,8 @@
 engines:
   bandit:
     enabled: true
+  duplication:
+    enabled: false
   eslint:
     enabled: false
   flake8:
