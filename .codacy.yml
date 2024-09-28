@@ -67,7 +67,7 @@ engines:
   semgrep:
     enabled: false
   shellcheck:
-    enabled: false
+    enabled: true
   sonarcsharp:
     enabled: false
   sonarvb:
