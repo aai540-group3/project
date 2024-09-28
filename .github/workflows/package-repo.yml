@@ -1,99 +1,61 @@
-name: Package Repository
-
+name: Create Release
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - ".dvcignore"
-      - ".env.template"
-      - ".gitattributes"
-      - ".github/workflows/mlops-pipeline.yml"
-      - ".github/workflows/package-repo.yml"
-      - ".gitignore"
-      - "configs/**"
-      - "dvc.lock"
-      - "dvc.yaml"
-      - "dvclive/**"
-      - "LICENSE"
-      - "notebooks/**"
-      - "params.yaml"
-      - "README.md"
-      - "reports/**"
-      - "requirements.txt"
-      - "src/**"
-      - "terraform/main.tf"
+  repository_dispatch:
+    types:
+      - create-release
   workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  contents: write
-
 jobs:
-  package-repo:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+
+      - name: Bump Version
+        id: tag_version
+        uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297  # v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          PRERELEASE: true
+          DEFAULT_BUMP: minor
+
+      - name: Generate attestations
+        id: attestation
+        uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c  # v1.4.3
         with:
-          fetch-depth: 1
+          subject-path: |
+            Final_Project_Team_3_Deliverable_1.pdf
+            Final_Project_Team_3_Deliverable_2.mp4
+            Final_Project_Team_3_Deliverable_3.zip
 
-      - name: Install System Dependencies
-        run: sudo apt-get install -y pigz zip
-
-      - name: Create File List
-        run: |
-          cat << EOF > files.txt
-          .dvcignore
-          .env.template
-          .gitattributes
-          .github/workflows/mlops-pipeline.yml
-          .gitignore
-          configs/
-          dvc.lock
-          dvc.yaml
-          dvclive/
-          LICENSE
-          notebooks/
-          params.yaml
-          README.md
-          reports/
-          requirements.txt
-          src/
-          terraform/main.tf
-          EOF
-
-      - name: Zip Repository
-        run: zip -r -0 $(cat files.txt) | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
-
-      - name: Check File Size
-        run: ls -lh Final_Project_Team_3_Deliverable_3.zip
-
-      - name: Configure Git
-        run: |
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git config pull.rebase false
-
-      - name: Push to Remote
-        run: |
-          git add Final_Project_Team_3_Deliverable_3.zip
-          git commit -m "Update Final_Project_Team_3_Deliverable_3.zip"
-          git pull origin main
-          git push origin main
-
-      - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+      - name: Release
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191  # v2.0.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
-          repository: aai540-group3/project
-          event-type: create-release
+          name: Final Project Deliverables ${{ steps.tag_version.outputs.new_tag }}
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          make_latest: true
+          files: |
+            Final_Project_Team_3_Deliverable_1.pdf
+            Final_Project_Team_3_Deliverable_2.mp4
+            Final_Project_Team_3_Deliverable_3.zip
+            ${{ steps.attestation.outputs.attestation-path }}
+          body: |
+            DELIVERABLES:
+              - [Final_Project_Team_3_Deliverable_1.pdf](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_1.pdf)
+              - [Final_Project_Team_3_Deliverable_2.mp4](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_2.mp4)
+              - [Final_Project_Team_3_Deliverable_3.zip](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/Final_Project_Team_3_Deliverable_3.zip)
 
-      - name: Cleanup
-        if: always()
-        run: rm -f files.txt
+            ATTESTATION:
+              - [Build Provenance Attestation](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag_version.outputs.new_tag }}/${{ steps.attestation.outputs.attestation-name }})
+
+            This release includes a build provenance attestation for supply chain security verification.
