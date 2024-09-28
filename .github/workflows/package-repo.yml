@@ -32,10 +32,6 @@ concurrency:
 permissions:
   contents: write
 
-env:
-  REPO_NAME: aai540-group3/project
-  EVENT_TYPE: create-release
-
 jobs:
   package-repo:
     runs-on: ubuntu-latest

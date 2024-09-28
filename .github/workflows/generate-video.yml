@@ -21,10 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      REPO_ROOT: ${{ github.workspace }}
-      BASE_NAME: Final_Project_Team_3_Deliverable_2
-      REPO_NAME: ${{ secrets.REPO_NAME }}
-      EVENT_TYPE: create-release
     steps:
       - name: Check out main branch
         uses: actions/checkout@v4
@@ -33,31 +29,10 @@ jobs:
           fetch-depth: 1
           lfs: true
 
-      - name: Set Environment Variables
-        run: |
-          echo "PPTX_FILE=$REPO_ROOT/$BASE_NAME.pptx" >> $GITHUB_ENV
-          echo "PDF_FILE=$REPO_ROOT/$BASE_NAME.pdf" >> $GITHUB_ENV
-          echo "MP4_FILE=$REPO_ROOT/$BASE_NAME.mp4" >> $GITHUB_ENV
-          echo "ASSETS_DIR=$REPO_ROOT/video-assets" >> $GITHUB_ENV
-          echo "ASSETS_PDF=$REPO_ROOT/video-assets/$BASE_NAME.pdf" >> $GITHUB_ENV
-          echo "ASSETS_MP4=$REPO_ROOT/video-assets/$BASE_NAME.mp4" >> $GITHUB_ENV
-
-      - name: Print Environment Variables
-        run: |
-          echo "REPO_ROOT: $REPO_ROOT"
-          echo "PPTX_FILE: $PPTX_FILE"
-          echo "PDF_FILE: $PDF_FILE"
-          echo "MP4_FILE: $MP4_FILE"
-          echo "ASSETS_DIR: $ASSETS_DIR"
-          echo "ASSETS_PDF: $ASSETS_PDF"
-          echo "ASSETS_MP4: $ASSETS_MP4"
-          echo "Current directory: $(pwd)"
-          ls -la
-
       - name: Check for PowerPoint file
         run: |
-          if [ ! -f "$PPTX_FILE" ]; then
-            echo "::error::PPTX file not found: $PPTX_FILE"
+          if [ ! -f "Final_Project_Team_3_Deliverable_2.pptx" ]; then
+            echo "::error::PPTX file not found: Final_Project_Team_3_Deliverable_2.pptx"
             exit 1
           fi
 
@@ -98,44 +73,44 @@ jobs:
 
       - name: Delete Old Files
         run: |
-          rm -rf "$MP4_FILE"
-          rm -rf "$PDF_FILE"
-          rm -rf "$ASSETS_DIR"
-          mkdir -p "$ASSETS_DIR"
+          rm -f "Final_Project_Team_3_Deliverable_2.mp4"
+          rm -f "Final_Project_Team_3_Deliverable_2.pdf"
+          rm -rf "video-assets"
+          mkdir -p "video-assets"
 
       - name: Generate Video
-        run: python scripts/pptx2video.py "$PPTX_FILE"
+        run: python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
 
       - name: Check Video
         run: |
-          if [ ! -f "$ASSETS_MP4" ]; then
-            echo "::error::Video generation failed. MP4 file not found in $ASSETS_DIR."
+          if [ ! -f "video-assets/Final_Project_Team_3_Deliverable_2.mp4" ]; then
+            echo "::error::Video generation failed. MP4 file not found in video-assets."
             exit 1
           fi
 
       - name: Copy PDF to Top-Level Repo Directory
         run: |
-          if [ -f "$ASSETS_PDF" ]; then
-            cp "$ASSETS_PDF" "$REPO_ROOT"
+          if [ -f "video-assets/Final_Project_Team_3_Deliverable_2.pdf" ]; then
+            cp video-assets/Final_Project_Team_3_Deliverable_2.pdf "$GITHUB_WORKSPACE"
             echo "Copied PDF to Top-Level Repo Directory"
           else
-            echo "::error::PDF file not found in $ASSETS_DIR directory"
+            echo "::error::PDF file not found in video-assets directory"
             exit 1
           fi
 
       - name: Move MP4 to Top-Level Repo Directory
         run: |
-          if [ -f "$ASSETS_MP4" ]; then
-            mv "$ASSETS_MP4" "$REPO_ROOT"
+          if [ -f "video-assets/Final_Project_Team_3_Deliverable_2.mp4" ]; then
+            mv "video-assets/Final_Project_Team_3_Deliverable_2.mp4" "$GITHUB_WORKSPACE"
             echo "Moved MP4 to Top-Level Repo Directory"
           else
-            echo "::error::MP4 file not found in $ASSETS_DIR directory"
+            echo "::error::MP4 file not found in video-assets directory"
             exit 1
           fi
 
       - name: Get Video Duration
         run: |
-          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$MP4_FILE")
+          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "Final_Project_Team_3_Deliverable_2.mp4")
           minutes=$(echo "$duration / 60" | bc)
           seconds=$(printf "%.0f" $(echo "$duration % 60" | bc))
           DURATION="${minutes}m ${seconds}s"
@@ -148,7 +123,7 @@ jobs:
 
       - name: Push to Remote
         run: |
-          git add "$PDF_FILE" "$MP4_FILE"
+          git add Final_Project_Team_3_Deliverable_2.pdf Final_Project_Team_3_Deliverable_2.mp4
           git commit --allow-empty -m "$DURATION out of 15 minutes"
           git pull origin main
           git push origin main
