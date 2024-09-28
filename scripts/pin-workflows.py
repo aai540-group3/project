@@ -274,7 +274,7 @@ def update_workflow_file(file_path: str, github_api: GitHubAPI) -> None:
         full_match = match.group(0)
         action = match.group(2)
         ref = match.group(3)
-        existing_comment = match.group(4) or "" # Get existing comment or empty string
+        existing_comment = match.group(4) or ""  # Get existing comment or empty string
         logger.info(f"Found action: {action}@{ref}{existing_comment}")
 
         owner_repo = action

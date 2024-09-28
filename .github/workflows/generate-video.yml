@@ -92,10 +92,10 @@ jobs:
       - name: Push to Remote
         run: |
           git add \
-            Final_Project_Team_3_Deliverable_2.pdf \
             Final_Project_Team_3_Deliverable_2.mp4 \
+            video-assets/Final_Project_Team_3_Deliverable_2.pdf \
             video-assets/conversion_state.json
-          git commit --allow-empty -m "$DURATION out of 15 minutes"
+          git commit -m "$DURATION out of 15 minutes"
           git pull origin main
           git push origin main
 

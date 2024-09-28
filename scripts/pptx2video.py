@@ -35,6 +35,7 @@ import logging
 import multiprocessing
 import os
 import subprocess
+import tempfile
 from concurrent.futures import ProcessPoolExecutor
 from typing import List, Optional
 
@@ -43,12 +44,8 @@ import openai
 from pdf2image import convert_from_path
 from PIL import Image
 from pptx import Presentation
-from tenacity import (
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
+from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
+                      wait_exponential)
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -324,30 +321,40 @@ class PPTXtoVideo:
 
     def _convert_to_pdf(self):
         """Converts the .pptx file to a .pdf file using LibreOffice."""
-        if self.state["pdf_created"] and os.path.exists(self.pdf_filename):
+
+        # Check if PDF already exists and if PPTX hash matches
+        if self.state["pdf_created"] and os.path.exists(self.pdf_filename) and self.state.get('pptx_hash') == self.pptx_hash:
             logger.info(f"PDF already exists: {self.pdf_filename}")
             return
 
         logger.info("Converting PPTX to PDF")
         os.makedirs(os.path.dirname(self.pdf_filename), exist_ok=True)
 
-        cmd = [
-            "libreoffice",
-            "--headless",
-            "--convert-to",
-            "pdf",
-            "--outdir",
-            os.path.dirname(self.pdf_filename),
-            self.pptx_filename,
-        ]
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-        logger.debug(f"LibreOffice conversion output: {result.stdout}")
-        logger.debug(f"LibreOffice conversion errors: {result.stderr}")
+        # Use tempfile to handle potential issues with long filenames
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf:
+            temp_pdf_path = temp_pdf.name
+
+            cmd = [
+                "libreoffice",
+                "--headless",
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                os.path.dirname(temp_pdf_path),
+                self.pptx_filename,
+            ]
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+            logger.debug(f"LibreOffice conversion output: {result.stdout}")
+            logger.debug(f"LibreOffice conversion errors: {result.stderr}")
+
+            # Move the temporary PDF to the desired location
+            os.rename(temp_pdf_path, self.pdf_filename)
 
         if not os.path.exists(self.pdf_filename):
             raise RuntimeError(f"Failed to create PDF file: {self.pdf_filename}")
 
         self.state["pdf_created"] = True
+        self.state['pptx_hash'] = self.pptx_hash  # Store the hash in the state
         self._save_state()
         logger.info(f"PDF created successfully: {self.pdf_filename}")
 
