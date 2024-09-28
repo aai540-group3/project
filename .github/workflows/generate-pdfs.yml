@@ -17,19 +17,23 @@ permissions:
 jobs:
   generate-pdfs:
     runs-on: ubuntu-latest
+    env:
+      REPO_ROOT: ${{ github.workspace }}
+      TEX_FILE: ${{ github.workspace }}/docs/design-document/Final_Project_Team_3_Deliverable_1.tex
+      BIB_FILE: ${{ github.workspace }}/docs/design-document/references.bib
+      PDF_FILE: ${{ github.workspace }}/docs/design-document/Final_Project_Team_3_Deliverable_1.pdf
+      ROOT_PDF_FILE: ${{ github.workspace }}/Final_Project_Team_3_Deliverable_1.pdf
+      REPO_NAME: aai540-group3/project #Added repository name
+      EVENT_TYPE: create-release # Added event type
+
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Configure Git
-        run: |
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-
       - name: Cache apt packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        uses: actions/cache@v4
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
@@ -47,27 +51,45 @@ jobs:
             texlive-bibtex-extra \
             texlive-science
 
+      - name: Remove existing PDFs
+        run: |
+          rm -f "${{ env.PDF_FILE }}"
+          rm -f "${{ env.ROOT_PDF_FILE }}"
+
       - name: Generate PDFs
         run: |
-          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error -debug -output-format=dvi docs/design-document/Final_Project_Team_3_Deliverable_1.tex
-          biber --debug -t biber,backend,config,data,filter,io docs/design-document/Final_Project_Team_3_Deliverable_1
-          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error -debug -output-format=dvi docs/design-document/Final_Project_Team_3_Deliverable_1.tex
-          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error -debug -output-format=dvi docs/design-document/Final_Project_Team_3_Deliverable_1.tex
+          TEXINPUTS="${{ env.REPO_ROOT }}/docs/design-document:." \
+          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "${{ env.TEX_FILE }}"
+          biber "${{ env.BIB_FILE }}"
+          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "${{ env.TEX_FILE }}"
+          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "${{ env.TEX_FILE }}"
+
+      - name: Check if PDF was generated
+        run: |
+          if [ ! -f "${{ env.PDF_FILE }}" ]; then
+            echo "Error: PDF generation failed!"
+            exit 1
+          fi
 
       - name: Move PDF to root
         run: |
-          cp Final_Project_Team_3_Deliverable_1.pdf ../..
+          mv "${{ env.PDF_FILE }}" "${{ env.ROOT_PDF_FILE }}"
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
 
       - name: Commit and Push Files
         run: |
-          git add Final_Project_Team_3_Deliverable_1.pdf
-          git commit -m "Push PDF and source files"
-          git pull origin main --rebase
-          git push origin main
+          git add "${{ env.ROOT_PDF_FILE }}"
+          git commit -m "Push PDF and source files" || echo "Nothing to commit"
+          git pull origin main --rebase || echo "Pull failed"
+          git push origin main || echo "Push failed"
 
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0  # v3.0.0
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
-          repository: aai540-group3/project
-          event-type: create-release
+          repository: ${{ env.REPO_NAME }}
+          event-type: ${{ env.EVENT_TYPE }}

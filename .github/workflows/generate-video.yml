@@ -1,4 +1,5 @@
 name: Generate Video
+
 on:
   push:
     paths:
@@ -16,134 +17,84 @@ permissions:
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  PPTX_FILE: ${{ github.workspace }}/Final_Project_Team_3_Deliverable_2.pptx
+  MP4_FILE: ${{ github.workspace }}/Final_Project_Team_3_Deliverable_2.mp4
+  PDF_FILE: ${{ github.workspace }}/Final_Project_Team_3_Deliverable_2.pdf
+  VIDEO_ASSETS_DIR: ${{ github.workspace }}/video-assets
+  REPO_NAME: aai540-group3/project
+  EVENT_TYPE: create-release
 
 jobs:
   generate-video:
     runs-on: ubuntu-latest
     steps:
       - name: Check out main branch
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 1
           lfs: true
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y install \
-              ffmpeg \
-              libreoffice \
-              poppler-utils
+          sudo apt-get -y install ffmpeg libreoffice poppler-utils
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install \
-              aiohttp \
-              openai \
-              pdf2image \
-              Pillow \
-              python-pptx \
-              tenacity
+          pip install aiohttp openai pdf2image Pillow python-pptx tenacity
 
       - name: Delete old files
         run: |
-          rm -rf Final_Project_Team_3_Deliverable_2.mp4
-          rm -rf Final_Project_Team_3_Deliverable_2.pdf
-          rm -rf video-assets
-          mkdir -p video-assets
+          rm -rf "${{ env.MP4_FILE }}"
+          rm -rf "${{ env.PDF_FILE }}"
+          rm -rf "${{ env.VIDEO_ASSETS_DIR }}"
+          mkdir -p "${{ env.VIDEO_ASSETS_DIR }}"
 
       - name: Generate Video
         id: generate
-        run: python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
+        run: python scripts/pptx2video.py "${{ env.PPTX_FILE }}"
         continue-on-error: false
-
-      - name: Copy PDF to root directory
-        run: |
-          if [ -f "video-assets/Final_Project_Team_3_Deliverable_2.pdf" ]; then
-            cp video-assets/Final_Project_Team_3_Deliverable_2.pdf ./
-            echo "Copied PDF to root directory"
-          else
-            echo "PDF file not found in video-assets directory"
-          fi
-
-      - name: Copy MP4 to root directory
-        run: |
-          if [ -f "video-assets/Final_Project_Team_3_Deliverable_2.mp4" ]; then
-            cp video-assets/Final_Project_Team_3_Deliverable_2.mp4 ./
-            echo "Copied MP4 to root directory"
-          else
-            echo "MP4 file not found in video-assets directory"
-          fi
-
-      - name: Check video creation
-        id: check_video
-        run: |
-          if [ -f "Final_Project_Team_3_Deliverable_2.mp4" ]; then
-            echo "video_created=true" >> $GITHUB_OUTPUT
-          else
-            echo "video_created=false" >> $GITHUB_OUTPUT
-            echo "::error title=Video generation failed::Video file not found."
-          fi
 
       - name: Get video duration
         id: duration
-        if: steps.check_video.outputs.video_created == 'true'
         run: |
-          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 Final_Project_Team_3_Deliverable_2.mp4)
+          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${{ env.MP4_FILE }}")
           minutes=$(printf "%.0f" $(echo "$duration/60" | bc))
           seconds=$(printf "%.0f" $(echo "$duration%60" | bc))
           echo "duration=${minutes}m ${seconds}s" >> $GITHUB_OUTPUT
 
-      - name: List directory contents
-        if: steps.check_video.outputs.video_created == 'true'
+      - name: Copy PDF to root directory
         run: |
-          echo "Contents of video-assets directory:"
-          ls -la video-assets/
-          echo "Contents of root directory:"
-          ls -la
+          cp "${{ env.PDF_FILE }}" ./
+          echo "Copied PDF to root directory"
+
+      - name: Move video to root directory
+        run: |
+          mv "${{ env.MP4_FILE }}" ./
+          echo "Moved PDF to root directory"
 
       - name: Configure Git
-        if: steps.check_video.outputs.video_created == 'true'
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
       - name: Commit changes
-        if: steps.check_video.outputs.video_created == 'true'
         run: |
-          git add Final_Project_Team_3_Deliverable_2.pdf
-          git commit -m "Update PDF file" || echo "No changes to commit for PDF"
-
-          git add Final_Project_Team_3_Deliverable_2.mp4
-          git commit -m "Update MP4 file - Video Duration: ${{ steps.duration.outputs.duration }}" || echo "No changes to commit for MP4"
-
-          git add video-assets
-          git commit -m "Update video assets" || echo "No changes to commit for video assets"
-
-      - name: Pull
-        if: steps.check_video.outputs.video_created == 'true'
-        run: git pull
-
-      - name: Push
-        if: steps.check_video.outputs.video_created == 'true'
-        run: git push
-
-      - name: Check for failure
-        if: steps.check_video.outputs.video_created == 'false'
-        run: |
-          echo "Video generation failed. Please check the logs for errors."
-          exit 1
+          git add "${{ env.PDF_FILE }}" "${{ env.MP4_FILE }}" "${{ env.VIDEO_ASSETS_DIR }}"
+          git commit -m "${{ steps.duration.outputs.duration }} out of 15 minutes" || echo "No changes to commit"
+          git pull
+          git push
 
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
-          repository: aai540-group3/project
-          event-type: create-release
+          repository: ${{ env.REPO_NAME }}
+          event-type: ${{ env.EVENT_TYPE }}
