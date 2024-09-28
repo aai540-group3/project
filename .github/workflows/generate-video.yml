@@ -6,6 +6,7 @@ on:
       - ".github/workflows/generate-video.yml"
       - "Final_Project_Team_3_Deliverable_2.pptx"
       - "scripts/pptx2video.py"
+      - "requirements-pptx2video.txt"
   workflow_dispatch:
 
 concurrency:
@@ -86,14 +87,14 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-pptx2video.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-pptx2video.txt
 
       - name: Delete Old Files
         run: |
@@ -149,7 +150,7 @@ jobs:
         run: |
           git add "$PDF_FILE" "$MP4_FILE"
           git commit --allow-empty -m "$DURATION out of 15 minutes"
-          git pull --rebase
+          git pull
           git push
 
       - name: Repository Dispatch
