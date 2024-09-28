@@ -14,8 +14,6 @@ joblib
 numpy
 openai
 pandas
-pdf2image
-python-terraform
 scikit-learn
 seaborn
 tenacity
