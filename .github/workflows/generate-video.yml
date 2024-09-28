@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out main branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938  # v4.2.0
         with:
           ref: main
           fetch-depth: 1
@@ -53,6 +53,13 @@ jobs:
           echo "Current directory: $(pwd)"
           ls -la
 
+      - name: Check For PowerPoint
+        run: |
+          if [ ! -f "$PPTX_FILE" ]; then
+            echo "::error::PPTX file not found: $PPTX_FILE"
+            exit 1
+          fi
+
       - name: Install System Dependencies
         run: |
           sudo apt-get update
@@ -61,8 +68,16 @@ jobs:
               libreoffice \
               poppler-utils
 
+      - name: Cache Apt Packages
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
         with:
           python-version: "3.11"
 
@@ -77,12 +92,13 @@ jobs:
               python-pptx \
               tenacity
 
-      - name: Check For PowerPoint
-        run: |
-          if [ ! -f "$PPTX_FILE" ]; then
-            echo "::error::PPTX file not found: $PPTX_FILE"
-            exit 1
-          fi
+      - name: Cache Python dependencies
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Delete Old Files
         run: |
@@ -118,7 +134,7 @@ jobs:
           mv $ASSETS_MP4 $REPO_ROOT
           echo "Moved MP4 to Top-Level Repo Directory"
 
-      - name: Get video duration
+      - name: Get Video Duration
         id: duration
         run: |
           duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 $MP4_FILE)
@@ -131,7 +147,7 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Commit changes
+      - name: Push to Remote
         run: |
           git add "$PDF_FILE" "$MP4_FILE"
           git commit --allow-empty -m "$DURATION out of 15 minutes"
@@ -139,7 +155,7 @@ jobs:
           git push origin main
 
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0  # v3.0.0
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: ${{ env.REPO_NAME }}

@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938  # v4.2.0
         with:
           fetch-depth: 1
 
@@ -51,7 +51,7 @@ jobs:
           ls -la ${{ env.DESIGN_DOC_DIR }}
 
       - name: Cache Apt Packages
-        uses: actions/cache@v4
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
@@ -118,7 +118,7 @@ jobs:
           git push origin main
 
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0  # v3.0.0
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: ${{ env.REPO_NAME }}
