@@ -19,20 +19,23 @@ jobs:
   generate-pdfs:
     runs-on: ubuntu-latest
     env:
-      REPO_NAME: aai540-group3/project
-      EVENT_TYPE: create-release
       REPO_ROOT: ${{ github.workspace }}
       DESIGN_DOC_DIR: ${{ github.workspace }}/docs/design-document
       BASE_NAME: Final_Project_Team_3_Deliverable_1
-      TEX_FILE: ${{ env.DESIGN_DOC_DIR }}/${{ env.BASE_NAME }}.tex
-      BIB_FILE: ${{ env.DESIGN_DOC_DIR }}/references.bib
-      PDF_FILE: ${{ env.DESIGN_DOC_DIR }}/${{ env.BASE_NAME }}.pdf
-      ROOT_PDF_FILE: ${{ github.workspace }}/${{ env.BASE_NAME }}.pdf
+      REPO_NAME: aai540-group3/project
+      EVENT_TYPE: create-release
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
+      - name: Set Environment Variables
+        run: |
+          echo "TEX_FILE=$DESIGN_DOC_DIR/$BASE_NAME.tex" >> $GITHUB_ENV
+          echo "BIB_FILE=$DESIGN_DOC_DIR/references.bib" >> $GITHUB_ENV
+          echo "PDF_FILE=$DESIGN_DOC_DIR/$BASE_NAME.pdf" >> $GITHUB_ENV
+          echo "ROOT_PDF_FILE=$REPO_ROOT/$BASE_NAME.pdf" >> $GITHUB_ENV
 
       - name: Print Environment Variables
         run: |
