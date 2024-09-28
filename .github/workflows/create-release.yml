@@ -123,7 +123,7 @@ jobs:
 
             - **Attestation Information**
               - Bundle Path: ${{ steps.attestation.outputs.bundle-path }}
-              - Predicate Type: ${{ steps.attestation.outputs.predicate-type }}
+              - Predicate Type: https://slsa.dev/provenance/v0.2
               - Description: Cryptographic evidence of the build process and artifact integrity.
 
             ## 📝 Release Notes
