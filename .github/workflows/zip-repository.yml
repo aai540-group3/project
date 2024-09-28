@@ -16,6 +16,7 @@ on:
       - "dvc.yaml"
       - "dvclive/**"
       - "LICENSE"
+      - "notebooks/**"
       - "params.yaml"
       - "README.md"
       - "reports/**"
@@ -51,6 +52,7 @@ jobs:
           dvc.yaml
           dvclive/
           LICENSE
+          notebooks/
           params.yaml
           README.md
           reports/
