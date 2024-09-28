@@ -26,7 +26,7 @@ jobs:
       EVENT_TYPE: create-release
 
     steps:
-      - name: Checkout Repository
+      - name: Check out main branch
         uses: actions/checkout@v4
         with:
           ref: main
@@ -150,8 +150,8 @@ jobs:
         run: |
           git add "$PDF_FILE" "$MP4_FILE"
           git commit --allow-empty -m "$DURATION out of 15 minutes"
-          git pull origin main
-          git push origin main
+          git pull --rebase
+          git push
 
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v3
