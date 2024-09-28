@@ -274,7 +274,7 @@ def update_workflow_file(file_path: str, github_api: GitHubAPI) -> None:
         full_match = match.group(0)
         action = match.group(2)
         ref = match.group(3)
-        existing_comment = match.group(4) or ""  # Get existing comment or empty string
+        existing_comment = match.group(4) or "" # Get existing comment or empty string
         logger.info(f"Found action: {action}@{ref}{existing_comment}")
 
         owner_repo = action
@@ -302,7 +302,7 @@ def update_workflow_file(file_path: str, github_api: GitHubAPI) -> None:
                 # If not pinning to latest release, use the original ref or get the tag for the SHA
                 version_info = github_api.get_tag_for_sha(owner, repo, sha) or ref
 
-            new_line = f"uses: {action}@{sha}  # {version_info}"
+            new_line = f"uses: {action}@{sha} # {version_info}"
             logger.info(f"BEFORE: {full_match}")
             logger.info(f"AFTER:  {new_line}\n")
             return new_line
