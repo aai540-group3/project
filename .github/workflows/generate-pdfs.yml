@@ -3,6 +3,7 @@ name: Generate PDFs
 on:
   push:
     paths:
+      - ".github/workflows/generate-pdfs.yml"
       - "docs/design-document/Final_Project_Team_3_Deliverable_1.tex"
       - "docs/design-document/references.bib"
   workflow_dispatch:
@@ -14,17 +15,18 @@ concurrency:
 permissions:
   contents: write
 
+env:
+  REPO_ROOT: ${{ github.workspace }}
+  TEX_FILE: ${{ github.workspace }}/docs/design-document/Final_Project_Team_3_Deliverable_1.tex
+  BIB_FILE: ${{ github.workspace }}/docs/design-document/references.bib
+  PDF_FILE: ${{ github.workspace }}/docs/design-document/Final_Project_Team_3_Deliverable_1.pdf
+  ROOT_PDF_FILE: ${{ github.workspace }}/Final_Project_Team_3_Deliverable_1.pdf
+  REPO_NAME: ${{ secrets.REPO_NAME }}
+  EVENT_TYPE: create-release
+
 jobs:
   generate-pdfs:
     runs-on: ubuntu-latest
-    env:
-      REPO_ROOT: ${{ github.workspace }}
-      TEX_FILE: ${{ github.workspace }}/docs/design-document/Final_Project_Team_3_Deliverable_1.tex
-      BIB_FILE: ${{ github.workspace }}/docs/design-document/references.bib
-      PDF_FILE: ${{ github.workspace }}/docs/design-document/Final_Project_Team_3_Deliverable_1.pdf
-      ROOT_PDF_FILE: ${{ github.workspace }}/Final_Project_Team_3_Deliverable_1.pdf
-      REPO_NAME: aai540-group3/project
-      EVENT_TYPE: create-release
 
     steps:
       - name: Checkout Repository
@@ -63,6 +65,8 @@ jobs:
           biber "${{ env.BIB_FILE }}"
           pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "${{ env.TEX_FILE }}"
           pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "${{ env.TEX_FILE }}"
+        if: ${{ failure() }}
+        continue-on-error: false
 
       - name: Check if PDF was generated
         run: |
@@ -71,21 +75,21 @@ jobs:
             exit 1
           fi
 
-      - name: Move PDF to root
+      - name: Copy PDF to root
         run: |
-          mv "${{ env.PDF_FILE }}" "${{ env.ROOT_PDF_FILE }}"
+          cp "${{ env.PDF_FILE }}" "${{ env.ROOT_PDF_FILE }}"
 
       - name: Configure Git
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Commit and Push Files
+      - name: Add, commit, and push files
         run: |
           git add "${{ env.ROOT_PDF_FILE }}"
-          git commit -m "Push PDF and source files" || echo "Nothing to commit"
-          git pull origin main --rebase || echo "Pull failed"
-          git push origin main || echo "Push failed"
+          git commit -m "Push PDF: ${{ env.ROOT_PDF_FILE }}"
+          git pull origin main
+          git push origin main
 
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v3

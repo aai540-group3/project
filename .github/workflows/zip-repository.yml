@@ -25,6 +25,11 @@ on:
       - "terraform/main.tf"
   workflow_dispatch:
 
+env:
+  REPO_NAME: ${{ secrets.REPO_NAME }}
+  EVENT_TYPE: create-release
+  ZIP_FILENAME: "Final_Project_Team_3_Deliverable_3.zip"
+
 jobs:
   zip-repo:
     runs-on: ubuntu-latest
@@ -34,7 +39,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Install pigz
         run: sudo apt-get install -y pigz
@@ -44,68 +49,35 @@ jobs:
 
       - name: Copy files to temporary directory
         run: |
-          files=(
-            ".dvcignore"
-            ".env.template"
-            ".gitattributes"
-            ".github/workflows/mlops-pipeline.yml"
-            ".gitignore"
-            "configs"
-            "dvc.lock"
-            "dvc.yaml"
-            "dvclive"
-            "LICENSE"
-            "notebooks"
-            "params.yaml"
-            "README.md"
-            "reports"
-            "requirements.txt"
-            "src"
-            "terraform/main.tf"
-          )
-          for file in "${files[@]}"; do
-            if [[ -d "$file" ]]; then
-              cp -r "$file" temp_repo/
-            else
-              cp "$file" temp_repo/
-            fi
-          done
-
-      - name: Remove unwanted files
-        run: |
-          unwanted_files=(
-            ".gitkeep"
-            ".gitignore"
-            ".gitattributes"
-          )
-          for file in "${unwanted_files[@]}"; do
-            find temp_repo -type f -name "$file" -delete
-          done
+          cp -r ./* temp_repo/
+          find temp_repo -name ".git" -prune -o -type f -name "*.zip" -delete
 
       - name: Zip repository
-        run: zip -r -0 -9 temp_repo/ | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
+        run: zip -r -0 -9 temp_repo/ | pigz -9 > ${{ env.ZIP_FILENAME }}
+        if: ${{ failure() }}
+        continue-on-error: false
 
-      - name: Cleanup
+      - name: Cleanup temporary directory
         run: rm -rf temp_repo
 
       - name: Check zip file size
-        run: ls -lh Final_Project_Team_3_Deliverable_3.zip
+        run: ls -lh ${{ env.ZIP_FILENAME }}
 
       - name: Configure Git
         run: |
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
+          git config --global user.email ${{ secrets.GIT_EMAIL }}
+          git config --global user.name ${{ secrets.GIT_USERNAME }}
 
-      - name: Commit and push zip file
+      - name: Add, commit, and push zip file
         run: |
-          git add Final_Project_Team_3_Deliverable_3.zip
-          git commit -m "Update Final_Project_Team_3_Deliverable_3.zip"
-          git pull
-          git push
+          git add ${{ env.ZIP_FILENAME }}
+          git commit -m "Update ${{ env.ZIP_FILENAME }}"
+          git pull origin main --rebase
+          git push origin main
 
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
-          repository: aai540-group3/project
-          event-type: create-release
+          repository: ${{ env.REPO_NAME }}
+          event-type: ${{ env.EVENT_TYPE }}
