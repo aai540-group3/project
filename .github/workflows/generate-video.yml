@@ -52,8 +52,10 @@ jobs:
               python-pptx \
               tenacity
 
-      - name: Recreate video-assets directory
+      - name: Delete old files
         run: |
+          rm Final_Project_Team_3_Deliverable_2.mp4
+          rm Final_Project_Team_3_Deliverable_2.pdf
           rm -rf video-assets
           mkdir -p video-assets
 
