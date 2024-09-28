@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938  # v4.2.0
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
           fetch-depth: 1
 
@@ -37,7 +37,7 @@ jobs:
           echo "PDF_FILE=$REPO_ROOT/docs/design-document/Final_Project_Team_3_Deliverable_1.pdf" >> $GITHUB_ENV
           echo "ROOT_PDF_FILE=$REPO_ROOT/Final_Project_Team_3_Deliverable_1.pdf" >> $GITHUB_ENV
 
-      - name: Print Environment variables
+      - name: Debug environment variables
         run: |
           echo "REPO_ROOT: ${{ env.REPO_ROOT }}"
           echo "DESIGN_DOC_DIR: ${{ env.DESIGN_DOC_DIR }}"
@@ -47,11 +47,20 @@ jobs:
           echo "ROOT_PDF_FILE: ${{ env.ROOT_PDF_FILE }}"
           echo "Current directory: $(pwd)"
           ls -la
-          echo "Contents of DESIGN_DOC_DIR:"
-          ls -la ${{ env.DESIGN_DOC_DIR }}
+          echo "Repository structure:"
+          tree ${{ env.REPO_ROOT }} -L 3 || echo "tree command not found, using ls instead" && ls -R ${{ env.REPO_ROOT }}
+          echo "Checking DESIGN_DOC_DIR:"
+          if [ -d "${{ env.DESIGN_DOC_DIR }}" ]; then
+            echo "DESIGN_DOC_DIR exists. Contents:"
+            ls -la ${{ env.DESIGN_DOC_DIR }}
+          else
+            echo "DESIGN_DOC_DIR does not exist."
+            echo "Parent directory contents:"
+            ls -la ${{ env.REPO_ROOT }}/docs || echo "docs directory not found"
+          fi
 
       - name: Cache Apt Packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
@@ -84,7 +93,7 @@ jobs:
           pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$TEX_FILE"
           pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$TEX_FILE"
 
-      - name: Check For PDF
+      - name: Check for PDF
         run: |
           if [ ! -f "$PDF_FILE" ]; then
             echo "ERROR: PDF generation failed!"
@@ -118,7 +127,7 @@ jobs:
           git push origin main
 
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0  # v3.0.0
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: ${{ env.REPO_NAME }}
