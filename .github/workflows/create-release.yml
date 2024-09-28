@@ -41,12 +41,6 @@ jobs:
           WITH_V: true
           RELEASE_BRANCHES: main
 
-      - name: Generate SLSA Provenance
-        uses: slsa-framework/slsa-github-generator@v1
-        with:
-          base64-subjects: ${{ steps.hash_files.outputs.hashes }}
-          upload-assets: true
-
       - name: Generate SBOM
         uses: anchore/sbom-action@v0.15.1
         with:
