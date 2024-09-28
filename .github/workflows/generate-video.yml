@@ -83,24 +83,17 @@ jobs:
           DURATION="${minutes}m ${seconds}s"
           echo "DURATION=$DURATION" >> $GITHUB_ENV
 
-      - name: Generate Build Attestation
+      - name: Attest
         uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c # v1.4.3
         id: attestation
         with:
           subject-path: Final_Project_Team_3_Deliverable_2.mp4
           subject-name: Final_Project_Team_3_Deliverable_2.mp4
 
-      - name: Move Attestation to Folder
-        run: |
-          mkdir -p attestations
-          mv \
-            ${{ steps.attestation.outputs.bundle-path }} \
-            attestations/attestation-Final_Project_Team_3_Deliverable_2.mp4.json
-
       - name: Upload Attestation as Artifact
         uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
-          name: attestations/attestation-Final_Project_Team_3_Deliverable_2.mp4.json
+          name: attestation
           path: ${{ steps.attestation.outputs.bundle-path }}
 
       - name: Configure Git
