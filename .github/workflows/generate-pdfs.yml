@@ -37,7 +37,20 @@ jobs:
           echo "PDF_FILE=$REPO_ROOT/docs/design-document/Final_Project_Team_3_Deliverable_1.pdf" >> $GITHUB_ENV
           echo "ROOT_PDF_FILE=$REPO_ROOT/Final_Project_Team_3_Deliverable_1.pdf" >> $GITHUB_ENV
 
-      - name: Cache apt packages
+      - name: Print Environment variables
+        run: |
+          echo "REPO_ROOT: ${{ env.REPO_ROOT }}"
+          echo "DESIGN_DOC_DIR: ${{ env.DESIGN_DOC_DIR }}"
+          echo "TEX_FILE: ${{ env.TEX_FILE }}"
+          echo "BIB_FILE: ${{ env.BIB_FILE }}"
+          echo "PDF_FILE: ${{ env.PDF_FILE }}"
+          echo "ROOT_PDF_FILE: ${{ env.ROOT_PDF_FILE }}"
+          echo "Current directory: $(pwd)"
+          ls -la
+          echo "Contents of DESIGN_DOC_DIR:"
+          ls -la ${{ env.DESIGN_DOC_DIR }}
+
+      - name: Cache Apt Packages
         uses: actions/cache@v4
         with:
           path: /var/cache/apt/archives
@@ -45,7 +58,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-apt-
 
-      - name: Install TeX and additional tools
+      - name: Install TeX and Tools
         run: |
           sudo apt-get update
           sudo apt-get -y install \
@@ -58,7 +71,7 @@ jobs:
             texlive-extra-utils \
             poppler-utils
 
-      - name: Remove existing PDFs
+      - name: Remove Old PDFs
         run: |
           rm -f "$PDF_FILE"
           rm -f "$ROOT_PDF_FILE"
@@ -71,23 +84,23 @@ jobs:
           pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$TEX_FILE"
           pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$TEX_FILE"
 
-      - name: Check if PDF was generated
+      - name: Check For PDF
         run: |
           if [ ! -f "$PDF_FILE" ]; then
-            echo "Error: PDF generation failed!"
+            echo "ERROR: PDF generation failed!"
             exit 1
           fi
 
-      - name: Copy PDF to root
+      - name: Copy PDF to Top-Level Repo Diectory
         run: |
           cp "$PDF_FILE" "$ROOT_PDF_FILE"
 
-      - name: Get word count
+      - name: Get Word Count
         run: |
           WORDS=$(texcount -1 -sum -inc "$TEX_FILE" | grep "Sum count:" | awk '{print $3}')
           echo "WORDS=$WORDS" >> $GITHUB_ENV
 
-      - name: Get page count
+      - name: Get Page Count
         run: |
           PAGES=$(pdfinfo "$PDF_FILE" | grep Pages: | awk '{print $2}')
           echo "PAGES=$PAGES" >> $GITHUB_ENV
@@ -97,7 +110,7 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Add, commit, and push files
+      - name: Push to Remote
         run: |
           git add "$ROOT_PDF_FILE"
           git commit -m "WORDS: $WORDS | PAGES: $PAGES"
