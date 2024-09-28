@@ -1,5 +1,4 @@
 name: Generate PDFs
-
 on:
   push:
     paths:
@@ -7,32 +6,31 @@ on:
       - "docs/design-document/Final_Project_Team_3_Deliverable_1.tex"
       - "docs/design-document/references.bib"
   workflow_dispatch:
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 permissions:
   contents: write
-
 env:
-  REPO_ROOT: ${{ github.workspace }}
-  TEX_FILE: ${{ github.workspace }}/docs/design-document/Final_Project_Team_3_Deliverable_1.tex
-  BIB_FILE: ${{ github.workspace }}/docs/design-document/references.bib
-  PDF_FILE: ${{ github.workspace }}/docs/design-document/Final_Project_Team_3_Deliverable_1.pdf
-  ROOT_PDF_FILE: ${{ github.workspace }}/Final_Project_Team_3_Deliverable_1.pdf
-  REPO_NAME: ${{ secrets.REPO_NAME }}
+  REPO_NAME: aai540-group3/project
   EVENT_TYPE: create-release
-
 jobs:
   generate-pdfs:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
+      - name: Set up environment variables
+        run: |
+          echo "REPO_ROOT=$(git rev-parse --show-toplevel)" >> $GITHUB_ENV
+          echo "DESIGN_DOC_DIR=$REPO_ROOT/docs/design-document" >> $GITHUB_ENV
+          echo "TEX_FILE=$REPO_ROOT/docs/design-document/Final_Project_Team_3_Deliverable_1.tex" >> $GITHUB_ENV
+          echo "BIB_FILE=$REPO_ROOT/docs/design-document/references.bib" >> $GITHUB_ENV
+          echo "PDF_FILE=$REPO_ROOT/docs/design-document/Final_Project_Team_3_Deliverable_1.pdf" >> $GITHUB_ENV
+          echo "ROOT_PDF_FILE=$REPO_ROOT/Final_Project_Team_3_Deliverable_1.pdf" >> $GITHUB_ENV
 
       - name: Cache apt packages
         uses: actions/cache@v4
@@ -55,29 +53,29 @@ jobs:
 
       - name: Remove existing PDFs
         run: |
-          rm -f "${{ env.PDF_FILE }}"
-          rm -f "${{ env.ROOT_PDF_FILE }}"
+          rm -f "$PDF_FILE"
+          rm -f "$ROOT_PDF_FILE"
 
       - name: Generate PDFs
         run: |
-          TEXINPUTS="${{ env.REPO_ROOT }}/docs/design-document:." \
-          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "${{ env.TEX_FILE }}"
-          biber "${{ env.BIB_FILE }}"
-          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "${{ env.TEX_FILE }}"
-          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "${{ env.TEX_FILE }}"
+          TEXINPUTS="$DESIGN_DOC_DIR:." \
+          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$TEX_FILE"
+          biber "$BIB_FILE"
+          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$TEX_FILE"
+          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$TEX_FILE"
         if: ${{ failure() }}
         continue-on-error: false
 
       - name: Check if PDF was generated
         run: |
-          if [ ! -f "${{ env.PDF_FILE }}" ]; then
+          if [ ! -f "$PDF_FILE" ]; then
             echo "Error: PDF generation failed!"
             exit 1
           fi
 
       - name: Copy PDF to root
         run: |
-          cp "${{ env.PDF_FILE }}" "${{ env.ROOT_PDF_FILE }}"
+          cp "$PDF_FILE" "$ROOT_PDF_FILE"
 
       - name: Configure Git
         run: |
@@ -86,8 +84,8 @@ jobs:
 
       - name: Add, commit, and push files
         run: |
-          git add "${{ env.ROOT_PDF_FILE }}"
-          git commit -m "Push PDF: ${{ env.ROOT_PDF_FILE }}"
+          git add "$ROOT_PDF_FILE"
+          git commit -m "Push PDF: $(basename $ROOT_PDF_FILE)"
           git pull origin main
           git push origin main
 

@@ -1,0 +1,132 @@
+name: Package Repository
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".dvcignore"
+      - ".env.template"
+      - ".gitattributes"
+      - ".github/workflows/mlops-pipeline.yml"
+      - ".github/workflows/zip-repository.yml"
+      - ".gitignore"
+      - "configs/**"
+      - "dvc.lock"
+      - "dvc.yaml"
+      - "dvclive/**"
+      - "LICENSE"
+      - "notebooks/**"
+      - "params.yaml"
+      - "README.md"
+      - "reports/**"
+      - "requirements.txt"
+      - "src/**"
+      - "terraform/main.tf"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  REPO_NAME: aai540-group3/project
+  EVENT_TYPE: create-release
+
+jobs:
+  package-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up environment variables
+        run: |
+          echo "REPO_ROOT=$(git rev-parse --show-toplevel)" >> $GITHUB_ENV
+          echo "TEMP_DIR=$REPO_ROOT/temp_repo" >> $GITHUB_ENV
+          echo "ZIP_FILENAME=$REPO_ROOT/Final_Project_Team_3_Deliverable_3.zip" >> $GITHUB_ENV
+          echo "FILES_LIST=$REPO_ROOT/files_to_zip.txt" >> $GITHUB_ENV
+
+      - name: Install pigz
+        run: sudo apt-get install -y pigz
+
+      - name: Delete previous ZIP file if it exists
+        run: |
+          if [ -f "$ZIP_FILENAME" ]; then
+            rm "$ZIP_FILENAME"
+            echo "Deleted previous ZIP file"
+          else
+            echo "No previous ZIP file found"
+          fi
+
+      - name: Create file list
+        run: |
+          cat << EOF > $FILES_LIST
+          .dvcignore
+          .env.template
+          .gitattributes
+          .github/workflows/mlops-pipeline.yml
+          .gitignore
+          configs/
+          dvc.lock
+          dvc.yaml
+          dvclive/
+          LICENSE
+          params.yaml
+          README.md
+          reports/
+          requirements.txt
+          src/
+          terraform/
+          EOF
+
+      - name: Create temporary directory
+        run: mkdir -p $TEMP_DIR
+
+      - name: Copy files to temporary directory
+        run: |
+          while IFS= read -r file; do
+            if [ -d "$file" ]; then
+              mkdir -p "$TEMP_DIR/$file"
+              cp -r "$file"/* "$TEMP_DIR/$file/"
+            else
+              cp "$file" "$TEMP_DIR/$file"
+            fi
+          done < $FILES_LIST
+
+      - name: Zip repository
+        run: |
+          zip -r -0 "$ZIP_FILENAME" $TEMP_DIR
+          pigz -9 "$ZIP_FILENAME"
+
+      - name: Cleanup temporary directory
+        run: rm -rf $TEMP_DIR
+
+      - name: Get zip file size
+        run: |
+          FILESIZE=$(du -h "$ZIP_FILENAME" | cut -f1)
+          echo "FILESIZE=$FILESIZE" >> $GITHUB_ENV
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Add, commit, and push zip file
+        run: |
+          git add $ZIP_FILENAME
+          git commit -m "Size: $FILESIZE"
+          git pull origin main
+          git push origin main
+
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
+          repository: ${{ env.REPO_NAME }}
+          event-type: ${{ env.EVENT_TYPE }}

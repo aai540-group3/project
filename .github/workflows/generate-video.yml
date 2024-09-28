@@ -3,8 +3,8 @@ name: Generate Video
 on:
   push:
     paths:
-      - "Final_Project_Team_3_Deliverable_2.pptx"
       - ".github/workflows/generate-video.yml"
+      - "Final_Project_Team_3_Deliverable_2.pptx"
       - "scripts/pptx2video.py"
   workflow_dispatch:
 
@@ -17,11 +17,7 @@ permissions:
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-  PPTX_FILE: ${{ github.workspace }}/Final_Project_Team_3_Deliverable_2.pptx
-  MP4_FILE: ${{ github.workspace }}/Final_Project_Team_3_Deliverable_2.mp4
-  PDF_FILE: ${{ github.workspace }}/Final_Project_Team_3_Deliverable_2.pdf
-  VIDEO_ASSETS_DIR: ${{ github.workspace }}/video-assets
-  REPO_NAME: aai540-group3/project
+  REPO_NAME: ${{ secrets.REPO_NAME }}
   EVENT_TYPE: create-release
 
 jobs:
@@ -35,6 +31,16 @@ jobs:
           fetch-depth: 1
           lfs: true
 
+      - name: Set up environment variables
+        run: |
+          echo "REPO_ROOT=$(git rev-parse --show-toplevel)" >> $GITHUB_ENV
+          echo "PPTX_FILE=$REPO_ROOT/Final_Project_Team_3_Deliverable_2.pptx" >> $GITHUB_ENV
+          echo "PDF_FILE=$REPO_ROOT/Final_Project_Team_3_Deliverable_2.pdf" >> $GITHUB_ENV
+          echo "MP4_FILE=$REPO_ROOT/Final_Project_Team_3_Deliverable_2.mp4" >> $GITHUB_ENV
+          echo "ASSETS_DIR=$REPO_ROOT/video-assets" >> $GITHUB_ENV
+          echo "ASSETS_PDF=$REPO_ROOT/video-assets/Final_Project_Team_3_Deliverable_2.pdf" >> $GITHUB_ENV
+          echo "ASSETS_MP4=$REPO_ROOT/video-assets/Final_Project_Team_3_Deliverable_2.mp4" >> $GITHUB_ENV
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -43,42 +49,70 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y install ffmpeg libreoffice poppler-utils
+          sudo apt-get -y install \
+              ffmpeg \
+              libreoffice \
+              poppler-utils
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install aiohttp openai pdf2image Pillow python-pptx tenacity
+          pip install \
+              aiohttp \
+              openai \
+              pdf2image \
+              Pillow \
+              python-pptx \
+              tenacity
+
+      - name: Check if PPTX file exists
+        run: |
+          if [ ! -f "$PPTX_FILE" ]; then
+            echo "::error::PPTX file not found: $PPTX_FILE"
+            exit 1
+          fi
 
       - name: Delete old files
         run: |
-          rm -rf "${{ env.MP4_FILE }}"
-          rm -rf "${{ env.PDF_FILE }}"
-          rm -rf "${{ env.VIDEO_ASSETS_DIR }}"
-          mkdir -p "${{ env.VIDEO_ASSETS_DIR }}"
+          rm -rf $MP4_FILE
+          rm -rf $PDF_FILE
+          rm -rf $ASSETS_DIR
+          mkdir -p $ASSETS_DIR
 
       - name: Generate Video
         id: generate
-        run: python scripts/pptx2video.py "${{ env.PPTX_FILE }}"
-        continue-on-error: false
+        run: python scripts/pptx2video.py "$PPTX_FILE"
+
+      - name: Check video creation
+        id: check_video
+        run: |
+          if [ ! -f "$ASSETS_MP4" ]; then
+            echo "::error::Video generation failed. MP4 file not found in $ASSETS_DIR."
+            exit 1
+          fi
+
+      - name: Copy PDF to root directory
+        run: |
+          if [ -f "$ASSETS_PDF" ]; then
+            cp $ASSETS_PDF $REPO_ROOT
+            echo "Copied PDF to root directory"
+          else
+            echo "::error::PDF file not found in $ASSETS_DIR directory"
+            exit 1
+          fi
+
+      - name: Move MP4 to root directory
+        run: |
+          mv $ASSETS_MP4 $REPO_ROOT
+          echo "Moved MP4 to root directory"
 
       - name: Get video duration
         id: duration
         run: |
-          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${{ env.MP4_FILE }}")
+          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 $MP4_FILE)
           minutes=$(printf "%.0f" $(echo "$duration/60" | bc))
           seconds=$(printf "%.0f" $(echo "$duration%60" | bc))
-          echo "duration=${minutes}m ${seconds}s" >> $GITHUB_OUTPUT
-
-      - name: Copy PDF to root directory
-        run: |
-          cp "${{ env.PDF_FILE }}" ./
-          echo "Copied PDF to root directory"
-
-      - name: Move video to root directory
-        run: |
-          mv "${{ env.MP4_FILE }}" ./
-          echo "Moved PDF to root directory"
+          echo "VIDEO_DURATION=${minutes}m ${seconds}s" >> $GITHUB_ENV
 
       - name: Configure Git
         run: |
@@ -87,8 +121,8 @@ jobs:
 
       - name: Commit changes
         run: |
-          git add "${{ env.PDF_FILE }}" "${{ env.MP4_FILE }}" "${{ env.VIDEO_ASSETS_DIR }}"
-          git commit -m "${{ steps.duration.outputs.duration }} out of 15 minutes" || echo "No changes to commit"
+          git add $PDF_FILE $MP4_FILE
+          git commit --allow-empty -m "$VIDEO_DURATION out of 15 minutes"
           git pull
           git push
 
