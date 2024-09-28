@@ -56,9 +56,6 @@ jobs:
             Final_Project_Team_3_Deliverable_2.mp4
             Final_Project_Team_3_Deliverable_3.zip
             sbom.json
-            .codacy.yml
-            .flake8
-            .pylintrc
           predicate-type: "https://slsa.dev/provenance/v0.2"
           predicate: |
             {
