@@ -71,10 +71,7 @@ jobs:
       - name: Zip Repository
         run: zip -r -0 $(cat files.txt) | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
 
-      - name: Cleanup
-        run: rm -f files_to_zip.txt
-
-      - name: Check Zipfile Size
+      - name: Check File Size
         run: ls -lh Final_Project_Team_3_Deliverable_3.zip
 
       - name: Configure Git
@@ -96,3 +93,7 @@ jobs:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: aai540-group3/project
           event-type: create-release
+
+      - name: Cleanup
+        if: always()
+        run: rm -f files.txt
