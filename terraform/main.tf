@@ -77,7 +77,7 @@ resource "aws_iam_user" "zrobertson" {
 
 # Set up login profiles for the IAM users
 resource "aws_iam_user_login_profile" "jagustin" {
-  user                    = aws_iam_user.jagustin.name
+  user                    = "jagustin"
   password_reset_required = true
   lifecycle {
     ignore_changes = [password_reset_required]
@@ -85,7 +85,7 @@ resource "aws_iam_user_login_profile" "jagustin" {
 }
 
 resource "aws_iam_user_login_profile" "lvo" {
-  user                    = aws_iam_user.lvo.name
+  user                    = "lvo"
   password_reset_required = true
   lifecycle {
     ignore_changes = [password_reset_required]
@@ -93,7 +93,7 @@ resource "aws_iam_user_login_profile" "lvo" {
 }
 
 resource "aws_iam_user_login_profile" "zrobertson" {
-  user                    = aws_iam_user.zrobertson.name
+  user                    = "zrobertson"
   password_reset_required = true
   lifecycle {
     ignore_changes = [password_reset_required]
@@ -108,8 +108,8 @@ resource "aws_iam_group" "organization_users" {
 # Add users to the IAM group
 resource "aws_iam_group_membership" "organization_users" {
   name  = "OrganizationUsersMembership"
-  users = [aws_iam_user.jagustin.name, aws_iam_user.lvo.name, aws_iam_user.zrobertson.name]
-  group = aws_iam_group.organization_users.name
+  users = ["jagustin", "lvo", "zrobertson"]
+  group = "OrganizationUsers"
 }
 
 # Create an IAM policy for administrator access
@@ -128,10 +128,30 @@ resource "aws_iam_policy" "administrator_access_policy" {
   })
 }
 
-# Attach the administrator access policy to the IAM group
+# Create an IAM policy for S3 bucket versioning access
+resource "aws_iam_policy" "s3_versioning_access_policy" {
+  name        = "S3VersioningAccessPolicy"
+  description = "Policy granting access to S3 bucket versioning"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = "s3:GetBucketVersioning",
+        Resource = "arn:aws:s3:::terraform-state-bucket-eeb973f4"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_group_policy_attachment" "administrator_access_policy_attachment" {
-  group      = aws_iam_group.organization_users.name
-  policy_arn = aws_iam_policy.administrator_access_policy.arn
+  group      = "OrganizationUsers"
+  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/AdministratorAccessPolicy"
+}
+
+resource "aws_iam_group_policy_attachment" "s3_versioning_access_policy_attachment" {
+  group      = "OrganizationUsers"
+  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/S3VersioningAccessPolicy"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -156,7 +176,7 @@ resource "aws_s3_bucket" "terraform_state" {
 
 # Enable versioning on the S3 bucket
 resource "aws_s3_bucket_versioning" "enabled" {
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = "terraform-state-bucket-eeb973f4"
   versioning_configuration {
     status = "Enabled"
   }
@@ -164,7 +184,7 @@ resource "aws_s3_bucket_versioning" "enabled" {
 
 # Enable server-side encryption for the S3 bucket
 resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = "terraform-state-bucket-eeb973f4"
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -174,7 +194,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
 
 # Block public access to the S3 bucket
 resource "aws_s3_bucket_public_access_block" "public_access" {
-  bucket                  = aws_s3_bucket.terraform_state.id
+  bucket                  = "terraform-state-bucket-eeb973f4"
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -183,7 +203,7 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
 
 # Add a policy to enforce SSL-only access to the S3 bucket
 resource "aws_s3_bucket_policy" "terraform_state_policy" {
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = "terraform-state-bucket-eeb973f4"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -192,8 +212,8 @@ resource "aws_s3_bucket_policy" "terraform_state_policy" {
         Effect    = "Deny",
         Principal = "*",
         Resource = [
-          "${aws_s3_bucket.terraform_state.arn}/*",
-          "${aws_s3_bucket.terraform_state.arn}"
+          "arn:aws:s3:::terraform-state-bucket-eeb973f4/*",
+          "arn:aws:s3:::terraform-state-bucket-eeb973f4"
         ],
         Condition = {
           Bool : {
@@ -243,7 +263,7 @@ resource "aws_dynamodb_table" "terraform_locks" {
 
 # Policy to enforce SSL-only access to the DynamoDB table
 resource "aws_dynamodb_resource_policy" "terraform_locks_policy" {
-  resource_arn = aws_dynamodb_table.terraform_locks.arn
+  resource_arn = "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/terraform-state-lock-eeb973f4"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -251,7 +271,7 @@ resource "aws_dynamodb_resource_policy" "terraform_locks_policy" {
         Effect    = "Deny",
         Principal = "*",
         Action    = "dynamodb:*",
-        Resource  = aws_dynamodb_table.terraform_locks.arn,
+        Resource  = "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/terraform-state-lock-eeb973f4",
         Condition = {
           Bool : {
             "aws:SecureTransport" : "false"
@@ -374,21 +394,21 @@ resource "aws_sns_topic" "zrobertson_notifications" {
 
 # Subscribe jagustin's email to their respective SNS topic
 resource "aws_sns_topic_subscription" "jagustin_email_subscriptions" {
-  topic_arn = aws_sns_topic.jagustin_notifications.arn
+  topic_arn = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-jagustin"
   protocol  = "email"
   endpoint  = "jagustin@sandiego.edu"
 }
 
 # Subscribe lvo's email to their respective SNS topic
 resource "aws_sns_topic_subscription" "lvo_email_subscriptions" {
-  topic_arn = aws_sns_topic.lvo_notifications.arn
+  topic_arn = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-lvo"
   protocol  = "email"
   endpoint  = "lvo@sandiego.edu"
 }
 
 # Subscribe zrobertson's email to their respective SNS topic
 resource "aws_sns_topic_subscription" "zrobertson_email_subscriptions" {
-  topic_arn = aws_sns_topic.zrobertson_notifications.arn
+  topic_arn = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-zrobertson"
   protocol  = "email"
   endpoint  = "zrobertson@sandiego.edu"
 }
@@ -402,7 +422,7 @@ data "aws_iam_policy_document" "sns_topic_policy_jagustin" {
       type        = "Service"
       identifiers = ["cloudwatch.amazonaws.com"]
     }
-    resources = [aws_sns_topic.jagustin_notifications.arn]
+    resources = ["arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-jagustin"]
   }
 }
 
@@ -414,7 +434,7 @@ data "aws_iam_policy_document" "sns_topic_policy_lvo" {
       type        = "Service"
       identifiers = ["cloudwatch.amazonaws.com"]
     }
-    resources = [aws_sns_topic.lvo_notifications.arn]
+    resources = ["arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-lvo"]
   }
 }
 
@@ -426,22 +446,22 @@ data "aws_iam_policy_document" "sns_topic_policy_zrobertson" {
       type        = "Service"
       identifiers = ["cloudwatch.amazonaws.com"]
     }
-    resources = [aws_sns_topic.zrobertson_notifications.arn]
+    resources = ["arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-zrobertson"]
   }
 }
 
 resource "aws_sns_topic_policy" "jagustin_default" {
-  arn    = aws_sns_topic.jagustin_notifications.arn
+  arn    = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-jagustin"
   policy = data.aws_iam_policy_document.sns_topic_policy_jagustin.json
 }
 
 resource "aws_sns_topic_policy" "lvo_default" {
-  arn    = aws_sns_topic.lvo_notifications.arn
+  arn    = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-lvo"
   policy = data.aws_iam_policy_document.sns_topic_policy_lvo.json
 }
 
 resource "aws_sns_topic_policy" "zrobertson_default" {
-  arn    = aws_sns_topic.zrobertson_notifications.arn
+  arn    = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-zrobertson"
   policy = data.aws_iam_policy_document.sns_topic_policy_zrobertson.json
 }
 
@@ -459,7 +479,7 @@ resource "aws_cloudwatch_metric_alarm" "free_tier_usage_alarm" {
   statistic           = "Maximum"
   threshold           = "1.00"
   actions_enabled     = true
-  alarm_actions       = [aws_sns_topic.free_tier_alerts.arn]
+  alarm_actions       = ["arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:free-tier-alerts"]
   dimensions = {
     Currency = "USD"
   }
@@ -470,23 +490,34 @@ resource "aws_sns_topic" "free_tier_alerts" {
   name = "free-tier-alerts"
 }
 
+
+resource "aws_cloudwatch_log_group" "mlops_pipeline_logs" {
+  name = "/aws/mlops/pipeline"
+
+  tags = {
+    Name        = "MLOps Pipeline Logs"
+    Environment = "Development"
+    ManagedBy   = "Terraform"
+  }
+}
+
 # Subscribe jagustin's email to the Free Tier alerts SNS topic
 resource "aws_sns_topic_subscription" "free_tier_alerts_email_jagustin" {
-  topic_arn = aws_sns_topic.free_tier_alerts.arn
+  topic_arn = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:free-tier-alerts"
   protocol  = "email"
   endpoint  = "jagustin@sandiego.edu"
 }
 
 # Subscribe lvo's email to the Free Tier alerts SNS topic
 resource "aws_sns_topic_subscription" "free_tier_alerts_email_lvo" {
-  topic_arn = aws_sns_topic.free_tier_alerts.arn
+  topic_arn = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:free-tier-alerts"
   protocol  = "email"
   endpoint  = "lvo@sandiego.edu"
 }
 
 # Subscribe zrobertson's email to the Free Tier alerts SNS topic
 resource "aws_sns_topic_subscription" "free_tier_alerts_email_zrobertson" {
-  topic_arn = aws_sns_topic.free_tier_alerts.arn
+  topic_arn = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:free-tier-alerts"
   protocol  = "email"
   endpoint  = "zrobertson@sandiego.edu"
 }
@@ -503,14 +534,14 @@ resource "aws_s3_bucket" "mlops_artifacts" {
   }
 
   lifecycle {
-    # prevent_destroy = true
+    prevent_destroy = true
     ignore_changes = [bucket]
   }
 }
 
 # Enable versioning on the S3 bucket
 resource "aws_s3_bucket_versioning" "mlops_versioning" {
-  bucket = aws_s3_bucket.mlops_artifacts.id
+  bucket = "mlops-artifacts-aai540-group3"
   versioning_configuration {
     status = "Enabled"
   }
@@ -518,7 +549,7 @@ resource "aws_s3_bucket_versioning" "mlops_versioning" {
 
 # Enable server-side encryption for the S3 bucket
 resource "aws_s3_bucket_server_side_encryption_configuration" "mlops_encryption" {
-  bucket = aws_s3_bucket.mlops_artifacts.id
+  bucket = "mlops-artifacts-aai540-group3"
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -528,7 +559,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "mlops_encryption"
 
 # Block public access to the S3 bucket
 resource "aws_s3_bucket_public_access_block" "mlops_public_access" {
-  bucket                  = aws_s3_bucket.mlops_artifacts.id
+  bucket                  = "mlops-artifacts-aai540-group3"
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -537,7 +568,7 @@ resource "aws_s3_bucket_public_access_block" "mlops_public_access" {
 
 # Add a policy to enforce SSL-only access to the S3 bucket
 resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
-  bucket = aws_s3_bucket.mlops_artifacts.id
+  bucket = "mlops-artifacts-aai540-group3"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -546,8 +577,8 @@ resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
         Effect    = "Deny",
         Principal = "*",
         Resource = [
-          "${aws_s3_bucket.mlops_artifacts.arn}/*",
-          "${aws_s3_bucket.mlops_artifacts.arn}"
+          "arn:aws:s3:::mlops-artifacts-aai540-group3/*",
+          "arn:aws:s3:::mlops-artifacts-aai540-group3"
         ],
         Condition = {
           Bool = {
@@ -608,6 +639,8 @@ resource "aws_iam_policy" "access_analyzer_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "access_analyzer_attachment" {
-  role       = aws_iam_role.github_actions_policy_validator.name
-  policy_arn = aws_iam_policy.access_analyzer_policy.arn
+  role       = "GitHub-Actions-PolicyValidator"
+  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/AccessAnalyzerPolicy"
 }
+
+data "aws_caller_identity" "current" {}

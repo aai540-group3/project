@@ -4,7 +4,7 @@
 # Description     :This script bootstraps AWS resources required for Terraform,
 #                  such as S3 buckets for state storage and DynamoDB tables for
 #                  state locking.
-# Version         :1.0
+# Version         :1.1
 # Usage           :./aws_bootstrap.sh
 #===============================================================================
 set -e
@@ -34,7 +34,6 @@ create_resources() {
         echo "Enter your AWS Access Key ID:"
         read -r AWS_ACCESS_KEY_ID
     fi
-
     if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
         echo "Enter your AWS Secret Access Key:"
         read -rs AWS_SECRET_ACCESS_KEY
@@ -63,7 +62,6 @@ EOF
         echo "ERROR: AWS authentication failed"
         exit 1
     fi
-
     echo "STATUS: AWS authentication successful"
 
     # Create S3 bucket
@@ -75,24 +73,58 @@ EOF
         exit 1
     fi
 
-    # Create DynamoDB table
-    echo "Creating DynamoDB table '$DYNAMODB_TABLE_NAME'..."
-    if aws dynamodb create-table \
-        --table-name "$DYNAMODB_TABLE_NAME" \
-        --attribute-definitions AttributeName=LockID,AttributeType=S \
-        --key-schema AttributeName=LockID,KeyType=HASH \
-        --billing-mode PAY_PER_REQUEST \
-        --region "$AWS_REGION"; then
-        echo "STATUS: DynamoDB table '$DYNAMODB_TABLE_NAME' created successfully"
+
+    # Check if the DynamoDB table already exists
+    if aws dynamodb describe-table --table-name terraform-state-lock-eeb973f4 > /dev/null 2>&1; then
+    echo "STATUS: DynamoDB table 'terraform-state-lock-eeb973f4' already exists. Skipping creation."
     else
-        echo "ERROR: Failed to create DynamoDB table '$DYNAMODB_TABLE_NAME'"
-        exit 1
+    # Code to create the DynamoDB table (keep this part commented out)
+    aws dynamodb create-table \
+      --table-name terraform-state-lock-eeb973f4 \
+      --attribute-definitions AttributeName=LockID,AttributeType=S \
+      --key-schema AttributeName=LockID,KeyType=HASH \
+      --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
+    echo "STATUS: DynamoDB table 'terraform-state-lock-eeb973f4' created successfully"
     fi
 
     echo "---- AWS BOOTSTRAP COMPLETE ----"
-    echo "S3 Bucket Name: $S3_BUCKET_NAME"
-    echo "DynamoDB Table Name: $DYNAMODB_TABLE_NAME"
 }
+
+#---------------------------------------
+# Function: print_status
+# Description:
+#   Prints the status and configuration of created resources
+#---------------------------------------
+print_status() {
+    echo "---- PRINTING STATUS AND CONFIGURATION ----"
+
+    # Print S3 bucket status
+    echo "Checking S3 bucket status..."
+    if aws s3api head-bucket --bucket "$S3_BUCKET_NAME" 2>/dev/null; then
+        echo "STATUS: S3 bucket '$S3_BUCKET_NAME' exists and is accessible"
+        # Print bucket details
+        aws s3api get-bucket-location --bucket "$S3_BUCKET_NAME"
+    else
+        echo "ERROR: S3 bucket '$S3_BUCKET_NAME' is not accessible or does not exist"
+    fi
+
+    # Print DynamoDB table status
+    echo "Checking DynamoDB table status..."
+    if aws dynamodb describe-table --table-name "$DYNAMODB_TABLE_NAME" --region "$AWS_REGION" 2>/dev/null; then
+        echo "STATUS: DynamoDB table '$DYNAMODB_TABLE_NAME' exists and is accessible"
+    else
+        echo "ERROR: DynamoDB table '$DYNAMODB_TABLE_NAME' is not accessible or does not exist"
+    fi
+
+    # Print AWS configuration
+    echo "AWS Configuration:"
+    echo "Region: $AWS_REGION"
+    echo "Credentials file: $CREDENTIALS_FILE"
+    echo "Config file: $CONFIG_FILE"
+
+    echo "---- STATUS AND CONFIGURATION PRINTOUT COMPLETE ----"
+}
+
 #---------------------------------------
 # Main Script Logic
 #---------------------------------------
@@ -101,5 +133,6 @@ if ! command -v aws &> /dev/null; then
     echo "ERROR: AWS CLI is not installed. Please install it before running this script."
     exit 1
 fi
-    create_resources
-fi
+
+create_resources
+print_status
