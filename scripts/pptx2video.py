@@ -222,7 +222,7 @@ class PPTXtoVideo:
         """
         self.pptx_filename = pptx_filename
         self.pptx_hash = self._compute_file_hash(pptx_filename)
-        self.output_dir = os.path.join(os.getcwd(), "video-assets-current")
+        self.output_dir = os.path.join(os.getcwd(), "video-assets")
         os.makedirs(self.output_dir, exist_ok=True)
         self.pdf_filename = os.path.join(
             self.output_dir,
