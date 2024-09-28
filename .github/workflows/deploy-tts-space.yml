@@ -18,7 +18,7 @@ jobs:
       REPO_ROOT: ${{ github.workspace }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938  # v4.2.0
 
       - name: Set Environment Variables
         run: |
@@ -34,12 +34,12 @@ jobs:
           ls -la "$LOCAL_DIR"
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
         with:
           python-version: "3.11"
 
       - name: Cache Python Dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
