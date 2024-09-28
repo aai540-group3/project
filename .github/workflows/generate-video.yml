@@ -71,15 +71,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-pptx2video.txt
 
-      - name: Delete Old Files
+      - name: Run Video Generation Script
         run: |
-          rm -f "Final_Project_Team_3_Deliverable_2.mp4"
-          rm -f "Final_Project_Team_3_Deliverable_2.pdf"
-          rm -rf "video-assets"
-          mkdir -p "video-assets"
-
-      - name: Generate Video
-        run: python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
+          python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
 
       - name: Get Video Duration
         run: |
@@ -97,7 +91,10 @@ jobs:
 
       - name: Push to Remote
         run: |
-          git add Final_Project_Team_3_Deliverable_2.pdf Final_Project_Team_3_Deliverable_2.mp4
+          git add \
+            Final_Project_Team_3_Deliverable_2.pdf \
+            Final_Project_Team_3_Deliverable_2.mp4 \
+            video-assets/conversion_state.json
           git commit --allow-empty -m "$DURATION out of 15 minutes"
           git pull origin main
           git push origin main

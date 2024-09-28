@@ -43,15 +43,19 @@ import openai
 from pdf2image import convert_from_path
 from PIL import Image
 from pptx import Presentation
-from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
-                      wait_exponential)
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-MAX_CONCURRENT_CALLS = 5  # Maximum number of concurrent OPENAI API calls
+MAX_CONCURRENT_CALLS = 5  # Maximum number of concurrent OpenAI API calls
 
 
 @retry(
@@ -74,9 +78,7 @@ async def tts_async(input_text: str, model: str, voice: str, api_key: str) -> by
     if not api_key.strip() or not input_text.strip():
         raise ValueError("API key and input text are required.")
 
-    logger.debug(
-        f"Sending TTS request for text: {input_text[:50]}..."
-    )  # Log first 50 chars of input text
+    logger.debug(f"Sending TTS request for text: {input_text[:50]}...")
 
     async with aiohttp.ClientSession() as session:
         async with session.post(
@@ -103,7 +105,9 @@ def convert_slide_to_image(pdf_filename: str, output_dir: str, i: int) -> str:
     """
     logger.debug(f"Converting slide {i+1} to image")
     image_path = os.path.join(output_dir, f"slide_{i}.png")
-    images = convert_from_path(pdf_filename, first_page=i + 1, last_page=i + 1, dpi=300)
+    images = convert_from_path(
+        pdf_filename, first_page=i + 1, last_page=i + 1, dpi=300
+    )
     if images:
         images[0].save(image_path, "PNG")
         logger.debug(f"Saved slide {i+1} image to {image_path}")
@@ -113,26 +117,35 @@ def convert_slide_to_image(pdf_filename: str, output_dir: str, i: int) -> str:
 
 
 async def generate_audio_for_slide(
-    text: str, output_dir: str, i: int, api_key: str
+    text: str, text_hash: str, output_dir: str, i: int, api_key: str, state: dict
 ) -> Optional[str]:
     """
     Generate audio for a single slide using the TTS function.
 
     :param text: Text to convert to speech.
+    :param text_hash: Hash of the text.
     :param output_dir: Directory to store output files.
     :param i: Slide index.
     :param api_key: OpenAI API key.
+    :param state: State dictionary to track progress.
     :return: Path to the generated audio file, or None if generation fails.
     """
     slide_audio_filename = os.path.join(output_dir, f"voice_{i}.mp3")
+    if (
+        state["slide_hashes"].get(str(i)) == text_hash
+        and os.path.exists(slide_audio_filename)
+    ):
+        logger.info(f"Audio for slide {i+1} is up to date, skipping generation")
+        return slide_audio_filename
     try:
         logger.debug(
             f"Generating audio for slide {i+1} with text: {text[:50]}..."
-        )  # Log first 50 chars of text
+        )
         audio_content = await tts_async(text, "tts-1-hd", "echo", api_key)
         with open(slide_audio_filename, "wb") as f:
             f.write(audio_content)
         logger.debug(f"Generated audio for slide {i+1}: {slide_audio_filename}")
+        state["slide_hashes"][str(i)] = text_hash
         return slide_audio_filename
     except Exception as e:
         logger.error(f"Error generating audio for slide {i+1}: {e}")
@@ -141,7 +154,7 @@ async def generate_audio_for_slide(
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 def create_video_for_slide(
-    image_file: str, audio_file: Optional[str], output_dir: str, i: int
+    image_file: str, audio_file: Optional[str], output_dir: str, i: int, state: dict
 ) -> str:
     """
     Create a video for a single slide by combining image and audio.
@@ -150,15 +163,23 @@ def create_video_for_slide(
     :param audio_file: Path to the audio file, or None if no audio.
     :param output_dir: Directory to store output files.
     :param i: Slide index.
+    :param state: State dictionary to track progress.
     :return: Path to the generated video file.
     """
-    logger.debug(f"Creating video for slide {i+1}")
     slide_video_filename = os.path.join(output_dir, f"video_{i}.mp4")
+    if (
+        state["videos_created"].get(str(i))
+        and os.path.exists(slide_video_filename)
+    ):
+        logger.info(f"Video for slide {i+1} is up to date, skipping creation")
+        return slide_video_filename
+
+    logger.debug(f"Creating video for slide {i+1}")
     with Image.open(image_file) as img:
         width, height = img.size
     adjusted_width = width if width % 2 == 0 else width - 1
 
-    if audio_file:
+    if audio_file and os.path.exists(audio_file):
         ffmpeg_cmd = [
             "ffmpeg",
             "-y",
@@ -205,6 +226,7 @@ def create_video_for_slide(
 
     subprocess.run(ffmpeg_cmd, check=True, capture_output=True)
     logger.debug(f"Created video for slide {i+1}: {slide_video_filename}")
+    state["videos_created"][str(i)] = True
     return slide_video_filename
 
 
@@ -236,7 +258,7 @@ class PPTXtoVideo:
         self.api_key = os.environ.get("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY not found in environment variables.")
-        self.voiceover_texts = self._extract_slide_texts()
+        self.slides_data = self._extract_slide_texts()
         self.video_files = []
         self.state_file = os.path.join(self.output_dir, "conversion_state.json")
         self.state = self._load_state()
@@ -254,45 +276,51 @@ class PPTXtoVideo:
                 hasher.update(chunk)
         return hasher.hexdigest()
 
-    def _extract_slide_texts(self) -> List[str]:
+    def _extract_slide_texts(self) -> List[dict]:
         """
-        Extract text from slide notes.
+        Extract text from slide notes and compute hashes.
 
-        :return: List of texts extracted from slide notes.
+        :return: List of dicts with slide index, text, and text hash.
         """
-        texts = []
+        slides_data = []
         for i, slide in enumerate(self.slides):
             text = (
                 slide.notes_slide.notes_text_frame.text.strip()
-                if slide.has_notes_slide
+                if slide.has_notes_slide and slide.notes_slide.notes_text_frame.text
                 else ""
             )
-            texts.append(text)
+            text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+            slides_data.append({"index": i, "text": text, "hash": text_hash})
             logger.debug(
-                f"Slide {i+1} text: {text[:50]}..."
-            )  # Log first 50 chars of each slide's text
-        return texts
+                f"Slide {i+1} text hash: {text_hash} - text: {text[:50]}..."
+            )
+        return slides_data
 
     def _load_state(self) -> dict:
         """
-        Load the conversion state from a file.  Handles missing file gracefully.
+        Load the conversion state from a file. Handles missing file gracefully.
         :return: Dictionary containing the conversion state, or an empty dict if the file is missing.
         """
+        initial_state = {
+            "pptx_hash": self.pptx_hash,
+            "pdf_created": False,
+            "slide_hashes": {},
+            "videos_created": {},
+        }
         try:
             with open(self.state_file, "r") as f:
                 state = json.load(f)
-                # Check for pptx hash match -  if it doesn't match, reset the state.
+                # Check for pptx hash match - if it doesn't match, reset the state.
                 if state.get("pptx_hash") != self.pptx_hash:
-                    state = {"pptx_hash": self.pptx_hash, "pdf_created": False, "images_created": [], "audio_created": [], "videos_created": []}
-                return state
+                    state = initial_state
+            return state
         except (FileNotFoundError, json.JSONDecodeError):
-            return {"pptx_hash": self.pptx_hash, "pdf_created": False, "images_created": [], "audio_created": [], "videos_created": []}
-
+            return initial_state
 
     def _save_state(self):
         """Save the current conversion state to a file."""
         with open(self.state_file, "w") as f:
-            json.dump(self.state, f)
+            json.dump(self.state, f, indent=4)
 
     def _convert_to_pdf(self):
         """Converts the .pptx file to a .pdf file using LibreOffice."""
@@ -330,52 +358,66 @@ class PPTXtoVideo:
         # Convert PDF slides to images
         logger.info("Converting PDF slides to images")
         image_files = []
-        with multiprocessing.Pool() as pool:
-            convert_func = functools.partial(
-                convert_slide_to_image, self.pdf_filename, self.output_dir
-            )
-            for i, image_path in enumerate(
-                pool.imap(convert_func, range(len(self.slides)))
-            ):
-                if i not in self.state["images_created"]:
-                    image_files.append(image_path)
-                    self.state["images_created"].append(i)
-                    self._save_state()
-        logger.info(f"Created {len(image_files)} new slide images")
+        images_to_generate = []
+
+        # Collect slides that need image generation
+        for i in range(len(self.slides)):
+            image_file = os.path.join(self.output_dir, f"slide_{i}.png")
+            if not os.path.exists(image_file):
+                images_to_generate.append(i)
+            image_files.append(image_file)
+
+        if images_to_generate:
+            with multiprocessing.Pool() as pool:
+                convert_func = functools.partial(
+                    convert_slide_to_image, self.pdf_filename, self.output_dir
+                )
+                for _ in pool.imap_unordered(convert_func, images_to_generate):
+                    pass  # Images are saved in the function
 
         # Generate audio for slides
         logger.info("Generating audio for slides")
         audio_files = []
 
-        async def generate_all_audio():
-            semaphore = asyncio.Semaphore(MAX_CONCURRENT_CALLS)
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_CALLS)
 
-            async def bounded_generate(text, i):
-                if i in self.state["audio_created"]:
-                    return os.path.join(self.output_dir, f"voice_{i}.mp3")
+        async def generate_all_audio():
+            tasks = []
+            for slide_data in self.slides_data:
+                i = slide_data["index"]
+                text = slide_data["text"]
+                text_hash = slide_data["hash"]
+                audio_file = os.path.join(self.output_dir, f"voice_{i}.mp3")
+                audio_files.append(audio_file)
+                if (
+                    self.state["slide_hashes"].get(str(i)) == text_hash
+                    and os.path.exists(audio_file)
+                ):
+                    logger.info(
+                        f"Audio for slide {i+1} is up to date, skipping generation"
+                    )
+                    continue
                 if not text.strip():
                     logger.warning(
                         f"Skipping audio generation for slide {i+1} due to empty text"
                     )
-                    return None
+                    continue
+
                 async with semaphore:
-                    audio_file = await generate_audio_for_slide(
-                        text, self.output_dir, i, self.api_key
+                    tasks.append(
+                        generate_audio_for_slide(
+                            text,
+                            text_hash,
+                            self.output_dir,
+                            i,
+                            self.api_key,
+                            self.state,
+                        )
                     )
-                    if audio_file:
-                        self.state["audio_created"].append(i)
-                        self._save_state()
-                    return audio_file
+            if tasks:
+                await asyncio.gather(*tasks)
 
-            return await asyncio.gather(
-                *[
-                    bounded_generate(text, i)
-                    for i, text in enumerate(self.voiceover_texts)
-                ]
-            )
-
-        audio_files = await generate_all_audio()
-        logger.info(f"Generated {len([a for a in audio_files if a])} audio files")
+        await generate_all_audio()
 
         # Create videos for each slide
         logger.info("Creating videos for each slide")
@@ -383,22 +425,34 @@ class PPTXtoVideo:
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = []
             for i, (image_file, audio_file) in enumerate(zip(image_files, audio_files)):
-                if i not in self.state["videos_created"]:
-                    futures.append(
-                        executor.submit(
-                            create_video_for_slide,
-                            image_file,
-                            audio_file,
-                            self.output_dir,
-                            i,
-                        )
+                slide_hash = self.slides_data[i]["hash"]
+                if (
+                    self.state["videos_created"].get(str(i))
+                    and self.state["slide_hashes"].get(str(i)) == slide_hash
+                    and os.path.exists(
+                        os.path.join(self.output_dir, f"video_{i}.mp4")
                     )
+                ):
+                    logger.info(f"Video for slide {i+1} is up to date, skipping")
+                    self.video_files.append(
+                        os.path.join(self.output_dir, f"video_{i}.mp4")
+                    )
+                    continue
+                futures.append(
+                    executor.submit(
+                        create_video_for_slide,
+                        image_file,
+                        audio_file,
+                        self.output_dir,
+                        i,
+                        self.state,
+                    )
+                )
 
-            for i, future in enumerate(futures):
+            for future in futures:
                 video_file = future.result()
                 if video_file:
                     self.video_files.append(video_file)
-                    self.state["videos_created"].append(i)
                     self._save_state()
 
         logger.info(f"Created {len(self.video_files)} individual slide videos")
@@ -412,7 +466,10 @@ class PPTXtoVideo:
         logger.info("Combining individual slide videos into final video")
         list_file = os.path.join(self.output_dir, "videos.txt")
         with open(list_file, "w") as f:
-            for video_file in self.video_files:
+            for i in range(len(self.slides)):
+                video_file = os.path.join(self.output_dir, f"video_{i}.mp4")
+                if not os.path.exists(video_file):
+                    raise FileNotFoundError(f"Missing video file: {video_file}")
                 f.write(f"file '{video_file}'\n")
 
         ffmpeg_cmd = [
