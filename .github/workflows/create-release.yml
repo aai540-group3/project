@@ -39,7 +39,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: ${{ github.event.inputs.bump_type || 'minor' }}
           WITH_V: true
-          RELEASE_BRANCHES: main,master
+          RELEASE_BRANCHES: main
 
       - name: Generate Attestations
         id: attestation
