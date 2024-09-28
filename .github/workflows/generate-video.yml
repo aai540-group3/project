@@ -15,45 +15,45 @@ concurrency:
 permissions:
   contents: write
 
-env:
-  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-  REPO_NAME: ${{ secrets.REPO_NAME }}
-  EVENT_TYPE: create-release
-
 jobs:
   generate-video:
     runs-on: ubuntu-latest
+    env:
+      # Secret and repository variables
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      REPO_NAME: ${{ secrets.REPO_NAME }}
+      EVENT_TYPE: create-release
+
+      # Define file and directory paths
+      REPO_ROOT: ${{ github.workspace }}
+      BASE_NAME: Final_Project_Team_3_Deliverable_2
+      PPTX_FILE: ${{ github.workspace }}/${{ env.BASE_NAME }}.pptx
+      PDF_FILE: ${{ github.workspace }}/${{ env.BASE_NAME }}.pdf
+      MP4_FILE: ${{ github.workspace }}/${{ env.BASE_NAME }}.mp4
+      ASSETS_DIR: ${{ github.workspace }}/video-assets
+      ASSETS_PDF: ${{ env.ASSETS_DIR }}/${{ env.BASE_NAME }}.pdf
+      ASSETS_MP4: ${{ env.ASSETS_DIR }}/${{ env.BASE_NAME }}.mp4
     steps:
-      - name: Check out main branch
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - name: Checkout main branch
+        uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 1
           lfs: true
 
-      - name: Set Environment Variables
-        run: |
-          echo "REPO_ROOT=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-          echo "PPTX_FILE=$GITHUB_WORKSPACE/Final_Project_Team_3_Deliverable_2.pptx" >> $GITHUB_ENV
-          echo "PDF_FILE=$GITHUB_WORKSPACE/Final_Project_Team_3_Deliverable_2.pdf" >> $GITHUB_ENV
-          echo "MP4_FILE=$GITHUB_WORKSPACE/Final_Project_Team_3_Deliverable_2.mp4" >> $GITHUB_ENV
-          echo "ASSETS_DIR=$GITHUB_WORKSPACE/video-assets" >> $GITHUB_ENV
-          echo "ASSETS_PDF=$GITHUB_WORKSPACE/video-assets/Final_Project_Team_3_Deliverable_2.pdf" >> $GITHUB_ENV
-          echo "ASSETS_MP4=$GITHUB_WORKSPACE/video-assets/Final_Project_Team_3_Deliverable_2.mp4" >> $GITHUB_ENV
-
       - name: Print Environment Variables
         run: |
-          echo "REPO_ROOT: ${{ env.REPO_ROOT }}"
-          echo "PPTX_FILE: ${{ env.PPTX_FILE }}"
-          echo "PDF_FILE: ${{ env.PDF_FILE }}"
-          echo "MP4_FILE: ${{ env.MP4_FILE }}"
-          echo "ASSETS_DIR: ${{ env.ASSETS_DIR }}"
-          echo "ASSETS_PDF: ${{ env.ASSETS_PDF }}"
-          echo "ASSETS_MP4: ${{ env.ASSETS_MP4 }}"
+          echo "REPO_ROOT: $REPO_ROOT"
+          echo "PPTX_FILE: $PPTX_FILE"
+          echo "PDF_FILE: $PDF_FILE"
+          echo "MP4_FILE: $MP4_FILE"
+          echo "ASSETS_DIR: $ASSETS_DIR"
+          echo "ASSETS_PDF: $ASSETS_PDF"
+          echo "ASSETS_MP4: $ASSETS_MP4"
           echo "Current directory: $(pwd)"
           ls -la
 
-      - name: Check For PowerPoint
+      - name: Check for PowerPoint file
         run: |
           if [ ! -f "$PPTX_FILE" ]; then
             echo "::error::PPTX file not found: $PPTX_FILE"
@@ -66,10 +66,11 @@ jobs:
           sudo apt-get -y install \
               ffmpeg \
               libreoffice \
-              poppler-utils
+              poppler-utils \
+              bc
 
       - name: Cache Apt Packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@v4
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
@@ -77,9 +78,17 @@ jobs:
             ${{ runner.os }}-apt-
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Cache Python Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install Python Dependencies
         run: |
@@ -92,14 +101,6 @@ jobs:
               python-pptx \
               tenacity
 
-      - name: Cache Python dependencies
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
       - name: Delete Old Files
         run: |
           rm -rf "$MP4_FILE"
@@ -108,11 +109,9 @@ jobs:
           mkdir -p "$ASSETS_DIR"
 
       - name: Generate Video
-        id: generate
         run: python scripts/pptx2video.py "$PPTX_FILE"
 
       - name: Check Video
-        id: check_video
         run: |
           if [ ! -f "$ASSETS_MP4" ]; then
             echo "::error::Video generation failed. MP4 file not found in $ASSETS_DIR."
@@ -122,7 +121,7 @@ jobs:
       - name: Copy PDF to Top-Level Repo Directory
         run: |
           if [ -f "$ASSETS_PDF" ]; then
-            cp $ASSETS_PDF $REPO_ROOT
+            cp "$ASSETS_PDF" "$REPO_ROOT"
             echo "Copied PDF to Top-Level Repo Directory"
           else
             echo "::error::PDF file not found in $ASSETS_DIR directory"
@@ -131,16 +130,16 @@ jobs:
 
       - name: Move MP4 to Top-Level Repo Directory
         run: |
-          mv $ASSETS_MP4 $REPO_ROOT
+          mv "$ASSETS_MP4" "$REPO_ROOT"
           echo "Moved MP4 to Top-Level Repo Directory"
 
       - name: Get Video Duration
-        id: duration
         run: |
-          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 $MP4_FILE)
-          minutes=$(printf "%.0f" $(echo "$duration/60" | bc))
-          seconds=$(printf "%.0f" $(echo "$duration%60" | bc))
-          echo "DURATION=${minutes}m ${seconds}s" >> $GITHUB_ENV
+          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$MP4_FILE")
+          minutes=$(echo "$duration / 60" | bc)
+          seconds=$(echo "$duration % 60" | bc)
+          DURATION="${minutes}m ${seconds}s"
+          echo "DURATION=$DURATION" >> $GITHUB_ENV
 
       - name: Configure Git
         run: |
@@ -155,7 +154,7 @@ jobs:
           git push origin main
 
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: ${{ env.REPO_NAME }}

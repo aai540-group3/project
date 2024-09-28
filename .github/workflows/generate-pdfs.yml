@@ -15,40 +15,37 @@ concurrency:
 permissions:
   contents: write
 
-env:
-  REPO_NAME: aai540-group3/project
-  EVENT_TYPE: create-release
-
 jobs:
   generate-pdfs:
     runs-on: ubuntu-latest
+    env:
+      REPO_NAME: aai540-group3/project
+      EVENT_TYPE: create-release
+      REPO_ROOT: ${{ github.workspace }}
+      DESIGN_DOC_DIR: ${{ github.workspace }}/docs/design-document
+      BASE_NAME: Final_Project_Team_3_Deliverable_1
+      TEX_FILE: ${{ env.DESIGN_DOC_DIR }}/${{ env.BASE_NAME }}.tex
+      BIB_FILE: ${{ env.DESIGN_DOC_DIR }}/references.bib
+      PDF_FILE: ${{ env.DESIGN_DOC_DIR }}/${{ env.BASE_NAME }}.pdf
+      ROOT_PDF_FILE: ${{ github.workspace }}/${{ env.BASE_NAME }}.pdf
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Set up environment variables
-        run: |
-          echo "REPO_ROOT=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-          echo "DESIGN_DOC_DIR=$GITHUB_WORKSPACE/docs/design-document" >> $GITHUB_ENV
-          echo "TEX_FILE=$GITHUB_WORKSPACE/docs/design-document/Final_Project_Team_3_Deliverable_1.tex" >> $GITHUB_ENV
-          echo "BIB_FILE=$GITHUB_WORKSPACE/docs/design-document/references.bib" >> $GITHUB_ENV
-          echo "PDF_FILE=$GITHUB_WORKSPACE/docs/design-document/Final_Project_Team_3_Deliverable_1.pdf" >> $GITHUB_ENV
-          echo "ROOT_PDF_FILE=$GITHUB_WORKSPACE/Final_Project_Team_3_Deliverable_1.pdf" >> $GITHUB_ENV
-
       - name: Print Environment Variables
         run: |
-          echo "REPO_ROOT: ${{ env.REPO_ROOT }}"
-          echo "DESIGN_DOC_DIR: ${{ env.DESIGN_DOC_DIR }}"
-          echo "TEX_FILE: ${{ env.TEX_FILE }}"
-          echo "BIB_FILE: ${{ env.BIB_FILE }}"
-          echo "PDF_FILE: ${{ env.PDF_FILE }}"
-          echo "ROOT_PDF_FILE: ${{ env.ROOT_PDF_FILE }}"
+          echo "REPO_ROOT: $REPO_ROOT"
+          echo "DESIGN_DOC_DIR: $DESIGN_DOC_DIR"
+          echo "TEX_FILE: $TEX_FILE"
+          echo "BIB_FILE: $BIB_FILE"
+          echo "PDF_FILE: $PDF_FILE"
+          echo "ROOT_PDF_FILE: $ROOT_PDF_FILE"
           echo "Current directory: $(pwd)"
           ls -la
           echo "Checking file existence and permissions:"
-          for file in "${{ env.TEX_FILE }}" "${{ env.BIB_FILE }}"; do
+          for file in "$TEX_FILE" "$BIB_FILE"; do
             if [ -f "$file" ]; then
               echo "$file exists. Permissions: $(ls -l "$file")"
             else
@@ -56,10 +53,10 @@ jobs:
             fi
           done
           echo "Contents of DESIGN_DOC_DIR:"
-          ls -la ${{ env.DESIGN_DOC_DIR }} || echo "DESIGN_DOC_DIR does not exist or is not accessible"
+          ls -la "$DESIGN_DOC_DIR" || echo "DESIGN_DOC_DIR does not exist or is not accessible"
 
       - name: Cache Apt Packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@v3
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
@@ -77,6 +74,8 @@ jobs:
             texlive-bibtex-extra \
             texlive-science \
             texlive-extra-utils \
+            texlive-lang-all \
+            texcount \
             poppler-utils
 
       - name: Remove Old PDFs
@@ -86,11 +85,12 @@ jobs:
 
       - name: Generate PDFs
         run: |
-          TEXINPUTS="$DESIGN_DOC_DIR:."
-          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$TEX_FILE"
-          biber "$BIB_FILE"
-          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$TEX_FILE"
-          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$TEX_FILE"
+          cd "$DESIGN_DOC_DIR"
+          TEXINPUTS=".:$TEXINPUTS"
+          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$BASE_NAME.tex"
+          biber "$BASE_NAME"
+          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$BASE_NAME.tex"
+          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$BASE_NAME.tex"
 
       - name: Check for PDF
         run: |
@@ -99,7 +99,7 @@ jobs:
             exit 1
           fi
 
-      - name: Copy PDF to Top-Level Repo Diectory
+      - name: Copy PDF to Top-Level Repo Directory
         run: |
           cp "$PDF_FILE" "$ROOT_PDF_FILE"
 
@@ -126,7 +126,7 @@ jobs:
           git push origin main
 
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: ${{ env.REPO_NAME }}
