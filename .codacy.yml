@@ -1,25 +1,20 @@
-# .codacy.yml
-
 engines:
-  # Disable eslint for JavaScript/TypeScript analysis
-  eslint:
-    enabled: false
-
-  # Disable Scala analysis engine
-  scalastyle:
-    enabled: false
-
-  # Enable Python analysis engines
-  flake8:
-    enabled: true
-  pylint:
-    enabled: true
   bandit:
     enabled: true
+  eslint:
+    enabled: false
+  flake8:
+    enabled: true
+  jacksonlint:
+    enabled: false
   mypy:
     enabled: true
   pydocstyle:
     enabled: true
+  pylint:
+    enabled: true
+  scalastyle:
+    enabled: false
 
 files:
   include:
