@@ -84,17 +84,17 @@ jobs:
     name: Policy Validator checks for AWS IAM policies
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938  # v4.2.0
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502  # v4.0.2
         with:
           role-to-assume: ${{ env.AWS_ROLE }}
           aws-region: ${{ env.REGION }}
 
       - name: Run AWS AccessAnalyzer ValidatePolicy check
         id: validate-policy
-        uses: aws-actions/terraform-aws-iam-policy-validator@v1.0.2
+        uses: aws-actions/terraform-aws-iam-policy-validator@26797c40250bf1ee50af8996a2475b9b5a8b8927  # v1.0.2
         with:
           policy-check-type: "VALIDATE_POLICY"
           template-path: ${{ env.TEMPLATE_PATH }}
@@ -106,7 +106,7 @@ jobs:
 
       - name: Run AWS AccessAnalyzer CheckAccessNotGranted check
         id: check-access-not-granted
-        uses: aws-actions/terraform-aws-iam-policy-validator@v1.0.2
+        uses: aws-actions/terraform-aws-iam-policy-validator@26797c40250bf1ee50af8996a2475b9b5a8b8927  # v1.0.2
         with:
           policy-check-type: "CHECK_ACCESS_NOT_GRANTED"
           template-path: ${{ env.TEMPLATE_PATH }}
@@ -120,7 +120,7 @@ jobs:
 
       - name: Run AWS AccessAnalyzer CheckNoNewAccess check
         id: check-no-new-access
-        uses: aws-actions/terraform-aws-iam-policy-validator@v1.0.2
+        uses: aws-actions/terraform-aws-iam-policy-validator@26797c40250bf1ee50af8996a2475b9b5a8b8927  # v1.0.2
         with:
           policy-check-type: "CHECK_NO_NEW_ACCESS"
           template-path: ${{ env.TEMPLATE_PATH }}
@@ -134,7 +134,7 @@ jobs:
 
       - name: Run AWS AccessAnalyzer CheckNoPublicAccess check
         id: check-no-public-access
-        uses: aws-actions/terraform-aws-iam-policy-validator@v1
+        uses: aws-actions/terraform-aws-iam-policy-validator@26797c40250bf1ee50af8996a2475b9b5a8b8927  # v1.0.2
         with:
           policy-check-type: "CHECK_NO_PUBLIC_ACCESS"
           template-path: ${{ env.TEMPLATE_PATH }}
