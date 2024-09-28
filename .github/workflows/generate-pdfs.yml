@@ -71,15 +71,16 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install \
             biber \
-            texlive \
-            texlive-latex-extra \
-            texlive-fonts-extra \
-            texlive-bibtex-extra \
-            texlive-science \
-            texlive-extra-utils \
-            texlive-lang-all \
+            detex \
+            poppler-utils \
             texcount \
-            poppler-utils
+            texlive \
+            texlive-bibtex-extra \
+            texlive-extra-utils \
+            texlive-fonts-extra \
+            texlive-lang-all \
+            texlive-latex-extra \
+            texlive-science
 
       - name: Remove Old PDFs
         run: |
@@ -106,10 +107,10 @@ jobs:
         run: |
           cp "$PDF_FILE" "$ROOT_PDF_FILE"
 
-      - name: Get Word Count
+      - name: Get word count
         run: |
-          WORDS=$(texcount -1 -sum -inc "$TEX_FILE" | grep "Sum count:" | awk '{print $3}')
-          echo "WORDS=$WORDS" >> $GITHUB_ENV
+          WORD_COUNT=$(detex "$TEX_FILE" | wc -w)
+          echo "WORD_COUNT=$WORD_COUNT" >> $GITHUB_ENV
 
       - name: Get Page Count
         run: |
