@@ -267,7 +267,7 @@ stages:
     outs:
     - path: models/logistic_regression/model.pkl
       hash: md5
-      md5: 0c9a37889dd9174a8c509b206c745702
+      md5: 7ccc3e08cb52d965e66d3a9bc3dcfb54
       size: 6159
   train@autogluon:
     cmd: python src/models/autogluon/train.py model=autogluon
@@ -291,8 +291,8 @@ stages:
     outs:
     - path: models/autogluon/model.pkl
       hash: md5
-      md5: ee4b70e960b0208d5b5c3217fc21e79e
-      size: 75423
+      md5: e6f8a7d4a81651e573565cdc129b97c9
+      size: 75375
   evaluate@logistic_regression:
     cmd: python src/models/logistic_regression/evaluate.py model=logistic_regression
     deps:
@@ -302,7 +302,7 @@ stages:
       size: 14026237
     - path: models/logistic_regression/model.pkl
       hash: md5
-      md5: 0c9a37889dd9174a8c509b206c745702
+      md5: 7ccc3e08cb52d965e66d3a9bc3dcfb54
       size: 6159
     - path: src/models/logistic_regression/evaluate.py
       hash: md5
@@ -322,7 +322,7 @@ stages:
     outs:
     - path: reports/metrics/logistic_regression_metrics.json
       hash: md5
-      md5: 27056c2a28d3c8257c52f6e568501261
+      md5: e71750b133aa7399768c7ac9e7863481
       size: 180
   evaluate@autogluon:
     cmd: python src/models/autogluon/evaluate.py model=autogluon
@@ -333,8 +333,8 @@ stages:
       size: 14026237
     - path: models/autogluon/model.pkl
       hash: md5
-      md5: ee4b70e960b0208d5b5c3217fc21e79e
-      size: 75423
+      md5: e6f8a7d4a81651e573565cdc129b97c9
+      size: 75375
     - path: src/models/autogluon/evaluate.py
       hash: md5
       md5: 8ebe0d0645b3700cb3fdb341dc3ef586
@@ -350,5 +350,5 @@ stages:
     outs:
     - path: reports/metrics/autogluon_metrics.json
       hash: md5
-      md5: d7f6e2cb5a6f4ec9b5e18d0b0dbd5e13
-      size: 180
+      md5: 9fab3e3b70c0ebeaaac2bfaa2bcaae87
+      size: 179
