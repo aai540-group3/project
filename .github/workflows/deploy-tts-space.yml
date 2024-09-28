@@ -1,11 +1,13 @@
-name: Deploy HF Space
+name: Deploy HF TTS Space
+
 on:
   workflow_dispatch:
   push:
     branches:
       - main
     paths:
-      - "huggingface/spaces/**"
+      - "huggingface/spaces/openai-tts"
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -14,7 +16,7 @@ jobs:
       REPO_ID: ${{ secrets.REPO_ID }}
       REMOTE_DIR: "."
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
       - name: Set Environment Variables
