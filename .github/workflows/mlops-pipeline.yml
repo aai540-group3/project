@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - ".github/workflows/mlops-pipeline.yml"
-      - "conf/**"
+      - "v/**"
       - "dvc.lock"
       - "dvc.yaml"
       - "params.yaml"
@@ -17,7 +17,7 @@ on:
       - main
     paths:
       - ".github/workflows/mlops-pipeline.yml"
-      - "conf/**"
+      - "configs/**"
       - "dvc.lock"
       - "dvc.yaml"
       - "params.yaml"
