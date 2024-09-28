@@ -112,7 +112,7 @@ jobs:
           duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 $MP4_FILE)
           minutes=$(printf "%.0f" $(echo "$duration/60" | bc))
           seconds=$(printf "%.0f" $(echo "$duration%60" | bc))
-          echo "VIDEO_DURATION=${minutes}m ${seconds}s" >> $GITHUB_ENV
+          echo "DURATION=${minutes}m ${seconds}s" >> $GITHUB_ENV
 
       - name: Configure Git
         run: |
@@ -122,9 +122,9 @@ jobs:
       - name: Commit changes
         run: |
           git add $PDF_FILE $MP4_FILE
-          git commit --allow-empty -m "$VIDEO_DURATION out of 15 minutes"
-          git pull
-          git push
+          git commit --allow-empty -m "$DURATION out of 15 minutes"
+          git pull origin main
+          git push origin main
 
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v3
