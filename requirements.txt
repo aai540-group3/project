@@ -1,3 +1,4 @@
+aioboto3
 autogluon.tabular[all]
 black[jupyter]
 botocore
@@ -13,8 +14,8 @@ joblib
 numpy
 openai
 pandas
+pdf2image
+python-terraform
 scikit-learn
 seaborn
 tenacity
-aioboto3
-python-terraform
