@@ -96,9 +96,14 @@ jobs:
             Final_Project_Team_3_Deliverable_2.mp4 \
             video-assets/Final_Project_Team_3_Deliverable_2.pdf \
             video-assets/conversion_state.json
-          git commit -m "$DURATION out of 15 minutes"
-          git pull origin main
-          git push origin main
+          if git diff --staged --quiet; then
+            echo "No changes detected. Skipping commit and push."
+          else
+            git commit -m "$DURATION out of 15 minutes"
+            git pull origin main
+            git push origin main
+            echo "Changes committed and pushed successfully."
+          fi
 
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0

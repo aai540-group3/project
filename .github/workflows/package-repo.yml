@@ -82,10 +82,15 @@ jobs:
 
       - name: Push to Remote
         run: |
-          git add Final_Project_Team_3_Deliverable_3.zip
-          git commit -m "Update Final_Project_Team_3_Deliverable_3.zip"
-          git pull origin main
-          git push origin main
+          git add  Final_Project_Team_3_Deliverable_3.zip
+          if git diff --staged --quiet; then
+            echo "No changes detected. Skipping commit and push."
+          else
+            git commit -m "DELIVERABLE: Final_Project_Team_3_Deliverable_3.zip"
+            git pull origin main
+            git push origin main
+            echo "Changes committed and pushed successfully."
+          fi
 
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
