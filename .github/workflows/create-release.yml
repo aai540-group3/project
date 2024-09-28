@@ -28,13 +28,13 @@ jobs:
       actions: read
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
           fetch-depth: 0
 
       - name: Bump Version
         id: tag_version
-        uses: anothrNick/github-tag-action@1.67.0
+        uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297 # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: ${{ github.event.inputs.bump_type || 'minor' }}
@@ -42,13 +42,13 @@ jobs:
           RELEASE_BRANCHES: main
 
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0.15.1
+        uses: anchore/sbom-action@61119d458adab75f756bc0b9e4bde25725f86a7a # v0.17.2
         with:
           format: cyclonedx-json
           output-file: sbom.json
 
       - name: Generate Attestations
-        uses: actions/attest@v1
+        uses: actions/attest@67422f5511b7ff725f4dbd6fb9bd2cd925c65a8d # v1.4.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           show-summary: true
@@ -85,7 +85,7 @@ jobs:
             }
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
