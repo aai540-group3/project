@@ -3,7 +3,6 @@ name: Generate PDFs
 on:
   push:
     paths:
-      - ".github/workflows/generate-pdfs.yml"
       - "docs/design-document/Final_Project_Team_3_Deliverable_1.tex"
       - "docs/design-document/references.bib"
   workflow_dispatch:
@@ -18,79 +17,41 @@ permissions:
 jobs:
   generate-pdfs:
     runs-on: ubuntu-latest
-    env:
-      REPO_ROOT: ${{ github.workspace }}
-      DESIGN_DOC_DIR: ${{ github.workspace }}/docs/design-document
-      BASE_NAME: Final_Project_Team_3_Deliverable_1
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 1
 
-      - name: Set Environment Variables
-        run: |
-          echo "TEX_FILE=$DESIGN_DOC_DIR/$BASE_NAME.tex" >> $GITHUB_ENV
-          echo "BIB_FILE=$DESIGN_DOC_DIR/references.bib" >> $GITHUB_ENV
-          echo "PDF_FILE=$DESIGN_DOC_DIR/$BASE_NAME.pdf" >> $GITHUB_ENV
-          echo "ROOT_PDF_FILE=$REPO_ROOT/$BASE_NAME.pdf" >> $GITHUB_ENV
-
-      - name: Cache Apt Packages
-        uses: actions/cache@v3
+      - name: Cache apt packages
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
           restore-keys: |
             ${{ runner.os }}-apt-
 
-      - name: Install TeX and Tools
+      - name: Install TeX
         run: |
           sudo apt-get update
           sudo apt-get -y install \
             biber \
-            poppler-utils \
             texlive \
-            texlive-bibtex-extra \
-            texlive-extra-utils \
-            texlive-fonts-extra \
-            texlive-lang-all \
             texlive-latex-extra \
+            texlive-fonts-extra \
+            texlive-bibtex-extra \
             texlive-science
-
-      - name: Remove Old PDFs
-        run: |
-          rm -f "$PDF_FILE"
-          rm -f "$ROOT_PDF_FILE"
 
       - name: Generate PDFs
         run: |
-          cd "$DESIGN_DOC_DIR"
-          TEXINPUTS=".:$TEXINPUTS"
-          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$BASE_NAME.tex"
-          biber "$BASE_NAME"
-          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$BASE_NAME.tex"
-          pdflatex -interaction=nonstopmode -file-line-error -halt-on-error "$BASE_NAME.tex"
+          pdflatex -debug docs/design-document/Final_Project_Team_3_Deliverable_1.tex
+          biber --debug docs/design-document/Final_Project_Team_3_Deliverable_1
+          pdflatex docs/design-document/Final_Project_Team_3_Deliverable_1.tex
+          pdflatex docs/design-document/Final_Project_Team_3_Deliverable_1.tex
 
-      - name: Check for PDF
+      - name: Move PDF to Top-Level Repo Folder
         run: |
-          if [ ! -f "$PDF_FILE" ]; then
-            echo "ERROR: PDF generation failed!"
-            exit 1
-          fi
-
-      - name: Copy PDF to Top-Level Repo Directory
-        run: |
-          cp "$PDF_FILE" "$ROOT_PDF_FILE"
-
-      - name: Get Word Count
-        run: |
-          WORD_COUNT=$(texcount -1 -sum "$TEX_FILE")
-          echo "WORD_COUNT=$WORD_COUNT" >> $GITHUB_ENV
-
-      - name: Get Page Count
-        run: |
-          PAGES=$(pdfinfo "$PDF_FILE" | grep Pages: | awk '{print $2}')
-          echo "PAGES=$PAGES" >> $GITHUB_ENV
+          cp Final_Project_Team_3_Deliverable_1.pdf ../..
 
       - name: Configure Git
         run: |
@@ -100,14 +61,14 @@ jobs:
 
       - name: Push to Remote
         run: |
-          git add "$ROOT_PDF_FILE"
-          git commit -m "WORDS: $WORD_COUNT | PAGES: $PAGES"
+          git add Final_Project_Team_3_Deliverable_1.pdf
+          git commit -m "DELIVERABLE: Final_Project_Team_3_Deliverable_1.pdf"
           git pull origin main
           git push origin main
 
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: aai540-group3/project
-          event-type: pdf-generated
+          event-type: create-release
