@@ -52,13 +52,13 @@ jobs:
 
       - name: Set up environment variables
         run: |
-          echo "REPO_ROOT=$(git rev-parse --show-toplevel)" >> $GITHUB_ENV
-          echo "REQUIREMENTS_FILE=$REPO_ROOT/requirements.txt" >> $GITHUB_ENV
-          echo "DVC_LOCK_FILE=$REPO_ROOT/dvc.lock" >> $GITHUB_ENV
-          echo "DVC_CACHE_DIR=$REPO_ROOT/.dvc/cache" >> $GITHUB_ENV
-          echo "DVCLIVE_DIR=$REPO_ROOT/dvclive" >> $GITHUB_ENV
-          echo "DVCLIVE_EVALUATE_DIR=$REPO_ROOT/dvclive_evaluate" >> $GITHUB_ENV
-          echo "METRICS_JSON=$REPO_ROOT/reports/metrics.json" >> $GITHUB_ENV
+          echo "REPO_ROOT=${{ github.workspace }}" >> $GITHUB_ENV
+          echo "REQUIREMENTS_FILE=${{ github.workspace }}/requirements.txt" >> $GITHUB_ENV
+          echo "DVC_LOCK_FILE=${{ github.workspace }}/dvc.lock" >> $GITHUB_ENV
+          echo "DVC_CACHE_DIR=${{ github.workspace }}/.dvc/cache" >> $GITHUB_ENV
+          echo "DVCLIVE_DIR=${{ github.workspace }}/dvclive" >> $GITHUB_ENV
+          echo "DVCLIVE_EVALUATE_DIR=${{ github.workspace }}/dvclive_evaluate" >> $GITHUB_ENV
+          echo "METRICS_JSON=${{ github.workspace }}/reports/metrics.json" >> $GITHUB_ENV
 
       - name: Cache Python dependencies
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
