@@ -68,7 +68,7 @@ def main(cfg: DictConfig) -> None:
                     # Load the existing model
                     model = joblib.load(model_output_path)
                     logger.info(f"Loaded existing model from {model_output_path}")
-                    return model # Return the loaded model
+                    return model  # Return the loaded model
             else:
                 logger.info("Hash file doesn't exist. Proceeding to training.")
         else:
@@ -125,7 +125,7 @@ def main(cfg: DictConfig) -> None:
             f.write(input_hash)
         logger.info(f"Input hash saved to {hash_file}")
 
-        return model # Return the trained model
+        return model  # Return the trained model
 
     except Exception as e:
         logger.error(f"An error occurred during training: {str(e)}")

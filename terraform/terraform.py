@@ -417,23 +417,23 @@ class ResourceImporter:
         for page in paginator.paginate():
             for subscription in page['Subscriptions']:
                 if (
-                    subscription['TopicArn'] == topic_arn and
-                    subscription['Protocol'] == protocol and
-                    subscription['Endpoint'] == endpoint
+                    subscription['TopicArn'] == topic_arn
+                    and subscription['Protocol'] == protocol
+                    and subscription['Endpoint'] == endpoint
                 ):
                     return subscription['SubscriptionArn']
         return None  # Subscription not found
 
     def handle_iam_user_deletion(self, user_name):
-            iam_client = boto3.client('iam')
-            try:
-                iam_client.delete_login_profile(UserName=user_name)
-                logger.info(f"Deleted login profile for user: {user_name}")
-            except ClientError as e:
-                if e.response['Error']['Code'] == 'NoSuchEntity':
-                    logger.info(f"No login profile found for user: {user_name}")
-                else:
-                    logger.error(f"Error deleting login profile for user {user_name}: {e}")
+        iam_client = boto3.client('iam')
+        try:
+            iam_client.delete_login_profile(UserName=user_name)
+            logger.info(f"Deleted login profile for user: {user_name}")
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchEntity':
+                logger.info(f"No login profile found for user: {user_name}")
+            else:
+                logger.error(f"Error deleting login profile for user {user_name}: {e}")
 
     def handle_iam_group_deletion(self, group_name):
         iam_client = boto3.client('iam')
@@ -486,9 +486,11 @@ class ResourceImporter:
                         else:
                             self.import_or_create(address, resource_id, resource_type, resource_config)
 
-                    except Exception as e:
+                    except Exception:
                         logger.info(f"EXISTS: {address}")
                         continue
+
+
 def parse_terraform_file(file_path: str) -> Dict[str, Any]:
     logger.info(f"Parsing Terraform file: {file_path}")
     with open(file_path, "r") as f:

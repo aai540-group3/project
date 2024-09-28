@@ -91,6 +91,7 @@ COMMENT_SYNTAX: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "vim": {"start": '"', "end": "", "extensions": {"vim"}},
 }
 
+
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Combine files and generate directory tree structure.")
@@ -143,6 +144,7 @@ def parse_arguments() -> argparse.Namespace:
     )
     return parser.parse_args()
 
+
 def get_comment_syntax(file_path: Path) -> Tuple[str, str]:
     """Determine the appropriate comment syntax for a given file."""
     ext = file_path.suffix.lower()[1:]
@@ -173,6 +175,7 @@ def get_comment_syntax(file_path: Path) -> Tuple[str, str]:
 
     return "//", ""
 
+
 def generate_separator_line(comment_start: str, comment_end: str = "") -> str:
     """Generate a separator line with appropriate comment syntax."""
     total_length = 80
@@ -181,6 +184,7 @@ def generate_separator_line(comment_start: str, comment_end: str = "") -> str:
     dashes = "-" * num_dashes
 
     return f"{comment_start} {dashes} {comment_end}".rstrip()
+
 
 def process_file(file_path: Path, outfile, parent_dir: Path) -> None:
     """Process a single file and write its contents to the output file."""
@@ -197,6 +201,7 @@ def process_file(file_path: Path, outfile, parent_dir: Path) -> None:
     except Exception as e:
         logger.error(f"Error reading file {file_path}: {e}")
 
+
 def is_relative_to(path: Path, other: Path) -> bool:
     """Check if 'path' is relative to 'other' (compatible with Python < 3.9)."""
     try:
@@ -204,6 +209,7 @@ def is_relative_to(path: Path, other: Path) -> bool:
         return True
     except ValueError:
         return False
+
 
 def should_exclude_file(
     file_name: str,
@@ -221,6 +227,7 @@ def should_exclude_file(
         return True
     return False
 
+
 def should_exclude_directory(
     directory_name: str,
     relative_path: Path,
@@ -234,6 +241,7 @@ def should_exclude_directory(
         if is_relative_to(relative_path, exclude_path):
             return True
     return False
+
 
 def generate_tree_structure(
     directory: Path,
@@ -282,6 +290,7 @@ def generate_tree_structure(
 
     return "\n".join(output)
 
+
 def setup_logging(debug_file: Path) -> None:
     """Configure the logging."""
     logger.setLevel(logging.DEBUG)
@@ -290,6 +299,7 @@ def setup_logging(debug_file: Path) -> None:
     formatter = logging.Formatter("[%(levelname)s] %(asctime)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+
 
 def main():
     """Main function to execute the file combination and tree structure generation process."""
@@ -377,7 +387,7 @@ def main():
     # Ensure output directories exist and delete existing debug files
     if debug_folder.exists():
         shutil.rmtree(debug_folder)
-        #print(f"Deleted existing debug folder: {debug_folder}") # Optional print statement
+        # print(f"Deleted existing debug folder: {debug_folder}") # Optional print statement
     debug_folder.mkdir(parents=True, exist_ok=True)
 
     # Set up logging AFTER creating the debug folder
@@ -467,6 +477,7 @@ def main():
         print(error_message, file=sys.stderr)
         logger.error(error_message)
         logger.debug(f"Error details: {traceback.format_exc()}")
+
 
 if __name__ == "__main__":
     main()

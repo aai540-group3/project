@@ -72,7 +72,6 @@ def main(cfg: DictConfig) -> None:
         else:
             logger.info("Model file doesn't exist. Proceeding to training.")
 
-
         logger.info("Training new AutoGluon TabularPredictor model...")
 
         # Load training data

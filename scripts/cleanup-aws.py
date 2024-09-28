@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 # Global set to store resources managed by Terraform
 terraform_resources = set()
 
+
 def read_terraform_state(state_file_path):
     """
     Read the Terraform state file and extract resource identifiers.
@@ -60,6 +61,7 @@ def read_terraform_state(state_file_path):
         logger.error(f"Error reading Terraform state file: {e}")
         sys.exit(1)
 
+
 def should_preserve(resource_id):
     """
     Check if a resource should be preserved (managed by Terraform).
@@ -70,6 +72,7 @@ def should_preserve(resource_id):
     :rtype: bool
     """
     return resource_id in terraform_resources
+
 
 def delete_ec2_resources(region):
     """
@@ -144,6 +147,7 @@ def delete_ec2_resources(region):
             except ClientError as e:
                 logger.error(f"Could not delete VPC {vpc.id}: {e}")
 
+
 def delete_vpc_resources(vpc):
     """
     Delete resources associated with a VPC.
@@ -181,6 +185,7 @@ def delete_vpc_resources(vpc):
     logger.info(f"Deleting VPC: {vpc.id}")
     vpc.delete()
 
+
 def delete_s3_buckets(region):
     """
     Delete S3 buckets in the specified region, except those managed by Terraform.
@@ -200,6 +205,7 @@ def delete_s3_buckets(region):
             except ClientError as e:
                 logger.error(f"Could not delete bucket {bucket.name}: {e}")
 
+
 def delete_iam_users():
     """
     Delete IAM users and their associated resources, except those managed by Terraform.
@@ -213,6 +219,7 @@ def delete_iam_users():
                 delete_iam_user_resources(user)
             except ClientError as e:
                 logger.error(f"Error deleting user {user.name}: {e}")
+
 
 def delete_iam_user_resources(user):
     """
@@ -245,6 +252,7 @@ def delete_iam_user_resources(user):
     # Finally, delete the user
     user.delete()
 
+
 def delete_cloudformation_stacks(region):
     """
     Delete CloudFormation stacks in the specified region, except those managed by Terraform.
@@ -273,6 +281,7 @@ def delete_cloudformation_stacks(region):
             except ClientError as e:
                 logger.error(f"Error deleting stack {stack_name}: {e}")
 
+
 def delete_lambda_functions(region):
     """
     Delete Lambda functions in the specified region, except those managed by Terraform.
@@ -296,6 +305,7 @@ def delete_lambda_functions(region):
     except ClientError as e:
         logger.error(f"Error listing Lambda functions: {e}")
 
+
 def delete_dynamodb_tables(region):
     """
     Delete DynamoDB tables in the specified region, except those managed by Terraform.
@@ -318,6 +328,7 @@ def delete_dynamodb_tables(region):
                     logger.error(f"Error deleting table {table_name}: {e}")
     except ClientError as e:
         logger.error(f"Error listing DynamoDB tables: {e}")
+
 
 def delete_rds_instances(region):
     """
@@ -347,6 +358,7 @@ def delete_rds_instances(region):
     except ClientError as e:
         logger.error(f"Error describing RDS instances: {e}")
 
+
 def delete_elasticache_clusters(region):
     """
     Delete ElastiCache clusters in the specified region, except those managed by Terraform.
@@ -369,6 +381,7 @@ def delete_elasticache_clusters(region):
     except ClientError as e:
         logger.error(f"Error describing ElastiCache clusters: {e}")
 
+
 def delete_efs_file_systems(region):
     """
     Delete EFS file systems in the specified region, except those managed by Terraform.
@@ -390,6 +403,7 @@ def delete_efs_file_systems(region):
                     logger.error(f"Error deleting EFS file system {fs_id}: {e}")
     except ClientError as e:
         logger.error(f"Error describing EFS file systems: {e}")
+
 
 def delete_elbs(region):
     """
@@ -429,6 +443,7 @@ def delete_elbs(region):
     except ClientError as e:
         logger.error(f"Error describing ELBv2s: {e}")
 
+
 def delete_cloudwatch_logs(region):
     """
     Delete CloudWatch log groups in the specified region, except those managed by Terraform.
@@ -452,6 +467,7 @@ def delete_cloudwatch_logs(region):
     except ClientError as e:
         logger.error(f"Error describing log groups: {e}")
 
+
 def delete_resources_in_region(region):
     """
     Delete all supported AWS resources in the specified region, except those managed by Terraform.
@@ -471,6 +487,7 @@ def delete_resources_in_region(region):
     delete_efs_file_systems(region)
     delete_elbs(region)
     delete_cloudwatch_logs(region)
+
 
 def main():
     """
@@ -500,6 +517,7 @@ def main():
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
