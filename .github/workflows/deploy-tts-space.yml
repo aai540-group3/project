@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HF_TRANSFER_ENABLED: "1"
-      REPO_ID: ${{ secrets.REPO_ID }}
+      REPO_ID: aai540-group3/openai-tts
       REMOTE_DIR: "."
       REPO_ROOT: ${{ github.workspace }}
     steps:
