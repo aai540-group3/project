@@ -22,8 +22,6 @@ jobs:
       REPO_ROOT: ${{ github.workspace }}
       DESIGN_DOC_DIR: ${{ github.workspace }}/docs/design-document
       BASE_NAME: Final_Project_Team_3_Deliverable_1
-      REPO_NAME: aai540-group3/project
-      EVENT_TYPE: create-release
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -36,27 +34,6 @@ jobs:
           echo "BIB_FILE=$DESIGN_DOC_DIR/references.bib" >> $GITHUB_ENV
           echo "PDF_FILE=$DESIGN_DOC_DIR/$BASE_NAME.pdf" >> $GITHUB_ENV
           echo "ROOT_PDF_FILE=$REPO_ROOT/$BASE_NAME.pdf" >> $GITHUB_ENV
-
-      - name: Print Environment Variables
-        run: |
-          echo "REPO_ROOT: $REPO_ROOT"
-          echo "DESIGN_DOC_DIR: $DESIGN_DOC_DIR"
-          echo "TEX_FILE: $TEX_FILE"
-          echo "BIB_FILE: $BIB_FILE"
-          echo "PDF_FILE: $PDF_FILE"
-          echo "ROOT_PDF_FILE: $ROOT_PDF_FILE"
-          echo "Current directory: $(pwd)"
-          ls -la
-          echo "Checking file existence and permissions:"
-          for file in "$TEX_FILE" "$BIB_FILE"; do
-            if [ -f "$file" ]; then
-              echo "$file exists. Permissions: $(ls -l "$file")"
-            else
-              echo "$file does not exist."
-            fi
-          done
-          echo "Contents of DESIGN_DOC_DIR:"
-          ls -la "$DESIGN_DOC_DIR" || echo "DESIGN_DOC_DIR does not exist or is not accessible"
 
       - name: Cache Apt Packages
         uses: actions/cache@v3
@@ -119,17 +96,18 @@ jobs:
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
+          git config pull.rebase false
 
       - name: Push to Remote
         run: |
           git add "$ROOT_PDF_FILE"
           git commit -m "WORDS: $WORD_COUNT | PAGES: $PAGES"
-          git pull
-          git push
+          git pull origin main
+          git push origin main
 
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
-          repository: ${{ env.REPO_NAME }}
-          event-type: ${{ env.EVENT_TYPE }}
+          repository: aai540-group3/project
+          event-type: pdf-generated

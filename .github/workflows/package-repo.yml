@@ -65,7 +65,7 @@ jobs:
           reports/
           requirements.txt
           src/
-          terraform/
+          terraform/main.tf
           EOF
 
       - name: Zip Repository
@@ -74,15 +74,16 @@ jobs:
       - name: Cleanup
         run: rm -f files_to_zip.txt
 
-      - name: Check zip file size
+      - name: Check Zipfile Size
         run: ls -lh Final_Project_Team_3_Deliverable_3.zip
 
       - name: Configure Git
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
+          git config pull.rebase false
 
-      - name: Commit and push zip file
+      - name: Push to Remote
         run: |
           git add Final_Project_Team_3_Deliverable_3.zip
           git commit -m "Update Final_Project_Team_3_Deliverable_3.zip"
