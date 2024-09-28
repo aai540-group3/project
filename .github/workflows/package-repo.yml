@@ -137,8 +137,18 @@ jobs:
       - name: Zip Repository
         run: |
           cd "$TEMP_DIR"
-          zip -r -0 "$ZIP_FILEPATH" .
-          pigz -9 "$ZIP_FILEPATH"
+          if zip -r "$ZIP_FILEPATH" .; then
+            echo "ZIP file created successfully"
+            if pigz -9 "$ZIP_FILEPATH"; then
+              echo "ZIP file compressed successfully"
+            else
+              echo "Error: Failed to compress ZIP file with pigz"
+              exit 1
+            fi
+          else
+            echo "Error: Failed to create ZIP file"
+            exit 1
+          fi
 
       - name: Cleanup
         run: rm -rf "$TEMP_DIR"
