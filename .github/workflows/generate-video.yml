@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out main branch
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938  # v4.2.0
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
           ref: main
           fetch-depth: 1
@@ -33,13 +33,13 @@ jobs:
 
       - name: Set Environment Variables
         run: |
-          echo "REPO_ROOT=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "PPTX_FILE=${{ github.workspace }}/Final_Project_Team_3_Deliverable_2.pptx" >> $GITHUB_ENV
-          echo "PDF_FILE=${{ github.workspace }}/Final_Project_Team_3_Deliverable_2.pdf" >> $GITHUB_ENV
-          echo "MP4_FILE=${{ github.workspace }}/Final_Project_Team_3_Deliverable_2.mp4" >> $GITHUB_ENV
-          echo "ASSETS_DIR=${{ github.workspace }}/video-assets" >> $GITHUB_ENV
-          echo "ASSETS_PDF=${{ github.workspace }}/video-assets/Final_Project_Team_3_Deliverable_2.pdf" >> $GITHUB_ENV
-          echo "ASSETS_MP4=${{ github.workspace }}/video-assets/Final_Project_Team_3_Deliverable_2.mp4" >> $GITHUB_ENV
+          echo "REPO_ROOT=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+          echo "PPTX_FILE=$GITHUB_WORKSPACE/Final_Project_Team_3_Deliverable_2.pptx" >> $GITHUB_ENV
+          echo "PDF_FILE=$GITHUB_WORKSPACE/Final_Project_Team_3_Deliverable_2.pdf" >> $GITHUB_ENV
+          echo "MP4_FILE=$GITHUB_WORKSPACE/Final_Project_Team_3_Deliverable_2.mp4" >> $GITHUB_ENV
+          echo "ASSETS_DIR=$GITHUB_WORKSPACE/video-assets" >> $GITHUB_ENV
+          echo "ASSETS_PDF=$GITHUB_WORKSPACE/video-assets/Final_Project_Team_3_Deliverable_2.pdf" >> $GITHUB_ENV
+          echo "ASSETS_MP4=$GITHUB_WORKSPACE/video-assets/Final_Project_Team_3_Deliverable_2.mp4" >> $GITHUB_ENV
 
       - name: Print Environment Variables
         run: |
@@ -69,7 +69,7 @@ jobs:
               poppler-utils
 
       - name: Cache Apt Packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
@@ -77,7 +77,7 @@ jobs:
             ${{ runner.os }}-apt-
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.11"
 
@@ -93,7 +93,7 @@ jobs:
               tenacity
 
       - name: Cache Python dependencies
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -155,7 +155,7 @@ jobs:
           git push origin main
 
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0  # v3.0.0
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: ${{ env.REPO_NAME }}

@@ -46,19 +46,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
 
       - name: Set up environment variables
         run: |
-          echo "REPO_ROOT=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "REQUIREMENTS_FILE=${{ github.workspace }}/requirements.txt" >> $GITHUB_ENV
-          echo "DVC_LOCK_FILE=${{ github.workspace }}/dvc.lock" >> $GITHUB_ENV
-          echo "DVC_CACHE_DIR=${{ github.workspace }}/.dvc/cache" >> $GITHUB_ENV
-          echo "DVCLIVE_DIR=${{ github.workspace }}/dvclive" >> $GITHUB_ENV
-          echo "DVCLIVE_EVALUATE_DIR=${{ github.workspace }}/dvclive_evaluate" >> $GITHUB_ENV
-          echo "METRICS_JSON=${{ github.workspace }}/reports/metrics.json" >> $GITHUB_ENV
+          echo "REPO_ROOT=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+          echo "REQUIREMENTS_FILE=$GITHUB_WORKSPACE/requirements.txt" >> $GITHUB_ENV
+          echo "DVC_LOCK_FILE=$GITHUB_WORKSPACE/dvc.lock" >> $GITHUB_ENV
+          echo "DVC_CACHE_DIR=$GITHUB_WORKSPACE/.dvc/cache" >> $GITHUB_ENV
+          echo "DVCLIVE_DIR=$GITHUB_WORKSPACE/dvclive" >> $GITHUB_ENV
+          echo "DVCLIVE_EVALUATE_DIR=$GITHUB_WORKSPACE/dvclive_evaluate" >> $GITHUB_ENV
+          echo "METRICS_JSON=$GITHUB_WORKSPACE/reports/metrics.json" >> $GITHUB_ENV
 
       - name: Debug environment variables
         run: |
@@ -77,7 +77,7 @@ jobs:
           [ -d "${{ env.DVC_CACHE_DIR }}" ] && ls -la ${{ env.DVC_CACHE_DIR }} || echo "DVC_CACHE_DIR does not exist yet"
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.11"
 
@@ -87,7 +87,7 @@ jobs:
           pip install -r $REQUIREMENTS_FILE
 
       - name: Cache Python dependencies
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -107,7 +107,7 @@ jobs:
           dvc remote list
 
       - name: Cache DVC cache directory
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ env.DVC_CACHE_DIR }}
           key: ${{ runner.os }}-dvc-cache-${{ hashFiles('dvc.lock') }}

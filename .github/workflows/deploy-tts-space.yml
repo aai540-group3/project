@@ -21,8 +21,8 @@ jobs:
 
       - name: Set Environment Variables
         run: |
-          echo "REPO_ROOT=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "LOCAL_DIR=${{ github.workspace }}/huggingface/spaces/openai-tts" >> $GITHUB_ENV
+          echo "REPO_ROOT=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+          echo "LOCAL_DIR=$GITHUB_WORKSPACE/huggingface/spaces/openai-tts" >> $GITHUB_ENV
 
       - name: Print Environment Variables
         run: |

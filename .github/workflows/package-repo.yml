@@ -47,10 +47,10 @@ jobs:
 
       - name: Set Environment Variables
         run: |
-          echo "REPO_ROOT=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "TEMP_DIR=${{ github.workspace }}/temp_repo" >> $GITHUB_ENV
-          echo "ZIP_FILENAME=${{ github.workspace }}/Final_Project_Team_3_Deliverable_3.zip" >> $GITHUB_ENV
-          echo "FILES_LIST=${{ github.workspace }}/files_to_zip.txt" >> $GITHUB_ENV
+          echo "REPO_ROOT=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+          echo "TEMP_DIR=$GITHUB_WORKSPACE/temp_repo" >> $GITHUB_ENV
+          echo "ZIP_FILENAME=$GITHUB_WORKSPACE/Final_Project_Team_3_Deliverable_3.zip" >> $GITHUB_ENV
+          echo "FILES_LIST=$GITHUB_WORKSPACE/files_to_zip.txt" >> $GITHUB_ENV
 
       - name: Print Environment Variables
         run: |

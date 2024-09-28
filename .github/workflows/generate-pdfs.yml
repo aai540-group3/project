@@ -30,14 +30,14 @@ jobs:
 
       - name: Set up environment variables
         run: |
-          echo "REPO_ROOT=$(git rev-parse --show-toplevel)" >> $GITHUB_ENV
-          echo "DESIGN_DOC_DIR=$REPO_ROOT/docs/design-document" >> $GITHUB_ENV
-          echo "TEX_FILE=$REPO_ROOT/docs/design-document/Final_Project_Team_3_Deliverable_1.tex" >> $GITHUB_ENV
-          echo "BIB_FILE=$REPO_ROOT/docs/design-document/references.bib" >> $GITHUB_ENV
-          echo "PDF_FILE=$REPO_ROOT/docs/design-document/Final_Project_Team_3_Deliverable_1.pdf" >> $GITHUB_ENV
-          echo "ROOT_PDF_FILE=$REPO_ROOT/Final_Project_Team_3_Deliverable_1.pdf" >> $GITHUB_ENV
+          echo "REPO_ROOT=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+          echo "DESIGN_DOC_DIR=$GITHUB_WORKSPACE/docs/design-document" >> $GITHUB_ENV
+          echo "TEX_FILE=$GITHUB_WORKSPACE/docs/design-document/Final_Project_Team_3_Deliverable_1.tex" >> $GITHUB_ENV
+          echo "BIB_FILE=$GITHUB_WORKSPACE/docs/design-document/references.bib" >> $GITHUB_ENV
+          echo "PDF_FILE=$GITHUB_WORKSPACE/docs/design-document/Final_Project_Team_3_Deliverable_1.pdf" >> $GITHUB_ENV
+          echo "ROOT_PDF_FILE=$GITHUB_WORKSPACE/Final_Project_Team_3_Deliverable_1.pdf" >> $GITHUB_ENV
 
-      - name: Debug environment variables
+      - name: Print Environment Variables
         run: |
           echo "REPO_ROOT: ${{ env.REPO_ROOT }}"
           echo "DESIGN_DOC_DIR: ${{ env.DESIGN_DOC_DIR }}"
@@ -47,17 +47,16 @@ jobs:
           echo "ROOT_PDF_FILE: ${{ env.ROOT_PDF_FILE }}"
           echo "Current directory: $(pwd)"
           ls -la
-          echo "Repository structure:"
-          tree ${{ env.REPO_ROOT }} -L 3 || echo "tree command not found, using ls instead" && ls -R ${{ env.REPO_ROOT }}
-          echo "Checking DESIGN_DOC_DIR:"
-          if [ -d "${{ env.DESIGN_DOC_DIR }}" ]; then
-            echo "DESIGN_DOC_DIR exists. Contents:"
-            ls -la ${{ env.DESIGN_DOC_DIR }}
-          else
-            echo "DESIGN_DOC_DIR does not exist."
-            echo "Parent directory contents:"
-            ls -la ${{ env.REPO_ROOT }}/docs || echo "docs directory not found"
-          fi
+          echo "Checking file existence and permissions:"
+          for file in "${{ env.TEX_FILE }}" "${{ env.BIB_FILE }}"; do
+            if [ -f "$file" ]; then
+              echo "$file exists. Permissions: $(ls -l "$file")"
+            else
+              echo "$file does not exist."
+            fi
+          done
+          echo "Contents of DESIGN_DOC_DIR:"
+          ls -la ${{ env.DESIGN_DOC_DIR }} || echo "DESIGN_DOC_DIR does not exist or is not accessible"
 
       - name: Cache Apt Packages
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
