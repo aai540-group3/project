@@ -43,56 +43,56 @@ jobs:
       DATASETS_REMOTE: ${{ secrets.DATASETS_REMOTE }}
       DVC_STUDIO_TOKEN: ${{ secrets.DVC_STUDIO_TOKEN }}
       MODELS_REMOTE: ${{ secrets.MODELS_REMOTE }}
+      REPO_ROOT: ${{ github.workspace }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up environment variables
         run: |
-          echo "REPO_ROOT=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-          echo "REQUIREMENTS_FILE=$GITHUB_WORKSPACE/requirements.txt" >> $GITHUB_ENV
-          echo "DVC_LOCK_FILE=$GITHUB_WORKSPACE/dvc.lock" >> $GITHUB_ENV
-          echo "DVC_CACHE_DIR=$GITHUB_WORKSPACE/.dvc/cache" >> $GITHUB_ENV
-          echo "DVCLIVE_DIR=$GITHUB_WORKSPACE/dvclive" >> $GITHUB_ENV
-          echo "DVCLIVE_EVALUATE_DIR=$GITHUB_WORKSPACE/dvclive_evaluate" >> $GITHUB_ENV
-          echo "METRICS_JSON=$GITHUB_WORKSPACE/reports/metrics.json" >> $GITHUB_ENV
+          echo "REQUIREMENTS_FILE=$REPO_ROOT/requirements.txt" >> $GITHUB_ENV
+          echo "DVC_LOCK_FILE=$REPO_ROOT/dvc.lock" >> $GITHUB_ENV
+          echo "DVC_CACHE_DIR=$REPO_ROOT/.dvc/cache" >> $GITHUB_ENV
+          echo "DVCLIVE_DIR=$REPO_ROOT/dvclive" >> $GITHUB_ENV
+          echo "DVCLIVE_EVALUATE_DIR=$REPO_ROOT/dvclive_evaluate" >> $GITHUB_ENV
+          echo "METRICS_JSON=$REPO_ROOT/reports/metrics.json" >> $GITHUB_ENV
 
       - name: Debug environment variables
         run: |
-          echo "REPO_ROOT: ${{ env.REPO_ROOT }}"
-          echo "REQUIREMENTS_FILE: ${{ env.REQUIREMENTS_FILE }}"
-          echo "DVC_LOCK_FILE: ${{ env.DVC_LOCK_FILE }}"
-          echo "DVC_CACHE_DIR: ${{ env.DVC_CACHE_DIR }}"
-          echo "DVCLIVE_DIR: ${{ env.DVCLIVE_DIR }}"
-          echo "DVCLIVE_EVALUATE_DIR: ${{ env.DVCLIVE_EVALUATE_DIR }}"
-          echo "METRICS_JSON: ${{ env.METRICS_JSON }}"
+          echo "REPO_ROOT: $REPO_ROOT"
+          echo "REQUIREMENTS_FILE: $REQUIREMENTS_FILE"
+          echo "DVC_LOCK_FILE: $DVC_LOCK_FILE"
+          echo "DVC_CACHE_DIR: $DVC_CACHE_DIR"
+          echo "DVCLIVE_DIR: $DVCLIVE_DIR"
+          echo "DVCLIVE_EVALUATE_DIR: $DVCLIVE_EVALUATE_DIR"
+          echo "METRICS_JSON: $METRICS_JSON"
           echo "Current directory: $(pwd)"
           ls -la
           echo "Contents of REPO_ROOT:"
-          ls -la ${{ env.REPO_ROOT }}
+          ls -la "$REPO_ROOT"
           echo "Contents of DVC_CACHE_DIR (if exists):"
-          [ -d "${{ env.DVC_CACHE_DIR }}" ] && ls -la ${{ env.DVC_CACHE_DIR }} || echo "DVC_CACHE_DIR does not exist yet"
+          [ -d "$DVC_CACHE_DIR" ] && ls -la "$DVC_CACHE_DIR" || echo "DVC_CACHE_DIR does not exist yet"
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r $REQUIREMENTS_FILE
-
       - name: Cache Python dependencies
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r "$REQUIREMENTS_FILE"
 
       - name: Configure DVC
         run: |
@@ -100,27 +100,27 @@ jobs:
           dvc config core.autostage true
           dvc config hydra.enabled true
           dvc config studio.url https://studio.iterative.ai
-          dvc remote add -f datasets_remote $DATASETS_REMOTE -d
-          dvc remote add -f models_remote $MODELS_REMOTE
-          dvc remote modify datasets_remote region $AWS_DEFAULT_REGION
-          dvc remote modify models_remote region $AWS_DEFAULT_REGION
+          dvc remote add -f datasets_remote "$DATASETS_REMOTE" -d
+          dvc remote add -f models_remote "$MODELS_REMOTE"
+          dvc remote modify datasets_remote region "$AWS_DEFAULT_REGION"
+          dvc remote modify models_remote region "$AWS_DEFAULT_REGION"
           dvc remote list
 
       - name: Cache DVC cache directory
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@v3
         with:
           path: ${{ env.DVC_CACHE_DIR }}
           key: ${{ runner.os }}-dvc-cache-${{ hashFiles('dvc.lock') }}
           restore-keys: |
             ${{ runner.os }}-dvc-cache-
 
-      - name: Pull data and models from DVC remotes
+      - name: Pull from DVC remote
         run: dvc pull
 
       - name: Run DVC pipeline
         run: dvc repro
 
-      - name: Push Data to Remote
+      - name: Push to DVC Remote
         if: always()
         run: dvc push
 
@@ -129,47 +129,47 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Push to Remote
+      - name: Push to Git Remote
         if: always()
         id: commit_and_push
         continue-on-error: true
         run: |
-          [ -f $DVC_LOCK_FILE ] && git add $DVC_LOCK_FILE
-          [ -d $DVCLIVE_DIR ] && git add $DVCLIVE_DIR
-          [ -d $DVCLIVE_EVALUATE_DIR ] && git add $DVCLIVE_EVALUATE_DIR
-          [ -f $METRICS_JSON ] && git add $METRICS_JSON
+          [ -f "$DVC_LOCK_FILE" ] && git add "$DVC_LOCK_FILE"
+          [ -d "$DVCLIVE_DIR" ] && git add "$DVCLIVE_DIR"
+          [ -d "$DVCLIVE_EVALUATE_DIR" ] && git add "$DVCLIVE_EVALUATE_DIR"
+          [ -f "$METRICS_JSON" ] && git add "$METRICS_JSON"
 
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "Update DVC artifacts and metrics"
-            git pull
+            git pull --rebase
             git push
           fi
 
-      - name: Create Pull Request If Push Failed
+      - name: Create Pull Request on Push Failure
         if: failure() && steps.commit_and_push.outcome == 'failure'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NEW_BRANCH="auto/update-dvc-artifacts-${{ github.run_id }}"
-          git checkout -b $NEW_BRANCH
+          git checkout -b "$NEW_BRANCH"
 
-          [ -f $DVC_LOCK_FILE ] && git add $DVC_LOCK_FILE
-          [ -d $DVCLIVE_DIR ] && git add $DVCLIVE_DIR
-          [ -d $DVCLIVE_EVALUATE_DIR ] && git add $DVCLIVE_EVALUATE_DIR
-          [ -f $METRICS_JSON ] && git add $METRICS_JSON
+          [ -f "$DVC_LOCK_FILE" ] && git add "$DVC_LOCK_FILE"
+          [ -d "$DVCLIVE_DIR" ] && git add "$DVCLIVE_DIR"
+          [ -d "$DVCLIVE_EVALUATE_DIR" ] && git add "$DVCLIVE_EVALUATE_DIR"
+          [ -f "$METRICS_JSON" ] && git add "$METRICS_JSON"
 
           if git diff --staged --quiet; then
             echo "No changes to commit. Skipping PR."
           else
             git commit -m "Update DVC artifacts and metrics"
-            git push origin $NEW_BRANCH
+            git push origin "$NEW_BRANCH"
 
             gh pr create \
               --title "Update DVC artifacts and metrics" \
               --body "This PR updates the DVC artifacts and metrics." \
               --label "automated-pr" \
               --base ${{ github.ref_name }} \
-              --head $NEW_BRANCH
+              --head "$NEW_BRANCH"
           fi
