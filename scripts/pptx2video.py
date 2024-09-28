@@ -44,8 +44,12 @@ import openai
 from pdf2image import convert_from_path
 from PIL import Image
 from pptx import Presentation
-from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
-                      wait_exponential)
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -323,7 +327,11 @@ class PPTXtoVideo:
         """Converts the .pptx file to a .pdf file using LibreOffice."""
 
         # Check if PDF already exists and if PPTX hash matches
-        if self.state["pdf_created"] and os.path.exists(self.pdf_filename) and self.state.get('pptx_hash') == self.pptx_hash:
+        if (
+            self.state["pdf_created"]
+            and os.path.exists(self.pdf_filename)
+            and self.state.get("pptx_hash") == self.pptx_hash
+        ):
             logger.info(f"PDF already exists: {self.pdf_filename}")
             return
 
@@ -354,7 +362,7 @@ class PPTXtoVideo:
             raise RuntimeError(f"Failed to create PDF file: {self.pdf_filename}")
 
         self.state["pdf_created"] = True
-        self.state['pptx_hash'] = self.pptx_hash  # Store the hash in the state
+        self.state["pptx_hash"] = self.pptx_hash  # Store the hash in the state
         self._save_state()
         logger.info(f"PDF created successfully: {self.pdf_filename}")
 
@@ -382,7 +390,7 @@ class PPTXtoVideo:
                 for _ in pool.imap_unordered(convert_func, images_to_generate):
                     pass  # Images are saved in the function
 
-        # Generate audio for slides
+        # Generate audio for slides (modified to check for changes)
         logger.info("Generating audio for slides")
         audio_files = []
 
@@ -396,29 +404,24 @@ class PPTXtoVideo:
                 text_hash = slide_data["hash"]
                 audio_file = os.path.join(self.output_dir, f"voice_{i}.mp3")
                 audio_files.append(audio_file)
-                if (
-                    self.state["slide_hashes"].get(str(i)) == text_hash
-                    and os.path.exists(audio_file)
-                ):
+
+                # Check if audio needs to be regenerated
+                if self.state["slide_hashes"].get(str(i)) == text_hash:
                     logger.info(
-                        f"Audio for slide {i+1} is up to date, skipping generation"
+                        f"Audio for slide {i + 1} is up to date, skipping generation"
                     )
                     continue
+
                 if not text.strip():
                     logger.warning(
-                        f"Skipping audio generation for slide {i+1} due to empty text"
+                        f"Skipping audio generation for slide {i + 1} due to empty text"
                     )
                     continue
 
                 async with semaphore:
                     tasks.append(
                         generate_audio_for_slide(
-                            text,
-                            text_hash,
-                            self.output_dir,
-                            i,
-                            self.api_key,
-                            self.state,
+                            text, text_hash, self.output_dir, i, self.api_key, self.state
                         )
                     )
             if tasks:
@@ -431,7 +434,9 @@ class PPTXtoVideo:
         max_workers = min(multiprocessing.cpu_count(), len(self.slides))
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
             futures = []
-            for i, (image_file, audio_file) in enumerate(zip(image_files, audio_files)):
+            for i, (image_file, audio_file) in enumerate(
+                zip(image_files, audio_files)
+            ):
                 slide_hash = self.slides_data[i]["hash"]
                 if (
                     self.state["videos_created"].get(str(i))
@@ -440,7 +445,7 @@ class PPTXtoVideo:
                         os.path.join(self.output_dir, f"video_{i}.mp4")
                     )
                 ):
-                    logger.info(f"Video for slide {i+1} is up to date, skipping")
+                    logger.info(f"Video for slide {i + 1} is up to date, skipping")
                     self.video_files.append(
                         os.path.join(self.output_dir, f"video_{i}.mp4")
                     )
