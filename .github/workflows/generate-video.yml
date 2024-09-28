@@ -19,27 +19,28 @@ jobs:
   generate-video:
     runs-on: ubuntu-latest
     env:
-      # Secret and repository variables
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       REPO_NAME: ${{ secrets.REPO_NAME }}
       EVENT_TYPE: create-release
-
-      # Define file and directory paths
       REPO_ROOT: ${{ github.workspace }}
       BASE_NAME: Final_Project_Team_3_Deliverable_2
-      PPTX_FILE: ${{ github.workspace }}/${{ env.BASE_NAME }}.pptx
-      PDF_FILE: ${{ github.workspace }}/${{ env.BASE_NAME }}.pdf
-      MP4_FILE: ${{ github.workspace }}/${{ env.BASE_NAME }}.mp4
-      ASSETS_DIR: ${{ github.workspace }}/video-assets
-      ASSETS_PDF: ${{ env.ASSETS_DIR }}/${{ env.BASE_NAME }}.pdf
-      ASSETS_MP4: ${{ env.ASSETS_DIR }}/${{ env.BASE_NAME }}.mp4
+
     steps:
-      - name: Checkout main branch
+      - name: Check out main branch
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 1
           lfs: true
+
+      - name: Set Environment Variables
+        run: |
+          echo "PPTX_FILE=$REPO_ROOT/$BASE_NAME.pptx" >> $GITHUB_ENV
+          echo "PDF_FILE=$REPO_ROOT/$BASE_NAME.pdf" >> $GITHUB_ENV
+          echo "MP4_FILE=$REPO_ROOT/$BASE_NAME.mp4" >> $GITHUB_ENV
+          echo "ASSETS_DIR=$REPO_ROOT/video-assets" >> $GITHUB_ENV
+          echo "ASSETS_PDF=$REPO_ROOT/video-assets/$BASE_NAME.pdf" >> $GITHUB_ENV
+          echo "ASSETS_MP4=$REPO_ROOT/video-assets/$BASE_NAME.mp4" >> $GITHUB_ENV
 
       - name: Print Environment Variables
         run: |
@@ -70,7 +71,7 @@ jobs:
               bc
 
       - name: Cache Apt Packages
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
@@ -83,10 +84,10 @@ jobs:
           python-version: "3.11"
 
       - name: Cache Python Dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('scripts/**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
@@ -137,7 +138,7 @@ jobs:
         run: |
           duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$MP4_FILE")
           minutes=$(echo "$duration / 60" | bc)
-          seconds=$(echo "$duration % 60" | bc)
+          seconds=$(printf "%.0f" $(echo "$duration % 60" | bc))
           DURATION="${minutes}m ${seconds}s"
           echo "DURATION=$DURATION" >> $GITHUB_ENV
 
