@@ -1,5 +1,4 @@
 name: Package Repository
-
 on:
   push:
     branches:
@@ -24,18 +23,14 @@ on:
       - "src/**"
       - "terraform/main.tf"
   workflow_dispatch:
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 permissions:
   contents: write
-
 env:
   REPO_NAME: aai540-group3/project
   EVENT_TYPE: create-release
-
 jobs:
   package-repo:
     runs-on: ubuntu-latest
@@ -47,10 +42,19 @@ jobs:
 
       - name: Set up environment variables
         run: |
-          echo "REPO_ROOT=$(git rev-parse --show-toplevel)" >> $GITHUB_ENV
-          echo "TEMP_DIR=$REPO_ROOT/temp_repo" >> $GITHUB_ENV
-          echo "ZIP_FILENAME=$REPO_ROOT/Final_Project_Team_3_Deliverable_3.zip" >> $GITHUB_ENV
-          echo "FILES_LIST=$REPO_ROOT/files_to_zip.txt" >> $GITHUB_ENV
+          echo "REPO_ROOT=${{ github.workspace }}" >> $GITHUB_ENV
+          echo "TEMP_DIR=${{ github.workspace }}/temp_repo" >> $GITHUB_ENV
+          echo "ZIP_FILENAME=${{ github.workspace }}/Final_Project_Team_3_Deliverable_3.zip" >> $GITHUB_ENV
+          echo "FILES_LIST=${{ github.workspace }}/files_to_zip.txt" >> $GITHUB_ENV
+
+      - name: Debug environment variables
+        run: |
+          echo "REPO_ROOT: ${{ env.REPO_ROOT }}"
+          echo "TEMP_DIR: ${{ env.TEMP_DIR }}"
+          echo "ZIP_FILENAME: ${{ env.ZIP_FILENAME }}"
+          echo "FILES_LIST: ${{ env.FILES_LIST }}"
+          echo "Current directory: $(pwd)"
+          ls -la
 
       - name: Install pigz
         run: sudo apt-get install -y pigz
