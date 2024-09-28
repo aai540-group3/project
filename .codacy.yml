@@ -4,8 +4,12 @@ engines:
     enabled: true
   duplication:
     enabled: false
+  eslint-8:
+    enabled: false
   flake8:
     enabled: true
+  jacksonlinter:
+    enabled: false
   markdownlint:
     enabled: true
   mypy:
