@@ -46,17 +46,17 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.11"
 
       - name: Cache Python Dependencies
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements-pipeline.txt') }}
@@ -68,8 +68,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-pipeline.txt
 
-      - uses: iterative/setup-cml@f12ea7685438c1fc438d50f77519b3860cf5fa98  # v2.0.1
-      - uses: iterative/setup-dvc@68c55926a8ce27c2d4fcf7db61149ee64cf4eeb9  # 68c55926a8ce27c2d4fcf7db61149ee64cf4eeb9
+      - uses: iterative/setup-cml@f12ea7685438c1fc438d50f77519b3860cf5fa98 # v2.0.1
+      - uses: iterative/setup-dvc@68c55926a8ce27c2d4fcf7db61149ee64cf4eeb9 # 68c55926a8ce27c2d4fcf7db61149ee64cf4eeb9
 
       - name: Configure DVC
         run: |
@@ -84,7 +84,7 @@ jobs:
           dvc remote list
 
       - name: Cache DVC Directory
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.0.2
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: .dvc/cache
           key: ${{ runner.os }}-dvc-cache-${{ hashFiles('dvc.lock') }}
@@ -101,17 +101,15 @@ jobs:
         if: always()
         run: dvc push
 
-      - name: Configure Git
-        run: |
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git config pull.rebase false
-
       - name: Push to Git Remote
         if: always()
         id: commit_and_push
         continue-on-error: true
         run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config pull.rebase false
+
           [ -f dvc.lock ] && git add dvc.lock
           [ -d dvclive ] && git add dvclive
           [ -d dvclive_evaluate ] && git add dvclive_evaluate
@@ -130,6 +128,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config pull.rebase false
+
           NEW_BRANCH="auto/update-dvc-artifacts-${{ github.run_id }}"
           git checkout -b $NEW_BRANCH
 
