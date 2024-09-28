@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -54,23 +54,23 @@ jobs:
 
       - name: Print Environment Variables
         run: |
-          echo "REPO_ROOT: ${{ env.REPO_ROOT }}"
-          echo "TEMP_DIR: ${{ env.TEMP_DIR }}"
-          echo "ZIP_FILENAME: ${{ env.ZIP_FILENAME }}"
-          echo "FILES_LIST: ${{ env.FILES_LIST }}"
+          echo "REPO_ROOT: $REPO_ROOT"
+          echo "TEMP_DIR: $TEMP_DIR"
+          echo "ZIP_FILENAME: $ZIP_FILENAME"
+          echo "FILES_LIST: $FILES_LIST"
           echo "Current directory: $(pwd)"
           ls -la
 
-      - name: Install System Dependencies
-        run: sudo apt-get install -y pigz
-
       - name: Cache Apt Packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@v3
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
           restore-keys: |
             ${{ runner.os }}-apt-
+
+      - name: Install System Dependencies
+        run: sudo apt-get install -y pigz zip
 
       - name: Delete Old Zipfile
         run: |
@@ -83,7 +83,7 @@ jobs:
 
       - name: Create File List
         run: |
-          cat << EOF > $FILES_LIST
+          cat << EOF > "$FILES_LIST"
           .dvcignore
           .env.template
           .gitattributes
@@ -103,34 +103,40 @@ jobs:
           EOF
 
       - name: Create Temporary Directory
-        run: mkdir -p $TEMP_DIR
+        run: mkdir -p "$TEMP_DIR"
 
       - name: Copy Files to Temporary Directory
         run: |
-          while IFS= read -r file; do
+          while IFS= read -r file || [ -n "$file" ]; do
             if [ -d "$file" ]; then
               mkdir -p "$TEMP_DIR/$file"
-              cp -r "$file"/* "$TEMP_DIR/$file/" 2>/dev/null || true
-            else
+              cp -r "$file" "$TEMP_DIR/$file"
+            elif [ -f "$file" ]; then
               mkdir -p "$(dirname "$TEMP_DIR/$file")"
-              cp "$file" "$TEMP_DIR/$file" 2>/dev/null || echo "Failed to copy $file"
+              cp "$file" "$TEMP_DIR/$file"
+            else
+              echo "Warning: $file does not exist."
             fi
-          done < $FILES_LIST
+          done < "$FILES_LIST"
 
           echo "Contents of TEMP_DIR:"
-          ls -R $TEMP_DIR
+          ls -R "$TEMP_DIR"
 
       - name: Zip Repository
         run: |
-          zip -r -0 "$ZIP_FILENAME" $TEMP_DIR
+          cd "$TEMP_DIR"
+          zip -r -0 "$ZIP_FILENAME" .
           pigz -9 "$ZIP_FILENAME"
 
+      - name: Move Zip to Root
+        run: mv "$TEMP_DIR/$ZIP_FILENAME.gz" "$ZIP_FILENAME.gz"
+
       - name: Cleanup
-        run: rm -rf $TEMP_DIR
+        run: rm -rf "$TEMP_DIR"
 
       - name: Get Zipfile Size
         run: |
-          FILESIZE=$(du -h "$ZIP_FILENAME" | cut -f1)
+          FILESIZE=$(du -h "$ZIP_FILENAME.gz" | cut -f1)
           echo "FILESIZE=$FILESIZE" >> $GITHUB_ENV
 
       - name: Configure Git
@@ -140,13 +146,13 @@ jobs:
 
       - name: Push to Remote
         run: |
-          git add $ZIP_FILENAME
+          git add "$ZIP_FILENAME.gz"
           git commit -m "Size: $FILESIZE"
-          git pull origin main
-          git push origin main
+          git pull --rebase
+          git push
 
       - name: Repository Dispatch
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: ${{ env.REPO_NAME }}

@@ -107,7 +107,7 @@ jobs:
         run: |
           cp "$PDF_FILE" "$ROOT_PDF_FILE"
 
-      - name: Get word count
+      - name: Get Word Count
         run: |
           WORD_COUNT=$(detex "$TEX_FILE" | wc -w)
           echo "WORD_COUNT=$WORD_COUNT" >> $GITHUB_ENV
@@ -125,9 +125,9 @@ jobs:
       - name: Push to Remote
         run: |
           git add "$ROOT_PDF_FILE"
-          git commit -m "WORDS: $WORDS | PAGES: $PAGES"
-          git pull origin main
-          git push origin main
+          git commit -m "WORDS: $WORD_COUNT | PAGES: $PAGES"
+          git pull --rebase
+          git push
 
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v3
