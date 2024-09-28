@@ -114,3 +114,9 @@ tools:
     config: .pylintrc
   mypy:
     config: mypy.ini
+
+languages:
+  python:
+    extensions:
+      - ".py"
+      - ".pyi"
