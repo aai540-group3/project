@@ -70,6 +70,7 @@ jobs:
 
       - name: Configure DVC
         run: |
+          dvc init
           dvc config core.autostage true
           dvc config hydra.enabled true
           dvc config studio.url https://studio.iterative.ai
