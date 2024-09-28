@@ -1,0 +1,19 @@
+[flake8]
+# Basic flake8 configuration
+
+# E501: Line too long
+# W503: Line break before binary operator
+ignore = E501, W503
+
+# Specify maximum allowed line length
+max-line-length = 88
+
+# Exclude certain directories
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    build,
+    dist,
+    .mypy_cache,
+    .pytest_cache

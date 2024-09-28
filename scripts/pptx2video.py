@@ -28,27 +28,23 @@ Note:
 
 import argparse
 import asyncio
+import functools
 import hashlib
 import json
 import logging
+import multiprocessing
 import os
 import subprocess
-from typing import List, Optional
-import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
-import functools
+from typing import List, Optional
 
 import aiohttp
 import openai
 from pdf2image import convert_from_path
-from pptx import Presentation
 from PIL import Image
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-)
+from pptx import Presentation
+from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
+                      wait_exponential)
 
 # Configure logging
 logging.basicConfig(

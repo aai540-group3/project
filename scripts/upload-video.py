@@ -28,6 +28,7 @@ Note:
 """
 
 import os
+
 import vimeo
 
 # Initialize the Vimeo client with credentials from environment variables

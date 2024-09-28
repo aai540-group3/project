@@ -1,93 +1,3 @@
-variable "s3_bucket_name" {
-  description = "Name of the S3 bucket for Terraform state"
-  type        = string
-}
-
-variable "dynamodb_table_name" {
-  description = "Name of the DynamoDB table for Terraform state locking"
-  type        = string
-}
-
-variable "aws_region" {
-  description = "AWS region to deploy resources"
-  type        = string
-}
-
-variable "org_users" {
-  description = "List of email addresses for organization users"
-  type        = list(string)
-}
-
-variable "iam_group_name" {
-  description = "Name of the IAM group for organization users"
-  type        = string
-}
-
-variable "admin_policy_name" {
-  description = "Name of the administrator access policy"
-  type        = string
-}
-
-variable "budget_name" {
-  description = "Name of the AWS budget"
-  type        = string
-}
-
-variable "budget_limit_amount" {
-  description = "Limit amount for the AWS budget"
-  type        = string
-}
-
-variable "budget_limit_unit" {
-  description = "Limit unit for the AWS budget"
-  type        = string
-}
-
-variable "cloudwatch_alarm_name" {
-  description = "Name of the CloudWatch alarm for Free Tier usage"
-  type        = string
-}
-
-variable "cloudwatch_threshold" {
-  description = "Threshold for the CloudWatch alarm"
-  type        = string
-}
-
-variable "free_tier_alerts_topic_name" {
-  description = "Name of the SNS topic for Free Tier alerts"
-  type        = string
-}
-
-variable "mlops_bucket_name" {
-  description = "Name of the S3 bucket for MLOps artifacts"
-  type        = string
-}
-
-variable "github_actions_role_name" {
-  description = "Name of the IAM role for GitHub Actions"
-  type        = string
-}
-
-variable "github_org" {
-  description = "Name of the GitHub organization"
-  type        = string
-}
-
-variable "github_repo" {
-  description = "Name of the GitHub repository"
-  type        = string
-}
-
-variable "aws_account_id" {
-  description = "AWS account ID"
-  type        = string
-}
-
-variable "access_analyzer_policy_name" {
-  description = "Name of the Access Analyzer policy"
-  type        = string
-}
-
 # ---------------------------------------------------------------------------------------------------------------------
 # TERRAFORM CONFIGURATION
 # ---------------------------------------------------------------------------------------------------------------------
@@ -95,7 +5,6 @@ variable "access_analyzer_policy_name" {
 # This section specifies the Terraform settings and required providers.
 
 terraform {
-  # Define the required providers and their versions
   required_providers {
     aws = {
       source  = "hashicorp/aws" # The source of the AWS provider
@@ -122,17 +31,7 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
-}
-
-# ---------------------------------------------------------------------------------------------------------------------
-# LOCALS
-# ---------------------------------------------------------------------------------------------------------------------
-# Locals are named values that can be used throughout your Terraform configuration.
-
-locals {
-  # List of email addresses for the users
-  emails = var.org_users
+  region = "us-east-1"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -141,7 +40,7 @@ locals {
 # AWS Organizations is a service that enables you to centrally manage and govern multiple AWS accounts.
 
 resource "aws_organizations_organization" "org" {
-  feature_set = "ALL" # Enable all features of AWS Organizations
+  feature_set = "ALL"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -149,46 +48,74 @@ resource "aws_organizations_organization" "org" {
 # ---------------------------------------------------------------------------------------------------------------------
 # IAM is a web service that helps you securely control access to AWS resources.
 
-# Create IAM users
-resource "aws_iam_user" "users" {
-  count = length(local.emails)                     # Create a user for each email in the list
-  name  = split("@", local.emails[count.index])[0] # Use the part before @ as the username
-
+# Create IAM user - jagustin
+resource "aws_iam_user" "jagustin" {
+  name = "jagustin"
   tags = {
-    Email       = local.emails[count.index]
+    Environment = "Management"
+    ManagedBy   = "Terraform"
+  }
+}
+
+# Create IAM user - lvo
+resource "aws_iam_user" "lvo" {
+  name = "lvo"
+  tags = {
+    Environment = "Management"
+    ManagedBy   = "Terraform"
+  }
+}
+
+# Create IAM user - zrobertson
+resource "aws_iam_user" "zrobertson" {
+  name = "zrobertson"
+  tags = {
     Environment = "Management"
     ManagedBy   = "Terraform"
   }
 }
 
 # Set up login profiles for the IAM users
-resource "aws_iam_user_login_profile" "users" {
-  count                   = length(local.emails)
-  user                    = aws_iam_user.users[count.index].name
-  password_reset_required = true # Force users to change password on first login
+resource "aws_iam_user_login_profile" "jagustin" {
+  user                    = "jagustin"
+  password_reset_required = true
+  lifecycle {
+    ignore_changes = [password_reset_required]
+  }
+}
 
+resource "aws_iam_user_login_profile" "lvo" {
+  user                    = "lvo"
+  password_reset_required = true
+  lifecycle {
+    ignore_changes = [password_reset_required]
+  }
+}
+
+resource "aws_iam_user_login_profile" "zrobertson" {
+  user                    = "zrobertson"
+  password_reset_required = true
   lifecycle {
     ignore_changes = [password_reset_required]
   }
 }
 
 # Create an IAM group
-resource "aws_iam_group" "org_users" {
-  name = var.iam_group_name
+resource "aws_iam_group" "organization_users" {
+  name = "OrganizationUsers"
 }
 
 # Add users to the IAM group
-resource "aws_iam_group_membership" "org_users" {
-  name  = "${var.iam_group_name}Membership"
-  users = aws_iam_user.users[*].name
-  group = aws_iam_group.org_users.name
+resource "aws_iam_group_membership" "organization_users" {
+  name  = "OrganizationUsersMembership"
+  users = ["jagustin", "lvo", "zrobertson"]
+  group = "OrganizationUsers"
 }
 
 # Create an IAM policy for administrator access
 resource "aws_iam_policy" "administrator_access_policy" {
-  name        = var.admin_policy_name
+  name        = "AdministratorAccessPolicy"
   description = "Policy granting administrator access"
-
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -201,10 +128,30 @@ resource "aws_iam_policy" "administrator_access_policy" {
   })
 }
 
-# Attach the administrator access policy to the IAM group
+# Create an IAM policy for S3 bucket versioning access
+resource "aws_iam_policy" "s3_versioning_access_policy" {
+  name        = "S3VersioningAccessPolicy"
+  description = "Policy granting access to S3 bucket versioning"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = "s3:GetBucketVersioning",
+        Resource = "arn:aws:s3:::terraform-state-bucket-eeb973f4"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_group_policy_attachment" "administrator_access_policy_attachment" {
-  group      = aws_iam_group.org_users.name
-  policy_arn = aws_iam_policy.administrator_access_policy.arn
+  group      = "OrganizationUsers"
+  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/AdministratorAccessPolicy"
+}
+
+resource "aws_iam_group_policy_attachment" "s3_versioning_access_policy_attachment" {
+  group      = "OrganizationUsers"
+  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/S3VersioningAccessPolicy"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -213,7 +160,7 @@ resource "aws_iam_group_policy_attachment" "administrator_access_policy_attachme
 # Amazon S3 is an object storage service offering industry-leading scalability, data availability, security, and performance.
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = var.s3_bucket_name
+  bucket = "terraform-state-bucket-eeb973f4"
 
   tags = {
     Name        = "Terraform State"
@@ -222,14 +169,14 @@ resource "aws_s3_bucket" "terraform_state" {
   }
 
   lifecycle {
-    # prevent_destroy = true     # Prevent accidental deletion of this bucket
-    ignore_changes = [bucket] # Ignore changes to the bucket name
+    prevent_destroy = true     # Prevent accidental deletion of this bucket
+    ignore_changes  = [bucket] # Ignore changes to the bucket name
   }
 }
 
 # Enable versioning on the S3 bucket
 resource "aws_s3_bucket_versioning" "enabled" {
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = "terraform-state-bucket-eeb973f4"
   versioning_configuration {
     status = "Enabled"
   }
@@ -237,8 +184,7 @@ resource "aws_s3_bucket_versioning" "enabled" {
 
 # Enable server-side encryption for the S3 bucket
 resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
-  bucket = aws_s3_bucket.terraform_state.id
-
+  bucket = "terraform-state-bucket-eeb973f4"
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -248,7 +194,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
 
 # Block public access to the S3 bucket
 resource "aws_s3_bucket_public_access_block" "public_access" {
-  bucket                  = aws_s3_bucket.terraform_state.id
+  bucket                  = "terraform-state-bucket-eeb973f4"
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -257,8 +203,7 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
 
 # Add a policy to enforce SSL-only access to the S3 bucket
 resource "aws_s3_bucket_policy" "terraform_state_policy" {
-  bucket = aws_s3_bucket.terraform_state.id
-
+  bucket = "terraform-state-bucket-eeb973f4"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -267,8 +212,8 @@ resource "aws_s3_bucket_policy" "terraform_state_policy" {
         Effect    = "Deny",
         Principal = "*",
         Resource = [
-          "${aws_s3_bucket.terraform_state.arn}/*",
-          "${aws_s3_bucket.terraform_state.arn}"
+          "arn:aws:s3:::terraform-state-bucket-eeb973f4/*",
+          "arn:aws:s3:::terraform-state-bucket-eeb973f4"
         ],
         Condition = {
           Bool : {
@@ -284,10 +229,10 @@ resource "aws_s3_bucket_policy" "terraform_state_policy" {
 # DYNAMODB TABLE FOR TERRAFORM STATE LOCKING
 # ---------------------------------------------------------------------------------------------------------------------
 # Amazon DynamoDB is a key-value and document database that delivers single-digit millisecond performance at any scale.
-
 # DynamoDB table for Terraform state locking
+
 resource "aws_dynamodb_table" "terraform_locks" {
-  name         = var.dynamodb_table_name
+  name         = "terraform-state-lock-eeb973f4"
   billing_mode = "PAY_PER_REQUEST" # Pay only for what you use
   hash_key     = "LockID"
 
@@ -303,8 +248,8 @@ resource "aws_dynamodb_table" "terraform_locks" {
   }
 
   lifecycle {
-    # prevent_destroy = true   # Prevent accidental deletion of this table
-    ignore_changes = [name] # Ignore changes to the table name
+    prevent_destroy = true   # Prevent accidental deletion of this table
+    ignore_changes  = [name] # Ignore changes to the table name
   }
 
   server_side_encryption {
@@ -318,7 +263,7 @@ resource "aws_dynamodb_table" "terraform_locks" {
 
 # Policy to enforce SSL-only access to the DynamoDB table
 resource "aws_dynamodb_resource_policy" "terraform_locks_policy" {
-  resource_arn = aws_dynamodb_table.terraform_locks.arn
+  resource_arn = "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/terraform-state-lock-eeb973f4"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -326,7 +271,7 @@ resource "aws_dynamodb_resource_policy" "terraform_locks_policy" {
         Effect    = "Deny",
         Principal = "*",
         Action    = "dynamodb:*",
-        Resource  = aws_dynamodb_table.terraform_locks.arn,
+        Resource  = "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/terraform-state-lock-eeb973f4",
         Condition = {
           Bool : {
             "aws:SecureTransport" : "false"
@@ -341,12 +286,11 @@ resource "aws_dynamodb_resource_policy" "terraform_locks_policy" {
 # AWS BUDGETS
 # ---------------------------------------------------------------------------------------------------------------------
 # AWS Budgets gives you the ability to set custom budgets that alert you when your costs or usage exceed your budgeted amount.
-
 resource "aws_budgets_budget" "shared_user_budget" {
-  name         = var.budget_name
+  name         = "SharedFreeTierBudget"
   budget_type  = "COST"
-  limit_amount = var.budget_limit_amount
-  limit_unit   = var.budget_limit_unit
+  limit_amount = "1"
+  limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
   # Notification when actual spend reaches 20% of the budget
@@ -355,7 +299,7 @@ resource "aws_budgets_budget" "shared_user_budget" {
     threshold                  = 20
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = local.emails
+    subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
 
   # Notification when actual spend reaches 40% of the budget
@@ -364,7 +308,7 @@ resource "aws_budgets_budget" "shared_user_budget" {
     threshold                  = 40
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = local.emails
+    subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
 
   # Notification when actual spend reaches 60% of the budget
@@ -373,7 +317,7 @@ resource "aws_budgets_budget" "shared_user_budget" {
     threshold                  = 60
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = local.emails
+    subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
 
   # Notification when actual spend reaches 80% of the budget
@@ -382,7 +326,7 @@ resource "aws_budgets_budget" "shared_user_budget" {
     threshold                  = 80
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = local.emails
+    subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
 
   # Notification when actual spend reaches 90% of the budget
@@ -391,7 +335,7 @@ resource "aws_budgets_budget" "shared_user_budget" {
     threshold                  = 90
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = local.emails
+    subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
 
   # Notification when forecasted spend reaches 100% of the budget
@@ -400,12 +344,11 @@ resource "aws_budgets_budget" "shared_user_budget" {
     threshold                  = 100
     threshold_type             = "PERCENTAGE"
     notification_type          = "FORECASTED"
-    subscriber_email_addresses = local.emails
+    subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
-
   lifecycle {
-    # prevent_destroy = true   # Prevent accidental deletion of this budget
-    ignore_changes = [name] # Ignore changes to the budget name
+    prevent_destroy = true   # Prevent accidental deletion of this budget
+    ignore_changes  = [name] # Ignore changes to the budget name
   }
 }
 
@@ -416,68 +359,127 @@ resource "aws_budgets_budget" "shared_user_budget" {
 # and application-to-person (A2P) communication. It enables decoupled microservices, distributed systems, and serverless
 # applications to communicate with each other and with users.
 
-# Create an SNS topic for each user
-resource "aws_sns_topic" "user_notifications" {
-  count = length(local.emails)
-  name  = "user-notifications-${split("@", local.emails[count.index])[0]}"
-
+# Create an SNS topic for jagustin
+resource "aws_sns_topic" "jagustin_notifications" {
+  name = "user-notifications-jagustin"
   tags = {
     Name        = "User Notifications"
     Environment = "Management"
     ManagedBy   = "Terraform"
-    User        = split("@", local.emails[count.index])[0]
+    User        = "jagustin"
   }
 }
 
-# Subscribe each user's email to their respective SNS topic
-resource "aws_sns_topic_subscription" "user_email_subscriptions" {
-  count     = length(local.emails)
-  topic_arn = aws_sns_topic.user_notifications[count.index].arn
+# Create an SNS topic for lvo
+resource "aws_sns_topic" "lvo_notifications" {
+  name = "user-notifications-lvo"
+  tags = {
+    Name        = "User Notifications"
+    Environment = "Management"
+    ManagedBy   = "Terraform"
+    User        = "lvo"
+  }
+}
+
+# Create an SNS topic for zrobertson
+resource "aws_sns_topic" "zrobertson_notifications" {
+  name = "user-notifications-zrobertson"
+  tags = {
+    Name        = "User Notifications"
+    Environment = "Management"
+    ManagedBy   = "Terraform"
+    User        = "zrobertson"
+  }
+}
+
+# Subscribe jagustin's email to their respective SNS topic
+resource "aws_sns_topic_subscription" "jagustin_email_subscriptions" {
+  topic_arn = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-jagustin"
   protocol  = "email"
-  endpoint  = local.emails[count.index]
+  endpoint  = "jagustin@sandiego.edu"
+}
+
+# Subscribe lvo's email to their respective SNS topic
+resource "aws_sns_topic_subscription" "lvo_email_subscriptions" {
+  topic_arn = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-lvo"
+  protocol  = "email"
+  endpoint  = "lvo@sandiego.edu"
+}
+
+# Subscribe zrobertson's email to their respective SNS topic
+resource "aws_sns_topic_subscription" "zrobertson_email_subscriptions" {
+  topic_arn = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-zrobertson"
+  protocol  = "email"
+  endpoint  = "zrobertson@sandiego.edu"
 }
 
 # Define a policy document that allows CloudWatch to publish to each SNS topic
-data "aws_iam_policy_document" "sns_topic_policy" {
-  count = length(local.emails)
-
+data "aws_iam_policy_document" "sns_topic_policy_jagustin" {
   statement {
     effect  = "Allow"
     actions = ["SNS:Publish"]
-
     principals {
       type        = "Service"
       identifiers = ["cloudwatch.amazonaws.com"]
     }
-
-    resources = [aws_sns_topic.user_notifications[count.index].arn]
+    resources = ["arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-jagustin"]
   }
 }
 
-# Attach the policy to each SNS topic
-resource "aws_sns_topic_policy" "default" {
-  count  = length(local.emails)
-  arn    = aws_sns_topic.user_notifications[count.index].arn
-  policy = data.aws_iam_policy_document.sns_topic_policy[count.index].json
+data "aws_iam_policy_document" "sns_topic_policy_lvo" {
+  statement {
+    effect  = "Allow"
+    actions = ["SNS:Publish"]
+    principals {
+      type        = "Service"
+      identifiers = ["cloudwatch.amazonaws.com"]
+    }
+    resources = ["arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-lvo"]
+  }
+}
+
+data "aws_iam_policy_document" "sns_topic_policy_zrobertson" {
+  statement {
+    effect  = "Allow"
+    actions = ["SNS:Publish"]
+    principals {
+      type        = "Service"
+      identifiers = ["cloudwatch.amazonaws.com"]
+    }
+    resources = ["arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-zrobertson"]
+  }
+}
+
+resource "aws_sns_topic_policy" "jagustin_default" {
+  arn    = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-jagustin"
+  policy = data.aws_iam_policy_document.sns_topic_policy_jagustin.json
+}
+
+resource "aws_sns_topic_policy" "lvo_default" {
+  arn    = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-lvo"
+  policy = data.aws_iam_policy_document.sns_topic_policy_lvo.json
+}
+
+resource "aws_sns_topic_policy" "zrobertson_default" {
+  arn    = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:user-notifications-zrobertson"
+  policy = data.aws_iam_policy_document.sns_topic_policy_zrobertson.json
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
 # CLOUDWATCH ALARM FOR FREE TIER USAGE
 # ---------------------------------------------------------------------------------------------------------------------
 # Amazon CloudWatch is a monitoring and observability service that provides data and actionable insights for AWS resources.
-
 resource "aws_cloudwatch_metric_alarm" "free_tier_usage_alarm" {
-  alarm_name          = var.cloudwatch_alarm_name
+  alarm_name          = "FreeTierUsageAlarm"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "EstimatedCharges"
   namespace           = "AWS/Billing"
   period              = "300"
   statistic           = "Maximum"
-  threshold           = var.cloudwatch_threshold
+  threshold           = "1.00"
   actions_enabled     = true
-  alarm_actions       = [aws_sns_topic.free_tier_alerts.arn]
-
+  alarm_actions       = ["arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:free-tier-alerts"]
   dimensions = {
     Currency = "USD"
   }
@@ -485,24 +487,46 @@ resource "aws_cloudwatch_metric_alarm" "free_tier_usage_alarm" {
 
 # Create an SNS topic for Free Tier alerts
 resource "aws_sns_topic" "free_tier_alerts" {
-  name = var.free_tier_alerts_topic_name
+  name = "free-tier-alerts"
 }
 
-# Subscribe emails to the Free Tier alerts SNS topic
-resource "aws_sns_topic_subscription" "free_tier_alerts_email" {
-  count     = length(local.emails)
-  topic_arn = aws_sns_topic.free_tier_alerts.arn
+
+resource "aws_cloudwatch_log_group" "mlops_pipeline_logs" {
+  name = "/aws/mlops/pipeline"
+
+  tags = {
+    Name        = "MLOps Pipeline Logs"
+    Environment = "Development"
+    ManagedBy   = "Terraform"
+  }
+}
+
+# Subscribe jagustin's email to the Free Tier alerts SNS topic
+resource "aws_sns_topic_subscription" "free_tier_alerts_email_jagustin" {
+  topic_arn = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:free-tier-alerts"
   protocol  = "email"
-  endpoint  = local.emails[count.index]
+  endpoint  = "jagustin@sandiego.edu"
+}
+
+# Subscribe lvo's email to the Free Tier alerts SNS topic
+resource "aws_sns_topic_subscription" "free_tier_alerts_email_lvo" {
+  topic_arn = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:free-tier-alerts"
+  protocol  = "email"
+  endpoint  = "lvo@sandiego.edu"
+}
+
+# Subscribe zrobertson's email to the Free Tier alerts SNS topic
+resource "aws_sns_topic_subscription" "free_tier_alerts_email_zrobertson" {
+  topic_arn = "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:free-tier-alerts"
+  protocol  = "email"
+  endpoint  = "zrobertson@sandiego.edu"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
 # S3 BUCKET FOR MLOPS PIPELINE
 # ---------------------------------------------------------------------------------------------------------------------
-
 resource "aws_s3_bucket" "mlops_artifacts" {
-  bucket = var.mlops_bucket_name
-
+  bucket = "mlops-artifacts-aai540-group3"
   tags = {
     Name        = "MLOps Artifacts"
     Environment = "Development"
@@ -510,14 +534,14 @@ resource "aws_s3_bucket" "mlops_artifacts" {
   }
 
   lifecycle {
-    # prevent_destroy = true     # Prevent accidental deletion of this bucket
-    ignore_changes = [bucket] # Ignore changes to the bucket name
+    prevent_destroy = true
+    ignore_changes = [bucket]
   }
 }
 
 # Enable versioning on the S3 bucket
 resource "aws_s3_bucket_versioning" "mlops_versioning" {
-  bucket = aws_s3_bucket.mlops_artifacts.id
+  bucket = "mlops-artifacts-aai540-group3"
   versioning_configuration {
     status = "Enabled"
   }
@@ -525,8 +549,7 @@ resource "aws_s3_bucket_versioning" "mlops_versioning" {
 
 # Enable server-side encryption for the S3 bucket
 resource "aws_s3_bucket_server_side_encryption_configuration" "mlops_encryption" {
-  bucket = aws_s3_bucket.mlops_artifacts.id
-
+  bucket = "mlops-artifacts-aai540-group3"
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -536,7 +559,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "mlops_encryption"
 
 # Block public access to the S3 bucket
 resource "aws_s3_bucket_public_access_block" "mlops_public_access" {
-  bucket                  = aws_s3_bucket.mlops_artifacts.id
+  bucket                  = "mlops-artifacts-aai540-group3"
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -545,8 +568,7 @@ resource "aws_s3_bucket_public_access_block" "mlops_public_access" {
 
 # Add a policy to enforce SSL-only access to the S3 bucket
 resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
-  bucket = aws_s3_bucket.mlops_artifacts.id
-
+  bucket = "mlops-artifacts-aai540-group3"
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -555,8 +577,8 @@ resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
         Effect    = "Deny",
         Principal = "*",
         Resource = [
-          "${aws_s3_bucket.mlops_artifacts.arn}/*",
-          "${aws_s3_bucket.mlops_artifacts.arn}"
+          "arn:aws:s3:::mlops-artifacts-aai540-group3/*",
+          "arn:aws:s3:::mlops-artifacts-aai540-group3"
         ],
         Condition = {
           Bool = {
@@ -571,23 +593,21 @@ resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
 # ---------------------------------------------------------------------------------------------------------------------
 # IAM ROLE FOR GITHUB ACTIONS POLICY VALIDATION
 # ---------------------------------------------------------------------------------------------------------------------
-
 resource "aws_iam_role" "github_actions_policy_validator" {
-  name = var.github_actions_role_name
-
+  name = "GitHub-Actions-PolicyValidator"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
         Effect = "Allow",
         Principal = {
-          Federated = "arn:aws:iam::${var.aws_account_id}:oidc-provider/token.actions.githubusercontent.com"
+          Federated = "arn:aws:iam::864899865811:oidc-provider/token.actions.githubusercontent.com"
         },
         Action = "sts:AssumeRoleWithWebIdentity",
         Condition = {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com",
-            "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:sub" = "repo:aai540-group3/project:ref:refs/heads/main"
           }
         }
       }
@@ -596,10 +616,9 @@ resource "aws_iam_role" "github_actions_policy_validator" {
 }
 
 resource "aws_iam_policy" "access_analyzer_policy" {
-  name        = var.access_analyzer_policy_name
+  name        = "AccessAnalyzerPolicy"
   path        = "/"
   description = "IAM policy for Access Analyzer"
-
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -620,6 +639,8 @@ resource "aws_iam_policy" "access_analyzer_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "access_analyzer_attachment" {
-  role       = aws_iam_role.github_actions_policy_validator.name
-  policy_arn = aws_iam_policy.access_analyzer_policy.arn
+  role       = "GitHub-Actions-PolicyValidator"
+  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/AccessAnalyzerPolicy"
 }
+
+data "aws_caller_identity" "current" {}
