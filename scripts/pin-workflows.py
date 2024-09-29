@@ -29,6 +29,7 @@ import os
 import re
 import sys
 from typing import Dict, List, Optional
+import concurrent.futures
 
 import requests
 
@@ -253,15 +254,16 @@ class GitHubAPI:
         return None
 
 
-def update_workflow_file(file_path: str, github_api: GitHubAPI) -> None:
+def update_workflow_file(file_path: str) -> None:
     """
     Update a GitHub Actions workflow file by pinning actions to commit SHAs or latest release tags and adding version comments.
 
     :param file_path: The path to the workflow file to update.
     :type file_path: str
-    :param github_api: An instance of the GitHubAPI class.
-    :type github_api: GitHubAPI
     """
+    # Create a new GitHubAPI instance per file to avoid threading issues
+    github_api = GitHubAPI(token=GITHUB_TOKEN)
+
     logger.info(f"\nProcessing workflow file: {file_path}")
 
     with open(file_path, "r", encoding="utf-8") as f:
@@ -336,13 +338,16 @@ def main():
         logger.error(f"No workflow files found in '{WORKFLOWS_DIR}'")
         sys.exit(1)
 
-    github_api = GitHubAPI(token=GITHUB_TOKEN)
+    # Use ThreadPoolExecutor to process files in parallel
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future_to_file = {executor.submit(update_workflow_file, yaml_file): yaml_file for yaml_file in yaml_files}
 
-    for yaml_file in yaml_files:
-        try:
-            update_workflow_file(yaml_file, github_api)
-        except Exception as e:
-            logger.error(f"An error occurred while processing '{yaml_file}': {e}")
+        for future in concurrent.futures.as_completed(future_to_file):
+            yaml_file = future_to_file[future]
+            try:
+                future.result()
+            except Exception as e:
+                logger.error(f"An error occurred while processing '{yaml_file}': {e}")
 
 
 if __name__ == "__main__":
