@@ -1,5 +1,9 @@
 # Diabetic Readmission Risk Prediction
 
+--
+
+## Status
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/66d984def1ee4ae481e78b91ffd159f0)](https://app.codacy.com/gh/aai540-group3/project/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![CodeQL Advanced](https://github.com/aai540-group3/project/actions/workflows/codeql.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/codeql.yml) [![Codacy Security Scan](https://github.com/aai540-group3/project/actions/workflows/codacy.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/codacy.yml) [![Dependabot Updates](https://github.com/aai540-group3/project/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/dependabot/dependabot-updates)
