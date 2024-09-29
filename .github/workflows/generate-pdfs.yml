@@ -3,6 +3,7 @@ name: Generate PDFs
 on:
   push:
     paths:
+      - ".github/workflows/generate-pdfs.yml"
       - "docs/design-document/Final_Project_Team_3_Deliverable_1.tex"
       - "docs/design-document/references.bib"
   workflow_dispatch:
@@ -13,6 +14,9 @@ concurrency:
 
 permissions:
   contents: write
+
+env:
+  PACKAGES: packages-tex.txt
 
 jobs:
   generate-pdfs:
@@ -27,20 +31,14 @@ jobs:
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('/etc/apt/sources.list') }}
+          key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}-
           restore-keys: |
             ${{ runner.os }}-apt-
 
-      - name: Install TeX
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y install \
-            biber \
-            texlive \
-            texlive-latex-extra \
-            texlive-fonts-extra \
-            texlive-bibtex-extra \
-            texlive-science
+          sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
 
       - name: Generate PDFs
         run: |
@@ -53,6 +51,18 @@ jobs:
         run: |
           cp Final_Project_Team_3_Deliverable_1.pdf ../..
 
+      - name: Calculate Page Count
+        id: page_count
+        run: |
+          PAGES=$(pdfinfo docs/design-document/Final_Project_Team_3_Deliverable_1.pdf | grep Pages | awk '{print $2}')
+          echo "PAGES=$PAGES" >> $GITHUB_ENV
+
+      - name: Calculate Word Count
+        id: word_count
+        run: |
+          WORDS=$(pdftotext docs/design-document/Final_Project_Team_3_Deliverable_1.pdf - | wc -w)
+          echo "WORDS=$WORDS" >> $GITHUB_ENV
+
       - name: Configure Git
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -61,11 +71,11 @@ jobs:
 
       - name: Push to Remote
         run: |
-          git add  Final_Project_Team_3_Deliverable_1.pdf
+          git add Final_Project_Team_3_Deliverable_1.pdf
           if git diff --staged --quiet; then
             echo "No changes detected. Skipping commit and push."
           else
-            git commit -m "DELIVERABLE: Final_Project_Team_3_Deliverable_1.pdf"
+            git commit -m "PAGES: ${{ env.PAGES }} | WORDS: ${{ env.WORDS }}"
             git pull origin main
             git push origin main
             echo "Changes committed and pushed successfully."
