@@ -24,39 +24,29 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
-      - name: Download Codacy Analysis CLI Script
-        id: download-script
-        run: |
-          wget -O codacy-analysis-cli.sh https://raw.githubusercontent.com/codacy/codacy-analysis-cli/4.0.0/bin/codacy-analysis-cli.sh
-          chmod +x codacy-analysis-cli.sh
-          echo "SCRIPT_PATH=$GITHUB_WORKSPACE/codacy-analysis-cli.sh" >> $GITHUB_OUTPUT
-
-      - name: Cache Docker Layers
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        with:
-          path: /home/runner/.docker/buildx/
-          key: ${{ runner.os }}-buildx-${{ hashFiles('codacy-analysis-cli.sh') }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
       - name: Set Up QEMU
         uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3.2.0
 
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
 
+      - name: Cache Docker
+        uses: docker/build-push-action@32945a339266b759abcbdc89316275140b0fc960 # v6.8.0
+        with:
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Run Codacy Analysis CLI
-        env:
-          CODACY_ANALYSIS_CLI_VERSION: 4.0.0
-          CLI_SCRIPT_PATH: ${{ steps.download-script.outputs.SCRIPT_PATH }}
-        run: |
-          ${{ steps.download-script.outputs.SCRIPT_PATH }} analyze \
-            --verbose \
-            --project-token ${{ secrets.CODACY_PROJECT_TOKEN }} \
-            --format sarif \
-            --output results.sarif \
-            --gh-code-scanning-compat \
-            --max-allowed-issues 2147483647
+        uses: codacy/codacy-analysis-cli-action@97bf5df3c09e75f5bcd72695998f96ebd701846e # v4.4.5
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          verbose: true
+          format: sarif
+          output: results.sarif
+          upload: true
+          gh-code-scanning-compat: true
+          max-allowed-issues: 2147483647
 
       - name: Upload SARIF Results File
         uses: github/codeql-action/upload-sarif@5618c9fc1e675841ca52c1c6b1304f5255a905a0 # codeql-bundle-v2.19.0
