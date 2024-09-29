@@ -21,6 +21,18 @@ jobs:
     name: Codacy Security Scan
     runs-on: ubuntu-latest
     steps:
+      - name: Pull Codacy Images
+        run: |
+          docker pull codacy/codacy-analysis-cli:4.0.0
+          docker pull codacy/codacy-shellcheck:2.4.0
+          docker pull codacy/codacy-metrics-cloc:0.2.4
+          docker pull codacy/codacy-bandit:2.2.1
+          docker pull codacy/codacy-metrics-radon:0.1.66
+          docker pull codacy/codacy-jackson-linter:5.2.1
+          docker pull codacy/codacy-prospector:2.2.0
+          docker pull codacy/codacy-pylint-python3:2.2.2
+          docker pull codacy/codacy-duplication-pmdcpd:2.0.145
+
       - name: Checkout Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
