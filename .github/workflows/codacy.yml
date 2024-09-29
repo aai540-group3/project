@@ -42,7 +42,6 @@ jobs:
           verbose: true
           format: sarif
           output: results.sarif
-          upload: true
           gh-code-scanning-compat: true
           max-allowed-issues: 2147483647
 
