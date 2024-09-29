@@ -28,25 +28,12 @@ jobs:
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: /home/runner/.docker/buildx/
-          key: ${{ runner.os }}-buildx-${{ github.ref_name }}-python
+          key: ${{ runner.os }}-buildx-${{ hashFiles('/home/runner/.docker/buildx/**/*') }}
           restore-keys: |
-            ${{ runner.os }}-buildx-${{ github.ref_name }}-
             ${{ runner.os }}-buildx-
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
-
-      - name: Pull Codacy Images
-        run: |
-          docker pull codacy/codacy-analysis-cli:4.0.0
-          docker pull codacy/codacy-shellcheck:2.4.0
-          docker pull codacy/codacy-metrics-cloc:0.2.4
-          docker pull codacy/codacy-bandit:2.2.1
-          docker pull codacy/codacy-metrics-radon:0.1.66
-          docker pull codacy/codacy-jackson-linter:5.2.1
-          docker pull codacy/codacy-prospector:2.2.0
-          docker pull codacy/codacy-pylint-python3:2.2.2
-          docker pull codacy/codacy-duplication-pmdcpd:2.0.145
 
       - name: Run Codacy Analysis CLI
         uses: codacy/codacy-analysis-cli-action@97bf5df3c09e75f5bcd72695998f96ebd701846e # v4.4.5
