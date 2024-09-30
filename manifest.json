@@ -10,7 +10,7 @@
     "params.yaml",
     "README.md",
     "reports/",
-    "requirements.txt",
+    "requirements-pipeline.txt",
     "src/",
     "terraform/main.tf"
   ],
