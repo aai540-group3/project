@@ -3,6 +3,9 @@ on:
   repository_dispatch:
     types:
       - create-release
+  push:
+    paths:
+      - ".github/workflows/generate-pdfs.yml"
   workflow_dispatch:
     inputs:
       bump_type:

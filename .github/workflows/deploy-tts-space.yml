@@ -1,12 +1,12 @@
 name: Deploy HF TTS Space
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
     paths:
       - "huggingface/spaces/openai-tts/**"
+  workflow_dispatch:
 
 jobs:
   deploy:
