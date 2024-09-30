@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
           fetch-depth: 1
 
@@ -42,26 +42,30 @@ jobs:
           sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
 
       - name: Generate PDFs
+        working-directory: docs/design-document
         run: |
-          pdflatex -debug docs/design-document/Final_Project_Team_3_Deliverable_1.tex
-          biber --debug docs/design-document/Final_Project_Team_3_Deliverable_1
-          pdflatex docs/design-document/Final_Project_Team_3_Deliverable_1.tex
-          pdflatex docs/design-document/Final_Project_Team_3_Deliverable_1.tex
+          pdflatex -debug Final_Project_Team_3_Deliverable_1.tex
+          biber --debug Final_Project_Team_3_Deliverable_1
+          pdflatex Final_Project_Team_3_Deliverable_1.tex
+          pdflatex Final_Project_Team_3_Deliverable_1.tex
 
       - name: Move PDF to Top-Level Repo Folder
+        working-directory: docs/design-document
         run: |
-          cp Final_Project_Team_3_Deliverable_1.pdf ../..
+          cp Final_Project_Team_3_Deliverable_1.pdf ../../
 
       - name: Calculate Page Count
         id: page_count
+        working-directory: docs/design-document
         run: |
-          PAGES=$(pdfinfo docs/design-document/Final_Project_Team_3_Deliverable_1.pdf | grep Pages | awk '{print $2}')
+          PAGES=$(pdfinfo Final_Project_Team_3_Deliverable_1.pdf | grep Pages | awk '{print $2}')
           echo "PAGES=$PAGES" >> $GITHUB_ENV
 
       - name: Calculate Word Count
         id: word_count
+        working-directory: docs/design-document
         run: |
-          WORDS=$(pdftotext docs/design-document/Final_Project_Team_3_Deliverable_1.pdf - | wc -w)
+          WORDS=$(pdftotext Final_Project_Team_3_Deliverable_1.pdf - | wc -w)
           echo "WORDS=$WORDS" >> $GITHUB_ENV
 
       - name: Configure Git
