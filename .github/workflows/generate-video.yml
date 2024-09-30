@@ -22,17 +22,19 @@ permissions:
   contents: write
   id-token: write
 
+env:
+  PACKAGES: packages-tex.txt
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
 jobs:
   check-pptx:
     runs-on: ubuntu-latest
     outputs:
       conversion_needed: ${{ steps.check.outputs.conversion_needed }}
       force_generate: ${{ inputs.force_generate }}
-    env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
           ref: main
           fetch-depth: 1
@@ -46,7 +48,7 @@ jobs:
           fi
 
       - name: Install Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.11"
 
@@ -72,27 +74,27 @@ jobs:
     needs: check-pptx
     if: needs.check-pptx.outputs.conversion_needed == 'true' || inputs.force_generate == 'true'
     runs-on: ubuntu-latest
-    env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
           ref: main
           fetch-depth: 1
           lfs: true
 
+      - name: Cache Apt Archives
+        uses: actions/cache@v3
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
+
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y install \
-              ffmpeg \
-              libreoffice \
-              poppler-utils \
-              bc
+          sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.11"
 

@@ -27,7 +27,7 @@ jobs:
       current_hash: ${{ steps.compute_hash.outputs.current_hash }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
           fetch-depth: 0
 
@@ -65,9 +65,15 @@ jobs:
     if: needs.check-tex.outputs.hash_changed == 'true'
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
         with:
           fetch-depth: 0
+
+      - name: Cache Apt Archives
+        uses: actions/cache@v3
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
 
       - name: Install System Dependencies
         run: |
@@ -132,7 +138,7 @@ jobs:
 
       - name: Repository Dispatch
         if: env.CHANGED == 'true'
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: aai540-group3/project

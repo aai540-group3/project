@@ -26,16 +26,11 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Cache Apt Packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      - name: Cache Apt Archives
+        uses: actions/cache@v3
         with:
-          path: |
-            /var/cache/apt/archives/*.deb
-            /var/lib/apt/lists/*
-            ! /var/lib/apt/lists/partial
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/package-deliverables.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
 
       - name: Install System Dependencies
         run: |
