@@ -6,11 +6,11 @@
 
 ## Date
 
-September 24, 2024
+September 30, 2024
 
 ## Project Name
 
-AAI-540 Final Project - Machine Learning System for Predicting Hospital Readmissions in Diabetic Patients
+Machine Learning System for Predicting Hospital Readmissions
 
 ---
 
@@ -36,38 +36,44 @@ AAI-540 Final Project - Machine Learning System for Predicting Hospital Readmiss
     - [2.6 Assumptions and Dependencies](#26-assumptions-and-dependencies)
   - [3. Specific Requirements](#3-specific-requirements)
     - [3.1 Functional Requirements](#31-functional-requirements)
-      - [3.1.1 Data Ingestion and Storage](#311-data-ingestion-and-storage)
-      - [3.1.2 Data Processing](#312-data-processing)
-      - [3.1.3 Feature Engineering](#313-feature-engineering)
-      - [3.1.4 Model Development](#314-model-development)
-      - [3.1.5 Model Evaluation](#315-model-evaluation)
-      - [3.1.6 Model Deployment](#316-model-deployment)
-      - [3.1.7 Model Monitoring](#317-model-monitoring)
-      - [3.1.8 CI/CD Pipeline](#318-cicd-pipeline)
-      - [3.1.9 Infrastructure Management](#319-infrastructure-management)
-      - [3.1.10 Security and Access Control](#3110-security-and-access-control)
-      - [3.1.11 Code Quality and Documentation](#3111-code-quality-and-documentation)
+      - [FR-1: Problem Definition](#fr-1-problem-definition)
+      - [FR-2: Impact Measurement](#fr-2-impact-measurement)
+      - [FR-3: Security and Ethical Compliance](#fr-3-security-and-ethical-compliance)
+      - [FR-4: Data Sources](#fr-4-data-sources)
+      - [FR-5: Data Engineering](#fr-5-data-engineering)
+      - [FR-6: Feature Engineering](#fr-6-feature-engineering)
+      - [FR-7: Model Training and Evaluation](#fr-7-model-training-and-evaluation)
+      - [FR-8: Model Deployment](#fr-8-model-deployment)
+      - [FR-9: Model Monitoring](#fr-9-model-monitoring)
+      - [FR-10: CI/CD Processes](#fr-10-cicd-processes)
+      - [FR-11: Documentation](#fr-11-documentation)
+      - [FR-12: Video Demonstration](#fr-12-video-demonstration)
+      - [FR-13: Video Outline or Transcript](#fr-13-video-outline-or-transcript)
+      - [FR-14: Codebase Requirements](#fr-14-codebase-requirements)
     - [3.2 Non-functional Requirements](#32-non-functional-requirements)
-      - [3.2.1 Performance Requirements](#321-performance-requirements)
-      - [3.2.2 Security Requirements](#322-security-requirements)
-      - [3.2.3 Usability Requirements](#323-usability-requirements)
-      - [3.2.4 Maintainability Requirements](#324-maintainability-requirements)
+      - [NFR-1: Performance](#nfr-1-performance)
+      - [NFR-2: Scalability](#nfr-2-scalability)
+      - [NFR-3: Reliability](#nfr-3-reliability)
+      - [NFR-4: Maintainability](#nfr-4-maintainability)
+      - [NFR-5: Usability](#nfr-5-usability)
+      - [NFR-6: Security](#nfr-6-security)
+      - [NFR-7: Compliance](#nfr-7-compliance)
+      - [NFR-8: Team Collaboration Efficiency](#nfr-8-team-collaboration-efficiency)
     - [3.3 External Interface Requirements](#33-external-interface-requirements)
-      - [3.3.1 User Interfaces](#331-user-interfaces)
-      - [3.3.2 Hardware Interfaces](#332-hardware-interfaces)
-      - [3.3.3 Software Interfaces](#333-software-interfaces)
-      - [3.3.4 Communications Interfaces](#334-communications-interfaces)
+      - [EIR-1: User Interfaces](#eir-1-user-interfaces)
+      - [EIR-2: Hardware Interfaces](#eir-2-hardware-interfaces)
+      - [EIR-3: Software Interfaces](#eir-3-software-interfaces)
+      - [EIR-4: Communications Interfaces](#eir-4-communications-interfaces)
   - [4. Project Deliverables](#4-project-deliverables)
-    - [4.1 Overview](#41-overview)
+    - [4.1 Deliverables Overview](#41-deliverables-overview)
     - [4.2 Deliverables List](#42-deliverables-list)
-    - [4.3 Deliverable Descriptions](#43-deliverable-descriptions)
       - [D-01: ML System Design Document](#d-01-ml-system-design-document)
       - [D-02: Video Demonstration](#d-02-video-demonstration)
-      - [D-03: Video Demonstration Outline/Transcript](#d-03-video-demonstration-outlinetranscript)
-      - [D-04: Codebase GitHub Repository](#d-04-codebase-github-repository)
+      - [D-03: Video Outline or Transcript](#d-03-video-outline-or-transcript)
+      - [D-04: Codebase Git Repository](#d-04-codebase-git-repository)
   - [5. Appendices](#5-appendices)
-    - [5.1 Appendix A: Glossary of Terms](#51-appendix-a-glossary-of-terms)
-    - [5.2 Appendix B: References](#52-appendix-b-references)
+    - [Appendix A: Glossary of Terms](#appendix-a-glossary-of-terms)
+    - [Appendix B: References](#appendix-b-references)
 
 ---
 
@@ -75,51 +81,34 @@ AAI-540 Final Project - Machine Learning System for Predicting Hospital Readmiss
 
 ### 1.1 Purpose
 
-The purpose of this Software Requirements Specification (SRS) document is to provide a detailed description of the requirements for the development of a machine learning system that predicts 30-day hospital readmissions among diabetic patients. This document outlines the system's functional and non-functional requirements, design constraints, and provides necessary information for the development and testing teams to understand the project's scope and objectives.
+The purpose of this Software Requirements Specification (SRS) document is to define the requirements for developing a machine learning (ML) system that predicts hospital readmissions. This system is intended for a team project as part of the AAI-540 course, focusing on applying machine learning operations (MLOps) practices to design and build a production-ready ML system.
 
 ### 1.2 Scope
 
-The system to be developed is a comprehensive machine learning pipeline that includes data ingestion, data engineering, feature engineering, model training, evaluation, deployment, and monitoring. The system aims to:
+The ML system aims to predict hospital readmissions by processing and analyzing medical data. The scope includes:
 
-- Predict the likelihood of 30-day hospital readmissions for diabetic patients.
-- Provide actionable insights to healthcare providers to reduce readmission rates.
-- Be scalable, maintainable, and adhere to MLOps best practices.
-
-The project includes the development of:
-
-- Data processing scripts.
-- Machine learning models using Scikit-learn and AutoGluon.
-- Deployment of models via Hugging Face Spaces.
-- CI/CD pipelines using GitHub Actions.
-- Model monitoring using DVCLive and DVC Studio.
-- Infrastructure management via Terraform.
+- Defining the ML problem and objectives.
+- Measuring the impact of the ML system.
+- Ensuring security, ethical considerations, and compliance.
+- Developing the ML pipeline, including data ingestion, data engineering, feature engineering, model training, evaluation, deployment, monitoring, and CI/CD processes.
+- Delivering required documentation and presentations as per course requirements.
 
 ### 1.3 Definitions, Acronyms, and Abbreviations
 
 - **ML**: Machine Learning
 - **MLOps**: Machine Learning Operations
+- **SRS**: Software Requirements Specification
 - **CI/CD**: Continuous Integration/Continuous Deployment
 - **API**: Application Programming Interface
-- **DVC**: Data Version Control
-- **DVCLive**: DVC Live Logging Library
-- **SRS**: Software Requirements Specification
-- **AWS**: Amazon Web Services
 
 ### 1.4 References
 
-- [IEEE Std 830-1998: IEEE Recommended Practice for Software Requirements Specifications](https://ieeexplore.ieee.org/document/720574)
-- [Scikit-learn Documentation](https://scikit-learn.org/stable/)
-- [AutoGluon Documentation](https://auto.gluon.ai/)
-- [Pandas Documentation](https://pandas.pydata.org/docs/)
-- [Hugging Face Datasets](https://huggingface.co/datasets/)
-- [Hugging Face Spaces](https://huggingface.co/spaces)
-- [DVC Documentation](https://dvc.org/doc)
-- [Terraform Documentation](https://www.terraform.io/docs/)
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- AAI-540 Course Materials and Project Requirements
+- IEEE Std 830-1998: IEEE Recommended Practice for Software Requirements Specifications
 
 ### 1.5 Overview
 
-This SRS document provides an in-depth look at the system to be developed, including its functionality, constraints, and requirements. It is structured to guide the development team through the project's needs and to ensure that all stakeholders have a clear understanding of the system's capabilities and limitations.
+This SRS document provides an overall description of the ML system, specific functional and non-functional requirements, deliverables, and appendices containing relevant information. It is intended to guide the development team in understanding the system requirements without specifying implementation details.
 
 ---
 
@@ -127,48 +116,46 @@ This SRS document provides an in-depth look at the system to be developed, inclu
 
 ### 2.1 Product Perspective
 
-The machine learning system is an independent project developed from scratch. It will leverage open-source technologies and align with MLOps best practices. The system addresses the problem of predicting 30-day hospital readmissions among diabetic patients, aiming to assist healthcare providers in making informed decisions to reduce readmission rates.
+The ML system is an independent project developed by a team of students as part of their coursework. It leverages MLOps practices to create a production-ready ML system that addresses the problem of predicting hospital readmissions.
 
 ### 2.2 Product Functions
 
-The system will perform the following functions:
-
-- **Data Ingestion**: Load datasets from Hugging Face Datasets and store them securely.
-- **Data Processing**: Clean and preprocess data using Pandas.
-- **Feature Engineering**: Generate new features to enhance model performance.
-- **Model Training**: Train models using Scikit-learn (Logistic Regression) and AutoGluon.
-- **Model Evaluation**: Evaluate models using standard metrics and visualizations.
-- **Model Deployment**: Deploy models as API endpoints using Hugging Face Spaces.
-- **Model Monitoring**: Monitor model performance using DVCLive and DVC Studio.
-- **CI/CD Pipeline**: Automate workflows using GitHub Actions.
-- **Infrastructure Management**: Use Terraform for infrastructure provisioning.
+- **Problem Definition**: Define the ML problem of hospital readmission prediction.
+- **Impact Measurement**: Establish metrics to measure the impact of the ML system.
+- **Security and Ethical Compliance**: Address security, bias, and ethical concerns.
+- **Data Ingestion**: Acquire and manage relevant datasets.
+- **Data Engineering**: Perform data cleaning and preprocessing.
+- **Feature Engineering**: Extract and create meaningful features.
+- **Model Training and Evaluation**: Train models and evaluate their performance.
+- **Model Deployment**: Deploy models for inference.
+- **Model Monitoring**: Monitor model performance over time.
+- **CI/CD Processes**: Implement automated integration and deployment pipelines.
 
 ### 2.3 User Classes and Characteristics
 
-- **Data Scientists**: Users who will develop and train machine learning models.
-- **ML Engineers**: Users responsible for deploying and maintaining the ML system's infrastructure.
-- **Healthcare Providers**: End-users who will utilize the predictions to improve patient care.
-- **Project Managers**: Users who will oversee project progress and ensure alignment with goals.
+- **Data Scientists**: Users who develop and validate ML models.
+- **ML Engineers**: Users responsible for deploying and maintaining the ML system.
+- **Healthcare Stakeholders**: Users who utilize the predictions to make informed decisions.
+- **Course Instructors**: Evaluators who assess the project's adherence to requirements.
 
 ### 2.4 Operating Environment
 
-- **Development Environment**: Local machines with Python 3.x and necessary libraries.
-- **Deployment Environment**: Hosted on cloud platforms like Hugging Face Spaces and AWS S3.
-- **Supported Operating Systems**: Linux, Windows, macOS.
+- **Development Environment**: Systems capable of supporting ML development tools and languages.
+- **Deployment Environment**: Platforms that can host the ML models and serve predictions.
+- **Data Storage Environment**: Secure storage solutions for datasets and artifacts.
 
 ### 2.5 Design and Implementation Constraints
 
-- **Programming Language**: Python 3.x.
-- **Libraries and Frameworks**: Pandas, Scikit-learn, AutoGluon, DVC, DVCLive.
-- **Tools**: Git, GitHub, GitHub Actions, Terraform, Codacy.
-- **Data Privacy**: Compliance with data protection regulations; use of anonymized data.
-- **Resource Limitations**: Use of AWS Free Tier services to minimize costs.
+- The system must comply with the course's project requirements and deadlines.
+- The team must collaborate effectively, with equitable contributions.
+- The system must be developed using appropriate open-source technologies.
+- Data sources must meet the specified size and quality criteria.
 
 ### 2.6 Assumptions and Dependencies
 
-- **Team Expertise**: Assumes team members are proficient in Python and familiar with ML tools.
-- **Data Availability**: Assumes access to the required datasets without restrictions.
-- **Third-Party Services**: Reliance on availability and stability of external services like GitHub, AWS, and Hugging Face.
+- The team has access to necessary computational resources and tools.
+- The datasets used are appropriate and available for use without restrictions.
+- Team members possess the required skills in ML and MLOps practices.
 
 ---
 
@@ -176,127 +163,132 @@ The system will perform the following functions:
 
 ### 3.1 Functional Requirements
 
-#### 3.1.1 Data Ingestion and Storage
+#### FR-1: Problem Definition
 
-- **FR-01**: The system shall ingest data from Hugging Face Datasets.
-- **FR-02**: The system shall store data securely in AWS S3.
+- **Requirement**: The system shall include a clearly defined problem statement that addresses hospital readmissions as an ML problem.
 
-#### 3.1.2 Data Processing
+#### FR-2: Impact Measurement
 
-- **FR-03**: The system shall perform data cleaning to handle missing values and duplicates.
-- **FR-04**: The system shall preprocess data for modeling using Pandas.
+- **Requirement**: The system shall define clear metrics and methodologies to measure the impact of the ML model on the stated goals.
 
-#### 3.1.3 Feature Engineering
+#### FR-3: Security and Ethical Compliance
 
-- **FR-05**: The system shall create new features to improve model performance.
-- **FR-06**: The system shall perform feature scaling and encoding using Scikit-learn.
+- **Requirement**: The system shall complete a security checklist and describe any risks related to sensitive data, bias, and ethical concerns.
 
-#### 3.1.4 Model Development
+#### FR-4: Data Sources
 
-- **FR-07**: The system shall train a Logistic Regression model using Scikit-learn.
-- **FR-08**: The system shall utilize AutoGluon for automated model training and selection.
+- **Requirement**: The system shall utilize data sources that meet the project's minimum dataset requirements, ensuring sufficient data to build an effective ML model.
 
-#### 3.1.5 Model Evaluation
+#### FR-5: Data Engineering
 
-- **FR-09**: The system shall evaluate models using metrics like accuracy, precision, recall, F1-score, and ROC-AUC.
-- **FR-10**: The system shall generate evaluation reports and visualizations.
+- **Requirement**: The system shall perform data cleaning, preprocessing, and transformation to prepare the data for modeling.
 
-#### 3.1.6 Model Deployment
+#### FR-6: Feature Engineering
 
-- **FR-11**: The system shall deploy models as real-time API endpoints using Hugging Face Spaces.
+- **Requirement**: The system shall perform feature engineering to enhance model performance by creating or selecting relevant features.
 
-#### 3.1.7 Model Monitoring
+#### FR-7: Model Training and Evaluation
 
-- **FR-12**: The system shall monitor model performance over time using DVCLive.
-- **FR-13**: The system shall track experiments and model versions using DVC and DVC Studio.
+- **Requirement**: The system shall train one or more ML models and evaluate their performance using appropriate evaluation metrics.
 
-#### 3.1.8 CI/CD Pipeline
+#### FR-8: Model Deployment
 
-- **FR-14**: The system shall implement CI/CD pipelines using GitHub Actions.
-- **FR-15**: The system shall automate testing, building, and deployment processes.
+- **Requirement**: The system shall deploy the trained ML model for inference, making it accessible for predictions.
 
-#### 3.1.9 Infrastructure Management
+#### FR-9: Model Monitoring
 
-- **FR-16**: The system shall use Terraform scripts to provision and manage infrastructure.
+- **Requirement**: The system shall implement model monitoring to track performance over time and detect issues such as data drift or degradation.
 
-#### 3.1.10 Security and Access Control
+#### FR-10: CI/CD Processes
 
-- **FR-17**: The system shall manage secrets using GitHub Secrets.
-- **FR-18**: The system shall restrict data and resource access to authorized users only.
+- **Requirement**: The system shall implement Continuous Integration and Continuous Deployment pipelines to automate building, testing, and deployment processes.
 
-#### 3.1.11 Code Quality and Documentation
+#### FR-11: Documentation
 
-- **FR-19**: The system shall enforce code quality standards using tools like Codacy, Flake8, and Pylint.
-- **FR-20**: The system shall include comprehensive documentation, including an ML System Design Document.
+- **Requirement**: The team shall produce an ML System Design Document that includes detailed descriptions of each component of the system.
+
+#### FR-12: Video Demonstration
+
+- **Requirement**: The team shall prepare a 10-15 minute video that demonstrates the system's operation, including introductions, architecture diagrams, component demonstrations, and discussions of future improvements.
+
+#### FR-13: Video Outline or Transcript
+
+- **Requirement**: The team shall provide an outline, slide notes, or transcript accompanying the video demonstration.
+
+#### FR-14: Codebase Requirements
+
+- **Requirement**: The system's codebase shall be stored in a Git repository in a clean and professional manner, including all necessary code, data documentation, and visualizations.
 
 ### 3.2 Non-functional Requirements
 
-#### 3.2.1 Performance Requirements
+#### NFR-1: Performance
 
-- **NFR-01**: The system shall provide predictions within acceptable timeframes for real-time use.
-- **NFR-02**: The system shall efficiently handle the processing of large datasets.
+- **Requirement**: The system shall provide predictions within acceptable timeframes suitable for practical use.
 
-#### 3.2.2 Security Requirements
+#### NFR-2: Scalability
 
-- **NFR-03**: The system shall ensure data privacy and comply with relevant regulations.
-- **NFR-04**: The system shall protect against unauthorized access and data breaches.
+- **Requirement**: The system shall be scalable to handle increasing data volumes and user demands without significant performance degradation.
 
-#### 3.2.3 Usability Requirements
+#### NFR-3: Reliability
 
-- **NFR-05**: The system shall provide clear and comprehensive documentation for users and developers.
-- **NFR-06**: The deployed APIs shall have well-defined interfaces and documentation.
+- **Requirement**: The system shall be reliable, exhibiting minimal downtime and consistent operation.
 
-#### 3.2.4 Maintainability Requirements
+#### NFR-4: Maintainability
 
-- **NFR-07**: The system's codebase shall be modular to facilitate easy updates and maintenance.
-- **NFR-08**: The system shall include automated tests to detect regressions.
+- **Requirement**: The system shall be maintainable, with well-organized and documented code to facilitate updates and troubleshooting.
+
+#### NFR-5: Usability
+
+- **Requirement**: The system shall provide clear interfaces and documentation to ensure ease of use for intended users.
+
+#### NFR-6: Security
+
+- **Requirement**: The system shall ensure the security of data and models, adhering to best practices for data protection and privacy.
+
+#### NFR-7: Compliance
+
+- **Requirement**: The system shall comply with all relevant legal and ethical standards, including data privacy regulations.
+
+#### NFR-8: Team Collaboration Efficiency
+
+- **Requirement**: The team shall demonstrate effective collaboration, using tools to manage workflows, communicate progress, and ensure equitable contributions.
 
 ### 3.3 External Interface Requirements
 
-#### 3.3.1 User Interfaces
+#### EIR-1: User Interfaces
 
-- The system shall not require a graphical user interface but should provide command-line tools and scripts for interaction.
+- **Requirement**: The system shall provide appropriate user interfaces (e.g., APIs, dashboards) for users to interact with the ML model and access predictions.
 
-#### 3.3.2 Hardware Interfaces
+#### EIR-2: Hardware Interfaces
 
-- The system shall operate on standard hardware capable of running Python and the necessary libraries.
+- **Requirement**: The system shall operate on standard hardware used by the development team and end-users, without requiring specialized equipment.
 
-#### 3.3.3 Software Interfaces
+#### EIR-3: Software Interfaces
 
-- The system shall interface with external services such as AWS S3, GitHub, and Hugging Face Spaces through their APIs.
+- **Requirement**: The system shall interface with necessary software platforms and services required for operation, such as data storage solutions and deployment platforms.
 
-#### 3.3.4 Communications Interfaces
+#### EIR-4: Communications Interfaces
 
-- The system shall use secure protocols (e.g., HTTPS) for all network communications.
+- **Requirement**: The system shall utilize secure communication protocols for any data transmission to ensure data integrity and confidentiality.
 
 ---
 
 ## 4. Project Deliverables
 
-### 4.1 Overview
+### 4.1 Deliverables Overview
 
-The project includes several deliverables that demonstrate the system's capabilities and ensure compliance with course requirements. These deliverables include documentation, demonstration materials, and the complete codebase.
+The project requires several deliverables that demonstrate the system's design, functionality, and adherence to project requirements.
 
 ### 4.2 Deliverables List
 
-| **ID** | **Deliverable**                               | **Description**                                                                               |
-|--------|-----------------------------------------------|-----------------------------------------------------------------------------------------------|
-| D-01   | ML System Design Document                     | A comprehensive document detailing the system's design, implementation, and analysis.         |
-| D-02   | Video Demonstration                           | A 10-15 minute video showcasing the system's operation, architecture, and components.         |
-| D-03   | Video Demonstration Outline/Transcript        | An outline, slide notes, or transcript accompanying the video demonstration.                 |
-| D-04   | Codebase GitHub Repository                    | A professional and well-documented codebase stored on GitHub.                                 |
-
-### 4.3 Deliverable Descriptions
-
 #### D-01: ML System Design Document
 
-**Description:**
+- **Description**: A comprehensive document that includes:
 
-- A finalized document that includes:
-  - **Problem Statement:** Clearly defined machine learning problem.
-  - **Impact Measurement:** Description of how the project's impact will be measured.
-  - **Security Checklist and Risk Analysis:** Addressing sensitive data, bias, and ethical concerns.
-  - **Solution Overview:** Detailed explanation of implementation, including:
+  - A clearly defined problem statement.
+  - A description of how the impact will be measured, tied to project goals.
+  - Completion of a security checklist and description of any risks related to sensitive data, bias, and ethical concerns.
+  - Detailed descriptions of each component of the solution, including:
     - Data Sources
     - Data Engineering
     - Feature Engineering
@@ -305,74 +297,50 @@ The project includes several deliverables that demonstrate the system's capabili
     - Model Monitoring
     - CI/CD Processes
 
-**Requirements Met:**
-
-- **FR-20**: Inclusion of comprehensive documentation.
-- Supports communication with stakeholders and provides a technical reference.
-
 #### D-02: Video Demonstration
 
-**Description:**
+- **Description**: A 10-15 minute video presentation that includes:
 
-- A 10-15 minute video that includes:
-  - Introduction to the business use case.
-  - Architecture diagrams explaining the system design.
+  - Introduction of the business use case.
+  - Architecture diagrams of the system.
   - Demonstration of system components in action.
-  - Discussion of future improvements and challenges.
-  - Demonstration of:
+  - Discussion of future improvements, challenges, and potential risks.
+  - Demonstrations of:
     - Feature store and feature groups.
     - Infrastructure monitoring dashboards.
-    - Model and data monitoring reports.
-    - CI/CD pipeline in successful and failed states.
+    - Model or data monitoring reports.
+    - CI/CD pipeline in a successful and failed state.
     - Model registry.
-    - Outputs of batch inference jobs or endpoint invocation.
+    - Outputs of batch inference job or endpoint invocation.
 
-#### D-03: Video Demonstration Outline/Transcript
+#### D-03: Video Outline or Transcript
 
-**Description:**
+- **Description**: An outline, slide notes, or transcript that accompanies the video demonstration.
 
-- An accompanying document to the video that includes:
-  - Outline of the video content.
-  - Slide notes, if used.
-  - Transcript of the narration.
+#### D-04: Codebase Git Repository
 
-**Requirements Met:**
-
-- Enhances accessibility and provides a reference for the demonstration.
-- Supports evaluation and review processes.
-
-#### D-04: Codebase GitHub Repository
-
-**Description:**
-
-- A clean, organized, and professional repository that includes:
-  - All source code, stored in appropriate formats (e.g., `.py`, `.ipynb`).
-  - Documentation and comments within the code.
-  - Data storage details and instructions.
-  - Graphs and visualizations included within notebooks.
-  - Clear commit history demonstrating team contributions.
-
-**Requirements Met:**
-
-- **FR-12**: Use of Git and GitHub for version control.
-- **FR-19**: Code quality standards enforcement.
-- **NFR-07**: Maintainability through modular code and documentation.
+- **Description**: A Git repository containing the system's codebase, which must:
+  - Store all code in a clean and professional manner, with notebooks in `.ipynb` format if used.
+  - Include clean code with useful comments, focusing on the project goals.
+  - Document data storage solutions (e.g., S3 or repository).
+  - Include graphics, such as charts or graphs, within notebooks to explain the data.
+  - Reflect a comprehensive and complete ML system codebase.
+  - Align with the ML System Design Document.
+  - Demonstrate team contributions with a clear commit history.
 
 ---
 
 ## 5. Appendices
 
-### 5.1 Appendix A: Glossary of Terms
+### Appendix A: Glossary of Terms
 
-- **AutoGluon**: An open-source AutoML toolkit for automated machine learning.
-- **AWS S3**: Amazon Web Services Simple Storage Service for scalable cloud storage.
-- **Codacy**: A tool for automated code quality reviews and code analysis.
-- **Flake8**: A tool for style guide enforcement and linting in Python.
-- **Hugging Face**: A company providing open-source libraries for natural language processing.
-- **Pylint**: A source-code, bug and quality checker for Python.
-- **Terraform**: An infrastructure as code software tool for building, changing, and versioning infrastructure safely and efficiently.
+- **Git**: A distributed version control system for tracking changes in source code.
+- **GitHub**: A web-based interface for Git that provides collaboration and code repository hosting.
+- **S3**: Amazon Simple Storage Service, an object storage service.
+- **CI/CD Pipeline**: A set of processes that automate the integration and deployment of code changes.
 
-### 5.2 Appendix B: References
+### Appendix B: References
 
-- [IEEE Std 830-1998](https://ieeexplore.ieee.org/document/720574)
-- [AAI-540 Course Materials and Project Requirements](#)
+- AAI-540 Course Materials and Requirements
+- IEEE Std 830-1998: IEEE Recommended Practice for Software Requirements Specifications
+- Turnitin Guidelines for Assignment Submission
