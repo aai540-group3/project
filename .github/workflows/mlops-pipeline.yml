@@ -113,15 +113,17 @@ jobs:
         if: always()
         run: dvc push
 
-      - name: Push to Git Remote
-        if: always()
-        id: commit_and_push
-        continue-on-error: true
+      - name: Configure Git
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git config pull.rebase false
 
+      - name: Push to Git Remote
+        if: always()
+        id: commit_and_push
+        continue-on-error: true
+        run: |
           [ -f dvc.lock ] && git add dvc.lock
           [ -d dvclive ] && git add dvclive
           [ -d dvclive_evaluate ] && git add dvclive_evaluate
