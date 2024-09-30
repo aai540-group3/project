@@ -42,15 +42,7 @@ COMMENT_SYNTAX: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "autohotkey": {"start": ";", "end": "", "extensions": {"ahk", "au3"}},
     "basic": {"start": "'", "end": "", "extensions": {"vb", "vbs", "bas"}},
     "batch": {"start": "REM", "end": "", "extensions": {"bat", "cmd"}},
-    "c_style": {
-        "start": "//",
-        "end": "",
-        "extensions": {
-            "c", "h", "i", "cpp", "cc", "cxx", "c++", "hpp", "hxx", "h++", "hh", "ii", "m", "mm",
-            "cs", "java", "scala", "kt", "kts", "go", "rs", "rlib", "swift", "d", "di", "js",
-            "jsx", "mjs", "cjs", "ts", "tsx"
-        },
-    },
+    "c_style": {"start": "//", "end": "", "extensions": {"c", "h", "i", "cpp", "cc", "cxx", "c++", "hpp", "hxx", "h++", "hh", "ii", "m", "mm", "cs", "java", "scala", "kt", "kts", "go", "rs", "rlib", "swift", "d", "di", "js", "jsx", "mjs", "cjs", "ts", "tsx"}},
     "clojure": {"start": ";", "end": "", "extensions": {"clj", "cljs", "cljc", "edn"}},
     "css_style": {"start": "/*", "end": "*/", "extensions": {"css", "scss", "sass", "less"}},
     "data_formats": {"start": "#", "end": "", "extensions": {"yaml", "yml", "toml"}},
@@ -58,14 +50,7 @@ COMMENT_SYNTAX: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "erlang": {"start": "%", "end": "", "extensions": {"erl", "hrl"}},
     "fortran": {"start": "!", "end": "", "extensions": {"f", "f77", "f90", "f95", "f03", "f08"}},
     "haskell": {"start": "--", "end": "", "extensions": {"hs", "lhs"}},
-    "html_style": {
-        "start": "<!--",
-        "end": "-->",
-        "extensions": {
-            "html", "htm", "xhtml", "shtml", "xml", "svg", "xsl", "xslt", "rss", "atom", "ejs",
-            "hbs", "mustache", "handlebars"
-        },
-    },
+    "html_style": {"start": "<!--", "end": "-->", "extensions": {"html", "htm", "xhtml", "shtml", "xml", "svg", "xsl", "xslt", "rss", "atom", "ejs", "hbs", "mustache", "handlebars"}},
     "ini_style": {"start": ";", "end": "", "extensions": {"ini", "cfg", "conf"}},
     "json_style": {"start": "//", "end": "", "extensions": {"json", "jsonc", "json5"}},
     "latex": {"start": "%", "end": "", "extensions": {"tex", "sty", "cls", "dtx", "ins"}},
@@ -73,19 +58,8 @@ COMMENT_SYNTAX: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "markup": {"start": "<!--", "end": "-->", "extensions": {"md", "markdown", "mdown", "mkdn"}},
     "powershell": {"start": "#", "end": "", "extensions": {"ps1", "psm1", "psd1"}},
     "r": {"start": "#", "end": "", "extensions": {"r", "R", "Rmd"}},
-    "scripting_languages": {
-        "start": "#",
-        "end": "",
-        "extensions": {
-            "py", "pyw", "pyc", "pyo", "pyd", "pyi", "pyx", "pxd", "pxi",
-            "rb", "rbw", "rake", "gemspec", "pl", "pm", "t", "pod"
-        },
-    },
-    "shell_scripts": {
-        "start": "#",
-        "end": "",
-        "extensions": {"sh", "bash", "zsh", "fish", "ksh", "csh", "tcsh", "ash", "dash", "xonsh"},
-    },
+    "scripting_languages": {"start": "#", "end": "", "extensions": {"py", "pyw", "pyc", "pyo", "pyd", "pyi", "pyx", "pxd", "pxi", "rb", "rbw", "rake", "gemspec", "pl", "pm", "t", "pod"}},
+    "shell_scripts": {"start": "#", "end": "", "extensions": {"sh", "bash", "zsh", "fish", "ksh", "csh", "tcsh", "ash", "dash", "xonsh"}},
     "sql": {"start": "--", "end": "", "extensions": {"sql", "mysql", "pgsql", "plsql"}},
     "tcl": {"start": "#", "end": "", "extensions": {"tcl", "tk", "itcl", "itk"}},
     "vim": {"start": '"', "end": "", "extensions": {"vim"}},
@@ -262,13 +236,9 @@ def generate_tree_structure(
         connector = "└── " if is_last_entry else "├── "
 
         relative_path = entry.relative_to(parent_dir)
-        if entry.is_dir() and should_exclude_directory(
-            entry.name, relative_path, exclude_folders, exclude_folderpaths
-        ):
+        if entry.is_dir() and should_exclude_directory(entry.name, relative_path, exclude_folders, exclude_folderpaths):
             continue
-        if entry.is_file() and should_exclude_file(
-            entry.name, entry, exclude_files, exclude_patterns, sys.maxsize
-        ):
+        if entry.is_file() and should_exclude_file(entry.name, entry, exclude_files, exclude_patterns, sys.maxsize):
             continue
 
         output.append(f"{prefix}{connector}{entry.name}")
@@ -421,9 +391,7 @@ def main():
 
                 for file_name in files:
                     file_path = current_path / file_name
-                    if not should_exclude_file(
-                        file_name, file_path, exclude_files, compiled_patterns, args.max_file_size
-                    ):
+                    if not should_exclude_file(file_name, file_path, exclude_files, compiled_patterns, args.max_file_size):
                         process_file(file_path, outfile, parent_dir)
 
         logger.info(f"File concatenation complete. Output saved to {output_file}")

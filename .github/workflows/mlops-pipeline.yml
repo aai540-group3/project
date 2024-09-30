@@ -69,7 +69,7 @@ jobs:
           pip install -r requirements-pipeline.txt
 
       - uses: iterative/setup-cml@f12ea7685438c1fc438d50f77519b3860cf5fa98 # v2.0.1
-      - uses: iterative/setup-dvc@68c55926a8ce27c2d4fcf7db61149ee64cf4eeb9 # 68c55926a8ce27c2d4fcf7db61149ee64cf4eeb9
+      - uses: iterative/setup-dvc@68c55926a8ce27c2d4fcf7db61149ee64cf4eeb9 # v1
 
       - name: Configure DVC
         run: |
