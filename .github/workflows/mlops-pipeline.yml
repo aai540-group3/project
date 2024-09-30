@@ -131,36 +131,8 @@ jobs:
           else
             git commit -m "Update DVC artifacts and metrics"
             git pull origin main
-            git push origin main
-          fi
-
-      - name: Create Pull Request if push failed
-        if: failure() && steps.commit_and_push.outcome == 'failure'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git config pull.rebase false
-
-          NEW_BRANCH="auto/update-dvc-artifacts-${{ github.run_id }}"
-          git checkout -b $NEW_BRANCH
-
-          [ -f dvc.lock ] && git add dvc.lock
-          [ -d dvclive ] && git add dvclive
-          [ -d dvclive_evaluate ] && git add dvclive_evaluate
-          [ -f reports/metrics.json ] && git add reports/metrics.json
-
-          if git diff --staged --quiet; then
-            echo "No changes to commit. Skipping PR creation."
-          else
-            git commit -m "Update DVC artifacts and metrics"
-            git push origin $NEW_BRANCH
-
-            gh pr create \
-              --title "Update DVC artifacts and metrics" \
-              --body "This PR updates the DVC artifacts and metrics." \
-              --label "automated-pr" \
-              --base ${{ github.ref_name }} \
-              --head $NEW_BRANCH
+            git push origin main || {
+              echo "Push failed. Creating a pull request..."
+              gh pr create --title "Update DVC artifacts and metrics" --body "This PR updates the DVC artifacts and metrics. This PR was automatically created because the push to main failed." --label "automated-pr"
+            }
           fi

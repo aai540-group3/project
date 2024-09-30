@@ -104,8 +104,11 @@ jobs:
           else
             git commit -m "$DURATION out of 15 minutes"
             git pull origin main
-            git push origin main
-            echo "Changes committed and pushed successfully."
+            git push origin main || {
+              echo "Push failed. Creating a pull request..."
+              gh pr create --title "Automated Pull Request" --body "This pull request was automatically created because the push to main failed."
+            }
+            echo "Changes committed and pushed successfully (or pull request created)."
           fi
 
       - name: Repository Dispatch
