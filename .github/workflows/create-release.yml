@@ -3,9 +3,6 @@ on:
   repository_dispatch:
     types:
       - create-release
-  push:
-    paths:
-      - ".github/workflows/generate-pdfs.yml"
   workflow_dispatch:
     inputs:
       bump_type:
@@ -31,12 +28,12 @@ jobs:
       attestations: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@v4.2.0
         with:
           fetch-depth: 0
 
       - name: Cache Apt Packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@v4.0.2
         with:
           path: |
             /var/cache/apt/archives/*.deb
@@ -55,30 +52,41 @@ jobs:
       - name: Calculate Hashes of Deliverables
         id: calculate_hashes
         run: |
-          echo "deliverable1_hash=$(sha256sum Final_Project_Team_3_Deliverable_1.pdf | awk '{print $1}')" >> $GITHUB_ENV
-          echo "deliverable2_hash=$(sha256sum Final_Project_Team_3_Deliverable_2.mp4 | awk '{print $1}')" >> $GITHUB_ENV
-          echo "deliverable3_hash=$(sha256sum Final_Project_Team_3_Deliverable_3.zip | awk '{print $1}')" >> $GITHUB_ENV
+          echo "Calculating hashes of deliverables..."
+          deliverable1_hash=$(sha256sum Final_Project_Team_3_Deliverable_1.pdf | awk '{print $1}')
+          deliverable2_hash=$(sha256sum Final_Project_Team_3_Deliverable_2.mp4 | awk '{print $1}')
+          deliverable3_hash=$(sha256sum Final_Project_Team_3_Deliverable_3.zip | awk '{print $1}')
+          echo "deliverable1_hash=$deliverable1_hash" >> $GITHUB_ENV
+          echo "deliverable2_hash=$deliverable2_hash" >> $GITHUB_ENV
+          echo "deliverable3_hash=$deliverable3_hash" >> $GITHUB_ENV
 
       - name: Check if Deliverables Changed
         id: check_changes
         if: env.latest_release_tag != ''
         run: |
+          echo "Fetching hashes from the latest release..."
           latest_deliverable1_hash=$(gh release view $latest_release_tag --json assets | jq -r '.assets[] | select(.name=="Final_Project_Team_3_Deliverable_1.pdf").label')
           latest_deliverable2_hash=$(gh release view $latest_release_tag --json assets | jq -r '.assets[] | select(.name=="Final_Project_Team_3_Deliverable_2.mp4").label')
           latest_deliverable3_hash=$(gh release view $latest_release_tag --json assets | jq -r '.assets[] | select(.name=="Final_Project_Team_3_Deliverable_3.zip").label')
 
-          if [ "$deliverable1_hash" == "$latest_deliverable1_hash" ] && \
-             [ "$deliverable2_hash" == "$latest_deliverable2_hash" ] && \
-             [ "$deliverable3_hash" == "$latest_deliverable3_hash" ]; then
+          # Ensure that variables are set
+          if [ -z "$latest_deliverable1_hash" ] || [ -z "$latest_deliverable2_hash" ] || [ -z "$latest_deliverable3_hash" ]; then
+            echo "One or more previous hashes are missing. Assuming changes."
+            echo "changed=true" >> $GITHUB_ENV
+          elif [ "$deliverable1_hash" = "$latest_deliverable1_hash" ] && \
+               [ "$deliverable2_hash" = "$latest_deliverable2_hash" ] && \
+               [ "$deliverable3_hash" = "$latest_deliverable3_hash" ]; then
+            echo "No changes detected in deliverables."
             echo "changed=false" >> $GITHUB_ENV
           else
+            echo "Changes detected in deliverables."
             echo "changed=true" >> $GITHUB_ENV
           fi
 
       - name: Bump Version
         id: tag_version
         if: env.changed == 'true' || env.latest_release_tag == ''
-        uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297 # 1.71.0
+        uses: anothrNick/github-tag-action@1.71.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: ${{ github.event.inputs.bump_type || 'minor' }}
@@ -87,7 +95,7 @@ jobs:
 
       - name: Generate SBOM
         if: env.changed == 'true' || env.latest_release_tag == ''
-        uses: anchore/sbom-action@61119d458adab75f756bc0b9e4bde25725f86a7a # v0.17.2
+        uses: anchore/sbom-action@v0.17.2
         with:
           format: cyclonedx-json
           output-file: sbom.json
@@ -95,7 +103,7 @@ jobs:
       - name: Generate Attestations
         id: attestation
         if: env.changed == 'true' || env.latest_release_tag == ''
-        uses: actions/attest@67422f5511b7ff725f4dbd6fb9bd2cd925c65a8d # v1.4.1
+        uses: actions/attest@v1.4.1
         with:
           show-summary: true
           subject-path: |
@@ -130,7 +138,7 @@ jobs:
       - name: Release
         id: create_release
         if: env.changed == 'true' || env.latest_release_tag == ''
-        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
+        uses: softprops/action-gh-release@v2.0.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -138,9 +146,9 @@ jobs:
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
           generate_release_notes: true
           files: |
-            Final_Project_Team_3_Deliverable_1.pdf
-            Final_Project_Team_3_Deliverable_2.mp4
-            Final_Project_Team_3_Deliverable_3.zip
+            Final_Project_Team_3_Deliverable_1.pdf#${{ env.deliverable1_hash }}
+            Final_Project_Team_3_Deliverable_2.mp4#${{ env.deliverable2_hash }}
+            Final_Project_Team_3_Deliverable_3.zip#${{ env.deliverable3_hash }}
             sbom.json
             ${{ steps.attestation.outputs.bundle-path }}
           body_path: templates/RELEASE.md
