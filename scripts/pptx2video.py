@@ -12,7 +12,7 @@ This script converts a PowerPoint presentation (.pptx) into a video (.mp4) by:
 The process is idempotent and utilizes both asynchronous and parallel processing to improve performance.
 
 Usage:
-    python pptx2video.py <presentation.pptx>
+    python pptx2video.py <presentation.pptx> [--force]
 
 Requirements:
     - Python 3.7+
@@ -93,8 +93,15 @@ def convert_slide_to_image(args) -> Tuple[str, Optional[str], int]:
     :param args: Tuple containing pdf_filename, output_dir, and slide index i.
     :return: Tuple of (image_path, image_hash, slide index)
     """
-    pdf_filename, output_dir, i = args
+    pdf_filename, output_dir, i, force_flag = args
     image_path = os.path.join(output_dir, f"slide_{i}.png")
+    if not force_flag and os.path.exists(image_path):
+        # Image already exists and force_flag is not set
+        with open(image_path, 'rb') as f:
+            image_hash = hashlib.sha256(f.read()).hexdigest()
+        logger.info(f"Image for slide {i+1} exists, skipping conversion")
+        return image_path, image_hash, i
+
     try:
         images = pdf2image.convert_from_path(pdf_filename, first_page=i + 1, last_page=i + 1, dpi=300)
         if images:
@@ -112,7 +119,7 @@ def convert_slide_to_image(args) -> Tuple[str, Optional[str], int]:
     return image_path, image_hash, i
 
 
-async def generate_audio_for_slide(text: str, text_hash: str, output_dir: str, i: int, api_key: str, state: dict) -> Optional[str]:
+async def generate_audio_for_slide(text: str, text_hash: str, output_dir: str, i: int, api_key: str, state: dict, force_flag: bool) -> Optional[str]:
     """Generate audio for a single slide using the TTS function.
 
     :param text: Text to convert to speech.
@@ -121,10 +128,11 @@ async def generate_audio_for_slide(text: str, text_hash: str, output_dir: str, i
     :param i: Slide index.
     :param api_key: OpenAI API key.
     :param state: State dictionary to track progress.
+    :param force_flag: If True, forces regeneration of the audio.
     :return: Path to the generated audio file, or None if generation fails.
     """
     slide_audio_filename = os.path.join(output_dir, f"voice_{i}.mp3")
-    if state["slide_hashes"].get(str(i)) == text_hash and os.path.exists(slide_audio_filename):
+    if not force_flag and state["slide_hashes"].get(str(i)) == text_hash and os.path.exists(slide_audio_filename):
         logger.info(f"Audio for slide {i+1} is up to date, skipping generation")
         return slide_audio_filename
     if not text.strip():
@@ -146,15 +154,19 @@ async def generate_audio_for_slide(text: str, text_hash: str, output_dir: str, i
 def create_video_for_slide(args) -> Optional[str]:
     """Create a video for a single slide by combining image and audio.
 
-    :param args: Tuple containing image_file, audio_file, output_dir, slide index i.
+    :param args: Tuple containing image_file, audio_file, output_dir, slide index i, slide_content_hash, force_flag.
     :return: Path to the generated video file.
     """
-    image_file, audio_file, output_dir, i, _ = args
+    image_file, audio_file, output_dir, i, slide_content_hash, force_flag = args
     slide_video_filename = os.path.join(output_dir, f"video_{i}.mp4")
+
+    if not force_flag and os.path.exists(slide_video_filename):
+        logger.info(f"Video for slide {i+1} exists, skipping creation")
+        return slide_video_filename
 
     logger.info(f"Creating video for slide {i+1}")
     with Image.open(image_file) as img:
-        width, _ = img.size
+        width, height = img.size
     adjusted_width = width if width % 2 == 0 else width - 1
 
     if audio_file and os.path.exists(audio_file):
@@ -214,12 +226,14 @@ def create_video_for_slide(args) -> Optional[str]:
 class PPTXtoVideo:
     """A class to convert a PowerPoint presentation to a video using OpenAI TTS and FFmpeg."""
 
-    def __init__(self, pptx_filename: str):
+    def __init__(self, pptx_filename: str, force_flag: bool = False):
         """Initialize the PPTXtoVideo instance.
 
         :param pptx_filename: The path to the PowerPoint (.pptx) file.
+        :param force_flag: If True, forces regeneration of all resources.
         """
         self.pptx_filename = pptx_filename
+        self.force_flag = force_flag
         self.pptx_hash = self._compute_file_hash(pptx_filename)
         self.output_dir = os.path.join(os.getcwd(), "video-assets")
         os.makedirs(self.output_dir, exist_ok=True)
@@ -296,9 +310,7 @@ class PPTXtoVideo:
 
     def _convert_to_pdf(self):
         """Converts the .pptx file to a .pdf file using LibreOffice."""
-
-        # Check if PDF already exists and if PPTX hash matches
-        if self.state.get("pdf_created") and os.path.exists(self.pdf_filename):
+        if not self.force_flag and self.state.get("pdf_created", False) and os.path.exists(self.pdf_filename):
             logger.info(f"PDF is up to date, skipping conversion")
             return
 
@@ -336,6 +348,10 @@ class PPTXtoVideo:
 
     def is_conversion_needed(self) -> bool:
         """Check if conversion is needed based on PPTX hash and final video hash."""
+        if self.force_flag:
+            logger.info("Force flag is set, reprocessing all resources")
+            return True
+
         # Compute current final video hash
         slide_indices = sorted([int(i) for i in self.state.get("slide_content_hashes", {}).keys()])
         concatenated_hash = ''.join([self.state["slide_content_hashes"].get(str(i), '') for i in slide_indices])
@@ -362,8 +378,8 @@ class PPTXtoVideo:
             image_file = os.path.join(self.output_dir, f"slide_{i}.png")
             image_files.append(image_file)
             str_i = str(i)
-            if not os.path.exists(image_file):
-                images_to_generate.append((self.pdf_filename, self.output_dir, i))
+            if not os.path.exists(image_file) or self.force_flag:
+                images_to_generate.append((self.pdf_filename, self.output_dir, i, self.force_flag))
             else:
                 # Compute image hash for existing image
                 with open(image_file, 'rb') as f:
@@ -399,13 +415,13 @@ class PPTXtoVideo:
             audio_files.append(audio_file)
 
             # Check if audio needs to be regenerated
-            if self.state["slide_hashes"].get(str(i)) == text_hash and os.path.exists(audio_file):
+            if not self.force_flag and self.state["slide_hashes"].get(str(i)) == text_hash and os.path.exists(audio_file):
                 logger.info(f"Audio for slide {i + 1} is up to date, skipping generation")
                 continue
 
             # Limit the number of concurrent API calls
             task = asyncio.create_task(
-                generate_audio_for_slide(text, text_hash, self.output_dir, i, self.api_key, self.state)
+                generate_audio_for_slide(text, text_hash, self.output_dir, i, self.api_key, self.state, self.force_flag)
             )
             tasks.append(task)
 
@@ -430,11 +446,11 @@ class PPTXtoVideo:
             slide_content_hash = hashlib.sha256((slide_notes_hash + slide_image_hash).encode()).hexdigest()
             prev_slide_content_hash = self.state["slide_content_hashes"].get(str_i)
             video_file = os.path.join(self.output_dir, f"video_{i}.mp4")
-            if prev_slide_content_hash == slide_content_hash and os.path.exists(video_file):
+            if not self.force_flag and prev_slide_content_hash == slide_content_hash and os.path.exists(video_file):
                 logger.info(f"Video for slide {i + 1} is up to date, skipping")
                 self.video_files.append(video_file)
                 continue
-            video_creation_args.append((image_file, audio_file, self.output_dir, i, slide_content_hash))
+            video_creation_args.append((image_file, audio_file, self.output_dir, i, slide_content_hash, self.force_flag))
 
         if video_creation_args:
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
@@ -470,7 +486,7 @@ class PPTXtoVideo:
         slide_indices = sorted([int(i) for i in self.state.get("slide_content_hashes", {}).keys()])
         concatenated_hash = ''.join([self.state["slide_content_hashes"][str(i)] for i in slide_indices])
         final_video_hash = hashlib.sha256(concatenated_hash.encode()).hexdigest()
-        if self.state.get("final_video_hash") == final_video_hash and os.path.exists(self.output_file):
+        if not self.force_flag and self.state.get("final_video_hash") == final_video_hash and os.path.exists(self.output_file):
             logger.info(f"Final video is up to date, skipping combination")
             return
 
@@ -508,9 +524,8 @@ class PPTXtoVideo:
         """Converts the PowerPoint presentation to a video."""
         logger.info(f"Starting conversion of {self.pptx_filename}")
 
-        # Update PPTX hash in state
-        if self.state.get("pptx_hash") != self.pptx_hash:
-            logger.info("PPTX file has changed, resetting state")
+        if self.force_flag:
+            logger.info("Force flag detected, resetting state")
             self.state = {
                 "pptx_hash": self.pptx_hash,
                 "pdf_created": False,
@@ -519,7 +534,22 @@ class PPTXtoVideo:
                 "slide_content_hashes": {},
                 "final_video_hash": "",
             }
+            self.state_changed = True
             self._save_state()
+        else:
+            # Update PPTX hash in state
+            if self.state.get("pptx_hash") != self.pptx_hash:
+                logger.info("PPTX file has changed, resetting state")
+                self.state = {
+                    "pptx_hash": self.pptx_hash,
+                    "pdf_created": False,
+                    "slide_hashes": {},
+                    "slide_image_hashes": {},
+                    "slide_content_hashes": {},
+                    "final_video_hash": "",
+                }
+                self.state_changed = True
+                self._save_state()
 
         if not self.is_conversion_needed():
             return
@@ -533,11 +563,12 @@ async def main():
     """Main function to parse arguments and execute conversion."""
     parser = argparse.ArgumentParser(description="Convert a PowerPoint presentation to a video using OpenAI TTS and FFmpeg.")
     parser.add_argument("pptx", type=str, help="The path to the PowerPoint (.pptx) file to convert.")
+    parser.add_argument("--force", action="store_true", help="Force regeneration of all resources.")
     args = parser.parse_args()
 
     try:
         logger.info(f"Starting conversion process for: {args.pptx}")
-        converter = PPTXtoVideo(args.pptx)
+        converter = PPTXtoVideo(args.pptx, force_flag=args.force)
         await converter.convert()
         logger.info("Conversion process completed successfully")
     except Exception as e:

@@ -8,6 +8,11 @@ on:
       - "requirements-pptx2video.txt"
       - "scripts/pptx2video.py"
   workflow_dispatch:
+    inputs:
+      force_generate:
+        description: "Force regenerate all resources (true/false)"
+        required: false
+        default: "false"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -77,7 +82,11 @@ jobs:
 
       - name: Run Video Generation Script
         run: |
-          python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx
+          FORCE_FLAG=""
+          if [ "${{ github.event.inputs.force_generate }}" == 'true' ]; then
+            FORCE_FLAG="--force"
+          fi
+          python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx $FORCE_FLAG
 
       - name: Get Video Duration
         run: |
