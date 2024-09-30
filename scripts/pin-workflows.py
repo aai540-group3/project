@@ -23,13 +23,13 @@ Note:
     have at least `public_repo` scope for public repositories and additional scopes if accessing private repositories.
 """
 
+import concurrent.futures
 import glob
 import logging
 import os
 import re
 import sys
 from typing import Dict, List, Optional
-import concurrent.futures
 
 import requests
 
@@ -47,13 +47,10 @@ WORKFLOWS_DIR = os.path.join("..", ".github", "workflows")
 
 
 class GitHubAPI:
-    """
-    A helper class to interact with the GitHub API.
-    """
+    """A helper class to interact with the GitHub API."""
 
     def __init__(self, token: Optional[str] = None):
-        """
-        Initialize the GitHubAPI instance.
+        """Initialize the GitHubAPI instance.
 
         :param token: GitHub personal access token.
         :type token: str or None
@@ -65,14 +62,15 @@ class GitHubAPI:
         self.session.headers.update(self.headers)
 
     def get_latest_release_sha(self, owner: str, repo: str) -> Optional[str]:
-        """
-        Retrieve the tag name of the latest release for a given GitHub repository.
+        """Retrieve the tag name of the latest release for a given GitHub
+        repository.
 
         :param owner: The GitHub username or organization name.
         :type owner: str
         :param repo: The repository name.
         :type repo: str
-        :return: The tag name of the latest release if found, otherwise None.
+        :return: The tag name of the latest release if found, otherwise
+            None.
         :rtype: str or None
         """
         releases_url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
@@ -81,14 +79,11 @@ class GitHubAPI:
             release_data = response.json()
             return release_data.get("tag_name")
         else:
-            logger.error(
-                f"Failed to fetch latest release for {owner}/{repo}: {response.status_code}"
-            )
+            logger.error(f"Failed to fetch latest release for {owner}/{repo}: {response.status_code}")
             return None
 
     def get_tags(self, owner: str, repo: str) -> List[Dict]:
-        """
-        Retrieve all tags for a given GitHub repository.
+        """Retrieve all tags for a given GitHub repository.
 
         :param owner: The GitHub username or organization name.
         :type owner: str
@@ -111,15 +106,13 @@ class GitHubAPI:
                 tags.extend(page_tags)
                 page += 1
             else:
-                logger.error(
-                    f"Failed to fetch tags for {owner}/{repo}: {response.status_code}"
-                )
+                logger.error(f"Failed to fetch tags for {owner}/{repo}: {response.status_code}")
                 break
         return tags
 
     def get_tag_for_sha(self, owner: str, repo: str, sha: str) -> Optional[str]:
-        """
-        Find the tag name associated with a specific commit SHA in a repository.
+        """Find the tag name associated with a specific commit SHA in a
+        repository.
 
         :param owner: The GitHub username or organization name.
         :type owner: str
@@ -137,8 +130,7 @@ class GitHubAPI:
         return None
 
     def get_sha_for_ref(self, owner: str, repo: str, ref: str) -> Optional[str]:
-        """
-        Resolve a reference (branch name, tag name, or SHA) to a commit SHA.
+        """Resolve a reference (branch name, tag name, or SHA) to a commit SHA.
 
         :param owner: The GitHub username or organization name.
         :type owner: str
@@ -157,9 +149,7 @@ class GitHubAPI:
                 ref = latest_release_tag
                 logger.info(f"Using latest release tag '{ref}' for {owner}/{repo}")
             else:
-                logger.warning(
-                    f"Could not find latest release for {owner}/{repo}. Using original ref '{ref}'"
-                )
+                logger.warning(f"Could not find latest release for {owner}/{repo}. Using original ref '{ref}'")
 
         # Attempt to resolve the ref as a branch
         sha = self._get_sha_from_ref_type(owner, repo, ref_type="heads", ref=ref)
@@ -179,26 +169,22 @@ class GitHubAPI:
         logger.warning(f"Failed to resolve ref '{ref}' in {owner}/{repo}")
         return None
 
-    def _get_sha_from_ref_type(
-        self, owner: str, repo: str, ref_type: str, ref: str
-    ) -> Optional[str]:
-        """
-        Helper method to get SHA from a specific ref type (branch or tag).
+    def _get_sha_from_ref_type(self, owner: str, repo: str, ref_type: str, ref: str) -> Optional[str]:
+        """Helper method to get SHA from a specific ref type (branch or tag).
 
         :param owner: The GitHub username or organization name.
         :type owner: str
         :param repo: The repository name.
         :type repo: str
-        :param ref_type: The type of ref ('heads' for branches, 'tags' for tags).
+        :param ref_type: The type of ref ('heads' for branches, 'tags'
+            for tags).
         :type ref_type: str
         :param ref: The reference name.
         :type ref: str
         :return: The commit SHA if found, otherwise None.
         :rtype: str or None
         """
-        ref_url = (
-            f"https://api.github.com/repos/{owner}/{repo}/git/refs/{ref_type}/{ref}"
-        )
+        ref_url = f"https://api.github.com/repos/{owner}/{repo}/git/refs/{ref_type}/{ref}"
         response = self.session.get(ref_url)
         if response.status_code == 200:
             ref_data = response.json()
@@ -209,11 +195,8 @@ class GitHubAPI:
             return sha
         return None
 
-    def _get_sha_for_annotated_tag(
-        self, owner: str, repo: str, tag_sha: str
-    ) -> Optional[str]:
-        """
-        Resolve the commit SHA for an annotated tag.
+    def _get_sha_for_annotated_tag(self, owner: str, repo: str, tag_sha: str) -> Optional[str]:
+        """Resolve the commit SHA for an annotated tag.
 
         :param owner: The GitHub username or organization name.
         :type owner: str
@@ -232,8 +215,7 @@ class GitHubAPI:
         return None
 
     def _validate_sha(self, owner: str, repo: str, sha_candidate: str) -> Optional[str]:
-        """
-        Validate if a given string is a valid commit SHA.
+        """Validate if a given string is a valid commit SHA.
 
         :param owner: The GitHub username or organization name.
         :type owner: str
@@ -244,9 +226,7 @@ class GitHubAPI:
         :return: The commit SHA if valid, otherwise None.
         :rtype: str or None
         """
-        commit_url = (
-            f"https://api.github.com/repos/{owner}/{repo}/commits/{sha_candidate}"
-        )
+        commit_url = f"https://api.github.com/repos/{owner}/{repo}/commits/{sha_candidate}"
         response = self.session.get(commit_url)
         if response.status_code == 200:
             commit_data = response.json()
@@ -255,8 +235,8 @@ class GitHubAPI:
 
 
 def update_workflow_file(file_path: str) -> None:
-    """
-    Update a GitHub Actions workflow file by pinning actions to commit SHAs or latest release tags and adding version comments.
+    """Update a GitHub Actions workflow file by pinning actions to commit SHAs
+    or latest release tags and adding version comments.
 
     :param file_path: The path to the workflow file to update.
     :type file_path: str
@@ -272,7 +252,9 @@ def update_workflow_file(file_path: str) -> None:
     # Improved Regex pattern to handle existing comments
     pattern = r"(uses:\s*([^\s@]+)@([^\s#\n]+)(\s*#.*)?)"
 
-    def replace_match(match):
+    def replace_match(
+        match,
+    ):
         full_match = match.group(0)
         action = match.group(2)
         ref = match.group(3)
@@ -281,25 +263,23 @@ def update_workflow_file(file_path: str) -> None:
 
         owner_repo = action
         if "/" not in owner_repo:
-            owner_repo = (
-                "actions/" + owner_repo
-            )  # Default to 'actions' org if not specified
+            owner_repo = "actions/" + owner_repo  # Default to 'actions' org if not specified
         owner_repo_parts = owner_repo.split("/")
         if len(owner_repo_parts) < 2:
             logger.warning(f"Invalid action format: {action}. Skipping.")
             return full_match
 
-        owner, repo = owner_repo_parts[:2]
+        (owner, repo) = owner_repo_parts[:2]
 
         sha = github_api.get_sha_for_ref(owner, repo, ref)
         if sha:
             latest_release_tag = github_api.get_latest_release_sha(owner, repo)
 
             if latest_release_tag and not re.match(r"^[a-f0-9]+$", ref):
-                # Get the tag associated with the resolved SHA
-                version_info = (
-                    github_api.get_tag_for_sha(owner, repo, sha) or latest_release_tag
-                )
+                # Get the tag associated with the resolved SHA, prioritize full semantic version
+                version_info = github_api.get_tag_for_sha(owner, repo, sha)
+                if not version_info or not re.match(r"v\d+\.\d+\.\d+", version_info):  # Check for semantic version format
+                    version_info = latest_release_tag
             else:
                 # If not pinning to latest release, use the original ref or get the tag for the SHA
                 version_info = github_api.get_tag_for_sha(owner, repo, sha) or ref
@@ -309,9 +289,7 @@ def update_workflow_file(file_path: str) -> None:
             logger.info(f"AFTER:  {new_line}\n")
             return new_line
         else:
-            logger.warning(
-                f"Could not resolve ref '{ref}' for {action}. Skipping update.\n"
-            )
+            logger.warning(f"Could not resolve ref '{ref}' for {action}. Skipping update.\n")
             return full_match
 
     updated_content = re.sub(pattern, replace_match, content)
@@ -322,17 +300,14 @@ def update_workflow_file(file_path: str) -> None:
 
 
 def main():
-    """
-    Main function to update GitHub Actions workflow files by pinning action references to commit SHAs or latest release tags.
-    """
+    """Main function to update GitHub Actions workflow files by pinning action
+    references to commit SHAs or latest release tags."""
     if not os.path.exists(WORKFLOWS_DIR):
         logger.error(f"No workflows directory found at '{WORKFLOWS_DIR}'")
         sys.exit(1)
 
     # Get all .yml and .yaml files in the workflows directory
-    yaml_files = glob.glob(os.path.join(WORKFLOWS_DIR, "*.yml")) + glob.glob(
-        os.path.join(WORKFLOWS_DIR, "*.yaml")
-    )
+    yaml_files = glob.glob(os.path.join(WORKFLOWS_DIR, "*.yml")) + glob.glob(os.path.join(WORKFLOWS_DIR, "*.yaml"))
 
     if not yaml_files:
         logger.error(f"No workflow files found in '{WORKFLOWS_DIR}'")
