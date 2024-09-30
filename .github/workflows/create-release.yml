@@ -35,6 +35,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Cache Apt Packages
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: |
+            /var/cache/apt/archives/*.deb
+            /var/lib/apt/lists/*
+          key: ${{ runner.os }}-apt-${{ hashFiles('$GITHUB_WORKFLOW_PATH') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
       - name: Bump Version
         id: tag_version
         uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297 # 1.71.0

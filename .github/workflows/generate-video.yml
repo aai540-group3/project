@@ -43,7 +43,7 @@ jobs:
           path: |
             /var/cache/apt/archives/*.deb
             /var/lib/apt/lists/*
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/generate-video.yml') }}
+          key: ${{ runner.os }}-apt-${{ hashFiles('$GITHUB_WORKFLOW_PATH') }}
           restore-keys: |
             ${{ runner.os }}-apt-
 

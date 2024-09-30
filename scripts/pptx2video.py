@@ -35,7 +35,6 @@ import multiprocessing
 import os
 import subprocess
 import sys
-import tempfile
 from concurrent.futures import ProcessPoolExecutor
 from typing import List, Optional, Tuple
 
@@ -97,11 +96,10 @@ def convert_slide_to_image(args) -> Tuple[str, Optional[str], int]:
     pdf_filename, output_dir, i = args
     image_path = os.path.join(output_dir, f"slide_{i}.png")
     try:
-        logger.debug(f"Converting slide {i+1} to image")
         images = pdf2image.convert_from_path(pdf_filename, first_page=i + 1, last_page=i + 1, dpi=300)
         if images:
             images[0].save(image_path, "PNG")
-            logger.debug(f"Saved slide {i+1} image to {image_path}")
+            logger.info(f"Image for slide {i+1} generated")
             # Compute image hash
             with open(image_path, 'rb') as f:
                 image_hash = hashlib.sha256(f.read()).hexdigest()
@@ -130,14 +128,13 @@ async def generate_audio_for_slide(text: str, text_hash: str, output_dir: str, i
         logger.info(f"Audio for slide {i+1} is up to date, skipping generation")
         return slide_audio_filename
     if not text.strip():
-        logger.warning(f"Skipping audio generation for slide {i + 1} due to empty text")
+        logger.info(f"No notes for slide {i+1}, skipping audio generation")
         return None
     try:
-        logger.debug(f"Generating audio for slide {i+1} with text: {text[:50]}...")
+        logger.info(f"Generating audio for slide {i+1}")
         audio_content = await tts_async(text, "tts-1-hd", "echo", api_key)
         with open(slide_audio_filename, "wb") as f:
             f.write(audio_content)
-        logger.debug(f"Generated audio for slide {i+1}: {slide_audio_filename}")
         # Update state in main process
         state["slide_hashes"][str(i)] = text_hash
         return slide_audio_filename
@@ -149,15 +146,15 @@ async def generate_audio_for_slide(text: str, text_hash: str, output_dir: str, i
 def create_video_for_slide(args) -> Optional[str]:
     """Create a video for a single slide by combining image and audio.
 
-    :param args: Tuple containing image_file, audio_file, output_dir, slide index i, slide_content_hash.
+    :param args: Tuple containing image_file, audio_file, output_dir, slide index i.
     :return: Path to the generated video file.
     """
-    image_file, audio_file, output_dir, i, slide_content_hash = args
+    image_file, audio_file, output_dir, i, _ = args
     slide_video_filename = os.path.join(output_dir, f"video_{i}.mp4")
 
-    logger.debug(f"Creating video for slide {i+1}")
+    logger.info(f"Creating video for slide {i+1}")
     with Image.open(image_file) as img:
-        width, height = img.size
+        width, _ = img.size
     adjusted_width = width if width % 2 == 0 else width - 1
 
     if audio_file and os.path.exists(audio_file):
@@ -186,7 +183,7 @@ def create_video_for_slide(args) -> Optional[str]:
             slide_video_filename,
         ]
     else:
-        logger.warning(f"No audio file for slide {i+1}, creating silent video")
+        logger.info(f"Creating silent video for slide {i+1}")
         ffmpeg_cmd = [
             "ffmpeg",
             "-y",
@@ -207,7 +204,7 @@ def create_video_for_slide(args) -> Optional[str]:
 
     try:
         subprocess.run(ffmpeg_cmd, check=True, capture_output=True)
-        logger.debug(f"Created video for slide {i+1}: {slide_video_filename}")
+        logger.info(f"Video for slide {i+1} created")
         return slide_video_filename
     except subprocess.CalledProcessError as e:
         logger.error(f"Error creating video for slide {i+1}: {e}")
@@ -243,6 +240,7 @@ class PPTXtoVideo:
         self.video_files = []
         self.state_file = os.path.join(self.output_dir, "conversion_state.json")
         self.state = self._load_state()
+        self.state_changed = False  # Flag to indicate whether state has changed
 
     def _compute_file_hash(self, filename: str) -> str:
         """Compute a hash of the file contents.
@@ -276,7 +274,7 @@ class PPTXtoVideo:
         :return: Dictionary containing the conversion state, or an empty dict if the file is missing.
         """
         initial_state = {
-            "pptx_hash": self.pptx_hash,
+            "pptx_hash": "",
             "pdf_created": False,
             "slide_hashes": {},
             "slide_image_hashes": {},
@@ -286,25 +284,22 @@ class PPTXtoVideo:
         try:
             with open(self.state_file, "r") as f:
                 state = json.load(f)
-                # Check for pptx hash match - if it doesn't match, reset the state.
-                if state.get("pptx_hash") != self.pptx_hash:
-                    logger.info("PPTX file has changed, resetting state.")
-                    state = initial_state
-            return state
         except (FileNotFoundError, json.JSONDecodeError):
-            return initial_state
+            state = initial_state
+        return state
 
     def _save_state(self):
         """Save the current conversion state to a file."""
         with open(self.state_file, "w") as f:
             json.dump(self.state, f, indent=4)
+        self.state_changed = False  # Reset the flag after saving
 
     def _convert_to_pdf(self):
         """Converts the .pptx file to a .pdf file using LibreOffice."""
 
         # Check if PDF already exists and if PPTX hash matches
-        if self.state["pdf_created"] and os.path.exists(self.pdf_filename) and self.state.get("pptx_hash") == self.pptx_hash:
-            logger.info(f"PDF already exists: {self.pdf_filename}")
+        if self.state.get("pdf_created") and os.path.exists(self.pdf_filename):
+            logger.info(f"PDF is up to date, skipping conversion")
             return
 
         logger.info("Converting PPTX to PDF")
@@ -321,7 +316,9 @@ class PPTXtoVideo:
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
         logger.debug(f"LibreOffice conversion output: {result.stdout}")
-        logger.debug(f"LibreOffice conversion errors: {result.stderr}")
+        if result.returncode != 0:
+            logger.error(f"LibreOffice conversion errors: {result.stderr}")
+            raise RuntimeError("Failed to convert PPTX to PDF")
 
         # Check if the PDF was created
         expected_pdf = os.path.join(os.path.dirname(self.pdf_filename), f"{os.path.splitext(os.path.basename(self.pptx_filename))[0]}.pdf")
@@ -329,13 +326,26 @@ class PPTXtoVideo:
             # Move the PDF to the desired location
             if expected_pdf != self.pdf_filename:
                 os.replace(expected_pdf, self.pdf_filename)
+            logger.info("PDF created successfully")
         else:
+            logger.error("PDF file was not created")
             raise RuntimeError(f"Failed to create PDF file: {self.pdf_filename}")
 
         self.state["pdf_created"] = True
-        self.state["pptx_hash"] = self.pptx_hash  # Store the hash in the state
-        self._save_state()
-        logger.info(f"PDF created successfully: {self.pdf_filename}")
+        self.state_changed = True
+
+    def is_conversion_needed(self) -> bool:
+        """Check if conversion is needed based on PPTX hash and final video hash."""
+        # Compute current final video hash
+        slide_indices = sorted([int(i) for i in self.state.get("slide_content_hashes", {}).keys()])
+        concatenated_hash = ''.join([self.state["slide_content_hashes"].get(str(i), '') for i in slide_indices])
+        current_final_video_hash = hashlib.sha256(concatenated_hash.encode()).hexdigest()
+        # Check if PPTX hash matches and final video hash matches
+        if self.state.get("pptx_hash") == self.pptx_hash and self.state.get("final_video_hash") == current_final_video_hash and os.path.exists(self.output_file):
+            logger.info("PPTX file hasn't changed and final video is up to date, skipping conversion")
+            return False
+        else:
+            return True
 
     async def create_videos(self):
         """Creates individual video files for each slide, combining slide images and TTS audio."""
@@ -351,8 +361,14 @@ class PPTXtoVideo:
         for i in range(len(self.slides)):
             image_file = os.path.join(self.output_dir, f"slide_{i}.png")
             image_files.append(image_file)
+            str_i = str(i)
             if not os.path.exists(image_file):
                 images_to_generate.append((self.pdf_filename, self.output_dir, i))
+            else:
+                # Compute image hash for existing image
+                with open(image_file, 'rb') as f:
+                    image_hash = hashlib.sha256(f.read()).hexdigest()
+                image_hashes[str_i] = image_hash
 
         if images_to_generate:
             with multiprocessing.Pool() as pool:
@@ -360,23 +376,14 @@ class PPTXtoVideo:
                 results = pool.map(convert_slide_to_image, images_to_generate)
                 for image_path, image_hash, i in results:
                     if image_hash:
-                        image_hashes[str(i)] = image_hash
+                        str_i = str(i)
+                        image_hashes[str_i] = image_hash
                     else:
                         logger.error(f"Failed to generate image for slide {i+1}")
-        # Compute image hashes for existing images
-        for i in range(len(self.slides)):
-            str_i = str(i)
-            if str_i not in image_hashes:
-                image_file = image_files[i]
-                if os.path.exists(image_file):
-                    with open(image_file, 'rb') as f:
-                        image_hashes[str_i] = hashlib.sha256(f.read()).hexdigest()
-                else:
-                    logger.error(f"Image file missing for slide {i+1}")
 
         # Update state with current image hashes
         self.state["slide_image_hashes"] = image_hashes
-        self._save_state()
+        self.state_changed = True
 
         # Generate audio for slides
         logger.info("Generating audio for slides")
@@ -397,15 +404,18 @@ class PPTXtoVideo:
                 continue
 
             # Limit the number of concurrent API calls
-            async with semaphore:
-                task = asyncio.create_task(
-                    generate_audio_for_slide(text, text_hash, self.output_dir, i, self.api_key, self.state)
-                )
-                tasks.append(task)
+            task = asyncio.create_task(
+                generate_audio_for_slide(text, text_hash, self.output_dir, i, self.api_key, self.state)
+            )
+            tasks.append(task)
 
         # Await all audio generation tasks
         if tasks:
             await asyncio.gather(*tasks)
+            self.state_changed = True
+
+        # Save state after audio generation
+        if self.state_changed:
             self._save_state()
 
         # Create videos for each slide
@@ -437,9 +447,10 @@ class PPTXtoVideo:
                     video_file = future.result()
                     if video_file:
                         self.video_files.append(video_file)
+                        logger.info(f"Video for slide {i + 1} generated")
                         # Update state in the main process
                         self.state["slide_content_hashes"][str_i] = slide_content_hash
-                        self._save_state()
+                        self.state_changed = True
                     else:
                         logger.error(f"Failed to create video for slide {i+1}")
 
@@ -450,12 +461,13 @@ class PPTXtoVideo:
                 if video_file not in self.video_files:
                     self.video_files.append(video_file)
 
-        logger.info(f"Created {len(self.video_files)} individual slide videos")
+        if self.state_changed:
+            self._save_state()
 
     def combine_videos(self):
         """Concatenates individual slide videos into a final video."""
         # Compute final video hash
-        slide_indices = sorted([int(i) for i in self.state["slide_content_hashes"].keys()])
+        slide_indices = sorted([int(i) for i in self.state.get("slide_content_hashes", {}).keys()])
         concatenated_hash = ''.join([self.state["slide_content_hashes"][str(i)] for i in slide_indices])
         final_video_hash = hashlib.sha256(concatenated_hash.encode()).hexdigest()
         if self.state.get("final_video_hash") == final_video_hash and os.path.exists(self.output_file):
@@ -488,11 +500,30 @@ class PPTXtoVideo:
         logger.info(f"Final video created: {self.output_file}")
         # Update final video hash
         self.state["final_video_hash"] = final_video_hash
-        self._save_state()
+        self.state_changed = True
+        if self.state_changed:
+            self._save_state()
 
     async def convert(self):
         """Converts the PowerPoint presentation to a video."""
         logger.info(f"Starting conversion of {self.pptx_filename}")
+
+        # Update PPTX hash in state
+        if self.state.get("pptx_hash") != self.pptx_hash:
+            logger.info("PPTX file has changed, resetting state")
+            self.state = {
+                "pptx_hash": self.pptx_hash,
+                "pdf_created": False,
+                "slide_hashes": {},
+                "slide_image_hashes": {},
+                "slide_content_hashes": {},
+                "final_video_hash": "",
+            }
+            self._save_state()
+
+        if not self.is_conversion_needed():
+            return
+
         await self.create_videos()
         self.combine_videos()
         logger.info(f"Video created successfully: {self.output_file}")
