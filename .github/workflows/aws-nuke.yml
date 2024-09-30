@@ -20,6 +20,7 @@ jobs:
           path: |
             /var/cache/apt/archives/*.deb
             /var/lib/apt/lists/*
+            ! /var/lib/apt/lists/partial
           key: ${{ runner.os }}-apt-${{ hashFiles('$GITHUB_WORKFLOW_PATH') }}
           restore-keys: |
             ${{ runner.os }}-apt-
