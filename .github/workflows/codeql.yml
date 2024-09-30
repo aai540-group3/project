@@ -38,7 +38,7 @@ jobs:
         uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: /home/runner/.docker/buildx/
-          key: ${{ runner.os }}-buildx-${{ hashFiles('project/.github/workflows/codeql.yml') }}
+          key: ${{ runner.os }}-buildx-${{ hashFiles('.github/workflows/codeql.yml') }}
           restore-keys: |
             ${{ runner.os }}-buildx-
 
@@ -49,7 +49,7 @@ jobs:
             /var/cache/apt/archives/*.deb
             /var/lib/apt/lists/*
             ! /var/lib/apt/lists/partial
-          key: ${{ runner.os }}-apt-${{ hashFiles('project/.github/workflows/codeql.yml') }}
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/codeql.yml') }}
           restore-keys: |
             ${{ runner.os }}-apt-
 

@@ -93,7 +93,7 @@ jobs:
             /var/cache/apt/archives/*.deb
             /var/lib/apt/lists/*
             ! /var/lib/apt/lists/partial
-          key: ${{ runner.os }}-apt-${{ hashFiles('project/.github/workflows/policy-validator-tf.yml') }}
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/policy-validator-tf.yml') }}
           restore-keys: |
             ${{ runner.os }}-apt-
 
