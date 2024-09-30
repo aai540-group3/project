@@ -49,7 +49,7 @@ jobs:
       - name: Get Latest Release Tag
         id: get_latest_release
         run: |
-          latest_release=$(gh release list -L 1 --exclude-prereleases | awk '{print $1}')
+          latest_release=$(gh release list -L 1 --exclude-pre-releases | awk '{print $1}')
           echo "latest_release_tag=$latest_release" >> $GITHUB_ENV
 
       - name: Calculate Hashes of Deliverables
