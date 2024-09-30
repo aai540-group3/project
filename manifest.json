@@ -14,7 +14,6 @@
     "src/",
     "terraform/main.tf"
   ],
-  "hash": "$FILEHASH",
-  "size": "207",
-  "previous_hash": "$CURRENT_HASH"
+  "hash": "",
+  "size": "207"
 }

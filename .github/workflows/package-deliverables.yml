@@ -68,7 +68,7 @@ jobs:
       - name: Get Previous Hash
         id: get_previous_hash
         run: |
-          PREVIOUS_HASH=$(jq -r '.previous_hash // ""' $MANIFEST_FILE)
+          PREVIOUS_HASH=$(jq -r '.hash // ""' $MANIFEST_FILE) # Changed to .hash
           echo "PREVIOUS_HASH=$PREVIOUS_HASH" >> $GITHUB_ENV
 
       - name: Compare Hashes
@@ -108,14 +108,13 @@ jobs:
           FILES=$(jq -r '.files[]' $MANIFEST_FILE)
           zip -r -0 $FILES | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
 
-      - name: Get File Size and Hash
+      - name: Get File Hash
         run: |
-          echo "FILESIZE=$(stat -c%s Final_Project_Team_3_Deliverable_3.zip)" >> $GITHUB_ENV
           echo "FILEHASH=$(sha256sum Final_Project_Team_3_Deliverable_3.zip | awk '{print $1}')" >> $GITHUB_ENV
 
-      - name: Update manifest.json with Hash and Size
+      - name: Update manifest.json with Hash
         run: |
-          jq '.hash = "$FILEHASH" | .size = env.FILESIZE | .previous_hash = "$CURRENT_HASH"' <<< $(cat $MANIFEST_FILE) > temp_manifest.json
+          jq '.hash = env.FILEHASH' $MANIFEST_FILE > temp_manifest.json
           mv temp_manifest.json $MANIFEST_FILE
 
       - name: Configure Git
@@ -135,7 +134,7 @@ jobs:
             git pull origin main
             git stash pop
             git add Final_Project_Team_3_Deliverable_3.zip $MANIFEST_FILE
-            git commit -m "FILESIZE: $FILESIZE bytes, HASH: $FILEHASH"
+            git commit -m "HASH: $FILEHASH"
             git push origin main || {
               echo "Push failed. Creating a pull request..."
               gh pr create --title "Automated Zip Update" --body "Push to main failed. Updated zip included."
