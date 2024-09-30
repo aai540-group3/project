@@ -1,5 +1,5 @@
 \documentclass{article}
-\usepackage[protrusion=true]{microtype}
+\usepackage{microtype}
 \usepackage[sfdefault]{FiraSans}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
@@ -87,7 +87,7 @@
                 rectangle,
                 fill=blue!70!white,
                 fill opacity=0,
-                text opacity=1, % Removed the extra 'D' here
+                text opacity=1,
                 minimum height=0.2\paperheight,
                 minimum width=\paperwidth,
                 text width=0.8\paperwidth,
@@ -144,13 +144,13 @@
 
 \section{Introduction}
 
-Hospital readmissions, particularly within 30 days of discharge, represent a significant challenge to healthcare systems worldwide, leading to increased costs and potentially adverse patient outcomes. Diabetic patients are especially vulnerable to readmission due to the chronic and complex nature of diabetes management. This document outlines the design of a machine learning (ML) system aimed at predicting 30-day hospital readmissions among diabetic patients. By leveraging historical patient data and advanced analytical techniques, the system seeks to identify high-risk individuals, enabling proactive interventions and contributing to improved healthcare efficiency and patient well-being.
+Hospital readmissions, particularly within 30~days of discharge, represent a significant challenge to healthcare systems worldwide, leading to increased costs and potentially adverse patient outcomes. Diabetic patients are especially vulnerable to readmission due to the chronic and complex nature of diabetes management. This document outlines the design of a machine learning (ML) system aimed at predicting 30-day hospital readmissions among diabetic patients. By leveraging historical patient data and advanced analytical techniques, the system seeks to identify high-risk individuals, enabling proactive interventions and contributing to improved healthcare efficiency and patient well-being.
 
 \section{Problem Statement}
 
 The rising rate of hospital readmissions among diabetic patients presents a multifaceted problem for healthcare providers. It strains resources, increases healthcare expenditures, and can negatively impact patient health and quality of life. The complexity of diabetes management, potential complications, and the need for strict adherence to treatment regimens contribute to the elevated readmission risk for this population.
 
-This project addresses the challenge of accurately predicting 30-day hospital readmissions among diabetic patients. By developing a robust and scalable machine learning system, we aim to analyze a wide range of patient attributes—including demographics, medical history, treatment patterns, and hospital procedures—to identify individuals at high risk of readmission. This predictive capability will empower clinicians to implement targeted interventions, potentially reducing readmission rates and improving overall patient care.
+This project addresses the challenge of accurately predicting 30-day hospital readmissions among diabetic patients. By developing a robust and scalable machine learning system, we aim to analyze a wide range of patient attributes---including demographics, medical history, treatment patterns, and hospital procedures---to identify individuals at high risk of readmission. This predictive capability will empower clinicians to implement targeted interventions, potentially reducing readmission rates and improving overall patient care.
 
 \section{Impact Measurement}
 
@@ -268,28 +268,26 @@ The overall architecture of the proposed ML system is designed to facilitate sea
         \draw [->, dashed] (HealthcareProviders.north) to[bend left=45] node[midway, right]{Feedback Loop} (DataSources.east);
 
     \end{tikzpicture}
-    \caption{System Architecture Diagram}
-    \label{fig:system_architecture}
+    \caption{System Architecture Diagram}\label{fig:system_architecture}
 \end{figure}
 
-\textit{Figure \ref{fig:system_architecture}: System Overview Diagram illustrating the flow from data sources through model deployment to clinical application and feedback integration.}
+\textit{Figure~\ref{fig:system_architecture}: System Overview Diagram illustrating the flow from data sources through model deployment to clinical application and feedback integration.}
 
 \subsection{Data Sources}
 
-We utilize the \textbf{Diabetes 130-US hospitals for years 1999-2008 Data Set} from the UCI Machine Learning Repository, accessed via the Hugging Face Datasets library under the identifier \texttt{aai540-group3/diabetes-readmission}.
+We use the \textbf{Diabetes 130-US hospitals for years 1999-2008 Data Set} from the UCI Machine Learning Repository, accessed via the Hugging Face Datasets library under the identifier \texttt{aai540-group3/diabetes-readmission}.
 
 \subsubsection{Dataset Characteristics}
 
 \begin{itemize}[leftmargin=*]
     \item \textbf{Size}: The dataset contains 101,766 patient records, providing a substantial sample for model training and evaluation.
     \item \textbf{Features}: It includes 55 attributes encompassing demographics (age, gender, ethnicity), medical history (diagnoses, comorbidities), laboratory results, medications, and hospitalization details (length of stay, number of procedures).
-    \item \textbf{Target Variable}: The \texttt{readmitted} indicator (0 or 1) signifies whether a patient was readmitted within 30 days of discharge.
+    \item \textbf{Target Variable}: The \texttt{readmitted} indicator (0 or 1) signifies whether a patient was readmitted within 30~days of discharge.
 \end{itemize}
 
 \begin{table}[H]
 \centering
-\caption{Summary of Dataset Features}
-\label{tab:dataset_features}
+\caption{Summary of Dataset Features}\label{tab:dataset_features}
 \begin{tabular}{p{3cm} p{10cm}}
 \toprule
 \textbf{Feature Type} & \textbf{Description} \\
@@ -304,7 +302,7 @@ Other & Discharge disposition, admission type, payer code \\
 \end{tabular}
 \end{table}
 
-\textit{Table \ref{tab:dataset_features}: Summary of the types of features included in the dataset.}
+\textit{Table~\ref{tab:dataset_features}: Summary of the types of features included in the dataset.}
 
 \subsubsection{Versioning}
 
@@ -374,11 +372,10 @@ The \texttt{splitting.py} script divides the dataset into training and testing s
         \draw [->] (Cleaning) -- (FeatureEngineering);
         \draw [->] (FeatureEngineering) -- (Splitting);
     \end{tikzpicture}
-    \caption{Data Engineering Pipeline}
-    \label{fig:data_engineering_pipeline}
+    \caption{Data Engineering Pipeline}\label{fig:data_engineering_pipeline}
 \end{figure}
 
-\textit{Figure \ref{fig:data_engineering_pipeline}: Data processing pipeline from ingestion to data splitting.}
+\textit{Figure~\ref{fig:data_engineering_pipeline}: Data processing pipeline from ingestion to data splitting.}
 
 \subsection{Feature Engineering}
 
@@ -390,8 +387,7 @@ Using \texttt{build\_features.py}, we engineered several new features:
 
 \begin{table}[H]
 \centering
-\caption{Engineered Features}
-\label{tab:engineered_features}
+\caption{Engineered Features}\label{tab:engineered_features}
 \begin{tabular}{p{4cm} p{10cm}}
 \toprule
 \textbf{Feature Name} & \textbf{Description} \\
@@ -405,7 +401,7 @@ Using \texttt{build\_features.py}, we engineered several new features:
 \end{tabular}
 \end{table}
 
-\textit{Table \ref{tab:engineered_features}: New features created during feature engineering.}
+\textit{Table~\ref{tab:engineered_features}: New features created during feature engineering.}
 
 \subsubsection{Polynomial Features}
 
@@ -431,7 +427,7 @@ The modeling phase involved training two distinct models: Logistic Regression an
     \item \textbf{Hyperparameters}:
         \begin{itemize}[leftmargin=*]
             \item \textbf{Penalty}: L2 regularization to prevent overfitting.
-            \item \textbf{Solver}: 'lbfgs', suitable for smaller datasets and supports L2 regularization.
+            \item \textbf{Solver}: ``lbfgs'', suitable for smaller datasets and supports L2 regularization.
             \item \textbf{Max Iterations}: Set to 1000 to ensure convergence, especially important given the complex feature set.
             \item \textbf{Random State}: Set to 42 for reproducibility.
         \end{itemize}
@@ -454,7 +450,7 @@ The modeling phase involved training two distinct models: Logistic Regression an
     \item \textbf{Algorithm}: Leveraged AutoGluon's automated machine learning capabilities to systematically explore various models and hyperparameters.
     \item \textbf{Configuration}:
         \begin{itemize}[leftmargin=*]
-            \item \textbf{Presets}: Set to 'best\_quality' to prioritize predictive performance.
+            \item \textbf{Presets}: Set to ``best\_quality'' to prioritize predictive performance.
             \item \textbf{Time Limit}: Restricted to 3600 seconds to balance computational resources and exploration depth.
             \item \textbf{Hyperparameters}: Customized settings for Gradient Boosting Machines (GBM) with \texttt{num\_boost\_round} set to 100.
             \item \textbf{Verbosity}: Level 2 to provide detailed logs during training.
@@ -476,8 +472,7 @@ Both models were evaluated on the test set, yielding the following results:
 
 \begin{table}[H]
 \centering
-\caption{Model Performance Metrics}
-\label{tab:model_performance}
+\caption{Model Performance Metrics}\label{tab:model_performance}
 \begin{tabular}{lcc}
 \toprule
 \textbf{Metric} & \textbf{Logistic Regression} & \textbf{AutoGluon} \\
@@ -491,7 +486,7 @@ ROC-AUC & 64.65\% & 68.09\% \\
 \end{tabular}
 \end{table}
 
-\textit{Table \ref{tab:model_performance}: Comparison of model performance metrics.}
+\textit{Table~\ref{tab:model_performance}: Comparison of model performance metrics.}
 
 \paragraph{Analysis}
 
@@ -525,7 +520,7 @@ To gain deeper insights into model behavior, we generated several visualizations
 %     \label{fig:roc_curve}
 % \end{figure}
 
-% \textit{Figure \ref{fig:roc_curve}: ROC Curve shows that AutoGluon provides better class separation than Logistic Regression.}
+% \textit{Figure~\ref{fig:roc_curve}: ROC Curve shows that AutoGluon provides better class separation than Logistic Regression.}
 
 \subsection{Model Deployment}
 
@@ -535,7 +530,7 @@ To gain deeper insights into model behavior, we generated several visualizations
     \item \textbf{Model Saving}:
         \begin{itemize}[leftmargin=*]
             \item \textbf{Logistic Regression}: Serialized using \texttt{joblib} for efficient storage and loading.
-            \item \textbf{AutoGluon}: Utilized AutoGluon's \texttt{.save()} and \texttt{.load()} methods.
+            \item \textbf{AutoGluon}: Utilized AutoGluon's \texttt{save} and \texttt{load} methods.
         \end{itemize}
     \item \textbf{Version Control with DVC}:
         \begin{itemize}[leftmargin=*]
@@ -592,11 +587,10 @@ To gain deeper insights into model behavior, we generated several visualizations
         \draw [->, dashed] (EndUsers.west) to[bend left=60] node[midway, below]{Feedback Loop} (ModelArtifacts.south);
 
     \end{tikzpicture}
-    \caption{Model Deployment Architecture}
-    \label{fig:model_deployment_architecture}
+    \caption{Model Deployment Architecture}\label{fig:model_deployment_architecture}
 \end{figure}
 
-\textit{Figure \ref{fig:model_deployment_architecture}: Deployment architecture diagram showing the transition from model artifacts to deployment and integration with clinical applications.}
+\textit{Figure~\ref{fig:model_deployment_architecture}: Deployment architecture diagram showing the transition from model artifacts to deployment and integration with clinical applications.}
 
 \subsection{Model Monitoring}
 
@@ -703,11 +697,10 @@ The CI/CD pipeline, defined in \texttt{.github/workflows/mlops-pipeline.yml}, au
         \draw [->] (CommitPush) -- (Complete);
 
     \end{tikzpicture}
-    \caption{CI/CD Pipeline Diagram}
-    \label{fig:cicd_pipeline}
+    \caption{CI/CD Pipeline Diagram}\label{fig:cicd_pipeline}
 \end{figure}
 
-\textit{Figure \ref{fig:cicd_pipeline}: CI/CD Pipeline Diagram illustrating the automated steps from code changes to updated models and data in the repository.}
+\textit{Figure~\ref{fig:cicd_pipeline}: CI/CD Pipeline Diagram illustrating the automated steps from code changes to updated models and data in the repository.}
 
 \subsubsection{Benefits}
 
@@ -725,6 +718,7 @@ Emphasis on security, ethical considerations, and bias mitigation ensures that t
 
 Moving forward, collaboration with healthcare professionals will be crucial to refine the system, ensuring that it integrates seamlessly into clinical workflows and truly enhances patient care.
 
+\nocite{*}
 \printbibliography
 
 \end{document}
