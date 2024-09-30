@@ -140,11 +140,11 @@ The final presentation and submission of your codebase should support your ML De
         3. Your data should be stored in S3 and documented in your GitHub repository
         4. Any graphics, such as charts/graphs that help explain your data, should be included in your .ipynb files.
     * **ML Design**
-        1. The codebase should be comprehensive and complete as an ML system codebase.
-        2. The codebase and design document should be mutually reinforcing, reflecting the parallel effort and scope of the ML system.
+        5. The codebase should be comprehensive and complete as an ML system codebase.
+        6. The codebase and design document should be mutually reinforcing, reflecting the parallel effort and scope of the ML system.
     * **Teamwork**
-        1. All team members should contribute to the GitHub repository.
-        2. Commit history will be available to the instructor for review.
+        7. All team members should contribute to the GitHub repository.
+        8. Commit history will be available to the instructor for review.
 
 ---
 
