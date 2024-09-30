@@ -46,8 +46,38 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-apt-
 
+      - name: Get Latest Release Tag
+        id: get_latest_release
+        run: |
+          latest_release=$(gh release list -L 1 --exclude-prereleases | awk '{print $1}')
+          echo "latest_release_tag=$latest_release" >> $GITHUB_ENV
+
+      - name: Calculate Hashes of Deliverables
+        id: calculate_hashes
+        run: |
+          echo "deliverable1_hash=$(sha256sum Final_Project_Team_3_Deliverable_1.pdf | awk '{print $1}')" >> $GITHUB_ENV
+          echo "deliverable2_hash=$(sha256sum Final_Project_Team_3_Deliverable_2.mp4 | awk '{print $1}')" >> $GITHUB_ENV
+          echo "deliverable3_hash=$(sha256sum Final_Project_Team_3_Deliverable_3.zip | awk '{print $1}')" >> $GITHUB_ENV
+
+      - name: Check if Deliverables Changed
+        id: check_changes
+        if: env.latest_release_tag != ''
+        run: |
+          latest_deliverable1_hash=$(gh release view $latest_release_tag --json assets | jq -r '.assets[] | select(.name=="Final_Project_Team_3_Deliverable_1.pdf").label')
+          latest_deliverable2_hash=$(gh release view $latest_release_tag --json assets | jq -r '.assets[] | select(.name=="Final_Project_Team_3_Deliverable_2.mp4").label')
+          latest_deliverable3_hash=$(gh release view $latest_release_tag --json assets | jq -r '.assets[] | select(.name=="Final_Project_Team_3_Deliverable_3.zip").label')
+
+          if [ "$deliverable1_hash" == "$latest_deliverable1_hash" ] && \
+             [ "$deliverable2_hash" == "$latest_deliverable2_hash" ] && \
+             [ "$deliverable3_hash" == "$latest_deliverable3_hash" ]; then
+            echo "changed=false" >> $GITHUB_ENV
+          else
+            echo "changed=true" >> $GITHUB_ENV
+          fi
+
       - name: Bump Version
         id: tag_version
+        if: env.changed == 'true' || env.latest_release_tag == ''
         uses: anothrNick/github-tag-action@f278d49d30cdd8775cc3e7dd00b5ee11686ee297 # 1.71.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -56,6 +86,7 @@ jobs:
           RELEASE_BRANCHES: main
 
       - name: Generate SBOM
+        if: env.changed == 'true' || env.latest_release_tag == ''
         uses: anchore/sbom-action@61119d458adab75f756bc0b9e4bde25725f86a7a # v0.17.2
         with:
           format: cyclonedx-json
@@ -63,6 +94,7 @@ jobs:
 
       - name: Generate Attestations
         id: attestation
+        if: env.changed == 'true' || env.latest_release_tag == ''
         uses: actions/attest@67422f5511b7ff725f4dbd6fb9bd2cd925c65a8d # v1.4.1
         with:
           show-summary: true
@@ -97,6 +129,7 @@ jobs:
 
       - name: Release
         id: create_release
+        if: env.changed == 'true' || env.latest_release_tag == ''
         uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -113,6 +146,7 @@ jobs:
           body_path: templates/RELEASE.md
 
       - name: Print Release Outputs
+        if: env.changed == 'true' || env.latest_release_tag == ''
         run: |
           echo "Release URL: ${{ steps.create_release.outputs.url }}"
           echo "Release ID: ${{ steps.create_release.outputs.id }}"

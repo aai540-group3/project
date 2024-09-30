@@ -47,10 +47,10 @@ jobs:
       - name: Generate PDFs
         working-directory: docs/design-document
         run: |
-          pdflatex -debug Final_Project_Team_3_Deliverable_1.tex
+          pdflatex -interaction=nonstopmode Final_Project_Team_3_Deliverable_1.tex
           biber --debug Final_Project_Team_3_Deliverable_1
-          pdflatex Final_Project_Team_3_Deliverable_1.tex
-          pdflatex Final_Project_Team_3_Deliverable_1.tex
+          pdflatex -interaction=nonstopmode Final_Project_Team_3_Deliverable_1.tex
+          pdflatex -interaction=nonstopmode Final_Project_Team_3_Deliverable_1.tex
 
       - name: Move PDF to Top-Level Repo Folder
         working-directory: docs/design-document
@@ -82,19 +82,22 @@ jobs:
           git add Final_Project_Team_3_Deliverable_1.pdf
           if git diff --staged --quiet; then
             echo "No changes detected. Skipping commit and push."
+            echo "CHANGED=false" >> $GITHUB_ENV
           else
             git commit -m "PAGES: ${{ env.PAGES }} | WORDS: ${{ env.WORDS }}"
             git pull origin main
             git push origin main || {
               echo "Push failed. Creating a pull request..."
-              gh pr create --title "Automated Pull Request" --body "This pull request was automatically created because the push to main failed."
+              gh pr create --title "Automated PR" --body "Push to main failed. Updated PDF included."
             }
             echo "Changes committed and pushed successfully (or pull request created)."
+            echo "CHANGED=true" >> $GITHUB_ENV
           fi
 
       - name: Repository Dispatch
+        if: env.CHANGED == 'true'
         uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: aai540-group3/project
-          event-type: create-release
+          event-type: package-deliverables

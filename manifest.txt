@@ -1,0 +1,12 @@
+.github/workflows/mlops-pipeline.yml
+configs/
+dvc.yaml
+dvclive/
+LICENSE
+notebooks/
+params.yaml
+README.md
+reports/
+requirements.txt
+src/
+terraform/main.tf

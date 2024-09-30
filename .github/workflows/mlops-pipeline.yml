@@ -129,11 +129,21 @@ jobs:
 
           if git diff --staged --quiet; then
             echo "No changes to commit"
+            echo "CHANGED=false" >> $GITHUB_ENV
           else
             git commit -m "Update DVC artifacts and metrics"
             git pull origin main
             git push origin main || {
               echo "Push failed. Creating a pull request..."
-              gh pr create --title "Update DVC artifacts and metrics" --body "This PR updates the DVC artifacts and metrics. This PR was automatically created because the push to main failed." --label "automated-pr"
+              gh pr create --title "Update DVC artifacts and metrics" --body "Push to main failed. Updated DVC artifacts and metrics included." --label "automated-pr"
             }
+            echo "CHANGED=true" >> $GITHUB_ENV
           fi
+
+      - name: Repository Dispatch
+        if: env.CHANGED == 'true'
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        with:
+          token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
+          repository: aai540-group3/project
+          event-type: package-deliverables

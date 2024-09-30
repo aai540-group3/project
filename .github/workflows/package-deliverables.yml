@@ -1,30 +1,9 @@
-name: Package Repository
+name: Package Deliverables
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - ".dvcignore"
-      - ".env.template"
-      - ".gitattributes"
-      - ".github/workflows/mlops-pipeline.yml"
-      - ".github/workflows/package-repo.yml"
-      - ".gitignore"
-      - "configs/**"
-      - "dvc.lock"
-      - "dvc.yaml"
-      - "dvclive/**"
-      - "LICENSE"
-      - "notebooks/**"
-      - "packages-packaging.txt"
-      - "params.yaml"
-      - "README.md"
-      - "reports/**"
-      - "requirements.txt"
-      - "src/**"
-      - "terraform/main.tf"
-  workflow_dispatch:
+  repository_dispatch:
+    types:
+      - package-deliverables
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -54,7 +33,7 @@ jobs:
             /var/cache/apt/archives/*.deb
             /var/lib/apt/lists/*
             ! /var/lib/apt/lists/partial
-          key: ${{ runner.os }}-apt-${{ hashFiles('project/.github/workflows/package-repo.yml') }}
+          key: ${{ runner.os }}-apt-${{ hashFiles('project/.github/workflows/package-deliverables.yml') }}
           restore-keys: |
             ${{ runner.os }}-apt-
 
@@ -63,30 +42,8 @@ jobs:
           sudo apt-get update
           sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
 
-      - name: Create File List
-        run: |
-          cat << EOF > files.txt
-          .dvcignore
-          .env.template
-          .gitattributes
-          .github/workflows/mlops-pipeline.yml
-          .gitignore
-          configs/
-          dvc.lock
-          dvc.yaml
-          dvclive/
-          LICENSE
-          notebooks/
-          params.yaml
-          README.md
-          reports/
-          requirements.txt
-          src/
-          terraform/main.tf
-          EOF
-
       - name: Zip Repository
-        run: zip -r -0 $(cat files.txt) | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
+        run: zip -r -0 $(cat manifest.txt) | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
 
       - name: Get File Size
         run: echo "FILESIZE=$(stat -c%s Final_Project_Team_3_Deliverable_3.zip)" >> $GITHUB_ENV
@@ -102,14 +59,16 @@ jobs:
           git add Final_Project_Team_3_Deliverable_3.zip
           if git diff --staged --quiet; then
             echo "No changes detected. Skipping commit and push."
+            echo "CHANGED=false" >> $GITHUB_ENV
           else
             git commit -m "FILESIZE: $FILESIZE bytes"
             git pull origin main
             git push origin main || {
               echo "Push failed. Creating a pull request..."
-              gh pr create --title "Automated Pull Request" --body "This pull request was automatically created because the push to main failed."
+              gh pr create --title "Automated Zip Update" --body "Push to main failed. Updated zip included."
             }
             echo "Changes committed and pushed successfully (or pull request created)."
+            echo "CHANGED=true" >> $GITHUB_ENV
           fi
 
       - name: Repository Dispatch
