@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""
-Combine contents of files within a directory into a single output file, excluding specified files and directories.
+"""Combine contents of files within a directory into a single output file,
+excluding specified files and directories.
 
 This script combines the contents of all files within a directory into a single output file, excluding
 specified files and directories. It also generates a tree structure of the directory. The script enhances
@@ -12,6 +12,7 @@ Usage:
 
 Features:
     - Excludes specified files and directories from the combined output.
+    - Includes specified files even if they are in the exclusion lists.
     - Generates a tree structure of the directory, excluding specified files and directories.
     - Adds separator lines between files in the combined output for better readability.
     - Handles various file types with appropriate comment syntax for separator lines.
@@ -65,6 +66,64 @@ COMMENT_SYNTAX: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "vim": {"start": '"', "end": "", "extensions": {"vim"}},
 }
 
+# Configuration Variables
+EXCLUDE_FILES = {
+    "__init__.py",
+    ".DS_Store",
+    ".gitattributes",
+    ".gitignore",
+    ".gitkeep",
+    "combine.sh",
+    "combined.txt",
+    "LICENSE",
+    "Thumbs.db",
+    "tree.txt",
+    "update.sh",
+}
+
+EXCLUDE_FOLDERS = {
+    "__pycache__",
+}
+
+EXCLUDE_FOLDERPATHS = {
+    Path(".devcontainer"),
+    Path(".dvc"),
+    Path(".git"),
+    Path(".gitea"),
+    Path(".github"),
+    Path(".temp"),
+    Path(".venv"),
+    Path(".vscode"),
+    Path("data"),
+    Path("debug"),
+    Path("huggingface"),
+    Path("models"),
+    Path("node_modules"),
+    Path("notebooks"),
+    Path("outputs"),
+    Path("temp"),
+    Path("terraform"),
+    Path("video-assets"),
+}
+
+EXCLUDE_PATTERNS = [
+    r".*\.bbl",
+    r".*\.lock",
+    r".*\.log",
+    r".*\.mp3",
+    r".*\.mp4",
+    r".*\.pdf",
+    r".*\.pkl",
+    r".*\.png",
+    r".*\.pptx",
+    r".*\.pyc",
+    r".*\.synctex.gz",
+    r".*\.wav",
+    r".*\.zip",
+]
+
+INCLUDE_FILES = {"Final_Project_Team_3_Deliverable_1.tex"}
+
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
@@ -109,6 +168,12 @@ def parse_arguments() -> argparse.Namespace:
         nargs="+",
         default=[],
         help="Regex patterns for files to exclude (space-separated)",
+    )
+    parser.add_argument(
+        "--include-files",
+        nargs="+",
+        default=[],
+        help="Files to include even if they are excluded (space-separated)",
     )
     parser.add_argument(
         "--max-file-size",
@@ -177,7 +242,8 @@ def process_file(file_path: Path, outfile, parent_dir: Path) -> None:
 
 
 def is_relative_to(path: Path, other: Path) -> bool:
-    """Check if 'path' is relative to 'other' (compatible with Python < 3.9)."""
+    """Check if 'path' is relative to 'other' (compatible with Python <
+    3.9)."""
     try:
         path.relative_to(other)
         return True
@@ -191,8 +257,11 @@ def should_exclude_file(
     exclude_files: Set[str],
     exclude_patterns: List[re.Pattern],
     max_file_size_kb: int,
+    include_files: Set[str],
 ) -> bool:
     """Determine if a file should be excluded based on various criteria."""
+    if file_name in include_files:
+        return False  # Include the file even if it matches exclusion criteria
     if file_name in exclude_files:
         return True
     if any(pattern.match(file_name) for pattern in exclude_patterns):
@@ -208,7 +277,8 @@ def should_exclude_directory(
     exclude_folders: Set[str],
     exclude_folderpaths: Set[Path],
 ) -> bool:
-    """Determine if a directory should be excluded based on various criteria."""
+    """Determine if a directory should be excluded based on various
+    criteria."""
     if directory_name in exclude_folders:
         return True
     for exclude_path in exclude_folderpaths:
@@ -224,6 +294,7 @@ def generate_tree_structure(
     exclude_folderpaths: Set[Path],
     exclude_files: Set[str],
     exclude_patterns: List[re.Pattern],
+    include_files: Set[str],
     prefix: str = "",
     is_last: bool = True,
 ) -> str:
@@ -238,7 +309,14 @@ def generate_tree_structure(
         relative_path = entry.relative_to(parent_dir)
         if entry.is_dir() and should_exclude_directory(entry.name, relative_path, exclude_folders, exclude_folderpaths):
             continue
-        if entry.is_file() and should_exclude_file(entry.name, entry, exclude_files, exclude_patterns, sys.maxsize):
+        if entry.is_file() and should_exclude_file(
+            entry.name,
+            entry,
+            exclude_files,
+            exclude_patterns,
+            sys.maxsize,
+            include_files,
+        ):
             continue
 
         output.append(f"{prefix}{connector}{entry.name}")
@@ -252,6 +330,7 @@ def generate_tree_structure(
                 exclude_folderpaths,
                 exclude_files,
                 exclude_patterns,
+                include_files,
                 prefix + extension,
                 is_last_entry,
             )
@@ -272,72 +351,18 @@ def setup_logging(debug_file: Path) -> None:
 
 
 def main():
-    """Main function to execute the file combination and tree structure generation process."""
-
-    EXCLUDE_FILES = {
-        "__init__.py",
-        ".DS_Store",
-        ".gitignore",
-        ".gitkeep",
-        "combine.sh",
-        "combined.txt",
-        "debug.log",
-        "Final_Project_Team_3_Deliverable_1.bbl",
-        "Final_Project_Team_3_Deliverable_1.pdf",
-        "Final_Project_Team_3_Deliverable_1.synctex.gz",
-        "LICENSE",
-        "Thumbs.db",
-        "tree.txt",
-        "update.sh",
-    }
-
-    EXCLUDE_FOLDERS = {
-        "__pycache__",
-    }
-
-    EXCLUDE_FOLDERPATHS = {
-        "./docs/design-document/images",
-        ".devcontainer",
-        ".dvc",
-        ".git",
-        ".gitea",
-        ".github",
-        ".temp",
-        ".venv",
-        ".vscode",
-        "data",
-        "debug",
-        "huggingface",
-        "models",
-        "node_modules",
-        "notebooks",
-        "outputs",
-        "temp",
-        "terraform",
-        "video-assets",
-    }
-
-    EXCLUDE_PATTERNS = [
-        r".*\.log",
-        r".*\.mp3",
-        r".*\.mp4",
-        r".*\.pdf",
-        r".*\.pkl",
-        r".*\.png",
-        r".*\.pptx",
-        r".*\.pyc",
-        r".*\.wav",
-        r".*\.zip",
-    ]
+    """Main function to execute the file combination and tree structure
+    generation process."""
 
     args = parse_arguments()
 
-    # Update exclusion lists with command-line arguments
+    # Update inclusion and exclusion lists with command-line arguments
+    include_files = set(args.include_files) | INCLUDE_FILES
     exclude_files = set(args.exclude_files) | EXCLUDE_FILES
     exclude_folders = set(args.exclude_folders) | EXCLUDE_FOLDERS
 
     # Convert folder paths to Path objects
-    exclude_folderpaths = {Path(p) for p in args.exclude_folderpaths} | {Path(p) for p in EXCLUDE_FOLDERPATHS}
+    exclude_folderpaths = {Path(p) for p in args.exclude_folderpaths} | EXCLUDE_FOLDERPATHS
 
     exclude_patterns = args.exclude_patterns + EXCLUDE_PATTERNS
 
@@ -358,7 +383,6 @@ def main():
     # Ensure output directories exist and delete existing debug files
     if debug_folder.exists():
         shutil.rmtree(debug_folder)
-        # print(f"Deleted existing debug folder: {debug_folder}") # Optional print statement
     debug_folder.mkdir(parents=True, exist_ok=True)
 
     # Set up logging AFTER creating the debug folder
@@ -391,7 +415,14 @@ def main():
 
                 for file_name in files:
                     file_path = current_path / file_name
-                    if not should_exclude_file(file_name, file_path, exclude_files, compiled_patterns, args.max_file_size):
+                    if not should_exclude_file(
+                        file_name,
+                        file_path,
+                        exclude_files,
+                        compiled_patterns,
+                        args.max_file_size,
+                        include_files,
+                    ):
                         process_file(file_path, outfile, parent_dir)
 
         logger.info(f"File concatenation complete. Output saved to {output_file}")
@@ -405,6 +436,7 @@ def main():
             exclude_folderpaths,
             exclude_files,
             compiled_patterns,
+            include_files,
         )
         with tree_file.open("w", encoding="utf-8") as f:
             f.write(tree_output)
@@ -417,7 +449,7 @@ def main():
             combined_content = combined_file.read()
 
         with output_file.open("w", encoding="utf-8") as final_file:
-            final_file.write(f"{tree_output}{combined_content}")
+            final_file.write(f"{tree_output}\n\n{combined_content}")
 
         logger.debug("Added tree structure to the top of the combined file")
 

@@ -7,8 +7,6 @@
 # Notes           :Requires installation of formatting tools (see TOOLS arrays).
 #===============================================================================
 
-set -euo pipefail
-
 #---------------------------------------
 # Array of APT tools to install
 #---------------------------------------
@@ -16,6 +14,7 @@ APT_TOOLS=(
   jq
   yq
   shfmt
+  terraform
 )
 
 #---------------------------------------
@@ -25,7 +24,6 @@ PIP_TOOLS=(
   autopep8
   isort
   docformatter
-  prettier
   black
 )
 
@@ -68,7 +66,7 @@ install_pip_package() {
 format_python() {
   echo "Formatting Python files..."
   find . -name "*.py" -print0 | while IFS= read -r -d $'\0' file; do
-    black "$file" -l 0
+    black "$file" -l 9999
     autopep8 -i "$file"
     isort "$file"
     docformatter -i "$file"
@@ -107,7 +105,7 @@ format_yaml() {
 format_markdown() {
   echo "Formatting Markdown files..."
   find . -name "*.md" -print0 | while IFS= read -r -d $'\0' file; do
-    prettier --write "$file"
+    npx prettier --write "$file"
   done
 }
 
@@ -120,6 +118,21 @@ format_shell_scripts() {
   echo "Formatting shell scripts..."
   find . -name "*.sh" -print0 | while IFS= read -r -d $'\0' file; do
     shfmt -i 2 -w "$file"
+  done
+}
+
+#---------------------------------------
+# Function: format_terraform
+# Description:
+#   Formats Terraform files using terraform fmt.
+#---------------------------------------
+format_terraform() {
+  echo "Formatting Terraform files..."
+  find . -name "*.tf" -print0 | while IFS= read -r -d $'\0' file; do
+    terraform fmt "$file"
+  done
+  find . -name "*.tfvars" -print0 | while IFS= read -r -d $'\0' file; do
+    terraform fmt "$file"
   done
 }
 
@@ -144,5 +157,6 @@ format_json
 format_yaml
 format_markdown
 format_shell_scripts
+format_terraform
 
 echo "---- Formatting Process Complete ----"

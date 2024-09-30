@@ -17,10 +17,10 @@ set -euo pipefail
 #   $1 - Package name
 #---------------------------------------
 install_package() {
-    local package_name="$1"
-    echo "Installing $package_name..."
-    sudo apt install -y "$package_name"
-    echo "$package_name installed successfully."
+  local package_name="$1"
+  echo "Installing $package_name..."
+  sudo apt install -y "$package_name"
+  echo "$package_name installed successfully."
 }
 
 #---------------------------------------

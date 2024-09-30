@@ -24,12 +24,12 @@ from pathlib import Path
 
 
 def find_nvidia_gpu_py():
-    """
-    Locate the nvidia_gpu.py file within the project's virtual environment.
+    """Locate the nvidia_gpu.py file within the project's virtual environment.
 
-    This function searches for the .venv directory starting from the current working directory
-    and moving up through parent directories. Once found, it constructs the path to the
-    nvidia_gpu.py file within the site-packages directory.
+    This function searches for the .venv directory starting from the
+    current working directory and moving up through parent directories.
+    Once found, it constructs the path to the nvidia_gpu.py file within
+    the site-packages directory.
 
     :return: Path to the nvidia_gpu.py file if found, None otherwise
     :rtype: Path or None
@@ -60,9 +60,7 @@ def find_nvidia_gpu_py():
         return None
 
     # Find the nvidia_gpu.py file
-    nvidia_gpu_py = (
-        site_packages / "ray" / "_private" / "accelerators" / "nvidia_gpu.py"
-    )
+    nvidia_gpu_py = site_packages / "ray" / "_private" / "accelerators" / "nvidia_gpu.py"
 
     if not nvidia_gpu_py.exists():
         print(f"Could not find nvidia_gpu.py in {nvidia_gpu_py}")
@@ -72,12 +70,13 @@ def find_nvidia_gpu_py():
 
 
 def update_nvidia_gpu_py(file_path):
-    """
-    Update the get_current_node_accelerator_type method in the nvidia_gpu.py file.
+    """Update the get_current_node_accelerator_type method in the nvidia_gpu.py
+    file.
 
-    This function reads the content of the nvidia_gpu.py file, identifies the
-    get_current_node_accelerator_type method, and replaces it with an updated version
-    that includes a fallback mechanism for decoding device names.
+    This function reads the content of the nvidia_gpu.py file,
+    identifies the get_current_node_accelerator_type method, and
+    replaces it with an updated version that includes a fallback
+    mechanism for decoding device names.
 
     :param file_path: Path to the nvidia_gpu.py file
     :type file_path: Path
@@ -87,9 +86,7 @@ def update_nvidia_gpu_py(file_path):
 
     # Define the patterns to match and replace
     old_pattern = re.compile(
-        r"@staticmethod\s*\n"
-        r"\s*def get_current_node_accelerator_type.*?"
-        r"return cuda_device_type\s*\n",
+        r"@staticmethod\s*\n" r"\s*def get_current_node_accelerator_type.*?" r"return cuda_device_type\s*\n",
         re.DOTALL,
     )
 
@@ -129,17 +126,15 @@ def update_nvidia_gpu_py(file_path):
 
 
 if __name__ == "__main__":
-    """
-    Main execution block of the script.
+    """Main execution block of the script.
 
-    This block locates the nvidia_gpu.py file and updates its content if found.
-    If the file cannot be located, it exits with an error message.
+    This block locates the nvidia_gpu.py file and updates its content if
+    found. If the file cannot be located, it exits with an error
+    message.
     """
     nvidia_gpu_py = find_nvidia_gpu_py()
     if nvidia_gpu_py:
         update_nvidia_gpu_py(nvidia_gpu_py)
     else:
-        print(
-            "Failed to locate nvidia_gpu.py. Please check your virtual environment setup."
-        )
+        print("Failed to locate nvidia_gpu.py. Please check your virtual environment setup.")
         sys.exit(1)
