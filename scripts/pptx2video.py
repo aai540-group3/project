@@ -12,7 +12,7 @@ This script converts a PowerPoint presentation (.pptx) into a video (.mp4) by:
 The process is idempotent and utilizes both asynchronous and parallel processing to improve performance.
 
 Usage:
-    python pptx2video.py <presentation.pptx> [--force]
+    python pptx2video.py <presentation.pptx> [--force] [--changed]
 
 Requirements:
     - Python 3.7+
@@ -43,8 +43,7 @@ import openai
 import pdf2image
 from PIL import Image
 from pptx import Presentation
-from tenacity import (retry, retry_if_exception_type, stop_after_attempt,
-                      wait_exponential)
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -65,7 +64,7 @@ async def tts_async(input_text: str, model: str, voice: str, api_key: str) -> by
     :param voice: The voice profile to use (e.g., 'alloy', 'echo', 'fable', etc.).
     :param api_key: OpenAI API key.
     :return: Audio content as bytes.
-    :raises ValueError: If API key or input text is empty.
+    :raises ValueError: If API key or input text are empty.
     :raises RuntimeError: If the API call fails.
     """
     if not api_key.strip() or not input_text.strip():
@@ -90,7 +89,7 @@ async def tts_async(input_text: str, model: str, voice: str, api_key: str) -> by
 def convert_slide_to_image(args) -> Tuple[str, Optional[str], int]:
     """Convert a single slide from the PDF to an image.
 
-    :param args: Tuple containing pdf_filename, output_dir, and slide index i.
+    :param args: Tuple containing pdf_filename, output_dir, slide index i, force_flag.
     :return: Tuple of (image_path, image_hash, slide index)
     """
     pdf_filename, output_dir, i, force_flag = args
@@ -235,8 +234,24 @@ class PPTXtoVideo:
         self.pptx_filename = pptx_filename
         self.force_flag = force_flag
         self.pptx_hash = self._compute_file_hash(pptx_filename)
-        self.output_dir = os.path.join(os.getcwd(), "video-assets")
+        self.api_key = os.environ.get("OPENAI_API_KEY")
+        if not self.api_key:
+            raise ValueError("OPENAI_API_KEY not found in environment variables.")
+        self.presentation = Presentation(pptx_filename)
+        self.slides = self.presentation.slides
+        self.slides_data = self._extract_slide_texts()
+        self.video_files = []
+
+        # Determine the output directory
+        repo_root = self._get_repo_root()
+        if repo_root:
+            self.output_dir = os.path.join(repo_root, "video-assets")
+        else:
+            # Fallback to using the PPTX file's directory
+            self.output_dir = os.path.join(os.path.dirname(self.pptx_filename), "video-assets")
         os.makedirs(self.output_dir, exist_ok=True)
+
+        # Define filenames
         self.pdf_filename = os.path.join(
             self.output_dir,
             f"{os.path.splitext(os.path.basename(pptx_filename))[0]}.pdf",
@@ -245,16 +260,29 @@ class PPTXtoVideo:
             os.path.dirname(pptx_filename),
             f"{os.path.splitext(os.path.basename(pptx_filename))[0]}.mp4",
         )
-        self.presentation = Presentation(pptx_filename)
-        self.slides = self.presentation.slides
-        self.api_key = os.environ.get("OPENAI_API_KEY")
-        if not self.api_key:
-            raise ValueError("OPENAI_API_KEY not found in environment variables.")
-        self.slides_data = self._extract_slide_texts()
-        self.video_files = []
         self.state_file = os.path.join(self.output_dir, "conversion_state.json")
         self.state = self._load_state()
         self.state_changed = False  # Flag to indicate whether state has changed
+
+    def _get_repo_root(self) -> Optional[str]:
+        """Get the root directory of the Git repository.
+
+        :return: The path to the repository root or None if not in a Git repository.
+        """
+        try:
+            result = subprocess.run(
+                ['git', 'rev-parse', '--show-toplevel'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True
+            )
+            repo_root = result.stdout.strip()
+            logger.debug(f"Repository root found: {repo_root}")
+            return repo_root
+        except subprocess.CalledProcessError:
+            logger.debug("Not in a Git repository or Git is not installed.")
+            return None
 
     def _compute_file_hash(self, filename: str) -> str:
         """Compute a hash of the file contents.
@@ -298,14 +326,17 @@ class PPTXtoVideo:
         try:
             with open(self.state_file, "r") as f:
                 state = json.load(f)
+                logger.debug("Conversion state loaded.")
         except (FileNotFoundError, json.JSONDecodeError):
             state = initial_state
+            logger.debug("No previous conversion state found or file corrupted. Starting fresh.")
         return state
 
     def _save_state(self):
         """Save the current conversion state to a file."""
         with open(self.state_file, "w") as f:
             json.dump(self.state, f, indent=4)
+            logger.debug("Conversion state saved.")
         self.state_changed = False  # Reset the flag after saving
 
     def _convert_to_pdf(self):
@@ -346,22 +377,45 @@ class PPTXtoVideo:
         self.state["pdf_created"] = True
         self.state_changed = True
 
-    def is_conversion_needed(self) -> bool:
-        """Check if conversion is needed based on PPTX hash and final video hash."""
-        if self.force_flag:
-            logger.info("Force flag is set, reprocessing all resources")
-            return True
+    def is_conversion_needed(self) -> Tuple[bool, dict]:
+        """Check if conversion is needed and return details on what has changed."""
+        changes = {}
+        conversion_needed = False
+
+        # Check if PPTX file has changed
+        if self.state.get("pptx_hash") != self.pptx_hash:
+            changes["pptx_changed"] = True
+            conversion_needed = True
+        else:
+            changes["pptx_changed"] = False
+
+        # Verify that slides are up to date
+        slides_changed = []
+        for slide_data in self.slides_data:
+            i = slide_data["index"]
+            str_i = str(i)
+            slide_notes_hash = slide_data["hash"]
+            slide_image_hash = self.state["slide_image_hashes"].get(str_i, "")
+            slide_content_hash = hashlib.sha256((slide_notes_hash + slide_image_hash).encode()).hexdigest()
+            prev_slide_content_hash = self.state["slide_content_hashes"].get(str_i)
+            if prev_slide_content_hash != slide_content_hash:
+                slides_changed.append(i + 1)  # Slide numbers are 1-indexed
+                conversion_needed = True
+
+        changes["slides_changed"] = slides_changed
 
         # Compute current final video hash
         slide_indices = sorted([int(i) for i in self.state.get("slide_content_hashes", {}).keys()])
         concatenated_hash = ''.join([self.state["slide_content_hashes"].get(str(i), '') for i in slide_indices])
         current_final_video_hash = hashlib.sha256(concatenated_hash.encode()).hexdigest()
-        # Check if PPTX hash matches and final video hash matches
-        if self.state.get("pptx_hash") == self.pptx_hash and self.state.get("final_video_hash") == current_final_video_hash and os.path.exists(self.output_file):
-            logger.info("PPTX file hasn't changed and final video is up to date, skipping conversion")
-            return False
+
+        if self.state.get("final_video_hash") != current_final_video_hash:
+            changes["final_video_changed"] = True
+            conversion_needed = True
         else:
-            return True
+            changes["final_video_changed"] = False
+
+        return conversion_needed, changes
 
     async def create_videos(self):
         """Creates individual video files for each slide, combining slide images and TTS audio."""
@@ -405,7 +459,6 @@ class PPTXtoVideo:
         logger.info("Generating audio for slides")
         audio_files = []
         tasks = []
-        semaphore = asyncio.Semaphore(MAX_CONCURRENT_CALLS)
 
         for slide_data in self.slides_data:
             i = slide_data["index"]
@@ -551,7 +604,9 @@ class PPTXtoVideo:
                 self.state_changed = True
                 self._save_state()
 
-        if not self.is_conversion_needed():
+        conversion_needed, _ = self.is_conversion_needed()
+        if not conversion_needed:
+            logger.info("No conversion needed. Exiting.")
             return
 
         await self.create_videos()
@@ -564,7 +619,21 @@ async def main():
     parser = argparse.ArgumentParser(description="Convert a PowerPoint presentation to a video using OpenAI TTS and FFmpeg.")
     parser.add_argument("pptx", type=str, help="The path to the PowerPoint (.pptx) file to convert.")
     parser.add_argument("--force", action="store_true", help="Force regeneration of all resources.")
+    parser.add_argument("--changed", action="store_true", help="Output exactly what has changed that requires conversion.")
     args = parser.parse_args()
+
+    if args.changed:
+        try:
+            converter = PPTXtoVideo(args.pptx)
+            conversion_needed, changes = converter.is_conversion_needed()
+            if conversion_needed:
+                print(json.dumps(changes, indent=4))
+            else:
+                print(json.dumps({"conversion_needed": False}, indent=4))
+        except Exception as e:
+            logger.exception(f"An error occurred while checking for changes: {e}")
+            sys.exit(1)
+        sys.exit(0)
 
     try:
         logger.info(f"Starting conversion process for: {args.pptx}")

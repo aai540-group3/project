@@ -112,17 +112,25 @@ jobs:
       - name: Push to Remote
         run: |
           git add Final_Project_Team_3_Deliverable_1.pdf docs/design-document/tex_hash.txt
-          git stash
-          git pull origin main
-          git stash pop
-          git commit -m "PAGES: ${{ steps.page_count.outputs.PAGES }} | WORDS: ${{ steps.word_count.outputs.WORDS }}"
-          git push origin main || {
-            echo "Push failed. Creating a pull request..."
-            gh pr create --title "Automated PR" --body "Push to main failed. Updated PDF included."
-          }
-          echo "Changes committed and pushed successfully."
+          if git diff --staged --quiet; then
+            echo "No changes detected. Skipping commit and push."
+            echo "CHANGED=false" >> $GITHUB_ENV
+          else
+            git stash
+            git pull origin main
+            git stash pop
+            git add Final_Project_Team_3_Deliverable_1.pdf docs/design-document/tex_hash.txt
+            git commit -m "PAGES: ${{ steps.page_count.outputs.PAGES }} | WORDS: ${{ steps.word_count.outputs.WORDS }}"
+            git push origin main || {
+              echo "Push failed. Creating a pull request..."
+              gh pr create --title "Automated PR" --body "Push to main failed. Updated PDF included."
+            }
+            echo "Changes committed and pushed successfully (or pull request created)."
+            echo "CHANGED=true" >> $GITHUB_ENV
+          fi
 
       - name: Repository Dispatch
+        if: env.CHANGED == 'true'
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}

@@ -75,11 +75,12 @@ jobs:
           fi
 
       - name: Repository Dispatch
+        if: env.CHANGED == 'true'
         uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: aai540-group3/project
-          event-type: create-release
+          event-type: package-deliverables
 
       - name: Cleanup
         if: always()

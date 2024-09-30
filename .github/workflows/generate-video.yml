@@ -23,13 +23,14 @@ permissions:
   id-token: write
 
 jobs:
-  generate-video:
+  check-pptx:
     runs-on: ubuntu-latest
-    env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    outputs:
+      conversion_needed: ${{ steps.check.outputs.conversion_needed }}
+      force_generate: ${{ inputs.force_generate }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 1
@@ -42,16 +43,42 @@ jobs:
             exit 1
           fi
 
-      - name: Cache Apt Packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      - name: Install Python
+        uses: actions/setup-python@v5
         with:
-          path: |
-            /var/cache/apt/archives/*.deb
-            /var/lib/apt/lists/*
-            ! /var/lib/apt/lists/partial
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/generate-video.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-
+          python-version: "3.11"
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-pptx2video.txt
+
+      - name: Check if Conversion is Needed
+        id: check
+        run: |
+          python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx --changed > changes.json
+          cat changes.json
+          if grep -q '"conversion_needed": false' changes.json; then
+            echo "Conversion is not needed."
+            echo "conversion_needed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Conversion is needed."
+            echo "conversion_needed=true" >> $GITHUB_OUTPUT
+          fi
+
+  generate-video:
+    needs: check-pptx
+    if: needs.check-pptx.outputs.conversion_needed == 'true' || inputs.force_generate == 'true'
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          lfs: true
 
       - name: Install System Dependencies
         run: |
@@ -63,17 +90,9 @@ jobs:
               bc
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Cache Python Dependencies
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('.github/workflows/generate-video.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
 
       - name: Install Python Dependencies
         run: |
@@ -83,7 +102,7 @@ jobs:
       - name: Run Video Generation Script
         run: |
           FORCE_FLAG=""
-          if [ "${{ github.event.inputs.force_generate }}" == 'true' ]; then
+          if [ "${{ needs.check-pptx.outputs.force_generate }}" == 'true' ]; then
             FORCE_FLAG="--force"
           fi
           python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx $FORCE_FLAG
@@ -129,8 +148,9 @@ jobs:
           fi
 
       - name: Repository Dispatch
+        if: env.CHANGED == 'true'
         uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: aai540-group3/project
-          event-type: package-delieverables
+          event-type: package-deliverables
