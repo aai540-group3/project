@@ -2,7 +2,7 @@
 
 ## Document Version
 
-1.2
+1.3
 
 ## Date
 
@@ -69,7 +69,7 @@ The ML system will include the following core features, implemented using open-s
 ### 2.4 Operating Environment
 
 - **Development Environment**: Local machines or cloud-based development environments with necessary open-source tools installed.
-- **Deployment Environment**: The system will be containerized using Docker and can be deployed on any platform that supports Docker containers, such as local servers or cloud providers offering free tiers (e.g., Google Cloud Platform Free Tier, Heroku, or AWS Free Tier services).
+- **Deployment Environment**: The system will be containerized using Docker and can be deployed on any platform that supports Docker containers, such as local servers or cloud providers offering free tiers (e.g., Google Cloud Platform Free Tier, Heroku).
 - **Operating Systems**: Compatible with Linux, Windows, and macOS environments.
 
 ### 2.5 Design and Implementation Constraints
@@ -80,6 +80,44 @@ The ML system will include the following core features, implemented using open-s
 - **Data Availability**: The dataset used must be publicly available and meet the minimum size requirements (e.g., at least 10,000 records per class for classification problems).
 - **Open-Source Tools**: The project must utilize open-source technologies exclusively, avoiding proprietary tools like AWS SageMaker.
 - **Resource Limitations**: Must operate within the constraints of available computational resources and any limitations of free-tier services.
+
+#### 2.5.1 Mapping of Proprietary AWS Tools to Open-Source Alternatives
+
+To ensure compliance with the project's requirements and to facilitate the use of open-source technologies, the following mapping from proprietary AWS tools to open-source equivalents will be implemented:
+
+| **AWS Proprietary Tool**                                            | **Open-Source Equivalent**                          | **Description**                                                                                                                                                                                                                                                                             |
+|---------------------------------------------------------------------|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **AWS SageMaker Studio**                                            | **JupyterLab**                                      | Integrated development environment for machine learning. JupyterLab offers a web-based interactive development environment for notebooks, code, and data.                                                                                            |
+| **AWS SageMaker Notebooks**                                         | **Jupyter Notebooks**                               | Interactive notebooks for data exploration and model development. Jupyter Notebooks are an open-source web application for creating and sharing documents containing live code and visualizations.                                                   |
+| **AWS SageMaker Processing**                                        | **Apache Airflow, Luigi**                           | Managed service for running data processing jobs. Apache Airflow and Luigi are workflow management platforms for orchestrating complex computational workflows and data processing pipelines.                                                       |
+| **AWS SageMaker Training**                                          | **TensorFlow, PyTorch, Scikit-learn**               | Managed service for training machine learning models. Open-source ML frameworks like TensorFlow, PyTorch, and Scikit-learn can be used for model training on local machines or cluster computing environments.                                        |
+| **AWS SageMaker Debugger**                                          | **TensorBoard, PyTorch Profiler**                   | Tool for debugging and profiling ML models during training. TensorBoard and PyTorch Profiler provide visualization and tools for debugging and optimizing ML models.                                                                                 |
+| **AWS SageMaker Model Registry**                                    | **MLflow Model Registry, DVC (Data Version Control)** | Central repository to store and version ML models. MLflow Model Registry and DVC are open-source tools for managing the full ML lifecycle, including model versioning and reproducibility.                                                          |
+| **AWS SageMaker Deployment (Endpoints)**                            | **Flask, FastAPI, Docker, Kubernetes**              | Hosting ML models for real-time inference. Flask and FastAPI are web frameworks for serving models via RESTful APIs. Docker and Kubernetes can be used for containerization and orchestration of deployments.                                        |
+| **AWS SageMaker Batch Transform**                                   | **Apache Spark, Dask**                              | For batch inference jobs on large datasets. Apache Spark and Dask are distributed computing frameworks suitable for large-scale data processing and batch inference tasks.                                                                           |
+| **AWS SageMaker Pipelines (CI/CD)**                                 | **Kubeflow Pipelines, Jenkins, GitHub Actions, GitLab CI/CD** | Managed service for building and managing ML workflows. Kubeflow Pipelines, Jenkins, GitHub Actions, and GitLab CI/CD are open-source CI/CD tools for automating ML workflows and pipelines.                                     |
+| **AWS SageMaker Feature Store**                                     | **Feast, Hopsworks Feature Store**                  | Centralized repository for storing and retrieving ML features. Feast and Hopsworks are open-source feature store implementations that manage feature data for training and serving.                                                                 |
+| **AWS SageMaker Model Monitor**                                     | **Evidently AI, WhyLogs, DataValidation**           | Monitoring deployed ML models for concept drift and data quality. Evidently AI, WhyLogs, and Google's Data Validation library provide tools for monitoring and detecting anomalies in data and model predictions.                                    |
+| **AWS CloudWatch (Infrastructure Monitoring)**                      | **Prometheus, Grafana**                             | Monitoring and observability of infrastructure and applications. Prometheus is an open-source monitoring system with a dimensional data model, and Grafana provides visualization dashboards for metrics collected by Prometheus.                     |
+| **AWS CloudTrail (Logging and Auditing)**                           | **ELK Stack (Elasticsearch, Logstash, Kibana), Graylog** | Logging and auditing of user activity and API calls. The ELK Stack and Graylog are open-source platforms for log management and analytics.                                                                                                           |
+| **AWS CodeCommit (Source Control)**                                 | **GitHub, GitLab, Bitbucket**                       | Source control service hosting private Git repositories. GitHub, GitLab, and Bitbucket offer Git repository hosting with additional features for collaboration and project management.                                                               |
+| **AWS CodePipeline (CI/CD for Applications)**                       | **Jenkins, GitHub Actions, GitLab CI/CD**           | Continuous integration and delivery service for fast and reliable application updates. Jenkins, GitHub Actions, and GitLab CI/CD are open-source automation servers for building, testing, and deploying applications.                               |
+| **AWS CodeBuild (Build Service)**                                   | **Jenkins, Travis CI, CircleCI**                    | Fully managed build service that compiles source code, runs tests, and produces software packages. Jenkins, Travis CI, and CircleCI are open-source tools for automating the software build process.                                                 |
+| **AWS CodeDeploy (Automated Deployments)**                          | **Ansible, Puppet, Chef**                           | Automates code deployments to any instance, including EC2 instances and servers on-premises. Ansible, Puppet, and Chef are open-source configuration management tools that automate application deployment.                                          |
+| **AWS Step Functions (Orchestration)**                              | **Apache Airflow, Luigi, Prefect**                  | Serverless orchestration service that lets you combine AWS services to build business-critical applications. Apache Airflow, Luigi, and Prefect are open-source platforms to programmatically author, schedule, and monitor workflows.               |
+| **AWS IAM (Identity and Access Management)**                        | **Keycloak, Auth0 (open-source plan)**              | Manage access to AWS services and resources securely. Keycloak and Auth0 provide open-source identity and access management solutions for securing applications and services.                                                                        |
+| **AWS S3 (Object Storage)**                                         | **MinIO, Ceph, HDFS**                               | Scalable storage in the cloud for data backup and distribution. MinIO and Ceph offer open-source object storage solutions compatible with S3 APIs. HDFS is the Hadoop Distributed File System for scalable storage and processing.                    |
+| **AWS Lambda (Serverless Compute)**                                 | **OpenFaaS, Apache OpenWhisk**                      | Run code without provisioning or managing servers. OpenFaaS and Apache OpenWhisk are open-source serverless computing frameworks that let you run code in response to events.                                                                        |
+| **AWS Kinesis (Real-time Data Streaming)**                          | **Apache Kafka, Apache Pulsar**                     | Collect, process, and analyze real-time, streaming data. Apache Kafka and Apache Pulsar are open-source distributed event streaming platforms capable of handling real-time data feeds.                                                              |
+| **AWS Glue (Data Catalog and ETL)**                                 | **Apache NiFi, Apache Airflow, Talend Open Studio** | Extract, transform, and load (ETL) service for data preparation. Apache NiFi and Airflow can manage ETL workflows, while Talend Open Studio is an open-source data integration tool for ETL tasks.                                                   |
+| **Amazon EMR (Managed Hadoop Framework)**                           | **Apache Hadoop, Apache Spark**                     | Provides a managed Hadoop framework to process vast amounts of data. Apache Hadoop and Spark can be set up on local clusters or cloud-based virtual machines to process large datasets.                                                              |
+| **Amazon Athena (Serverless Query Service)**                        | **Presto, Apache Drill, Dask**                      | Interactive query service that makes it easy to analyze data directly in S3 using standard SQL. Presto and Apache Drill are open-source distributed SQL query engines. Dask can handle parallel computing for analytics on large datasets.            |
+| **Amazon QuickSight (Business Intelligence)**                       | **Metabase, Apache Superset, Redash**               | Scalable business intelligence service with data visualization capabilities. Metabase, Apache Superset, and Redash are open-source BI tools for data exploration and visualization.                                                                  |
+| **AWS Secrets Manager**                                             | **HashiCorp Vault, Doppler**                        | Protects secrets needed to access applications, services, and IT resources. HashiCorp Vault and Doppler are open-source tools for securely accessing and distributing secrets and credentials.                                                        |
+| **AWS Config (Resource Inventory, Configurations, and Compliance)** | **Rudder, CFEngine**                                | Fully managed service providing an AWS resource inventory, configuration history, and configuration change notifications. Rudder and CFEngine are open-source configuration management and auditing tools.                                           |
+| **Amazon CloudWatch Synthetics**                                    | **Selenium, Locust**                                | Monitors application endpoints and APIs to ensure they are reachable. Selenium can automate web browser interactions, and Locust is an open-source load testing tool that can monitor endpoints.                                                      |
+
+This mapping ensures that all functionalities required for the ML system are covered using open-source tools, thereby satisfying the project's design constraints.
 
 ### 2.6 User Documentation
 
@@ -119,16 +157,16 @@ The following user documentation will be provided:
 
 ### 3.2 Non-Functional Requirements
 
-| **ID**   | **Type**      | **Description**                                                                                                     |
-|----------|---------------|---------------------------------------------------------------------------------------------------------------------|
-| **NFR-01**   | Performance   | The system shall process data and generate predictions within acceptable timeframes suitable for application needs.|
-| **NFR-02**   | Scalability   | The system shall be designed to handle increasing data volumes and user requests by scaling horizontally.        |
-| **NFR-03**   | Reliability   | The system shall have minimal downtime and be resilient to failures, ensuring consistent availability.            |
-| **NFR-04**   | Security      | The system shall protect sensitive data and models from unauthorized access and adhere to data protection standards.|
-| **NFR-05**   | Maintainability| The system shall be modular and well-documented, allowing for easy updates, maintenance, and onboarding of new team members.|
-| **NFR-06**   | Usability     | The system shall provide intuitive interfaces and clear documentation for users and developers.                   |
-| **NFR-07**   | Portability   | The system shall be deployable on various platforms with minimal configuration changes, facilitated by containerization.|
-| **NFR-08**   | Compliance    | The system shall comply with relevant legal and regulatory requirements, such as data privacy laws.              |
+| **ID**       | **Type**        | **Description**                                                                                                   |
+|--------------|-----------------|---------------------------------------------------------------------------------------------------------------------|
+| **NFR-01**   | Performance     | The system shall process data and generate predictions within acceptable timeframes suitable for application needs. |
+| **NFR-02**   | Scalability     | The system shall be designed to handle increasing data volumes and user requests by scaling horizontally.          |
+| **NFR-03**   | Reliability     | The system shall have minimal downtime and be resilient to failures, ensuring consistent availability.              |
+| **NFR-04**   | Security        | The system shall protect sensitive data and models from unauthorized access and adhere to data protection standards.|
+| **NFR-05**   | Maintainability | The system shall be modular and well-documented, allowing for easy updates, maintenance, and onboarding of new team members.|
+| **NFR-06**   | Usability       | The system shall provide intuitive interfaces and clear documentation for users and developers.                     |
+| **NFR-07**   | Portability     | The system shall be deployable on various platforms with minimal configuration changes, facilitated by containerization.|
+| **NFR-08**   | Compliance      | The system shall comply with relevant legal and regulatory requirements, such as data privacy laws.                |
 
 ## 4. Future Enhancements
 
@@ -168,3 +206,26 @@ Potential future enhancements to the ML system include:
 - [Feast Feature Store](https://feast.dev/)
 - [MLflow Documentation](https://www.mlflow.org/docs/latest/index.html)
 - [Evidently AI](https://evidentlyai.com/)
+- [JupyterLab](https://jupyterlab.readthedocs.io/)
+- [Apache Airflow](https://airflow.apache.org/)
+- [Docker](https://www.docker.com/)
+- [Kubernetes](https://kubernetes.io/)
+- [Prometheus](https://prometheus.io/)
+- [Grafana](https://grafana.com/)
+- [ELK Stack](https://www.elastic.co/what-is/elk-stack)
+- [GitHub](https://github.com/)
+- [Jenkins](https://www.jenkins.io/)
+- [GitHub Actions](https://github.com/features/actions)
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [Flask](https://flask.palletsprojects.com/)
+- [Apache Spark](https://spark.apache.org/)
+- [Dask](https://dask.org/)
+- [WhyLogs](https://whylogs.ai/)
+- [Ansible](https://www.ansible.com/)
+- [Keycloak](https://www.keycloak.org/)
+- [HashiCorp Vault](https://www.vaultproject.io/)
+- [OpenFaaS](https://www.openfaas.com/)
+- [Apache Kafka](https://kafka.apache.org/)
+- [Metabase](https://www.metabase.com/)
+- [Apache Superset](https://superset.apache.org/)
+- [Redash](https://redash.io/)
