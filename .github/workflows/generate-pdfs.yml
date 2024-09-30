@@ -59,14 +59,12 @@ jobs:
 
       - name: Calculate Page Count
         id: page_count
-        working-directory: docs/design-document
         run: |
           PAGES=$(pdfinfo Final_Project_Team_3_Deliverable_1.pdf | grep Pages | awk '{print $2}')
           echo "PAGES=$PAGES" >> $GITHUB_ENV
 
       - name: Calculate Word Count
         id: word_count
-        working-directory: docs/design-document
         run: |
           WORDS=$(pdftotext Final_Project_Team_3_Deliverable_1.pdf - | wc -w)
           echo "WORDS=$WORDS" >> $GITHUB_ENV
