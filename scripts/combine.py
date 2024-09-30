@@ -102,6 +102,7 @@ EXCLUDE_FOLDERPATHS = {
     Path("notebooks"),
     Path("outputs"),
     Path("temp"),
+    Path("templates"),
     Path("terraform"),
     Path("video-assets"),
 }

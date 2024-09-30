@@ -1,128 +1,170 @@
-## Software Requirements Specification (SRS)
+# Software Requirements Specification (SRS)
 
-**Document Version:** 1.1
-**Date:** September 24, 2024
-**Project Name:** AAI-540 Final Project - Machine Learning System (Open Source)
+## Document Version
 
-**1. Introduction**
+1.2
 
-**1.1 Purpose**
+## Date
 
-This document outlines the software requirements for the AAI-540 Final Project, which involves the design, development, and deployment of a production-ready machine learning (ML) system using open-source technologies. While AWS tooling is valuable in real-world scenarios, this project will prioritize free and accessible open-source tools to facilitate reuse and adaptation beyond the course duration.
+September 24, 2024
 
-**1.2 Scope**
+## Project Name
 
-The project scope encompasses the following:
+AAI-540 Final Project - Open Source Machine Learning System
 
-* Identifying a real-world problem solvable using machine learning.
-* Designing and implementing an ML system using open-source tools, including data engineering, feature engineering, model training, evaluation, deployment, and monitoring.
-* Implementing CI/CD pipelines for the ML system using open-source tools.
-* Documenting the ML system design and operational validation.
-* Demonstrating the operational components of the ML system.
-* Managing the project collaboratively using Asana and maintaining the codebase in a GitHub repository.
+## 1. Introduction
 
-**1.3 Intended Audience**
+### 1.1 Purpose
 
-This SRS is intended for the project team members, the course instructor, and potential stakeholders interested in understanding the technical requirements and functionalities of the open-source ML system.
+The purpose of this document is to outline the software requirements for the AAI-540 Final Project, which involves the design, development, and deployment of a production-ready machine learning (ML) system using open-source technologies. While proprietary tools like AWS SageMaker are valuable in real-world scenarios, this project will prioritize free and accessible open-source tools to facilitate reuse and adaptation beyond the course duration without incurring additional costs.
 
-**2. Overall Description**
+### 1.2 Scope
 
-**2.1 Product Perspective**
+This project encompasses:
 
-The project aims to deliver a fully functional ML system deployed using open-source technologies. The system will address a specific real-world problem chosen by the team, utilizing a suitable dataset and leveraging appropriate ML techniques. The system will be designed for scalability, reliability, and maintainability, adhering to MLOps best practices, all within the constraints of open-source solutions.
+- Identifying a real-world problem that can be solved using machine learning.
+- Selecting a publicly available dataset that meets the project's requirements.
+- Designing and implementing an end-to-end ML system using open-source tools, including data ingestion, data engineering, feature engineering, model training, evaluation, deployment, and monitoring.
+- Implementing CI/CD pipelines for automating ML workflows using open-source tools.
+- Documenting the ML system design and operational validation in a comprehensive design document.
+- Demonstrating the operational components of the ML system through a video presentation.
+- Collaboratively managing the project using Asana for project planning and GitHub for version control and codebase management.
 
-**2.2 Product Features**
+### 1.3 Intended Audience
+
+This SRS is intended for:
+
+- **Project Team Members**: To understand the system requirements and ensure consistent implementation.
+- **Course Instructor**: To evaluate the project's adherence to requirements and grading criteria.
+- **Potential Stakeholders**: Interested parties who may benefit from understanding the technical aspects of the ML system.
+
+## 2. Overall Description
+
+### 2.1 Product Perspective
+
+The ML system will address a specific real-world problem identified by the team, utilizing appropriate datasets and ML techniques. The system will be designed for scalability, reliability, and maintainability, adhering to MLOps best practices, all within the constraints of open-source solutions. The system will be an independent project developed from scratch and will not be an extension of an existing system.
+
+### 2.2 Product Features
 
 The ML system will include the following core features, implemented using open-source alternatives:
 
-* **Data Ingestion and Engineering:** Ability to ingest data from various sources, perform data cleaning and preprocessing, and store data in a structured format (e.g., using Pandas, Dask).
-* **Feature Engineering:** Creation of relevant features from raw data to improve model performance (e.g., using Scikit-learn, Featuretools).
-* **Model Training and Evaluation:** Training of an ML model using appropriate open-source algorithms (e.g., Scikit-learn, XGBoost, TensorFlow, PyTorch), evaluating its performance using relevant metrics, and selecting the best-performing model.
-* **Model Deployment:** Deployment of the trained model as a batch inference job or a real-time endpoint (e.g., using Flask, Docker, Kubernetes).
-* **Model Monitoring:** Monitoring of model performance over time and triggering retraining or redeployment as needed (e.g., using MLflow, Prometheus).
-* **CI/CD Pipeline:** Automated pipeline for building, testing, and deploying the ML system components using open-source tools (e.g., Jenkins, GitLab CI, GitHub Actions).
-* **Feature Store:** Centralized repository for storing and managing features (e.g., using Feast, Hopsworks).
-* **Infrastructure Monitoring:** Monitoring of the underlying infrastructure for performance and availability (e.g., using Prometheus, Grafana).
-* **Model and Data Monitoring:** Monitoring of model performance and data quality (e.g., using Evidently AI, Great Expectations).
-* **Model Registry:** Centralized repository for managing trained models and their versions (e.g., using MLflow Model Registry).
+- **Data Ingestion and Storage**: Ability to ingest data from various sources and store it in a structured format using open-source databases or file systems (e.g., PostgreSQL, SQLite, or local file storage with CSV/Parquet formats).
+- **Data Engineering**: Perform data cleaning, preprocessing, and transformation using libraries like Pandas and Dask.
+- **Feature Engineering**: Creation of relevant features from raw data to improve model performance using tools like Scikit-learn and Featuretools.
+- **Feature Store**: Implementation of a centralized feature store using tools like Feast or an in-house solution to manage features for training and serving.
+- **Model Training and Evaluation**: Training of ML models using open-source frameworks (e.g., Scikit-learn, TensorFlow, PyTorch), evaluating performance using relevant metrics, and selecting the best-performing model.
+- **Model Registry**: Management of model versions and metadata using tools like MLflow Model Registry.
+- **Model Deployment**: Deployment of the trained model as a batch inference job or a real-time API endpoint using frameworks like Flask or FastAPI, containerized with Docker.
+- **Model Monitoring**: Monitoring of model performance over time, including detecting data drift and triggering alerts for retraining using tools like Evidently AI.
+- **CI/CD Pipeline**: Automated pipeline for building, testing, and deploying the ML system components using open-source tools like Jenkins, GitLab CI, or GitHub Actions.
+- **Infrastructure Monitoring**: Monitoring of the underlying infrastructure for performance and availability using tools like Prometheus and Grafana.
+- **Logging and Tracing**: Implementing logging and tracing mechanisms to track system behavior using tools like the ELK Stack (Elasticsearch, Logstash, Kibana).
 
-**2.3 User Classes and Characteristics**
+### 2.3 User Classes and Characteristics
 
-The primary users of the ML system will be:
+- **Data Scientists**: Responsible for data analysis, feature engineering, and model development. Require access to data and computational resources.
+- **ML Engineers**: Responsible for deploying and maintaining the ML system infrastructure, ensuring scalability and reliability.
+- **Business Stakeholders**: Consumers of the insights generated by the ML system. Require interpretable results and reports.
 
-* **Data Scientists:** Responsible for developing and maintaining the ML models.
-* **ML Engineers:** Responsible for deploying and managing the ML system infrastructure.
-* **Business Stakeholders:** Consumers of the insights generated by the ML system.
+### 2.4 Operating Environment
 
-**2.4 Operating Environment**
+- **Development Environment**: Local machines or cloud-based development environments with necessary open-source tools installed.
+- **Deployment Environment**: The system will be containerized using Docker and can be deployed on any platform that supports Docker containers, such as local servers or cloud providers offering free tiers (e.g., Google Cloud Platform Free Tier, Heroku, or AWS Free Tier services).
+- **Operating Systems**: Compatible with Linux, Windows, and macOS environments.
 
-The ML system will be deployed on a platform built using open-source tools, potentially leveraging technologies like Docker, Kubernetes, and cloud providers offering free tiers for experimentation (e.g., Google Cloud Platform Free Tier).
+### 2.5 Design and Implementation Constraints
 
-**2.5 Design and Implementation Constraints**
+- **Project Timeline**: Must be completed within the timeframe of the AAI-540 course.
+- **Project Guidelines**: Must adhere to the course's project requirements and deliverables as outlined in the syllabus and assignment instructions.
+- **Programming Language**: Python 3.x will be used for all development.
+- **Data Availability**: The dataset used must be publicly available and meet the minimum size requirements (e.g., at least 10,000 records per class for classification problems).
+- **Open-Source Tools**: The project must utilize open-source technologies exclusively, avoiding proprietary tools like AWS SageMaker.
+- **Resource Limitations**: Must operate within the constraints of available computational resources and any limitations of free-tier services.
 
-* The project must be completed within the timeframe of the AAI-540 course.
-* The team must adhere to the project requirements and guidelines outlined in the course syllabus and assignment instructions.
-* The team must use Python as the primary programming language.
-* The dataset used must be publicly available and meet the minimum size requirements specified in the assignment.
-* The project must utilize open-source technologies for all components, avoiding proprietary tools like AWS SageMaker.
-
-**2.6 User Documentation**
+### 2.6 User Documentation
 
 The following user documentation will be provided:
 
-* **ML System Design Document:** A comprehensive document describing the design, implementation, and operational aspects of the open-source ML system, explicitly outlining the tools and technologies used.
-* **Video Demonstration:** A video recording demonstrating the operational validation of the ML system, including key features and functionalities, emphasizing the open-source nature of the deployment.
-* **GitHub Repository Readme:** A comprehensive guide on how to access, run, and modify the codebase, including detailed instructions for setting up the open-source environment.
+- **ML System Design Document**: A comprehensive document describing the design, implementation, and operational aspects of the open-source ML system, explicitly outlining the tools and technologies used.
+- **Video Demonstration**: A 10-15 minute video presentation demonstrating the operational validation of the ML system, including key features and functionalities.
+- **GitHub Repository with README**: A public repository containing the complete codebase, setup instructions, and usage guidelines.
 
-**2.7 Assumptions and Dependencies**
+### 2.7 Assumptions and Dependencies
 
-* The team members have a basic understanding of machine learning concepts and open-source ML tools.
-* The team has access to the necessary computing resources and is comfortable setting up and configuring open-source environments.
-* The chosen dataset is suitable for the selected ML problem and has sufficient quality and quantity.
+- **Team Skills**: Team members are proficient in Python and familiar with open-source ML tools and practices.
+- **Computing Resources**: Team members have access to personal computers capable of running the necessary software or can leverage cloud-based services within free-tier limits.
+- **Dataset Suitability**: The chosen dataset is appropriate for the identified ML problem and meets size and quality requirements.
+- **Third-party Libraries**: Reliance on open-source libraries and frameworks that are actively maintained (e.g., Pandas, Scikit-learn, TensorFlow).
 
-**3. Specific Requirements**
+## 3. Specific Requirements
 
-**3.1 Functional Requirements**
+### 3.1 Functional Requirements
 
-| **ID** | **Feature** | **Description** |
-|---|---|---|
-| FR-01 | Data Ingestion | The system shall be able to ingest data from various sources, including CSV files, databases, and APIs. |
-| FR-02 | Data Preprocessing | The system shall be able to perform data cleaning, transformation, and feature scaling. |
-| FR-03 | Feature Engineering | The system shall be able to create new features from existing data using various techniques. |
-| FR-04 | Model Training | The system shall be able to train ML models using various algorithms. |
-| FR-05 | Model Evaluation | The system shall be able to evaluate model performance using relevant metrics. |
-| FR-06 | Model Deployment | The system shall be able to deploy trained models as batch inference jobs or real-time endpoints. |
-| FR-07 | Model Monitoring | The system shall be able to monitor model performance over time and trigger retraining or redeployment as needed. |
-| FR-08 | CI/CD Pipeline | The system shall have an automated pipeline for building, testing, and deploying the ML system components. |
-| FR-09 | Feature Store | The system shall have a centralized repository for storing and managing features. |
-| FR-10 | Infrastructure Monitoring | The system shall be able to monitor the underlying infrastructure for performance and availability. |
-| FR-11 | Model and Data Monitoring | The system shall be able to monitor model performance and data quality. |
-| FR-12 | Model Registry | The system shall have a centralized repository for managing trained models and their versions. |
+| **ID**      | **Feature**                | **Description**                                                                                                                                |
+|-------------|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| **FR-01**   | Data Ingestion             | The system shall be able to ingest data from various sources, including CSV files, databases, and APIs, and store it for processing.           |
+| **FR-02**   | Data Preprocessing         | The system shall perform data cleaning, transformation, normalization, and handling of missing values and outliers.                            |
+| **FR-03**   | Feature Engineering        | The system shall create new features from existing data using techniques such as encoding, scaling, and feature extraction.                    |
+| **FR-04**   | Feature Store              | The system shall implement a centralized feature store for managing and serving features for model training and inference.                     |
+| **FR-05**   | Model Training             | The system shall train ML models using appropriate algorithms, supporting hyperparameter tuning and cross-validation.                          |
+| **FR-06**   | Model Evaluation           | The system shall evaluate model performance using relevant metrics (e.g., accuracy, precision, recall) and generate evaluation reports.        |
+| **FR-07**   | Model Registry             | The system shall manage trained models and their versions in a model registry, tracking metadata and performance metrics.                      |
+| **FR-08**   | Model Deployment           | The system shall deploy trained models as batch inference jobs or real-time API endpoints accessible to end-users or other systems.            |
+| **FR-09**   | Model Monitoring           | The system shall monitor model performance over time, detecting issues like data drift or concept drift, and trigger alerts for retraining.    |
+| **FR-10**   | CI/CD Pipeline             | The system shall implement an automated CI/CD pipeline for building, testing, and deploying ML system components upon code changes.            |
+| **FR-11**   | Infrastructure Monitoring  | The system shall monitor infrastructure metrics such as CPU, memory, and disk usage, providing dashboards and alerts for resource management.  |
+| **FR-12**   | Model and Data Monitoring  | The system shall monitor data quality and integrity, logging data processing steps and identifying anomalies in input data.                    |
+| **FR-13**   | Logging and Tracing        | The system shall implement logging and tracing mechanisms to debug issues and trace data flow through the system.                              |
+| **FR-14**   | Security and Access Control| The system shall implement security measures to protect data and models, including authentication and authorization mechanisms.                |
 
-**3.2 Non-Functional Requirements**
+### 3.2 Non-Functional Requirements
 
-| **ID** | **Type** | **Description** |
-|---|---|---|
-| NFR-01 | Performance | The system shall be able to process data and generate predictions within acceptable timeframes. |
-| NFR-02 | Scalability | The system shall be able to handle increasing data volumes and user traffic. |
-| NFR-03 | Reliability | The system shall be available and operational with minimal downtime. |
-| NFR-04 | Security | The system shall protect sensitive data and prevent unauthorized access. |
-| NFR-05 | Maintainability | The system shall be designed for easy maintenance and updates. |
-| NFR-06 | Usability | The system shall be easy to use and understand by its intended users. |
+| **ID**   | **Type**      | **Description**                                                                                                     |
+|----------|---------------|---------------------------------------------------------------------------------------------------------------------|
+| **NFR-01**   | Performance   | The system shall process data and generate predictions within acceptable timeframes suitable for application needs.|
+| **NFR-02**   | Scalability   | The system shall be designed to handle increasing data volumes and user requests by scaling horizontally.        |
+| **NFR-03**   | Reliability   | The system shall have minimal downtime and be resilient to failures, ensuring consistent availability.            |
+| **NFR-04**   | Security      | The system shall protect sensitive data and models from unauthorized access and adhere to data protection standards.|
+| **NFR-05**   | Maintainability| The system shall be modular and well-documented, allowing for easy updates, maintenance, and onboarding of new team members.|
+| **NFR-06**   | Usability     | The system shall provide intuitive interfaces and clear documentation for users and developers.                   |
+| **NFR-07**   | Portability   | The system shall be deployable on various platforms with minimal configuration changes, facilitated by containerization.|
+| **NFR-08**   | Compliance    | The system shall comply with relevant legal and regulatory requirements, such as data privacy laws.              |
 
-**4. Future Enhancements**
+## 4. Future Enhancements
 
-Potential future enhancements to the ML system may include:
+Potential future enhancements to the ML system include:
 
-* Implementing more advanced ML techniques, such as deep learning or reinforcement learning.
-* Integrating with other open-source tools and platforms.
-* Developing a user interface for interacting with the ML system.
-* Implementing automated model explainability features.
+- **Advanced Modeling Techniques**: Incorporating deep learning models or ensemble methods to improve predictive performance.
+- **Automated Machine Learning (AutoML)**: Implementing AutoML tools to automate hyperparameter tuning and model selection.
+- **User Interface Development**: Creating a user-friendly web or desktop application for interacting with the ML system outputs.
+- **Explainability and Interpretability**: Integrating tools like SHAP or LIME to provide insights into model predictions.
+- **Continuous Learning**: Enabling online learning capabilities where the model updates incrementally with new data.
+- **Edge Deployment**: Exploring deployment of models on edge devices or mobile platforms for applications requiring on-device inference.
 
-**5. Appendices**
+## 5. Appendices
 
-* **Appendix A: Glossary of Terms**
-* **Appendix B: List of Abbreviations**
-* **Appendix C: References**
+### Appendix A: Glossary of Terms
 
-This SRS serves as a living document and may be updated as the project progresses. Any changes to the requirements will be documented and communicated to all stakeholders.
+- **ML (Machine Learning)**: A field of artificial intelligence that uses statistical techniques to give computer systems the ability to learn from data.
+- **MLOps**: Machine Learning Operations, practices that combine ML, DevOps, and data engineering to deploy and maintain ML systems in production reliably and efficiently.
+- **CI/CD (Continuous Integration/Continuous Deployment)**: Practices that automate the integration, testing, and deployment of code changes.
+- **API (Application Programming Interface)**: A set of functions and protocols that allows different software applications to communicate with each other.
+
+### Appendix B: List of Abbreviations
+
+- **SRS**: Software Requirements Specification
+- **ML**: Machine Learning
+- **MLOps**: Machine Learning Operations
+- **CI/CD**: Continuous Integration/Continuous Deployment
+- **API**: Application Programming Interface
+- **GPU**: Graphics Processing Unit
+- **ELK Stack**: Elasticsearch, Logstash, and Kibana
+
+### Appendix C: References
+
+- [Scikit-learn Documentation](https://scikit-learn.org/stable/)
+- [TensorFlow Documentation](https://www.tensorflow.org/guide)
+- [PyTorch Documentation](https://pytorch.org/docs/stable/index.html)
+- [Feast Feature Store](https://feast.dev/)
+- [MLflow Documentation](https://www.mlflow.org/docs/latest/index.html)
+- [Evidently AI](https://evidentlyai.com/)
