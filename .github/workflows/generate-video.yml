@@ -28,6 +28,8 @@ jobs:
     outputs:
       conversion_needed: ${{ steps.check.outputs.conversion_needed }}
       force_generate: ${{ inputs.force_generate }}
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
