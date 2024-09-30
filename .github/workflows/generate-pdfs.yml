@@ -20,21 +20,53 @@ env:
   PACKAGES: packages-tex.txt
 
 jobs:
-  generate-pdfs:
+  check-tex:
     runs-on: ubuntu-latest
+    outputs:
+      hash_changed: ${{ steps.hash_check.outputs.hash_changed }}
+      current_hash: ${{ steps.compute_hash.outputs.current_hash }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
-      - name: Cache Apt Packages
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      - name: Compute Current Hash
+        id: compute_hash
+        run: |
+          CURRENT_HASH=$(md5sum docs/design-document/Final_Project_Team_3_Deliverable_1.tex | cut -d ' ' -f1)
+          echo "current_hash=$CURRENT_HASH" >> $GITHUB_OUTPUT
+
+      - name: Get Previous Hash
+        id: get_previous_hash
+        run: |
+          HASH_FILE="docs/design-document/tex_hash.txt"
+          if [ -f "$HASH_FILE" ]; then
+            PREVIOUS_HASH=$(cat "$HASH_FILE")
+          else
+            PREVIOUS_HASH=""
+          fi
+          echo "previous_hash=$PREVIOUS_HASH" >> $GITHUB_OUTPUT
+
+      - name: Compare Hashes
+        id: hash_check
+        run: |
+          if [ "${{ steps.compute_hash.outputs.current_hash }}" = "${{ steps.get_previous_hash.outputs.previous_hash }}" ]; then
+            echo "Hashes match. Skipping PDF generation."
+            echo "hash_changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Hashes do not match. Proceeding with PDF generation."
+            echo "hash_changed=true" >> $GITHUB_OUTPUT
+
+  generate-pdf:
+    runs-on: ubuntu-latest
+    needs: check-tex
+    if: needs.check-tex.outputs.hash_changed == 'true'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
-          path: /var/cache/apt/archives/**.deb
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/generate-pdfs.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-
+          fetch-depth: 0
 
       - name: Install System Dependencies
         run: |
@@ -45,26 +77,31 @@ jobs:
         working-directory: docs/design-document
         run: |
           pdflatex -interaction=nonstopmode Final_Project_Team_3_Deliverable_1.tex
-          biber --debug Final_Project_Team_3_Deliverable_1
+          biber Final_Project_Team_3_Deliverable_1
           pdflatex -interaction=nonstopmode Final_Project_Team_3_Deliverable_1.tex
           pdflatex -interaction=nonstopmode Final_Project_Team_3_Deliverable_1.tex
 
       - name: Move PDF to Top-Level Repo Folder
         working-directory: docs/design-document
         run: |
-          mv Final_Project_Team_3_Deliverable_1.pdf ../../
+          cp Final_Project_Team_3_Deliverable_1.pdf ../../
 
       - name: Calculate Page Count
         id: page_count
         run: |
           PAGES=$(pdfinfo Final_Project_Team_3_Deliverable_1.pdf | grep Pages | awk '{print $2}')
-          echo "PAGES=$PAGES" >> $GITHUB_ENV
+          echo "PAGES=$PAGES" >> $GITHUB_OUTPUT
 
       - name: Calculate Word Count
         id: word_count
         run: |
           WORDS=$(pdftotext Final_Project_Team_3_Deliverable_1.pdf - | wc -w)
-          echo "WORDS=$WORDS" >> $GITHUB_ENV
+          echo "WORDS=$WORDS" >> $GITHUB_OUTPUT
+
+      - name: Update Hash File
+        run: |
+          echo "${{ needs.check-tex.outputs.current_hash }}" > docs/design-document/tex_hash.txt
+          git add docs/design-document/tex_hash.txt
 
       - name: Configure Git
         run: |
@@ -74,27 +111,19 @@ jobs:
 
       - name: Push to Remote
         run: |
-          git add Final_Project_Team_3_Deliverable_1.pdf
-          if git diff --staged --quiet; then
-            echo "No changes detected. Skipping commit and push."
-            echo "CHANGED=false" >> $GITHUB_ENV
-          else
-            git stash
-            git pull origin main
-            git stash pop
-            git add Final_Project_Team_3_Deliverable_1.pdf
-            git commit -m "PAGES: ${{ env.PAGES }} | WORDS: ${{ env.WORDS }}"
-            git push origin main || {
-              echo "Push failed. Creating a pull request..."
-              gh pr create --title "Automated PR" --body "Push to main failed. Updated PDF included."
-            }
-            echo "Changes committed and pushed successfully (or pull request created)."
-            echo "CHANGED=true" >> $GITHUB_ENV
-          fi
+          git add Final_Project_Team_3_Deliverable_1.pdf docs/design-document/tex_hash.txt
+          git stash
+          git pull origin main
+          git stash pop
+          git commit -m "PAGES: ${{ steps.page_count.outputs.PAGES }} | WORDS: ${{ steps.word_count.outputs.WORDS }}"
+          git push origin main || {
+            echo "Push failed. Creating a pull request..."
+            gh pr create --title "Automated PR" --body "Push to main failed. Updated PDF included."
+          }
+          echo "Changes committed and pushed successfully."
 
       - name: Repository Dispatch
-        if: env.CHANGED == 'true'
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: aai540-group3/project
