@@ -112,8 +112,10 @@ jobs:
             echo "No changes detected. Skipping commit and push."
             echo "CHANGED=false" >> $GITHUB_ENV
           else
+            git stash
+            git pull origin main
+            git stash pop
             git commit -m "$DURATION out of 15 minutes"
-            git pull origin main --rebase
             git push origin main || {
               echo "Push failed. Creating a pull request..."
               gh pr create --title "Automated Video Update" --body "Push to main failed. Updated video included."

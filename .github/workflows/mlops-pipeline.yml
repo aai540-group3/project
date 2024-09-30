@@ -131,11 +131,13 @@ jobs:
             echo "No changes to commit"
             echo "CHANGED=false" >> $GITHUB_ENV
           else
-            git commit -m "Update DVC artifacts and metrics"
+            git stash
             git pull origin main
+            git stash pop
+            git commit -m "Update DVC artifacts and metrics"
             git push origin main || {
               echo "Push failed. Creating a pull request..."
-              gh pr create --title "Update DVC artifacts and metrics" --body "Push to main failed. Updated DVC artifacts and metrics included." --label "automated-pr"
+              gh pr create --title "Update DVC artifacts and metrics" --body "Push to main failed. Updated DVC artifacts included." --label "automated-pr"
             }
             echo "CHANGED=true" >> $GITHUB_ENV
           fi
