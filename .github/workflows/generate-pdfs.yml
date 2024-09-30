@@ -55,7 +55,7 @@ jobs:
       - name: Move PDF to Top-Level Repo Folder
         working-directory: docs/design-document
         run: |
-          cp Final_Project_Team_3_Deliverable_1.pdf ../../
+          mv Final_Project_Team_3_Deliverable_1.pdf ../../
 
       - name: Calculate Page Count
         id: page_count

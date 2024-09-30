@@ -123,7 +123,10 @@ EXCLUDE_PATTERNS = [
     r".*\.zip",
 ]
 
-INCLUDE_FILES = {"Final_Project_Team_3_Deliverable_1.tex"}
+INCLUDE_FILES = [
+    "Final_Project_Team_3_Deliverable_1.tex",
+    "terraform/main.tf"
+]
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -258,10 +261,10 @@ def should_exclude_file(
     exclude_files: Set[str],
     exclude_patterns: List[re.Pattern],
     max_file_size_kb: int,
-    include_files: Set[str],
+    include_files: List[str],
 ) -> bool:
     """Determine if a file should be excluded based on various criteria."""
-    if file_name in include_files:
+    if str(file_path) in include_files:
         return False  # Include the file even if it matches exclusion criteria
     if file_name in exclude_files:
         return True
@@ -295,7 +298,7 @@ def generate_tree_structure(
     exclude_folderpaths: Set[Path],
     exclude_files: Set[str],
     exclude_patterns: List[re.Pattern],
-    include_files: Set[str],
+    include_files: List[str],
     prefix: str = "",
     is_last: bool = True,
 ) -> str:
@@ -358,7 +361,7 @@ def main():
     args = parse_arguments()
 
     # Update inclusion and exclusion lists with command-line arguments
-    include_files = set(args.include_files) | INCLUDE_FILES
+    include_files = [str(Path(p).resolve()) for p in args.include_files] + [str(Path(p).resolve()) for p in INCLUDE_FILES]  # Convert to absolute paths
     exclude_files = set(args.exclude_files) | EXCLUDE_FILES
     exclude_folders = set(args.exclude_folders) | EXCLUDE_FOLDERS
 

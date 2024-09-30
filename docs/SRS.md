@@ -2,7 +2,7 @@
 
 ## Document Version
 
-1.3
+1.7
 
 ## Date
 
@@ -12,181 +12,193 @@ September 24, 2024
 
 AAI-540 Final Project - Open Source Machine Learning System
 
+---
+
 ## 1. Introduction
 
 ### 1.1 Purpose
 
-The purpose of this document is to outline the software requirements for the AAI-540 Final Project, which involves the design, development, and deployment of a production-ready machine learning (ML) system using open-source technologies. While proprietary tools like AWS SageMaker are valuable in real-world scenarios, this project will prioritize free and accessible open-source tools to facilitate reuse and adaptation beyond the course duration without incurring additional costs.
+The purpose of this document is to outline the software requirements for the AAI-540 Final Project, which involves the design, development, and deployment of a production-ready machine learning (ML) system using open-source technologies. This project leverages specific tools and services implemented to deliver a comprehensive ML system, aligning with course requirements while utilizing AWS Free Tier services like S3 for data storage where necessary.
 
 ### 1.2 Scope
 
 This project encompasses:
 
-- Identifying a real-world problem that can be solved using machine learning.
-- Selecting a publicly available dataset that meets the project's requirements.
-- Designing and implementing an end-to-end ML system using open-source tools, including data ingestion, data engineering, feature engineering, model training, evaluation, deployment, and monitoring.
-- Implementing CI/CD pipelines for automating ML workflows using open-source tools.
-- Documenting the ML system design and operational validation in a comprehensive design document.
-- Demonstrating the operational components of the ML system through a video presentation.
-- Collaboratively managing the project using Asana for project planning and GitHub for version control and codebase management.
+- **Problem Identification**: Addressing hospital readmissions among diabetic patients.
+- **Dataset Selection**: Utilizing a publicly available dataset meeting project requirements.
+- **System Implementation**: Designing and implementing an end-to-end ML system using specific tools, covering data ingestion, engineering, feature creation, model training, evaluation, deployment, and monitoring.
+- **CI/CD Pipelines**: Automating ML workflows using GitHub Actions, with secrets managed via GitHub Secrets.
+- **Deployment**: Deploying models using Hugging Face Spaces.
+- **Infrastructure Management**: Managing infrastructure as code with Terraform.
+- **Documentation**: Documenting the ML system design and operational validation in a comprehensive design document.
+- **Demonstration**: Presenting the operational components of the ML system through a video demonstration.
+- **Project Management**: Collaboratively managing the project using Asana and maintaining the codebase in a GitHub repository.
 
 ### 1.3 Intended Audience
 
 This SRS is intended for:
 
-- **Project Team Members**: To understand the system requirements and ensure consistent implementation.
-- **Course Instructor**: To evaluate the project's adherence to requirements and grading criteria.
-- **Potential Stakeholders**: Interested parties who may benefit from understanding the technical aspects of the ML system.
+- **Project Team Members**: To understand system requirements and ensure consistent implementation.
+- **Course Instructor**: To evaluate adherence to requirements and grading criteria.
+- **Potential Stakeholders**: Interested parties seeking technical insights into the ML system.
+
+---
 
 ## 2. Overall Description
 
 ### 2.1 Product Perspective
 
-The ML system will address a specific real-world problem identified by the team, utilizing appropriate datasets and ML techniques. The system will be designed for scalability, reliability, and maintainability, adhering to MLOps best practices, all within the constraints of open-source solutions. The system will be an independent project developed from scratch and will not be an extension of an existing system.
+The ML system addresses the problem of predicting 30-day hospital readmissions among diabetic patients. It leverages open-source technologies and adheres to MLOps best practices, ensuring scalability, reliability, and maintainability. The system is developed from scratch and aligns with the course's project scenario and deliverables.
 
 ### 2.2 Product Features
 
-The ML system will include the following core features, implemented using open-source alternatives:
+The ML system includes the following core features, implemented using specific tools:
 
-- **Data Ingestion and Storage**: Ability to ingest data from various sources and store it in a structured format using open-source databases or file systems (e.g., PostgreSQL, SQLite, or local file storage with CSV/Parquet formats).
-- **Data Engineering**: Perform data cleaning, preprocessing, and transformation using libraries like Pandas and Dask.
-- **Feature Engineering**: Creation of relevant features from raw data to improve model performance using tools like Scikit-learn and Featuretools.
-- **Feature Store**: Implementation of a centralized feature store using tools like Feast or an in-house solution to manage features for training and serving.
-- **Model Training and Evaluation**: Training of ML models using open-source frameworks (e.g., Scikit-learn, TensorFlow, PyTorch), evaluating performance using relevant metrics, and selecting the best-performing model.
-- **Model Registry**: Management of model versions and metadata using tools like MLflow Model Registry.
-- **Model Deployment**: Deployment of the trained model as a batch inference job or a real-time API endpoint using frameworks like Flask or FastAPI, containerized with Docker.
-- **Model Monitoring**: Monitoring of model performance over time, including detecting data drift and triggering alerts for retraining using tools like Evidently AI.
-- **CI/CD Pipeline**: Automated pipeline for building, testing, and deploying the ML system components using open-source tools like Jenkins, GitLab CI, or GitHub Actions.
-- **Infrastructure Monitoring**: Monitoring of the underlying infrastructure for performance and availability using tools like Prometheus and Grafana.
-- **Logging and Tracing**: Implementing logging and tracing mechanisms to track system behavior using tools like the ELK Stack (Elasticsearch, Logstash, Kibana).
+- **Data Ingestion and Storage**: Ingesting data from Hugging Face Datasets and storing it in AWS S3 (Free Tier) for processing.
+- **Data Engineering**: Performing data cleaning, preprocessing, and transformation using Pandas.
+- **Feature Engineering**: Creating new features to enhance model performance using Scikit-learn.
+- **Model Training and Evaluation**:
+  - Training models using Scikit-learn (Logistic Regression) and AutoGluon (automated model selection).
+  - Evaluating model performance using standard metrics and visualizations.
+- **Model Registry**: Managing model versions and metadata using DVC and DVC Studio.
+- **Model Deployment**: Deploying the trained model as a real-time API endpoint using Hugging Face Spaces.
+- **Model Monitoring**: Monitoring model performance over time using DVCLive and DVC Studio, detecting data drift and triggering alerts as needed.
+- **CI/CD Pipeline**: Automating building, testing, and deploying ML system components using GitHub Actions, with secrets managed via GitHub Secrets.
+- **Infrastructure as Code**: Managing infrastructure using Terraform scripts.
+- **Version Control**: Using Git and GitHub for source code management and collaboration.
+- **Code Quality and Security**: Implementing code quality checks and security analysis using tools like Codacy.
+- **Documentation and Reporting**: Generating reports and documentation, including the ML System Design Document.
 
 ### 2.3 User Classes and Characteristics
 
-- **Data Scientists**: Responsible for data analysis, feature engineering, and model development. Require access to data and computational resources.
-- **ML Engineers**: Responsible for deploying and maintaining the ML system infrastructure, ensuring scalability and reliability.
-- **Business Stakeholders**: Consumers of the insights generated by the ML system. Require interpretable results and reports.
+- **Data Scientists**: Focused on data analysis, feature engineering, and model development.
+- **ML Engineers**: Responsible for deploying and maintaining ML system infrastructure, utilizing Terraform.
+- **Project Managers**: Use Asana for project planning and tracking team workflows.
+- **Business Stakeholders**: Consumers of insights generated by the ML system, requiring interpretable results and reports.
 
 ### 2.4 Operating Environment
 
-- **Development Environment**: Local machines or cloud-based development environments with necessary open-source tools installed.
-- **Deployment Environment**: The system will be containerized using Docker and can be deployed on any platform that supports Docker containers, such as local servers or cloud providers offering free tiers (e.g., Google Cloud Platform Free Tier, Heroku).
-- **Operating Systems**: Compatible with Linux, Windows, and macOS environments.
+- **Development Environment**: Local machines or cloud-based environments with necessary tools.
+- **Deployment Environment**: Deployed using Hugging Face Spaces.
+- **Infrastructure**: Managed with Terraform; data stored in AWS S3 (Free Tier).
+- **Operating Systems**: Compatible with Linux, Windows, and macOS.
+- **Containers**: Use of Docker where applicable.
 
 ### 2.5 Design and Implementation Constraints
 
-- **Project Timeline**: Must be completed within the timeframe of the AAI-540 course.
-- **Project Guidelines**: Must adhere to the course's project requirements and deliverables as outlined in the syllabus and assignment instructions.
-- **Programming Language**: Python 3.x will be used for all development.
-- **Data Availability**: The dataset used must be publicly available and meet the minimum size requirements (e.g., at least 10,000 records per class for classification problems).
-- **Open-Source Tools**: The project must utilize open-source technologies exclusively, avoiding proprietary tools like AWS SageMaker.
-- **Resource Limitations**: Must operate within the constraints of available computational resources and any limitations of free-tier services.
+- **Project Timeline**: Completion within the AAI-540 course duration.
+- **Project Guidelines**: Adherence to course requirements, including deliverables.
+- **Programming Language**: Python 3.x for all development.
+- **Data Availability**: Use of a publicly available dataset meeting size requirements.
+- **Tool Exclusivity**: Exclusive use of implemented tools.
+- **Resource Constraints**: Operation within computational resource limitations and free-tier services.
 
-#### 2.5.1 Mapping of Proprietary AWS Tools to Open-Source Alternatives
+#### 2.5.1 Tools Utilized
 
-To ensure compliance with the project's requirements and to facilitate the use of open-source technologies, the following mapping from proprietary AWS tools to open-source equivalents will be implemented:
+The following table lists the specific tools and services used in the ML system. The "Satisfied" column includes a brief statement on how each tool satisfies the project requirements.
 
-| **AWS Proprietary Tool**                                            | **Open-Source Equivalent**                          | **Description**                                                                                                                                                                                                                                                                             |
-|---------------------------------------------------------------------|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **AWS SageMaker Studio**                                            | **JupyterLab**                                      | Integrated development environment for machine learning. JupyterLab offers a web-based interactive development environment for notebooks, code, and data.                                                                                            |
-| **AWS SageMaker Notebooks**                                         | **Jupyter Notebooks**                               | Interactive notebooks for data exploration and model development. Jupyter Notebooks are an open-source web application for creating and sharing documents containing live code and visualizations.                                                   |
-| **AWS SageMaker Processing**                                        | **Apache Airflow, Luigi**                           | Managed service for running data processing jobs. Apache Airflow and Luigi are workflow management platforms for orchestrating complex computational workflows and data processing pipelines.                                                       |
-| **AWS SageMaker Training**                                          | **TensorFlow, PyTorch, Scikit-learn**               | Managed service for training machine learning models. Open-source ML frameworks like TensorFlow, PyTorch, and Scikit-learn can be used for model training on local machines or cluster computing environments.                                        |
-| **AWS SageMaker Debugger**                                          | **TensorBoard, PyTorch Profiler**                   | Tool for debugging and profiling ML models during training. TensorBoard and PyTorch Profiler provide visualization and tools for debugging and optimizing ML models.                                                                                 |
-| **AWS SageMaker Model Registry**                                    | **MLflow Model Registry, DVC (Data Version Control)** | Central repository to store and version ML models. MLflow Model Registry and DVC are open-source tools for managing the full ML lifecycle, including model versioning and reproducibility.                                                          |
-| **AWS SageMaker Deployment (Endpoints)**                            | **Flask, FastAPI, Docker, Kubernetes**              | Hosting ML models for real-time inference. Flask and FastAPI are web frameworks for serving models via RESTful APIs. Docker and Kubernetes can be used for containerization and orchestration of deployments.                                        |
-| **AWS SageMaker Batch Transform**                                   | **Apache Spark, Dask**                              | For batch inference jobs on large datasets. Apache Spark and Dask are distributed computing frameworks suitable for large-scale data processing and batch inference tasks.                                                                           |
-| **AWS SageMaker Pipelines (CI/CD)**                                 | **Kubeflow Pipelines, Jenkins, GitHub Actions, GitLab CI/CD** | Managed service for building and managing ML workflows. Kubeflow Pipelines, Jenkins, GitHub Actions, and GitLab CI/CD are open-source CI/CD tools for automating ML workflows and pipelines.                                     |
-| **AWS SageMaker Feature Store**                                     | **Feast, Hopsworks Feature Store**                  | Centralized repository for storing and retrieving ML features. Feast and Hopsworks are open-source feature store implementations that manage feature data for training and serving.                                                                 |
-| **AWS SageMaker Model Monitor**                                     | **Evidently AI, WhyLogs, DataValidation**           | Monitoring deployed ML models for concept drift and data quality. Evidently AI, WhyLogs, and Google's Data Validation library provide tools for monitoring and detecting anomalies in data and model predictions.                                    |
-| **AWS CloudWatch (Infrastructure Monitoring)**                      | **Prometheus, Grafana**                             | Monitoring and observability of infrastructure and applications. Prometheus is an open-source monitoring system with a dimensional data model, and Grafana provides visualization dashboards for metrics collected by Prometheus.                     |
-| **AWS CloudTrail (Logging and Auditing)**                           | **ELK Stack (Elasticsearch, Logstash, Kibana), Graylog** | Logging and auditing of user activity and API calls. The ELK Stack and Graylog are open-source platforms for log management and analytics.                                                                                                           |
-| **AWS CodeCommit (Source Control)**                                 | **GitHub, GitLab, Bitbucket**                       | Source control service hosting private Git repositories. GitHub, GitLab, and Bitbucket offer Git repository hosting with additional features for collaboration and project management.                                                               |
-| **AWS CodePipeline (CI/CD for Applications)**                       | **Jenkins, GitHub Actions, GitLab CI/CD**           | Continuous integration and delivery service for fast and reliable application updates. Jenkins, GitHub Actions, and GitLab CI/CD are open-source automation servers for building, testing, and deploying applications.                               |
-| **AWS CodeBuild (Build Service)**                                   | **Jenkins, Travis CI, CircleCI**                    | Fully managed build service that compiles source code, runs tests, and produces software packages. Jenkins, Travis CI, and CircleCI are open-source tools for automating the software build process.                                                 |
-| **AWS CodeDeploy (Automated Deployments)**                          | **Ansible, Puppet, Chef**                           | Automates code deployments to any instance, including EC2 instances and servers on-premises. Ansible, Puppet, and Chef are open-source configuration management tools that automate application deployment.                                          |
-| **AWS Step Functions (Orchestration)**                              | **Apache Airflow, Luigi, Prefect**                  | Serverless orchestration service that lets you combine AWS services to build business-critical applications. Apache Airflow, Luigi, and Prefect are open-source platforms to programmatically author, schedule, and monitor workflows.               |
-| **AWS IAM (Identity and Access Management)**                        | **Keycloak, Auth0 (open-source plan)**              | Manage access to AWS services and resources securely. Keycloak and Auth0 provide open-source identity and access management solutions for securing applications and services.                                                                        |
-| **AWS S3 (Object Storage)**                                         | **MinIO, Ceph, HDFS**                               | Scalable storage in the cloud for data backup and distribution. MinIO and Ceph offer open-source object storage solutions compatible with S3 APIs. HDFS is the Hadoop Distributed File System for scalable storage and processing.                    |
-| **AWS Lambda (Serverless Compute)**                                 | **OpenFaaS, Apache OpenWhisk**                      | Run code without provisioning or managing servers. OpenFaaS and Apache OpenWhisk are open-source serverless computing frameworks that let you run code in response to events.                                                                        |
-| **AWS Kinesis (Real-time Data Streaming)**                          | **Apache Kafka, Apache Pulsar**                     | Collect, process, and analyze real-time, streaming data. Apache Kafka and Apache Pulsar are open-source distributed event streaming platforms capable of handling real-time data feeds.                                                              |
-| **AWS Glue (Data Catalog and ETL)**                                 | **Apache NiFi, Apache Airflow, Talend Open Studio** | Extract, transform, and load (ETL) service for data preparation. Apache NiFi and Airflow can manage ETL workflows, while Talend Open Studio is an open-source data integration tool for ETL tasks.                                                   |
-| **Amazon EMR (Managed Hadoop Framework)**                           | **Apache Hadoop, Apache Spark**                     | Provides a managed Hadoop framework to process vast amounts of data. Apache Hadoop and Spark can be set up on local clusters or cloud-based virtual machines to process large datasets.                                                              |
-| **Amazon Athena (Serverless Query Service)**                        | **Presto, Apache Drill, Dask**                      | Interactive query service that makes it easy to analyze data directly in S3 using standard SQL. Presto and Apache Drill are open-source distributed SQL query engines. Dask can handle parallel computing for analytics on large datasets.            |
-| **Amazon QuickSight (Business Intelligence)**                       | **Metabase, Apache Superset, Redash**               | Scalable business intelligence service with data visualization capabilities. Metabase, Apache Superset, and Redash are open-source BI tools for data exploration and visualization.                                                                  |
-| **AWS Secrets Manager**                                             | **HashiCorp Vault, Doppler**                        | Protects secrets needed to access applications, services, and IT resources. HashiCorp Vault and Doppler are open-source tools for securely accessing and distributing secrets and credentials.                                                        |
-| **AWS Config (Resource Inventory, Configurations, and Compliance)** | **Rudder, CFEngine**                                | Fully managed service providing an AWS resource inventory, configuration history, and configuration change notifications. Rudder and CFEngine are open-source configuration management and auditing tools.                                           |
-| **Amazon CloudWatch Synthetics**                                    | **Selenium, Locust**                                | Monitors application endpoints and APIs to ensure they are reachable. Selenium can automate web browser interactions, and Locust is an open-source load testing tool that can monitor endpoints.                                                      |
-
-This mapping ensures that all functionalities required for the ML system are covered using open-source tools, thereby satisfying the project's design constraints.
+| **Component**                             | **Tool Used**                           | **Description**                                                                                                                                     | **Satisfied**                                                                                                                                                                                                                            |
+|-------------------------------------------|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Source Control**                        | **GitHub**                              | Hosting Git repositories for version control and collaboration.                                                                                     | Codebase hosted on GitHub; collaborative development facilitated through Git features.                                                                                                             |
+| **Data Storage**                          | **AWS S3 (Free Tier)**                  | Scalable cloud storage for data backup and distribution.                                                                                            | Used AWS S3 for storing large data files and managing datasets via DVC remote storage.                                                                                                             |
+| **Data Ingestion**                        | **Hugging Face Datasets**               | Access to a wide range of publicly available datasets.                                                                                              | Ingested the diabetic readmission dataset using Hugging Face Datasets API.                                                                                                                         |
+| **Data Processing and Engineering**       | **Pandas**                              | Data manipulation and analysis library for Python.                                                                                                  | Employed Pandas for data cleaning, preprocessing, and transformation tasks.                                                                                                                        |
+| **Feature Engineering**                   | **Scikit-learn**                        | Machine learning library for Python, used for feature engineering and model development.                                                            | Utilized Scikit-learn for feature scaling, encoding, and creation of polynomial features.                                                                                                          |
+| **Model Development**                     | **Scikit-learn, AutoGluon**             | Libraries for machine learning and automated model development.                                                                                     | Trained Logistic Regression model using Scikit-learn and leveraged AutoGluon for automated model training and selection.                                                                            |
+| **Experiment Tracking and Model Registry**| **DVC, DVC Studio**                     | Data and model version control, and visual experiment tracking.                                                                                     | Managed datasets and models using DVC; tracked experiments and model versions with DVC Studio.                                                                                                     |
+| **CI/CD Pipeline and Automation**         | **GitHub Actions**                      | Automating workflows for building, testing, and deploying code changes; managing secrets via GitHub Secrets.                                        | Implemented automated CI/CD pipelines using GitHub Actions; secrets managed securely with GitHub Secrets.                                                                                          |
+| **Model Deployment**                      | **Hugging Face Spaces**                 | Platform for deploying ML models and applications as web apps.                                                                                      | Deployed the trained model as a real-time inference API on Hugging Face Spaces.                                                                                                                    |
+| **Infrastructure as Code**                | **Terraform**                           | Tool for building, changing, and versioning infrastructure safely and efficiently.                                                                  | Managed AWS infrastructure components using Terraform scripts for consistent provisioning.                                                                                                          |
+| **Model Monitoring**                      | **DVCLive, DVC Studio**                 | Monitoring of data and model performance to detect drift and anomalies.                                                                              | Monitored model metrics during training and evaluation using DVCLive; visualized experiment results in DVC Studio.                                                                                 |
+| **Project Management**                    | **Asana**                               | Tool for project planning and tracking team workflows.                                                                                              | Collaborated on project tasks and timelines using Asana boards.                                                                                                                                     |
+| **Secrets Management**                    | **GitHub Secrets**                      | Secure storage of sensitive information such as API keys and access tokens within GitHub repositories.                                               | Stored sensitive credentials securely in GitHub Secrets for use in GitHub Actions workflows.                                                                                                       |
+| **Code Quality and Security**             | **Codacy, Flake8, Pylint, Bandit**      | Tools for code quality checks and security analysis.                                                                                                | Enforced code quality standards and performed security scanning using Codacy and linters like Flake8 and Pylint; Bandit used for security analysis.                                                |
+| **Visualization and Reporting**           | **Matplotlib, Seaborn**                 | Libraries for creating visualizations and reports.                                                                                                  | Generated plots for data analysis and model evaluation metrics using Matplotlib and Seaborn.                                                                                                       |
+| **Documentation and Reporting**           | **LaTeX, Markdown**                     | Tools for creating project documentation.                                                                                                           | Produced the ML System Design Document using LaTeX; documentation and README files maintained in Markdown.                                                                                         |
 
 ### 2.6 User Documentation
 
-The following user documentation will be provided:
+The following user documentation is provided:
 
-- **ML System Design Document**: A comprehensive document describing the design, implementation, and operational aspects of the open-source ML system, explicitly outlining the tools and technologies used.
-- **Video Demonstration**: A 10-15 minute video presentation demonstrating the operational validation of the ML system, including key features and functionalities.
-- **GitHub Repository with README**: A public repository containing the complete codebase, setup instructions, and usage guidelines.
+- **ML System Design Document**: A comprehensive document detailing the design, implementation, and operational aspects of the ML system.
+- **Video Demonstration**: A 10-15 minute presentation demonstrating the ML system's operation.
+- **GitHub Repository with README**: Public repository containing the complete codebase, setup instructions, and usage guidelines.
 
 ### 2.7 Assumptions and Dependencies
 
-- **Team Skills**: Team members are proficient in Python and familiar with open-source ML tools and practices.
-- **Computing Resources**: Team members have access to personal computers capable of running the necessary software or can leverage cloud-based services within free-tier limits.
-- **Dataset Suitability**: The chosen dataset is appropriate for the identified ML problem and meets size and quality requirements.
-- **Third-party Libraries**: Reliance on open-source libraries and frameworks that are actively maintained (e.g., Pandas, Scikit-learn, TensorFlow).
+- **Team Skills**: Proficiency in Python and familiarity with the specified tools and practices.
+- **Computing Resources**: Access to personal computers or cloud-based services within free-tier limits.
+- **Dataset Suitability**: The diabetic readmission dataset is appropriate and meets size requirements.
+- **Third-party Libraries**: Reliance on actively maintained libraries and frameworks (e.g., Pandas, Scikit-learn, AutoGluon, DVC).
+
+---
 
 ## 3. Specific Requirements
 
 ### 3.1 Functional Requirements
 
-| **ID**      | **Feature**                | **Description**                                                                                                                                |
-|-------------|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| **FR-01**   | Data Ingestion             | The system shall be able to ingest data from various sources, including CSV files, databases, and APIs, and store it for processing.           |
-| **FR-02**   | Data Preprocessing         | The system shall perform data cleaning, transformation, normalization, and handling of missing values and outliers.                            |
-| **FR-03**   | Feature Engineering        | The system shall create new features from existing data using techniques such as encoding, scaling, and feature extraction.                    |
-| **FR-04**   | Feature Store              | The system shall implement a centralized feature store for managing and serving features for model training and inference.                     |
-| **FR-05**   | Model Training             | The system shall train ML models using appropriate algorithms, supporting hyperparameter tuning and cross-validation.                          |
-| **FR-06**   | Model Evaluation           | The system shall evaluate model performance using relevant metrics (e.g., accuracy, precision, recall) and generate evaluation reports.        |
-| **FR-07**   | Model Registry             | The system shall manage trained models and their versions in a model registry, tracking metadata and performance metrics.                      |
-| **FR-08**   | Model Deployment           | The system shall deploy trained models as batch inference jobs or real-time API endpoints accessible to end-users or other systems.            |
-| **FR-09**   | Model Monitoring           | The system shall monitor model performance over time, detecting issues like data drift or concept drift, and trigger alerts for retraining.    |
-| **FR-10**   | CI/CD Pipeline             | The system shall implement an automated CI/CD pipeline for building, testing, and deploying ML system components upon code changes.            |
-| **FR-11**   | Infrastructure Monitoring  | The system shall monitor infrastructure metrics such as CPU, memory, and disk usage, providing dashboards and alerts for resource management.  |
-| **FR-12**   | Model and Data Monitoring  | The system shall monitor data quality and integrity, logging data processing steps and identifying anomalies in input data.                    |
-| **FR-13**   | Logging and Tracing        | The system shall implement logging and tracing mechanisms to debug issues and trace data flow through the system.                              |
-| **FR-14**   | Security and Access Control| The system shall implement security measures to protect data and models, including authentication and authorization mechanisms.                |
+| **ID**    | **Feature**                         | **Description**                                                                                                                                          | **Satisfied**                                                                                                                               |
+|-----------|-------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| **FR-01** | Data Ingestion                      | The system shall ingest data from Hugging Face datasets and store it in AWS S3 for processing.                                                           | Implemented data ingestion using Hugging Face Datasets API; data stored in AWS S3 via DVC remote storage.                                    |
+| **FR-02** | Data Preprocessing                  | The system shall perform data cleaning, transformation, normalization, and handling of missing values and outliers using Pandas.                         | Performed data cleaning and preprocessing using Pandas scripts (`cleaning.py`).                                                              |
+| **FR-03** | Feature Engineering                 | The system shall create new features from existing data using techniques such as encoding, scaling, and feature extraction with Scikit-learn.            | Implemented feature engineering using Scikit-learn in `build_features.py`, including polynomial features and scaling.                        |
+| **FR-04** | Model Training                      | The system shall train ML models using Scikit-learn and AutoGluon, supporting hyperparameter tuning and model selection as appropriate.                  | Trained Logistic Regression model with Scikit-learn and automated model training with AutoGluon.                                             |
+| **FR-05** | Model Evaluation                    | The system shall evaluate model performance using relevant metrics and generate evaluation reports and visualizations.                                   | Evaluated models using standard metrics; generated reports and plots (ROC curve, confusion matrix) using Matplotlib and Seaborn.             |
+| **FR-06** | Model Registry                      | The system shall manage trained models and their versions using DVC and DVC Studio, tracking metadata and performance metrics.                           | Managed model versions and tracked experiments using DVC and DVC Studio.                                                                     |
+| **FR-07** | CI/CD Pipeline                      | The system shall implement an automated CI/CD pipeline for building, testing, and deploying ML system components upon code changes using GitHub Actions. | Configured GitHub Actions workflows for automated testing, building, and deployment upon code changes.                                        |
+| **FR-08** | Secrets Management                  | The system shall manage sensitive information using GitHub Secrets to ensure secure handling of credentials and access tokens.                           | Stored API keys and sensitive data in GitHub Secrets for secure access during CI/CD processes.                                                |
+| **FR-09** | Model Deployment                    | The system shall deploy trained models as real-time API endpoints accessible via Hugging Face Spaces.                                                    | Deployed the model as a RESTful API on Hugging Face Spaces for real-time inference.                                                          |
+| **FR-10** | Model Monitoring                    | The system shall monitor model performance over time using DVCLive and DVC Studio, detecting issues like data drift and triggering alerts as needed.     | Monitored training and evaluation metrics using DVCLive; visualized experiment history in DVC Studio.                                         |
+| **FR-11** | Infrastructure as Code              | The system shall manage and provision infrastructure using Terraform scripts to ensure consistent environments.                                          | Developed Terraform scripts to provision AWS resources consistently.                                                                          |
+| **FR-12** | Version Control                     | The system shall use Git and GitHub for source code management and collaboration among team members.                                                     | All code and documentation managed via Git and hosted on GitHub; collaborative development ensured through version control.                  |
+| **FR-13** | Logging and Tracing                 | The system shall implement logging mechanisms to debug issues and trace data flow through the system using standard Python logging.                       | Implemented logging in all scripts using Python's logging module for debugging and tracing.                                                   |
+| **FR-14** | Security and Access Control         | The system shall implement security measures to protect data and models, including authentication and authorization mechanisms as needed.                | Ensured data protection by managing access via GitHub Secrets and AWS IAM roles; sensitive data handled securely.                             |
+| **FR-15** | Code Quality and Security Analysis  | The system shall enforce code quality standards and perform security analysis using tools like Codacy, Flake8, Pylint, and Bandit.                       | Configured Codacy for continuous code quality checks; used Flake8, Pylint, and Bandit for linting and security analysis.                      |
+| **FR-16** | Documentation Generation            | The system shall generate documentation and reports automatically where possible, integrating with project requirements like the Design Document.        | Generated the ML System Design Document using automated LaTeX scripts; documentation updated alongside codebase changes.                     |
 
 ### 3.2 Non-Functional Requirements
 
-| **ID**       | **Type**        | **Description**                                                                                                   |
-|--------------|-----------------|---------------------------------------------------------------------------------------------------------------------|
-| **NFR-01**   | Performance     | The system shall process data and generate predictions within acceptable timeframes suitable for application needs. |
-| **NFR-02**   | Scalability     | The system shall be designed to handle increasing data volumes and user requests by scaling horizontally.          |
-| **NFR-03**   | Reliability     | The system shall have minimal downtime and be resilient to failures, ensuring consistent availability.              |
-| **NFR-04**   | Security        | The system shall protect sensitive data and models from unauthorized access and adhere to data protection standards.|
-| **NFR-05**   | Maintainability | The system shall be modular and well-documented, allowing for easy updates, maintenance, and onboarding of new team members.|
-| **NFR-06**   | Usability       | The system shall provide intuitive interfaces and clear documentation for users and developers.                     |
-| **NFR-07**   | Portability     | The system shall be deployable on various platforms with minimal configuration changes, facilitated by containerization.|
-| **NFR-08**   | Compliance      | The system shall comply with relevant legal and regulatory requirements, such as data privacy laws.                |
+| **ID**     | **Type**           | **Description**                                                                                                                                    | **Satisfied**                                                                                                                           |
+|------------|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| **NFR-01** | Performance        | The system shall process data and generate predictions within acceptable timeframes suitable for application needs.                                 | Models optimized for performance; acceptable inference times achieved in deployment.                                                    |
+| **NFR-02** | Scalability        | The system shall be designed to handle increasing data volumes by leveraging scalable services like AWS S3 and Hugging Face Spaces.                | Data storage and deployment services selected for scalability; infrastructure can handle increased loads.                                |
+| **NFR-03** | Reliability        | The system shall have minimal downtime and be resilient to failures, ensuring consistent availability.                                             | Reliance on reliable cloud services; CI/CD pipelines ensure consistent deployments.                                                     |
+| **NFR-04** | Security           | The system shall protect sensitive data and models from unauthorized access, utilizing GitHub Secrets and adhering to data protection standards.    | Implemented security best practices; credentials secured; data access controlled via IAM policies.                                       |
+| **NFR-05** | Maintainability    | The system shall be modular and well-documented, allowing for easy updates, maintenance, and onboarding of new team members.                        | Modular code structure; comprehensive documentation provided; code adheres to standards for maintainability.                             |
+| **NFR-06** | Usability          | The system shall provide intuitive interfaces and clear documentation for users and developers.                                                    | User-friendly deployment on Hugging Face Spaces; documentation guides users and developers effectively.                                  |
+| **NFR-07** | Portability        | The system shall be deployable on various platforms with minimal configuration changes, facilitated by Docker containerization where applicable.    | Codebase designed for portability; dependencies managed; Docker used where necessary.                                                    |
+| **NFR-08** | Compliance         | The system shall comply with relevant legal and regulatory requirements, such as data privacy laws.                                                 | Ensured compliance with data usage and privacy regulations; data anonymized as required.                                                 |
+| **NFR-09** | Code Quality       | The system shall adhere to code quality standards and best practices, ensuring readability and maintainability.                                     | Code formatted according to standards; code quality enforced through linters and continuous integration.                                 |
+| **NFR-10** | Automated Testing  | The system shall include automated tests to verify the correctness of the codebase and detect regressions.                                          | Implemented automated testing routines; tests integrated into CI/CD pipelines to detect issues promptly.                                 |
+
+---
 
 ## 4. Future Enhancements
 
-Potential future enhancements to the ML system include:
+Potential future enhancements include:
 
-- **Advanced Modeling Techniques**: Incorporating deep learning models or ensemble methods to improve predictive performance.
-- **Automated Machine Learning (AutoML)**: Implementing AutoML tools to automate hyperparameter tuning and model selection.
-- **User Interface Development**: Creating a user-friendly web or desktop application for interacting with the ML system outputs.
-- **Explainability and Interpretability**: Integrating tools like SHAP or LIME to provide insights into model predictions.
-- **Continuous Learning**: Enabling online learning capabilities where the model updates incrementally with new data.
-- **Edge Deployment**: Exploring deployment of models on edge devices or mobile platforms for applications requiring on-device inference.
+- Incorporating advanced modeling techniques, such as deep learning models.
+- Implementing AutoML tools to further automate model selection and hyperparameter tuning.
+- Developing a user-friendly interface beyond Hugging Face Spaces.
+- Integrating explainability tools like SHAP or LIME.
+- Enabling continuous learning capabilities for model updates.
+- Exploring edge deployment for on-device inference.
+- Implementing comprehensive monitoring with tools like Prometheus and Grafana.
+
+---
 
 ## 5. Appendices
 
 ### Appendix A: Glossary of Terms
 
-- **ML (Machine Learning)**: A field of artificial intelligence that uses statistical techniques to give computer systems the ability to learn from data.
-- **MLOps**: Machine Learning Operations, practices that combine ML, DevOps, and data engineering to deploy and maintain ML systems in production reliably and efficiently.
-- **CI/CD (Continuous Integration/Continuous Deployment)**: Practices that automate the integration, testing, and deployment of code changes.
-- **API (Application Programming Interface)**: A set of functions and protocols that allows different software applications to communicate with each other.
+- **ML (Machine Learning)**: Techniques enabling systems to learn from data.
+- **MLOps**: Practices combining ML, DevOps, and data engineering for reliable ML system deployment.
+- **CI/CD (Continuous Integration/Continuous Deployment)**: Automating code integration, testing, and deployment.
+- **API (Application Programming Interface)**: Protocols for building and interacting with software applications.
+- **DVC (Data Version Control)**: Tool for data and model versioning.
+- **Terraform**: Infrastructure-as-code tool for managing infrastructure.
+- **Hugging Face Spaces**: Platform to host ML demos and applications.
+- **DVCLive**: Library for logging ML experiment data.
 
 ### Appendix B: List of Abbreviations
 
@@ -195,37 +207,23 @@ Potential future enhancements to the ML system include:
 - **MLOps**: Machine Learning Operations
 - **CI/CD**: Continuous Integration/Continuous Deployment
 - **API**: Application Programming Interface
-- **GPU**: Graphics Processing Unit
-- **ELK Stack**: Elasticsearch, Logstash, and Kibana
+- **DVC**: Data Version Control
+- **DVCLive**: DVC Live Logging Library
 
 ### Appendix C: References
 
 - [Scikit-learn Documentation](https://scikit-learn.org/stable/)
-- [TensorFlow Documentation](https://www.tensorflow.org/guide)
-- [PyTorch Documentation](https://pytorch.org/docs/stable/index.html)
-- [Feast Feature Store](https://feast.dev/)
-- [MLflow Documentation](https://www.mlflow.org/docs/latest/index.html)
-- [Evidently AI](https://evidentlyai.com/)
-- [JupyterLab](https://jupyterlab.readthedocs.io/)
-- [Apache Airflow](https://airflow.apache.org/)
-- [Docker](https://www.docker.com/)
-- [Kubernetes](https://kubernetes.io/)
-- [Prometheus](https://prometheus.io/)
-- [Grafana](https://grafana.com/)
-- [ELK Stack](https://www.elastic.co/what-is/elk-stack)
-- [GitHub](https://github.com/)
-- [Jenkins](https://www.jenkins.io/)
+- [AutoGluon Documentation](https://auto.gluon.ai/)
+- [Pandas Documentation](https://pandas.pydata.org/docs/)
+- [Hydra Documentation](https://hydra.cc/docs/intro/)
+- [DVC Documentation](https://dvc.org/doc)
+- [DVC Studio](https://studio.iterative.ai/)
+- [Hugging Face Datasets](https://huggingface.co/datasets/)
+- [Hugging Face Spaces](https://huggingface.co/spaces)
 - [GitHub Actions](https://github.com/features/actions)
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [Flask](https://flask.palletsprojects.com/)
-- [Apache Spark](https://spark.apache.org/)
-- [Dask](https://dask.org/)
-- [WhyLogs](https://whylogs.ai/)
-- [Ansible](https://www.ansible.com/)
-- [Keycloak](https://www.keycloak.org/)
-- [HashiCorp Vault](https://www.vaultproject.io/)
-- [OpenFaaS](https://www.openfaas.com/)
-- [Apache Kafka](https://kafka.apache.org/)
-- [Metabase](https://www.metabase.com/)
-- [Apache Superset](https://superset.apache.org/)
-- [Redash](https://redash.io/)
+- [GitHub Secrets Documentation](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
+- [Terraform Documentation](https://www.terraform.io/docs/)
+- [DVCLive Documentation](https://dvc.org/doc/dvclive)
+- [Asana](https://asana.com/)
+- [AWS S3 Free Tier](https://aws.amazon.com/free/)
+- [Codacy](https://www.codacy.com/)
