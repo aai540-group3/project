@@ -78,7 +78,7 @@
     \begin{tikzpicture}[remember picture, overlay]
         % Place the background image at the bottom-left corner and extend it over the entire page
         \node [anchor=south west, inner sep=0pt] at (current page.south west) {
-            \includegraphics[width=\paperwidth,height=\paperheight]{images/background.png}
+            \includegraphics[width=\paperwidth,height=\paperheight]{background.png}
         };
         {
             \node [
@@ -87,7 +87,7 @@
                 rectangle,
                 fill=blue!70!white,
                 fill opacity=0,
-                text opacity=1,
+                text opacity=1, % Removed the extra 'D' here
                 minimum height=0.2\paperheight,
                 minimum width=\paperwidth,
                 text width=0.8\paperwidth,
@@ -95,7 +95,7 @@
             ] at (current page.center) {#2};
         }
         \node [anchor=south east, outer sep=3pt] at (current page.south east) {
-            \includegraphics[width=0.33\paperwidth]{images/logo.png}
+            \includegraphics[width=0.33\paperwidth]{logo.png}
         };
     \end{tikzpicture}
 
@@ -485,7 +485,7 @@ Both models were evaluated on the test set, yielding the following results:
 Accuracy & 46.01\% & 63.30\% \\
 Precision & 69.49\% & 63.18\% \\
 Recall & 46.01\% & 63.30\% \\
-F1-Score & 46.01\% & 63.30\% \\
+F1-Score & 55.18\% & 63.24\% \\
 ROC-AUC & 64.65\% & 68.09\% \\
 \bottomrule
 \end{tabular}
@@ -517,6 +517,7 @@ To gain deeper insights into model behavior, we generated several visualizations
         \end{itemize}
 \end{itemize}
 
+% Uncomment the following block if you have the ROC curve image
 % \begin{figure}[H]
 %     \centering
 %     \includegraphics[width=0.6\textwidth]{images/roc_curve.png}
