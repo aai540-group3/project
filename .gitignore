@@ -43,7 +43,7 @@ __pycache__/
 *.swo
 *.swp
 *.synctex.gz
-*.synctex.gz(busy)
+*.synctex(busy)
 *.temp
 *.tmp
 *.toc
