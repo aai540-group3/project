@@ -25,8 +25,18 @@ Machine learning offers robust tools to analyze large datasets and uncover patte
 ## Table of Contents
 
 - [Diabetic Readmission Risk Prediction](#diabetic-readmission-risk-prediction)
+  - [Status](#status)
   - [ML System Design Document](#ml-system-design-document)
   - [Table of Contents](#table-of-contents)
+  - [Mapping Proprietary AWS Tools to Open-Source Alternatives](#mapping-proprietary-aws-tools-to-open-source-alternatives)
+    - [Tool Mapping Table](#tool-mapping-table)
+    - [Additional Details](#additional-details)
+      - [Model Development and Training](#model-development-and-training)
+      - [Model Deployment](#model-deployment)
+      - [CI/CD Pipelines](#cicd-pipelines)
+      - [Feature Store and Model Registry](#feature-store-and-model-registry)
+      - [Monitoring and Logging](#monitoring-and-logging)
+    - [Notes on Implementation](#notes-on-implementation)
   - [Problem Statement](#problem-statement)
   - [Impact Measurement](#impact-measurement)
     - [Model Performance Metrics](#model-performance-metrics)
@@ -53,7 +63,7 @@ Machine learning offers robust tools to analyze large datasets and uncover patte
       - [Models Implemented](#models-implemented)
       - [Evaluation Metrics and Results](#evaluation-metrics-and-results)
       - [Visualizations](#visualizations)
-    - [Model Deployment](#model-deployment)
+    - [Model Deployment](#model-deployment-1)
       - [Serialization and Versioning](#serialization-and-versioning)
       - [Infrastructure as Code](#infrastructure-as-code)
       - [Deployment Strategy](#deployment-strategy)
@@ -73,6 +83,91 @@ Machine learning offers robust tools to analyze large datasets and uncover patte
     - [Model Deployment Architecture](#model-deployment-architecture)
   - [Conclusion](#conclusion)
   - [References](#references)
+
+---
+
+## Mapping Proprietary AWS Tools to Open-Source Alternatives
+
+In the context of our AAI-540 Final Project, we are tasked with building a production-ready machine learning system without relying on proprietary services like AWS SageMaker. This guide maps AWS services to equivalent open-source tools that can be used to achieve similar functionalities.
+
+---
+
+### Tool Mapping Table
+
+| **AWS Proprietary Tool**                                            | **Open-Source Equivalent**                          | **Description**                                                                                                                                                                                                                                                                             |
+|---------------------------------------------------------------------|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **AWS SageMaker Studio**                                            | **JupyterLab**                                      | Integrated development environment for machine learning. JupyterLab offers a web-based interactive development environment for notebooks, code, and data.                                                                                            |
+| **AWS SageMaker Notebooks**                                         | **Jupyter Notebooks**                               | Interactive notebooks for data exploration and model development. Jupyter Notebooks are an open-source web application for creating and sharing documents containing live code and visualizations.                                                   |
+| **AWS SageMaker Processing**                                        | **Apache Airflow, Luigi**                           | Managed service for running data processing jobs. Apache Airflow and Luigi are workflow management platforms for orchestrating complex computational workflows and data processing pipelines.                                                       |
+| **AWS SageMaker Training**                                          | **TensorFlow, PyTorch, Scikit-learn**               | Managed service for training machine learning models. Open-source ML frameworks like TensorFlow, PyTorch, and Scikit-learn can be used for model training on local machines or cluster computing environments.                                        |
+| **AWS SageMaker Debugger**                                          | **TensorBoard, PyTorch Profiler**                   | Tool for debugging and profiling ML models during training. TensorBoard and PyTorch Profiler provide visualization and tools for debugging and optimizing ML models.                                                                                 |
+| **AWS SageMaker Model Registry**                                    | **MLflow Model Registry, DVC (Data Version Control)** | Central repository to store and version ML models. MLflow Model Registry and DVC are open-source tools for managing the full ML lifecycle, including model versioning and reproducibility.                                                          |
+| **AWS SageMaker Deployment (Endpoints)**                            | **Flask, FastAPI, Docker, Kubernetes**              | Hosting ML models for real-time inference. Flask and FastAPI are web frameworks for serving models via RESTful APIs. Docker and Kubernetes can be used for containerization and orchestration of deployments.                                        |
+| **AWS SageMaker Batch Transform**                                   | **Apache Spark, Dask**                              | For batch inference jobs on large datasets. Apache Spark and Dask are distributed computing frameworks suitable for large-scale data processing and batch inference tasks.                                                                           |
+| **AWS SageMaker Pipelines (CI/CD)**                                 | **Kubeflow Pipelines, Jenkins, GitHub Actions, GitLab CI/CD** | Managed service for building and managing ML workflows. Kubeflow Pipelines, Jenkins, GitHub Actions, and GitLab CI/CD are open-source CI/CD tools for automating ML workflows and pipelines.                                     |
+| **AWS SageMaker Feature Store**                                     | **Feast, Hopsworks Feature Store**                  | Centralized repository for storing and retrieving ML features. Feast and Hopsworks are open-source feature store implementations that manage feature data for training and serving.                                                                 |
+| **AWS SageMaker Model Monitor**                                     | **Evidently AI, WhyLogs, DataValidation**           | Monitoring deployed ML models for concept drift and data quality. Evidently AI, WhyLogs, and Google's Data Validation library provide tools for monitoring and detecting anomalies in data and model predictions.                                    |
+| **AWS CloudWatch (Infrastructure Monitoring)**                      | **Prometheus, Grafana**                             | Monitoring and observability of infrastructure and applications. Prometheus is an open-source monitoring system with a dimensional data model, and Grafana provides visualization dashboards for metrics collected by Prometheus.                     |
+| **AWS CloudTrail (Logging and Auditing)**                           | **ELK Stack (Elasticsearch, Logstash, Kibana), Graylog** | Logging and auditing of user activity and API calls. The ELK Stack and Graylog are open-source platforms for log management and analytics.                                                                                                           |
+| **AWS CodeCommit (Source Control)**                                 | **GitHub, GitLab, Bitbucket**                       | Source control service hosting private Git repositories. GitHub, GitLab, and Bitbucket offer Git repository hosting with additional features for collaboration and project management.                                                               |
+| **AWS CodePipeline (CI/CD for Applications)**                       | **Jenkins, GitHub Actions, GitLab CI/CD**           | Continuous integration and delivery service for fast and reliable application updates. Jenkins, GitHub Actions, and GitLab CI/CD are open-source automation servers for building, testing, and deploying applications.                               |
+| **AWS CodeBuild (Build Service)**                                   | **Jenkins, Travis CI, CircleCI**                    | Fully managed build service that compiles source code, runs tests, and produces software packages. Jenkins, Travis CI, and CircleCI are open-source tools for automating the software build process.                                                 |
+| **AWS CodeDeploy (Automated Deployments)**                          | **Ansible, Puppet, Chef**                           | Automates code deployments to any instance, including EC2 instances and servers on-premises. Ansible, Puppet, and Chef are open-source configuration management tools that automate application deployment.                                          |
+| **AWS Step Functions (Orchestration)**                              | **Apache Airflow, Luigi, Prefect**                  | Serverless orchestration service that lets you combine AWS services to build business-critical applications. Apache Airflow, Luigi, and Prefect are open-source platforms to programmatically author, schedule, and monitor workflows.               |
+| **AWS IAM (Identity and Access Management)**                        | **Keycloak, Auth0 (open-source plan)**              | Manage access to AWS services and resources securely. Keycloak and Auth0 provide open-source identity and access management solutions for securing applications and services.                                                                        |
+| **AWS S3 (Object Storage)**                                         | **MinIO, Ceph, HDFS**                               | Scalable storage in the cloud for data backup and distribution. MinIO and Ceph offer open-source object storage solutions compatible with S3 APIs. HDFS is the Hadoop Distributed File System for scalable storage and processing.                    |
+| **AWS Lambda (Serverless Compute)**                                 | **OpenFaaS, Apache OpenWhisk**                      | Run code without provisioning or managing servers. OpenFaaS and Apache OpenWhisk are open-source serverless computing frameworks that let you run code in response to events.                                                                        |
+| **AWS Kinesis (Real-time Data Streaming)**                          | **Apache Kafka, Apache Pulsar**                     | Collect, process, and analyze real-time, streaming data. Apache Kafka and Apache Pulsar are open-source distributed event streaming platforms capable of handling real-time data feeds.                                                              |
+| **AWS Glue (Data Catalog and ETL)**                                 | **Apache NiFi, Apache Airflow, Talend Open Studio** | Extract, transform, and load (ETL) service for data preparation. Apache NiFi and Airflow can manage ETL workflows, while Talend Open Studio is an open-source data integration tool for ETL tasks.                                                   |
+| **Amazon EMR (Managed Hadoop Framework)**                           | **Apache Hadoop, Apache Spark**                     | Provides a managed Hadoop framework to process vast amounts of data. Apache Hadoop and Spark can be set up on local clusters or cloud-based virtual machines to process large datasets.                                                              |
+| **Amazon Athena (Serverless Query Service)**                        | **Presto, Apache Drill, Dask**                      | Interactive query service that makes it easy to analyze data directly in S3 using standard SQL. Presto and Apache Drill are open-source distributed SQL query engines. Dask can handle parallel computing for analytics on large datasets.            |
+| **Amazon QuickSight (Business Intelligence)**                       | **Metabase, Apache Superset, Redash**               | Scalable business intelligence service with data visualization capabilities. Metabase, Apache Superset, and Redash are open-source BI tools for data exploration and visualization.                                                                  |
+| **AWS Secrets Manager**                                             | **HashiCorp Vault, Doppler**                        | Protects secrets needed to access applications, services, and IT resources. HashiCorp Vault and Doppler are open-source tools for securely accessing and distributing secrets and credentials.                                                        |
+| **AWS Config (Resource Inventory, Configurations, and Compliance)** | **Rudder, CFEngine**                                | Fully managed service providing an AWS resource inventory, configuration history, and configuration change notifications. Rudder and CFEngine are open-source configuration management and auditing tools.                                           |
+| **Amazon CloudWatch Synthetics**                                    | **Selenium, Locust**                                | Monitors application endpoints and APIs to ensure they are reachable. Selenium can automate web browser interactions, and Locust is an open-source load testing tool that can monitor endpoints.                                                      |
+
+---
+
+### Additional Details
+
+#### Model Development and Training
+
+- **Proprietary**: AWS SageMaker provides managed instances for Jupyter notebooks and training jobs with built-in scalability.
+- **Open-Source Alternative**: Use JupyterLab or VSCode for development, and frameworks like TensorFlow or PyTorch for model training. Training can be conducted locally or on cloud VMs; for scalability, leverage distributed training with libraries like Horovod.
+
+#### Model Deployment
+
+- **Proprietary**: AWS SageMaker Endpoints offer scalable model deployment with easy integration into applications.
+- **Open-Source Alternative**: Containerize models using Docker and deploy using Flask or FastAPI. For scalability, orchestrate containers with Kubernetes or use serverless platforms like OpenFaaS.
+
+#### CI/CD Pipelines
+
+- **Proprietary**: AWS CodePipeline integrates with other AWS services for continuous integration and deployment.
+- **Open-Source Alternative**: Use GitHub Actions, GitLab CI/CD, or Jenkins to automate testing, building, and deployment of code changes. These tools integrate well with Git repositories and support custom workflows.
+
+#### Feature Store and Model Registry
+
+- **Proprietary**: AWS SageMaker Feature Store and Model Registry manage features and models centrally.
+- **Open-Source Alternative**: Implement a feature store using Feast to manage and serve features. Use MLflow for tracking experiments, storing model artifacts, and versioning models in the Model Registry.
+
+#### Monitoring and Logging
+
+- **Proprietary**: AWS CloudWatch provides logging and monitoring across AWS resources.
+- **Open-Source Alternative**: Use Prometheus for metrics collection and Grafana for visualization dashboards. Implement logging with the ELK Stack, and monitor models with tools like Evidently AI.
+
+---
+
+### Notes on Implementation
+
+- **Data Storage**: Instead of S3, data can be stored in local file systems or cloud storage services like Google Drive (with API integration) or open-source object storage like MinIO.
+
+- **Security**: Implement security best practices by managing secrets with HashiCorp Vault and securing APIs with authentication mechanisms provided by frameworks like OAuth2 Proxy.
+
+- **Infrastructure as Code**: Use tools like Terraform or Ansible to provision and manage infrastructure in a consistent and reproducible manner.
+
+- **Container Orchestration**: For managing containers at scale, Kubernetes provides extensive features for deployment, scaling, and management of containerized applications.
+
+- **Distributed Computing**: For large-scale data processing and training, consider setting up a Hadoop or Spark cluster using tools like Apache Hadoop or Dask for distributed computing.
 
 ---
 
