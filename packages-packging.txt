@@ -1,2 +1,3 @@
+jq
 pigz
 zip
