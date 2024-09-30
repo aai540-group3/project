@@ -64,6 +64,7 @@ jobs:
             git stash
             git pull origin main
             git stash pop
+            git add Final_Project_Team_3_Deliverable_3.zip
             git commit -m "FILESIZE: $FILESIZE bytes"
             git push origin main || {
               echo "Push failed. Creating a pull request..."

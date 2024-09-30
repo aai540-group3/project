@@ -136,6 +136,10 @@ jobs:
             git stash
             git pull origin main
             git stash pop
+            [ -f dvc.lock ] && git add dvc.lock
+            [ -d dvclive ] && git add dvclive
+            [ -d dvclive_evaluate ] && git add dvclive_evaluate
+            [ -f reports/metrics.json ] && git add reports/metrics.json
             git commit -m "Update DVC artifacts and metrics"
             git push origin main || {
               echo "Push failed. Creating a pull request..."

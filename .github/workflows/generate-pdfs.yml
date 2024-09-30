@@ -87,6 +87,7 @@ jobs:
             git stash
             git pull origin main
             git stash pop
+            git add Final_Project_Team_3_Deliverable_1.pdf
             git commit -m "PAGES: ${{ env.PAGES }} | WORDS: ${{ env.WORDS }}"
             git push origin main || {
               echo "Push failed. Creating a pull request..."
