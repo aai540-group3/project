@@ -3,7 +3,7 @@ from functools import partial
 
 import gradio as gr
 import openai
-
+from werkzeug.utils import secure_filename
 
 def tts(
     input_text: str,
@@ -53,7 +53,7 @@ def tts(
         )
         # Save the audio content to a temporary file
         allowed_formats = ["mp3", "opus", "aac", "flac", "wav"]
-        response_format = response_format.lower()
+        response_format = secure_filename(response_format.lower())
         if response_format not in allowed_formats:
             raise ValueError(f"Invalid response format: {response_format}")
         file_extension = f".{response_format}"
