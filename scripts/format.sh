@@ -66,10 +66,10 @@ install_pip_package() {
 format_python() {
   echo "Formatting Python files..."
   find . -name "*.py" -print0 | while IFS= read -r -d $'\0' file; do
-    black "$file" -l 9999
     autopep8 -i "$file"
     isort "$file"
     docformatter -i "$file"
+    black "$file" -l 9999
   done
 }
 

@@ -123,10 +123,7 @@ EXCLUDE_PATTERNS = [
     r".*\.zip",
 ]
 
-INCLUDE_FILES = [
-    "Final_Project_Team_3_Deliverable_1.tex",
-    "terraform/main.tf"
-]
+INCLUDE_FILES = ["Final_Project_Team_3_Deliverable_1.tex", "terraform/main.tf"]
 
 
 def parse_arguments() -> argparse.Namespace:
