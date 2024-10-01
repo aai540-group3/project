@@ -544,7 +544,7 @@ class PPTXtoVideo:
         concatenated_hash = "".join([self.state["slide_content_hashes"][str(i)] for i in slide_indices])
         final_video_hash = hashlib.sha256(concatenated_hash.encode()).hexdigest()
         if not self.force_flag and self.state.get("final_video_hash") == final_video_hash and os.path.exists(self.output_file):
-            logger.info(f"Final video is up to date, skipping combination")
+            logger.info("Final video is up to date, skipping combination")
             return
 
         logger.info("Combining individual slide videos into final video")
