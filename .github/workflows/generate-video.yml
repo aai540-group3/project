@@ -10,9 +10,13 @@ on:
   workflow_dispatch:
     inputs:
       force_generate:
-        description: "Force regenerate all resources (true/false)"
+        description: "Force regenerate all resources"
         required: false
         default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
