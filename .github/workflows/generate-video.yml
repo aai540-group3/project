@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/generate-video.yml"
       - "Final_Project_Team_3_Deliverable_2.pptx"
+      - "packages-pptx2video.txt"
       - "requirements-pptx2video.txt"
       - "scripts/pptx2video.py"
   workflow_dispatch:
