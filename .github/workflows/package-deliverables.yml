@@ -108,6 +108,12 @@ jobs:
           FILES=$(jq -r '.files[]' $MANIFEST_FILE)
           zip -r -0 $FILES | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
 
+      - name: Get File Size
+        id: get_file_size
+        run: |
+          FILESIZE=$(stat -c%s Final_Project_Team_3_Deliverable_3.zip)
+          echo "FILESIZE=$FILESIZE" >> $GITHUB_ENV
+
       - name: Get File Hash
         run: |
           echo "FILEHASH=$(sha256sum Final_Project_Team_3_Deliverable_3.zip | awk '{print $1}')" >> $GITHUB_ENV
@@ -134,7 +140,7 @@ jobs:
             git pull origin main
             git stash pop
             git add Final_Project_Team_3_Deliverable_3.zip $MANIFEST_FILE
-            git commit -m "HASH: $FILEHASH"
+            git commit -m "Size: ${{ env.FILESIZE }} bytes"
             git push origin main || {
               echo "Push failed. Creating a pull request..."
               gh pr create --title "Automated Zip Update" --body "Push to main failed. Updated zip included."
