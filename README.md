@@ -245,8 +245,10 @@ The `cleaning.py` script addresses data quality issues to enhance model performa
 
 The `splitting.py` script divides the dataset into training and testing sets:
 
-- **Training Set**: Consists of 80% of the data, used for model training.
-- **Testing Set**: Comprises 20% of the data, reserved for evaluating model performance.
+- **Training Set**: Consists of 40% of the data, used for model training.
+- **Validation Set**: Consists of 10% of the data, used to fine-tune the model.
+- **Testing Set**: Comprises 10% of the data, reserved for evaluating model performance.
+- **Production Set**: Comprises 40% of the data, reserved as input data for the complete model.
 - **Stratification**: Ensured that the distribution of the target variable (`readmitted`) is consistent across both sets, maintaining the representativeness of the sample.
 - **Reproducibility**: Used a fixed `random_state=42` to enable consistent results in subsequent runs, facilitating collaboration and comparison.
 
@@ -323,22 +325,42 @@ The modeling phase involved training two distinct models: Logistic Regression an
      - Used the raw training data (`data/processed/train.csv`).
      - Trained models are stored under `models/autogluon/`.
 
+
+  3. **Artificial Neural Network**
+
+   - **Algorithm**: Simple Artificial Neural network built with TensorFlow's Keras library optimized for binary classification.
+   - **Configuration**:
+     - **Layers**:
+       - Dense layers for input and hidden layers with ReLu activation
+       - Dropout layers with 0.5 dropout rate
+       - Fully-connected output layer with sigmoid activation
+     - **Hyperparameters**:
+       - **Optimizer**: Adam W
+       - **# of Epochs**: 100
+       - **Learning rate**: 0.0001
+       - **Batch size**: 32
+       - **Regularization**: Dropout layers; Early stopping with patience 15
+   - **Training Process**:
+     - Used the raw training data (`data/processed/train.csv`).
+     - Trained models are stored under `models/ann/`.
+
 #### Evaluation Metrics and Results
 
 Both models were evaluated on the test set, yielding the following results:
 
-| **Metric** | **Logistic Regression** | **AutoGluon** |
-| ---------- | ----------------------- | ------------- |
-| Accuracy   | 46.01%                  | 63.30%        |
-| Precision  | 69.49%                  | 63.18%        |
-| Recall     | 46.01%                  | 63.30%        |
-| F1-Score   | 46.01%                  | 63.30%        |
-| ROC-AUC    | 64.65%                  | 68.09%        |
+| **Metric** | **Logistic Regression** | **AutoGluon** | **Artificial Neural Network** |
+| ---------- | ----------------------- | ------------- | ----------------------------- |
+| Accuracy   | 46.01%                  | 63.30%        | 63.00%
+| Precision  | 69.49%                  | 63.18%        | 63.00%
+| Recall     | 46.01%                  | 63.30%        | 49.00%
+| F1-Score   | 46.01%                  | 63.30%        | 55.00%
+| ROC-AUC    | 64.65%                  | 68.09%        | 
 
 **Analysis**:
 
 - **AutoGluon Performance**: Demonstrated superior performance across most metrics compared to Logistic Regression. The higher accuracy and ROC-AUC indicate better overall predictive ability.
 - **Logistic Regression**: Achieved higher precision, suggesting it was better at predicting positive cases when it predicted them but had lower recall and overall accuracy.
+- **Artificial Neural Network**: ...
 - **ROC-AUC Improvement**: AutoGluon's ROC-AUC of 68.09% shows better discrimination between classes compared to Logistic Regression's 64.65%.
 
 The results indicate that while both models have room for improvement, AutoGluon provides a better foundation for further development due to its higher accuracy and balanced performance across metrics.
@@ -352,6 +374,7 @@ To gain deeper insights into model behavior, we generated several visualizations
 - **Feature Importances**:
   - **Logistic Regression**: Analyzed coefficients to understand the impact of each feature.
   - **AutoGluon**: Used built-in methods to extract and plot feature importance rankings.
+  - **Artificial Neural Network**: Used Principal Component Analysis (PCA) to extract significant features.
 
 ### Model Deployment
 
