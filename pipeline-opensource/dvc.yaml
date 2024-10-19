@@ -1,25 +1,25 @@
 params:
-- params.yaml
-- dvclive/params.yaml
-- models/autogluon/artifacts/params.yaml
-- models/logistic_regression/artifacts/params.yaml
-- models/neural_network/artifacts/params.yaml
+  - params.yaml
+  - dvclive/params.yaml
+  - models/autogluon/artifacts/params.yaml
+  - models/logistic_regression/artifacts/params.yaml
+  - models/neural_network/artifacts/params.yaml
 stages:
   setup_virtualenv:
     cmd: python3 -m virtualenv .venv
 
   install_dependencies:
     cmd:
-    - . .venv/bin/activate
-    - pip install uv
-    - uv pip install -r requirements.txt
+      - . .venv/bin/activate
+      - pip install uv
+      - uv pip install -r requirements.txt
     deps:
-    - requirements.txt
+      - requirements.txt
 
   fix_gpu_issue:
     cmd: .venv/bin/python scripts/fix-nvidia-gpu.py
     deps:
-    - scripts/fix-nvidia-gpu.py
+      - scripts/fix-nvidia-gpu.py
 
   data_ingestion:
     cmd: >-
@@ -27,12 +27,12 @@ stages:
       CONFIG_NAME=config
       .venv/bin/python data/ingestion.py
     deps:
-    - data/ingestion.py
+      - data/ingestion.py
     params:
-    - dataset.name
-    - data.raw_file
+      - dataset.name
+      - data.raw_file
     outs:
-    - ${data.raw_file}
+      - ${data.raw_file}
 
   data_cleaning:
     cmd: >-
@@ -40,13 +40,13 @@ stages:
       CONFIG_NAME=config
       .venv/bin/python data/cleaning.py
     deps:
-    - data/cleaning.py
-    - ${data.raw_file}
+      - data/cleaning.py
+      - ${data.raw_file}
     params:
-    - data.raw_file
-    - data.interim_file
+      - data.raw_file
+      - data.interim_file
     outs:
-    - ${data.interim_file}
+      - ${data.interim_file}
 
   feature_engineering:
     cmd: >-
@@ -54,12 +54,12 @@ stages:
       CONFIG_NAME=config
       .venv/bin/python data/build_features.py
     deps:
-    - data/build_features.py
-    - ${data.interim_file}
+      - data/build_features.py
+      - ${data.interim_file}
     params:
-    - data.interim_file
-    - data.featured_file
-    - feature_engineering
+      - data.interim_file
+      - data.featured_file
+      - feature_engineering
 
   data_splitting:
     cmd: >-
@@ -67,13 +67,13 @@ stages:
       CONFIG_NAME=config
       .venv/bin/python data/splitting.py
     deps:
-    - data/splitting.py
-    - ${data.featured_file}
+      - data/splitting.py
+      - ${data.featured_file}
     params:
-    - data.featured_file
-    - data.train_file
-    - data.test_file
-    - training.split
+      - data.featured_file
+      - data.train_file
+      - data.test_file
+      - training.split
 
   model_preprocessing:
     foreach: ${models.names}
@@ -84,11 +84,11 @@ stages:
         .venv/bin/python models/${item}/preprocessing.py
         model=${item}
       deps:
-      - models/${item}/preprocessing.py
-      - ${data.featured_file}
+        - models/${item}/preprocessing.py
+        - ${data.featured_file}
       params:
-      - data.featured_file
-      - model.${item}
+        - data.featured_file
+        - model.${item}
 
   model_training:
     foreach: ${models.names}
@@ -99,11 +99,11 @@ stages:
         .venv/bin/python models/${item}/train.py
         model=${item}
       deps:
-      - models/${item}/train.py
-      - models/${item}/artifacts/preprocessed_data.csv
+        - models/${item}/train.py
+        - models/${item}/artifacts/preprocessed_data.csv
       params:
-      - data.processed
-      - model.${item}
+        - data.processed
+        - model.${item}
 
   model_evaluation:
     foreach: ${models.names}
@@ -114,17 +114,17 @@ stages:
         .venv/bin/python models/${item}/evaluate.py
         model=${item}
       deps:
-      - models/${item}/evaluate.py
-      - ${data.test_file}
+        - models/${item}/evaluate.py
+        - ${data.test_file}
       params:
-      - model.${item}
+        - model.${item}
       metrics:
-      - models/${item}/artifacts/metrics.json:
-          cache: false
+        - models/${item}/artifacts/metrics.json:
+            cache: false
       plots:
-      - models/${item}/artifacts/confusion_matrix.png
-      - models/${item}/artifacts/roc_curve.png
-      - models/${item}/artifacts/feature_importances.png
+        - models/${item}/artifacts/confusion_matrix.png
+        - models/${item}/artifacts/roc_curve.png
+        - models/${item}/artifacts/feature_importances.png
 
 artifacts:
   # Logistic Regression Artifacts
@@ -138,16 +138,16 @@ artifacts:
     path: models/neural_network/artifacts/metrics.json
     type: metrics
 metrics:
-- models/autogluon/artifacts/metrics.json
-- models/logistic_regression/artifacts/metrics.json
-- models/neural_network/artifacts/metrics.json
+  - models/autogluon/artifacts/metrics.json
+  - models/logistic_regression/artifacts/metrics.json
+  - models/neural_network/artifacts/metrics.json
 plots:
-- models/autogluon/artifacts/plots/metrics:
-    x: step
-- models/autogluon/artifacts/plots/images
-- models/logistic_regression/artifacts/plots/metrics:
-    x: step
-- models/logistic_regression/artifacts/plots/images
-- models/neural_network/artifacts/plots/metrics:
-    x: step
-- models/neural_network/artifacts/plots/images
+  - models/autogluon/artifacts/plots/metrics:
+      x: step
+  - models/autogluon/artifacts/plots/images
+  - models/logistic_regression/artifacts/plots/metrics:
+      x: step
+  - models/logistic_regression/artifacts/plots/images
+  - models/neural_network/artifacts/plots/metrics:
+      x: step
+  - models/neural_network/artifacts/plots/images
