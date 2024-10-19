@@ -325,24 +325,23 @@ The modeling phase involved training two distinct models: Logistic Regression an
      - Used the raw training data (`data/processed/train.csv`).
      - Trained models are stored under `models/autogluon/`.
 
+3. **Artificial Neural Network**
 
-  3. **Artificial Neural Network**
-
-   - **Algorithm**: Simple Artificial Neural network built with TensorFlow's Keras library optimized for binary classification.
-   - **Configuration**:
-     - **Layers**:
-       - Dense layers for input and hidden layers with ReLu activation
-       - Dropout layers with 0.5 dropout rate
-       - Fully-connected output layer with sigmoid activation
-     - **Hyperparameters**:
-       - **Optimizer**: Adam W
-       - **# of Epochs**: 100
-       - **Learning rate**: 0.0001
-       - **Batch size**: 32
-       - **Regularization**: Dropout layers; Early stopping with patience 15
-   - **Training Process**:
-     - Used the raw training data (`data/processed/train.csv`).
-     - Trained models are stored under `models/ann/`.
+- **Algorithm**: Simple Artificial Neural network built with TensorFlow's Keras library optimized for binary classification.
+- **Configuration**:
+  - **Layers**:
+    - Dense layers for input and hidden layers with ReLu activation
+    - Dropout layers with 0.5 dropout rate
+    - Fully-connected output layer with sigmoid activation
+  - **Hyperparameters**:
+    - **Optimizer**: Adam W
+    - **# of Epochs**: 100
+    - **Learning rate**: 0.0001
+    - **Batch size**: 32
+    - **Regularization**: Dropout layers; Early stopping with patience 15
+- **Training Process**:
+  - Used the raw training data (`data/processed/train.csv`).
+  - Trained models are stored under `models/ann/`.
 
 #### Evaluation Metrics and Results
 
@@ -354,7 +353,7 @@ Both models were evaluated on the test set, yielding the following results:
 | Precision  | 69.49%                  | 63.18%        | 63.00%
 | Recall     | 46.01%                  | 63.30%        | 49.00%
 | F1-Score   | 46.01%                  | 63.30%        | 55.00%
-| ROC-AUC    | 64.65%                  | 68.09%        | 
+| ROC-AUC    | 64.65%                  | 68.09%        |
 
 **Analysis**:
 
@@ -558,7 +557,7 @@ project/
 │   └── visualization/                # Visualization modules
 │       ├── __init__.py               # Makes visualization a Python package
 │       └── visualize.py              # Script for creating visualizations
-├── dvc.yaml                          # DVC pipeline configuration file
+├── dvc-opensource.yaml                          # DVC pipeline configuration file
 ├── dvc.lock                          # DVC lock file (tracks data and pipeline state)
 ├── requirements.txt                  # Python project dependencies
 ├── README.md                         # Project documentation and instructions
