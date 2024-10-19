@@ -180,8 +180,8 @@ stages:
       size: 56094172
     - path: src/models/logistic_regression/preprocessing.py
       hash: md5
-      md5: d236594753f635177ccf4acb57551663
-      size: 4409
+      md5: 72214c592b039ccf891057dc8f26670d
+      size: 4410
     params:
       params.yaml:
         dataset.path.processed: data/processed

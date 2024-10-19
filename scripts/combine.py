@@ -76,27 +76,28 @@ EXCLUDE_FILES = {
     "combine.sh",
     "combined.txt",
     "LICENSE",
+    "README.md",
     "Thumbs.db",
     "tree.txt",
     "update.sh",
+    "model.pkl",
 }
 
 EXCLUDE_FOLDERS = {
     "__pycache__",
+    ".dvc"
+    "terraform"
 }
 
 EXCLUDE_FOLDERPATHS = {
     Path(".devcontainer"),
     Path(".dvc"),
     Path(".git"),
-    Path(".gitea"),
-    Path(".github"),
     Path(".temp"),
     Path(".venv"),
     Path(".vscode"),
     Path("data"),
     Path("debug"),
-    Path("huggingface"),
     Path("models"),
     Path("node_modules"),
     Path("notebooks"),
@@ -104,7 +105,6 @@ EXCLUDE_FOLDERPATHS = {
     Path("temp"),
     Path("templates"),
     Path("terraform"),
-    Path("video-assets"),
 }
 
 EXCLUDE_PATTERNS = [
