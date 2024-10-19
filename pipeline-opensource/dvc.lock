@@ -275,6 +275,11 @@ stages:
       params.yaml:
         data.raw_file: data/raw/data.csv
         dataset.name: aai540-group3/diabetes-readmission
+    outs:
+    - path: data/raw/data.csv
+      hash: md5
+      md5: dbfe12c203805ccf7fdb683042c46ab3
+      size: 49159045
   data_cleaning:
     cmd: CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python data/cleaning.py
     deps:
@@ -290,6 +295,11 @@ stages:
       params.yaml:
         data.interim_file: data/interim/data_cleaned.csv
         data.raw_file: data/raw/data.csv
+    outs:
+    - path: data/interim/data_cleaned.csv
+      hash: md5
+      md5: f1d6c377d981e8ba3a9f92775ecb85d6
+      size: 70117495
   data_splitting:
     cmd: CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python data/splitting.py
     deps:
@@ -342,8 +352,8 @@ stages:
       size: 72854176
     - path: models/autogluon/preprocessing.py
       hash: md5
-      md5: 2f78d1be3f607126236abd41940b0ab5
-      size: 7002
+      md5: a16c7c4a89a7f8c88063467180c14f28
+      size: 7155
     params:
       params.yaml:
         data.featured_file: data/processed/data_featured.csv
@@ -490,8 +500,8 @@ stages:
       size: 72854176
     - path: models/neural_network/preprocessing.py
       hash: md5
-      md5: 3bf2bbdc7ed21f7c0baca96499b6e101
-      size: 7924
+      md5: 054edbdf28e077af3c5d557062126f2c
+      size: 8162
     params:
       params.yaml:
         data.featured_file: data/processed/data_featured.csv

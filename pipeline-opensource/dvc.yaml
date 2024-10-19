@@ -31,6 +31,8 @@ stages:
     params:
     - dataset.name
     - data.raw_file
+    outs:
+    - ${data.raw_file}
 
   data_cleaning:
     cmd: >-
@@ -43,6 +45,8 @@ stages:
     params:
     - data.raw_file
     - data.interim_file
+    outs:
+    - ${data.interim_file}
 
   feature_engineering:
     cmd: >-

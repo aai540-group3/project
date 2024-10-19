@@ -194,10 +194,11 @@ EXCLUDE_FILES = {
 EXCLUDE_FOLDERS = {
     "__pycache__",
     ".dvc",
-    "terraform",
+    ".ruff_cache",
     ".temp",
     ".venv",
     ".vscode",
+    "artifacts",
     "debug",
     "dvclive",
     "external",
@@ -210,6 +211,7 @@ EXCLUDE_FOLDERS = {
     "reports",
     "temp",
     "templates",
+    "terraform",
     "terraform",
     "utils",
 }

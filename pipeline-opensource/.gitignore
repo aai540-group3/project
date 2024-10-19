@@ -10,3 +10,4 @@ models/autogluon/utils
 models/autogluon/version.txt
 models/logistic_regression/input_hash.txt
 /.venv
+.ruff_cache
