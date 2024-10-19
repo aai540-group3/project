@@ -103,13 +103,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-dvc-cache-
 
-      - name: Pull from DVC remotes
-        working-directory: pipeline-opensource
-        run: dvc pull
-
       - name: Run DVC pipeline
         working-directory: pipeline-opensource
-        run: dvc repro
+        run: dvc repro -f
 
       - name: Push to DVC remotes
         if: always()
