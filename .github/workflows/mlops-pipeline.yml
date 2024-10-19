@@ -81,12 +81,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Set up Continuous Machine Learning (CML)
-        uses: iterative/setup-cml@f12ea7685438c1fc438d50f77519b3860cf5fa98 # v2.0.1
-
-      - name: Set up Data Version Control (DVC)
-        uses: iterative/setup-dvc@2508d098217d24eef3c0e8d7bc0ce7b9ca0723c3 # v1.1.2
-
       - name: Configure DVC
         working-directory: pipeline-opensource
         run: |
