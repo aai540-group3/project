@@ -5,7 +5,7 @@
 This script loads a trained Logistic Regression model, evaluates its performance on a test dataset,
 and logs various metrics. These metrics include accuracy, precision, recall, ROC-AUC, and F1-score.
 It also generates and logs visualizations of the confusion matrix, ROC curve, and feature importances
-as image artifacts using DVCLive.
+as image artifacts using DVCLive. All outputs are saved in the model's artifacts directory.
 """
 
 import json
@@ -20,9 +20,15 @@ import numpy as np
 import pandas as pd
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
-from sklearn.metrics import (accuracy_score, auc, confusion_matrix,
-                             precision_score, recall_score, roc_auc_score,
-                             roc_curve)
+from sklearn.metrics import (
+    accuracy_score,
+    auc,
+    confusion_matrix,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+    roc_curve,
+)
 
 from dvclive import Live
 
@@ -31,9 +37,9 @@ logger = logging.getLogger(__name__)
 
 
 @hydra.main(
-        config_path=os.getenv("CONFIG_PATH"),
-        config_name=os.getenv("CONFIG_NAME"),
-        version_base=None,
+    config_path=os.getenv("CONFIG_PATH"),
+    config_name=os.getenv("CONFIG_NAME"),
+    version_base=None,
 )
 def main(cfg: DictConfig) -> None:
     """
@@ -49,14 +55,28 @@ def main(cfg: DictConfig) -> None:
 
         # Use Hydra-managed paths
         test_data_path = Path(to_absolute_path(cfg.paths.data.processed.test_file))
-        model_path = Path(to_absolute_path(cfg.paths.models.logistic_regression.model_file))
-        metrics_output_dir = Path(to_absolute_path(cfg.paths.reports.metrics))
-        metrics_output_dir.mkdir(parents=True, exist_ok=True)
-        metrics_output_path = metrics_output_dir / f"{cfg.model.name}_metrics.json"
-
-        logger.info(
-            f"Evaluating Logistic Regression model {cfg.model.name}..."
+        artifacts_dir = Path(
+            to_absolute_path(cfg.paths.models.logistic_regression.artifacts)
         )
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+
+        model_path = Path(
+            to_absolute_path(cfg.paths.models.logistic_regression.model_file)
+        )
+        metrics_output_path = Path(
+            to_absolute_path(cfg.paths.models.logistic_regression.metrics_file)
+        )
+        confusion_matrix_path = Path(
+            to_absolute_path(cfg.paths.models.logistic_regression.confusion_matrix)
+        )
+        roc_curve_path = Path(
+            to_absolute_path(cfg.paths.models.logistic_regression.roc_curve)
+        )
+        feature_importance_path = Path(
+            to_absolute_path(cfg.paths.models.logistic_regression.feature_importances)
+        )
+
+        logger.info(f"Evaluating Logistic Regression model {cfg.model.name}...")
 
         # Load test data
         test_df = pd.read_csv(test_data_path)
@@ -66,7 +86,9 @@ def main(cfg: DictConfig) -> None:
         # Load the trained Logistic Regression model
         model = joblib.load(model_path)
         y_pred = model.predict(X_test)
-        y_pred_proba = model.predict_proba(X_test)[:, 1]  # Probability of positive class
+        y_pred_proba = model.predict_proba(X_test)[
+            :, 1
+        ]  # Probability of positive class
 
         # Calculate evaluation metrics
         metrics = {
@@ -74,19 +96,15 @@ def main(cfg: DictConfig) -> None:
             "precision": precision_score(
                 y_true, y_pred, average="weighted", zero_division=0
             ),
-            "recall": recall_score(
-                y_true, y_pred, average="weighted", zero_division=0
-            ),
-            "roc_auc": roc_auc_score(
-                y_true, y_pred_proba, average="weighted"
-            ),
+            "recall": recall_score(y_true, y_pred, average="weighted", zero_division=0),
+            "roc_auc": roc_auc_score(y_true, y_pred_proba, average="weighted"),
             "f1_score": recall_score(
                 y_true, y_pred, average="weighted", zero_division=0
             ),
         }
 
         # Initialize DVCLive
-        with Live(dir=to_absolute_path(cfg.paths.dvclive)) as live:
+        with Live(dir=str(artifacts_dir)) as live:
             try:
                 # Log evaluation parameters
                 live.log_params(
@@ -115,9 +133,7 @@ def main(cfg: DictConfig) -> None:
                     type="metrics",
                     name=f"{cfg.model.name}_metrics",
                 )
-                logger.info(
-                    f"Metrics JSON logged as artifact at {metrics_output_path}"
-                )
+                logger.info(f"Metrics JSON logged as artifact at {metrics_output_path}")
 
                 # Generate and log Confusion Matrix plot
                 conf_matrix = confusion_matrix(y_true, y_pred)
@@ -140,12 +156,11 @@ def main(cfg: DictConfig) -> None:
                 for (i, j), val in np.ndenumerate(conf_matrix):
                     ax.text(j, i, f"{val}", ha="center", va="center", color="red")
 
-                conf_matrix_path = metrics_output_dir / f"{cfg.model.name}_confusion_matrix.png"
-                plt.savefig(conf_matrix_path)
+                plt.savefig(confusion_matrix_path)
                 plt.close()
 
                 # Log the confusion matrix image
-                live.log_image("confusion", str(conf_matrix_path))
+                live.log_image("confusion", str(confusion_matrix_path))
                 logger.info("Confusion matrix logged as image artifact.")
 
                 # Generate and log ROC Curve plot
@@ -168,7 +183,6 @@ def main(cfg: DictConfig) -> None:
                 plt.title("Receiver Operating Characteristic")
                 plt.legend(loc="lower right")
 
-                roc_curve_path = metrics_output_dir / f"{cfg.model.name}_roc_curve.png"
                 plt.savefig(roc_curve_path)
                 plt.close()
 
@@ -177,9 +191,7 @@ def main(cfg: DictConfig) -> None:
                 logger.info("ROC curve logged as image artifact.")
 
                 # Log feature importance (coefficients for logistic regression)
-                feature_importances = pd.Series(
-                    model.coef_[0], index=X_test.columns
-                )
+                feature_importances = pd.Series(model.coef_[0], index=X_test.columns)
                 sorted_importances = feature_importances.abs().sort_values(
                     ascending=False
                 )
@@ -187,9 +199,6 @@ def main(cfg: DictConfig) -> None:
                 sorted_importances.plot(kind="bar")
                 plt.title("Feature Importances (Absolute Coefficients)")
                 plt.tight_layout()
-                feature_importance_path = (
-                    metrics_output_dir / f"{cfg.model.name}_feature_importances.png"
-                )
                 plt.savefig(feature_importance_path)
                 plt.close()
 

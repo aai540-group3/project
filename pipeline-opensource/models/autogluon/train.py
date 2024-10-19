@@ -61,101 +61,110 @@ def main(cfg: DictConfig) -> None:
         logger.info(OmegaConf.to_yaml(cfg))
 
         # Use Hydra-managed paths
-        train_data_path = Path(to_absolute_path(cfg.paths.data.processed.train_file))
-        model_output_dir = Path(to_absolute_path(cfg.paths.models.autogluon.base))
-        model_output_dir.mkdir(parents=True, exist_ok=True)
+        train_data_path = Path(
+            to_absolute_path(cfg.paths.models.autogluon.preprocessed_data)
+        )
+        artifacts_dir = Path(to_absolute_path(cfg.paths.models.autogluon.artifacts))
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
 
         # Calculate hash of input data and configuration
         input_hash = calculate_input_hash(train_data_path, cfg)
         hash_file = Path(to_absolute_path(cfg.paths.models.autogluon.hash_file))
         model_pkl_path = Path(to_absolute_path(cfg.paths.models.autogluon.model_file))
 
-        # Check if model file exists before checking hashes
-        if model_pkl_path.exists():
-            if hash_file.exists():
+        # Initialize DVCLive
+        live = Live(dir=str(artifacts_dir), dvcyaml=False)
+
+        try:
+            # Log training parameters
+            params_to_log = {
+                "model": "autogluon",
+                "label": "readmitted",
+                "problem_type": "binary",
+                "dataset_version": cfg.dataset.version,
+            }
+            # Add flattened AutoGluon parameters
+            for key, value in cfg.model.params.items():
+                params_to_log[f"autogluon_{key}"] = value
+
+            live.log_params(params_to_log)
+
+            # Check if model file exists before checking hashes
+            if model_pkl_path.exists() and hash_file.exists():
                 with open(hash_file, "r") as f:
                     stored_hash = f.read().strip()
 
                 if stored_hash == input_hash:
-                    logger.info("Model already exists with the same input hash. Skipping training.")
+                    logger.info(
+                        "Model already exists with the same input hash. Skipping training."
+                    )
                     predictor = joblib.load(model_pkl_path)
                     logger.info(f"Loaded existing model from {model_pkl_path}")
-                    return predictor
-            else:
-                logger.info("Hash file doesn't exist. Proceeding to training.")
-        else:
-            logger.info("Model file doesn't exist. Proceeding to training.")
-
-        logger.info("Training new AutoGluon TabularPredictor model...")
-
-        # Load training data
-        train_data = pd.read_csv(train_data_path)
-
-        # Initialize DVCLive
-        with Live(dir=to_absolute_path(cfg.paths.dvclive)) as live:
-            try:
-                # Log training parameters
-                params_to_log = {
-                    "model": "autogluon",
-                    "label": "readmitted",
-                    "problem_type": "binary",
-                    "dataset_version": cfg.dataset.version,
-                }
-                # Add flattened AutoGluon parameters
-                for key, value in cfg.model.params.items():
-                    params_to_log[f"autogluon_{key}"] = value
-
-                live.log_params(params_to_log)
-
-                # Initialize and train the AutoGluon TabularPredictor
-                predictor = TabularPredictor(
-                    label="readmitted",
-                    path=str(model_output_dir),
-                    problem_type="binary",
-                )
-
-                # Prepare hyperparameters
-                hyperparameters = {
-                    "GBM": {"num_boost_round": cfg.model.params.gbm_num_boost_round}
-                }
-
-                predictor.fit(
-                    train_data=train_data,
-                    time_limit=cfg.model.params.time_limit,
-                    presets=cfg.model.params.presets,
-                    hyperparameters=hyperparameters,
-                    verbosity=cfg.model.params.verbosity,
-                )
-                logger.info("AutoGluon model training completed.")
-
-                try:
-                    # Save a reference to the predictor
-                    joblib.dump(predictor, model_pkl_path)
-                    logger.info(f"AutoGluon predictor reference saved to {model_pkl_path}")
 
                     # Log the model.pkl as an artifact
-                    live.log_artifact(str(model_pkl_path), type="model", name="autogluon_model")
+                    live.log_artifact(
+                        str(model_pkl_path), type="model", name="autogluon_model"
+                    )
+                    live.end()
+                    return predictor
+            else:
+                logger.info(
+                    "Model file doesn't exist or hash mismatch. Proceeding to training."
+                )
 
-                    # Only save the hash if model saving was successful
-                    with open(hash_file, "w") as f:
-                        f.write(input_hash)
-                    logger.info(f"Input hash saved to {hash_file}")
+            logger.info("Training new AutoGluon TabularPredictor model...")
 
-                except Exception as e:
-                    logger.error(f"Error saving model or hash: {e}")
-                    # Delete the hash file if model saving failed
-                    if hash_file.exists():
-                        hash_file.unlink()
-                    raise
+            # Load training data
+            train_data = pd.read_csv(train_data_path)
 
-            finally:
-                # Always end the DVC Live run
-                live.end()
+            # Initialize and train the AutoGluon TabularPredictor
+            predictor = TabularPredictor(
+                label="readmitted",
+                path=str(artifacts_dir),
+                problem_type="binary",
+            )
+
+            # Prepare hyperparameters
+            hyperparameters = {
+                "GBM": {"num_boost_round": cfg.model.params.gbm_num_boost_round}
+            }
+
+            predictor.fit(
+                train_data=train_data,
+                time_limit=cfg.model.params.time_limit,
+                presets=cfg.model.params.presets,
+                hyperparameters=hyperparameters,
+                verbosity=cfg.model.params.verbosity,
+            )
+            logger.info("AutoGluon model training completed.")
+
+            # Save a reference to the predictor
+            joblib.dump(predictor, model_pkl_path)
+            logger.info(f"AutoGluon predictor reference saved to {model_pkl_path}")
+
+            # Log the model.pkl as an artifact
+            live.log_artifact(str(model_pkl_path), type="model", name="autogluon_model")
+
+            # Save the input hash
+            with open(hash_file, "w") as f:
+                f.write(input_hash)
+            logger.info(f"Input hash saved to {hash_file}")
+
+        except Exception as e:
+            logger.error(f"Error during training or saving model: {e}", exc_info=True)
+            # Delete the hash file if model saving failed
+            if hash_file.exists():
+                hash_file.unlink()
+            raise
+
+        finally:
+            # Always end the DVC Live run
+            live.end()
 
         return predictor
 
     except Exception as e:
-        logger.error(f"An error occurred during training: {str(e)}")
+        logger.error(f"An error occurred during training: {str(e)}", exc_info=True)
         logger.error(f"Configuration dump: {OmegaConf.to_yaml(cfg)}")
         raise
 
@@ -178,8 +187,7 @@ def calculate_input_hash(data_path: Path, cfg: DictConfig) -> str:
     config_hash = hashlib.md5(config_str.encode(), usedforsecurity=False).hexdigest()
 
     combined_hash = hashlib.md5(
-        (data_hash + config_hash).encode(),
-        usedforsecurity=False
+        (data_hash + config_hash).encode(), usedforsecurity=False
     ).hexdigest()
     return combined_hash
 

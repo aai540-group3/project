@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @hydra.main(
     config_path=os.getenv("CONFIG_PATH"),
     config_name=os.getenv("CONFIG_NAME"),
@@ -28,9 +29,9 @@ def main(cfg: DictConfig) -> None:
         logger.info(OmegaConf.to_yaml(cfg))
 
         # Validate configuration
-        if 'dataset' not in cfg:
+        if "dataset" not in cfg:
             raise ValueError("Dataset configuration is missing")
-        if 'training' not in cfg or 'split' not in cfg.training:
+        if "training" not in cfg or "split" not in cfg.training:
             raise ValueError("Training split configuration is missing or incomplete")
 
         split_params = cfg.training.split
@@ -76,6 +77,7 @@ def main(cfg: DictConfig) -> None:
         logger.error(f"An error occurred during data splitting: {str(e)}")
         logger.error(f"Configuration dump: {OmegaConf.to_yaml(cfg)}")
         raise
+
 
 if __name__ == "__main__":
     main()

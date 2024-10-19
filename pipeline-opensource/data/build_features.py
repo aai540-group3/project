@@ -107,7 +107,9 @@ def main(cfg: DictConfig) -> None:
         df_featured = create_features(df)
 
         # Save processed data with new features
-        logger.info(f"Saving processed data with new features to {processed_data_path}...")
+        logger.info(
+            f"Saving processed data with new features to {processed_data_path}..."
+        )
         processed_data_path.parent.mkdir(parents=True, exist_ok=True)
         df_featured.to_csv(processed_data_path, index=False)
         logger.info(f"Processed data saved to {processed_data_path}")
@@ -115,7 +117,9 @@ def main(cfg: DictConfig) -> None:
         # Log data quality metrics
         logger.info(f"Original data shape: {df.shape}")
         logger.info(f"Processed data shape: {df_featured.shape}")
-        logger.info(f"New columns added: {', '.join(set(df_featured.columns) - set(df.columns))}")
+        logger.info(
+            f"New columns added: {', '.join(set(df_featured.columns) - set(df.columns))}"
+        )
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")

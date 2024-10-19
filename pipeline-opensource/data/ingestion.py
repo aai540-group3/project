@@ -21,10 +21,11 @@ logger = logging.getLogger(__name__)
 
 print(os.getenv("CONFIG_PATH"))
 
+
 @hydra.main(
     config_path=os.getenv("CONFIG_PATH"),
     config_name=os.getenv("CONFIG_NAME"),
-    version_base="1.2"
+    version_base="1.2",
 )
 def main(cfg: DictConfig) -> None:
     """

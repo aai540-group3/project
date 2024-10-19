@@ -1,3 +1,5 @@
+# conf/config.yaml
+
 conf:
   name: conf
 
@@ -5,20 +7,33 @@ defaults:
   - data: diabetes
   - training: base
   - feature_engineering: base
-  - model: logistic_regression
+  - model: autogluon # Updated to 'autogluon' to match the current model
   - _self_
   - override hydra/job_logging: colorlog
   - override hydra/hydra_logging: colorlog
 
+# Dataset configuration
 dataset:
   name: "aai540-group3/diabetes-readmission"
   version: "v1.0"
+  path:
+    raw: data/raw
+    interim: data/interim
+    processed: data/processed
+    external: data/external
 
-model:
-  active:
-    - logistic_regression
-    - autogluon
+# Training configuration
+training:
+  split:
+    test_size: 0.2
+    random_state: 42
 
+# Feature engineering configuration
+feature_engineering:
+  add_polynomial_features: true
+  poly_degree: 2
+
+# Paths configuration
 paths:
   data:
     raw:
@@ -35,14 +50,46 @@ paths:
     external: ${hydra:runtime.cwd}/data/external
   models:
     output: ${hydra:runtime.cwd}/models
+    preprocessed_data: ${paths.models.output}/${model.name}/artifacts/preprocessed_data.csv
     autogluon:
       base: ${paths.models.output}/autogluon
-      model_file: ${paths.models.autogluon.base}/model.pkl
-      hash_file: ${paths.models.autogluon.base}/input_hash.txt
+      artifacts: ${paths.models.autogluon.base}/artifacts
+      model_file: ${paths.models.autogluon.artifacts}/model.pkl
+      hash_file: ${paths.models.autogluon.artifacts}/input_hash.txt
+      metrics_file: ${paths.models.autogluon.artifacts}/metrics.json
+      params_file: ${paths.models.autogluon.artifacts}/params.yaml
+      confusion_matrix: ${paths.models.autogluon.artifacts}/confusion_matrix.png
+      roc_curve: ${paths.models.autogluon.artifacts}/roc_curve.png
+      feature_importances: ${paths.models.autogluon.artifacts}/feature_importances.png
+      preprocessed_data: ${paths.models.autogluon.artifacts}/preprocessed_data.csv
+      preprocessed_data_train: ${paths.models.autogluon.artifacts}/preprocessed_train_data.csv
+      preprocessed_data_test: ${paths.models.autogluon.artifacts}/preprocessed_test_data.csv
+      preprocessor: ${paths.models.autogluon.artifacts}/preprocessor.joblib
     logistic_regression:
       base: ${paths.models.output}/logistic_regression
-      model_file: ${paths.models.logistic_regression.base}/model.pkl
-      hash_file: ${paths.models.logistic_regression.base}/input_hash.txt
+      artifacts: ${paths.models.logistic_regression.base}/artifacts
+      model_file: ${paths.models.logistic_regression.artifacts}/model.pkl
+      hash_file: ${paths.models.logistic_regression.artifacts}/input_hash.txt
+      metrics_file: ${paths.models.logistic_regression.artifacts}/metrics.json
+      params_file: ${paths.models.logistic_regression.artifacts}/params.yaml
+      confusion_matrix: ${paths.models.logistic_regression.artifacts}/confusion_matrix.png
+      roc_curve: ${paths.models.logistic_regression.artifacts}/roc_curve.png
+      feature_importances: ${paths.models.logistic_regression.artifacts}/feature_importances.png
+      preprocessed_data: ${paths.models.logistic_regression.artifacts}/preprocessed_data.csv
+      preprocessor: ${paths.models.logistic_regression.artifacts}/preprocessor.joblib
+    neural_network:
+      base: ${paths.models.output}/neural_network
+      artifacts: ${paths.models.neural_network.base}/artifacts
+      model_file: ${paths.models.neural_network.artifacts}/model.h5
+      history_file: ${paths.models.neural_network.artifacts}/history.pkl
+      hash_file: ${paths.models.neural_network.artifacts}/input_hash.txt
+      metrics_file: ${paths.models.neural_network.artifacts}/metrics.json
+      params_file: ${paths.models.neural_network.artifacts}/params.yaml
+      confusion_matrix: ${paths.models.neural_network.artifacts}/confusion_matrix.png
+      roc_curve: ${paths.models.neural_network.artifacts}/roc_curve.png
+      feature_importances: ${paths.models.neural_network.artifacts}/feature_importances.png
+      preprocessed_data: ${paths.models.neural_network.artifacts}/preprocessed_data.csv
+      preprocessor: ${paths.models.neural_network.artifacts}/preprocessor.pkl
   reports:
     metrics: ${hydra:runtime.cwd}/reports/metrics
     figures: ${hydra:runtime.cwd}/reports/figures
@@ -53,6 +100,7 @@ paths:
     data: ${paths.config.base}/data/diabetes.yaml
     model_logistic_regression: ${paths.config.base}/model/logistic_regression.yaml
     model_autogluon: ${paths.config.base}/model/autogluon.yaml
+    model_neural_network: ${paths.config.base}/model/neural_network.yaml
     feature_engineering: ${paths.config.base}/feature_engineering/base.yaml
     training: ${paths.config.base}/training/base.yaml
 

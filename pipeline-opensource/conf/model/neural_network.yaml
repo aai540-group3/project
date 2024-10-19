@@ -1,0 +1,23 @@
+name: neural_network
+params:
+  layers:
+    - units: 64
+      activation: "relu"
+      dropout: 0.5
+    - units: 32
+      activation: "relu"
+      dropout: 0.5
+    - units: 32
+      activation: "relu"
+      dropout: 0.5
+    - units: 16
+      activation: "relu"
+  optimizer:
+    type: "adamw"
+    learning_rate: 0.0001
+  loss: "binary_crossentropy"
+  metrics:
+    - "accuracy"
+  batch_size: 32
+  epochs: 100
+  patience: 15

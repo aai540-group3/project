@@ -1,10 +1,10 @@
 autogluon.tabular[all]
-datasets
 dask[dataframe]
+datasets
 dvc[all]
 dvclive
-hydra-core
 hydra_colorlog
+hydra-core
 joblib
 matplotlib
 numpy
@@ -12,3 +12,7 @@ omegaconf
 pandas
 scikit-learn
 seaborn
+shap
+tensorflow
+tensorflow-addons
+tensorflow-cpu

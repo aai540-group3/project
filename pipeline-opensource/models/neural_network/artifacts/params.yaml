@@ -1,0 +1,5 @@
+model_name: neural_network
+metrics_output_path: 
+  /home/user/project/pipeline-opensource/models/neural_network/artifacts/metrics.json
+evaluation_date: '2024-10-19T12:10:44.498249'
+dataset_version: v1.0

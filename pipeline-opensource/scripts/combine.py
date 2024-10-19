@@ -43,24 +43,132 @@ COMMENT_SYNTAX: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "autohotkey": {"start": ";", "end": "", "extensions": {"ahk", "au3"}},
     "basic": {"start": "'", "end": "", "extensions": {"vb", "vbs", "bas"}},
     "batch": {"start": "REM", "end": "", "extensions": {"bat", "cmd"}},
-    "c_style": {"start": "//", "end": "", "extensions": {"c", "h", "i", "cpp", "cc", "cxx", "c++", "hpp", "hxx", "h++", "hh", "ii", "m", "mm", "cs", "java", "scala", "kt", "kts", "go", "rs", "rlib", "swift", "d", "di", "js", "jsx", "mjs", "cjs", "ts", "tsx"}},
+    "c_style": {
+        "start": "//",
+        "end": "",
+        "extensions": {
+            "c",
+            "h",
+            "i",
+            "cpp",
+            "cc",
+            "cxx",
+            "c++",
+            "hpp",
+            "hxx",
+            "h++",
+            "hh",
+            "ii",
+            "m",
+            "mm",
+            "cs",
+            "java",
+            "scala",
+            "kt",
+            "kts",
+            "go",
+            "rs",
+            "rlib",
+            "swift",
+            "d",
+            "di",
+            "js",
+            "jsx",
+            "mjs",
+            "cjs",
+            "ts",
+            "tsx",
+        },
+    },
     "clojure": {"start": ";", "end": "", "extensions": {"clj", "cljs", "cljc", "edn"}},
-    "css_style": {"start": "/*", "end": "*/", "extensions": {"css", "scss", "sass", "less"}},
+    "css_style": {
+        "start": "/*",
+        "end": "*/",
+        "extensions": {"css", "scss", "sass", "less"},
+    },
     "data_formats": {"start": "#", "end": "", "extensions": {"yaml", "yml", "toml"}},
     "elixir": {"start": "#", "end": "", "extensions": {"ex", "exs"}},
     "erlang": {"start": "%", "end": "", "extensions": {"erl", "hrl"}},
-    "fortran": {"start": "!", "end": "", "extensions": {"f", "f77", "f90", "f95", "f03", "f08"}},
+    "fortran": {
+        "start": "!",
+        "end": "",
+        "extensions": {"f", "f77", "f90", "f95", "f03", "f08"},
+    },
     "haskell": {"start": "--", "end": "", "extensions": {"hs", "lhs"}},
-    "html_style": {"start": "<!--", "end": "-->", "extensions": {"html", "htm", "xhtml", "shtml", "xml", "svg", "xsl", "xslt", "rss", "atom", "ejs", "hbs", "mustache", "handlebars"}},
+    "html_style": {
+        "start": "<!--",
+        "end": "-->",
+        "extensions": {
+            "html",
+            "htm",
+            "xhtml",
+            "shtml",
+            "xml",
+            "svg",
+            "xsl",
+            "xslt",
+            "rss",
+            "atom",
+            "ejs",
+            "hbs",
+            "mustache",
+            "handlebars",
+        },
+    },
     "ini_style": {"start": ";", "end": "", "extensions": {"ini", "cfg", "../conf"}},
     "json_style": {"start": "//", "end": "", "extensions": {"json", "jsonc", "json5"}},
-    "latex": {"start": "%", "end": "", "extensions": {"tex", "sty", "cls", "dtx", "ins"}},
+    "latex": {
+        "start": "%",
+        "end": "",
+        "extensions": {"tex", "sty", "cls", "dtx", "ins"},
+    },
     "lua": {"start": "--", "end": "", "extensions": {"lua"}},
-    "markup": {"start": "<!--", "end": "-->", "extensions": {"md", "markdown", "mdown", "mkdn"}},
+    "markup": {
+        "start": "<!--",
+        "end": "-->",
+        "extensions": {"md", "markdown", "mdown", "mkdn"},
+    },
     "powershell": {"start": "#", "end": "", "extensions": {"ps1", "psm1", "psd1"}},
     "r": {"start": "#", "end": "", "extensions": {"r", "R", "Rmd"}},
-    "scripting_languages": {"start": "#", "end": "", "extensions": {"py", "pyw", "pyc", "pyo", "pyd", "pyi", "pyx", "pxd", "pxi", "rb", "rbw", "rake", "gemspec", "pl", "pm", "t", "pod"}},
-    "shell_scripts": {"start": "#", "end": "", "extensions": {"sh", "bash", "zsh", "fish", "ksh", "csh", "tcsh", "ash", "dash", "xonsh"}},
+    "scripting_languages": {
+        "start": "#",
+        "end": "",
+        "extensions": {
+            "py",
+            "pyw",
+            "pyc",
+            "pyo",
+            "pyd",
+            "pyi",
+            "pyx",
+            "pxd",
+            "pxi",
+            "rb",
+            "rbw",
+            "rake",
+            "gemspec",
+            "pl",
+            "pm",
+            "t",
+            "pod",
+        },
+    },
+    "shell_scripts": {
+        "start": "#",
+        "end": "",
+        "extensions": {
+            "sh",
+            "bash",
+            "zsh",
+            "fish",
+            "ksh",
+            "csh",
+            "tcsh",
+            "ash",
+            "dash",
+            "xonsh",
+        },
+    },
     "sql": {"start": "--", "end": "", "extensions": {"sql", "mysql", "pgsql", "plsql"}},
     "tcl": {"start": "#", "end": "", "extensions": {"tcl", "tk", "itcl", "itk"}},
     "vim": {"start": '"', "end": "", "extensions": {"vim"}},
@@ -84,12 +192,14 @@ EXCLUDE_FILES = {
     "Thumbs.db",
     "tree.txt",
     "update.sh",
+    "preprocessor.joblib",
 }
 
 EXCLUDE_FOLDERS = {
+    "LightGBM_BAG_L1"
     "__pycache__",
     ".dvc",
-    "terraform",
+    ".ruff_cache",
     ".temp",
     ".venv",
     ".vscode",
@@ -97,6 +207,7 @@ EXCLUDE_FOLDERS = {
     "dvclive",
     "external",
     "interim",
+    "terraform",
     "node_modules",
     "notebooks",
     "outputs",
@@ -106,7 +217,8 @@ EXCLUDE_FOLDERS = {
     "temp",
     "templates",
     "terraform",
-    "utils"
+    "artifacts",
+    "utils",
 }
 
 EXCLUDE_FOLDERPATHS = {
@@ -116,7 +228,7 @@ EXCLUDE_FOLDERPATHS = {
 
 EXCLUDE_PATTERNS = [
     r".*\.bbl",
-    r".*\.json",
+    r".*\.h5",
     r".*\.lock",
     r".*\.log",
     r".*\.mp3",
@@ -129,7 +241,6 @@ EXCLUDE_PATTERNS = [
     r".*\.synctex.gz",
     r".*\.txt",
     r".*\.wav",
-    r".*\.yaml",
     r".*\.zip",
 ]
 
@@ -138,7 +249,9 @@ INCLUDE_FILES = ["Final_Project_Team_3_Deliverable_1.tex", "terraform/main.tf"]
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description="Combine files and generate directory tree structure.")
+    parser = argparse.ArgumentParser(
+        description="Combine files and generate directory tree structure."
+    )
     parser.add_argument(
         "-d",
         "--directory",
@@ -166,8 +279,18 @@ def parse_arguments() -> argparse.Namespace:
         default="debug/debug.log",
         help="Debug log file (default: debug/debug.log)",
     )
-    parser.add_argument("--exclude-files", nargs="+", default=[], help="Files to exclude (space-separated)")
-    parser.add_argument("--exclude-folders", nargs="+", default=[], help="Folders to exclude (space-separated)")
+    parser.add_argument(
+        "--exclude-files",
+        nargs="+",
+        default=[],
+        help="Files to exclude (space-separated)",
+    )
+    parser.add_argument(
+        "--exclude-folders",
+        nargs="+",
+        default=[],
+        help="Folders to exclude (space-separated)",
+    )
     parser.add_argument(
         "--exclude-folderpaths",
         nargs="+",
@@ -242,7 +365,9 @@ def process_file(file_path: Path, outfile, parent_dir: Path) -> None:
     separator_line = generate_separator_line(comment_start, comment_end)
 
     outfile.write(f"\n\n{separator_line}\n")
-    outfile.write(f"{comment_start} Source: {file_path.relative_to(parent_dir)} {comment_end}\n\n")
+    outfile.write(
+        f"{comment_start} Source: {file_path.relative_to(parent_dir)} {comment_end}\n\n"
+    )
 
     try:
         with file_path.open("r", encoding="utf-8", errors="ignore") as infile:
@@ -324,7 +449,9 @@ def generate_tree_structure(
         connector = "└── " if is_last_entry else "├── "
 
         relative_path = entry.relative_to(parent_dir)
-        if entry.is_dir() and should_exclude_directory(entry.name, relative_path, exclude_folders, exclude_folderpaths):
+        if entry.is_dir() and should_exclude_directory(
+            entry.name, relative_path, exclude_folders, exclude_folderpaths
+        ):
             continue
         if entry.is_file() and should_exclude_file(
             entry.name,
@@ -374,12 +501,16 @@ def main():
     args = parse_arguments()
 
     # Update inclusion and exclusion lists with command-line arguments
-    include_files = [str(Path(p).resolve()) for p in args.include_files] + [str(Path(p).resolve()) for p in INCLUDE_FILES]  # Convert to absolute paths
+    include_files = [str(Path(p).resolve()) for p in args.include_files] + [
+        str(Path(p).resolve()) for p in INCLUDE_FILES
+    ]  # Convert to absolute paths
     exclude_files = set(args.exclude_files) | EXCLUDE_FILES
     exclude_folders = set(args.exclude_folders) | EXCLUDE_FOLDERS
 
     # Convert folder paths to Path objects
-    exclude_folderpaths = {Path(p) for p in args.exclude_folderpaths} | EXCLUDE_FOLDERPATHS
+    exclude_folderpaths = {
+        Path(p) for p in args.exclude_folderpaths
+    } | EXCLUDE_FOLDERPATHS
 
     exclude_patterns = args.exclude_patterns + EXCLUDE_PATTERNS
 
@@ -488,7 +619,9 @@ def main():
         with debug_file.open("r", encoding="utf-8") as f:
             print(f.read())
 
-        print(f"\nAll output files are located in the debug folder: {output_file.parent}")
+        print(
+            f"\nAll output files are located in the debug folder: {output_file.parent}"
+        )
 
     except Exception as e:
         error_message = f"An error occurred: {e}"

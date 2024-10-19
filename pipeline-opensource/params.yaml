@@ -2,6 +2,7 @@ models:
   names:
     - logistic_regression
     - autogluon
+    - neural_network
   output: models
 
 data:
@@ -34,6 +35,7 @@ feature_engineering:
 
 model:
   logistic_regression:
+    model_file: model.pkl
     params:
       penalty: "l2"
       C: 1.0
@@ -42,8 +44,34 @@ model:
       random_state: 42
 
   autogluon:
+    model_file: model.pkl
     params:
       presets: "best_quality"
       time_limit: 3600
       verbosity: 2
       gbm_num_boost_round: 100
+
+  neural_network:
+    model_file: model.pkl
+    params:
+      layers:
+        - units: 64
+          activation: "relu"
+          dropout: 0.5
+        - units: 32
+          activation: "relu"
+          dropout: 0.5
+        - units: 32
+          activation: "relu"
+          dropout: 0.5
+        - units: 16
+          activation: "relu"
+      optimizer:
+        type: "adamw"
+        learning_rate: 0.0001
+      loss: "binary_crossentropy"
+      metrics:
+        - "accuracy"
+      batch_size: 32
+      epochs: 100
+      patience: 15

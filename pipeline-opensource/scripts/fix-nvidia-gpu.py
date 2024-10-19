@@ -17,6 +17,7 @@ Requirements:
 Note:
     Ensure that you have the necessary permissions to modify files in the environment.
 """
+
 import logging
 import os
 import re
@@ -31,10 +32,11 @@ from omegaconf import DictConfig, OmegaConf
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @hydra.main(
-        config_path=os.getenv("CONFIG_PATH"),
-        config_name=os.getenv("CONFIG_NAME"),
-        version_base=None,
+    config_path=os.getenv("CONFIG_PATH"),
+    config_name=os.getenv("CONFIG_NAME"),
+    version_base=None,
 )
 def main(cfg: DictConfig = None):
     """Main function to update the nvidia_gpu.py file."""
@@ -49,17 +51,21 @@ def main(cfg: DictConfig = None):
         print("Failed to locate nvidia_gpu.py. Check your Python environment.")
         sys.exit(1)
 
+
 def find_nvidia_gpu_py() -> Optional[Path]:
     """Locate the nvidia_gpu.py file within the active Python environment."""
 
     for path in site.getsitepackages():
-        nvidia_gpu_py = Path(path) / "ray" / "_private" / "accelerators" / "nvidia_gpu.py"
+        nvidia_gpu_py = (
+            Path(path) / "ray" / "_private" / "accelerators" / "nvidia_gpu.py"
+        )
         if nvidia_gpu_py.exists():
             print(f"Found nvidia_gpu.py in: {nvidia_gpu_py.parent}")
             return nvidia_gpu_py
 
     print("Could not find nvidia_gpu.py in the active Python environment.")
     return None
+
 
 def update_nvidia_gpu_py(file_path):
     """Update the get_current_node_accelerator_type method in the nvidia_gpu.py
@@ -78,7 +84,9 @@ def update_nvidia_gpu_py(file_path):
 
     # Define the patterns to match and replace
     old_pattern = re.compile(
-        r"@staticmethod\s*\n" r"\s*def get_current_node_accelerator_type.*?" r"return cuda_device_type\s*\n",
+        r"@staticmethod\s*\n"
+        r"\s*def get_current_node_accelerator_type.*?"
+        r"return cuda_device_type\s*\n",
         re.DOTALL,
     )
 

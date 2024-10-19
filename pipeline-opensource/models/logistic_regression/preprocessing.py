@@ -10,7 +10,7 @@ This script preprocesses the training data for the Logistic Regression model. Th
 - Converting boolean features to integers.
 - Imputing missing values in boolean features using the most frequent value.
 
-The preprocessed data is then saved to a CSV file.
+The preprocessed data is then saved to a CSV file in the model's artifacts directory.
 """
 
 import logging
@@ -19,6 +19,7 @@ from pathlib import Path
 
 import hydra
 import pandas as pd
+import joblib
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 from sklearn.compose import ColumnTransformer
@@ -43,9 +44,9 @@ def bool_to_int(X: pd.DataFrame) -> pd.DataFrame:
 
 
 @hydra.main(
-        config_path=os.getenv("CONFIG_PATH"),
-        config_name=os.getenv("CONFIG_NAME"),
-        version_base=None,
+    config_path=os.getenv("CONFIG_PATH"),
+    config_name=os.getenv("CONFIG_NAME"),
+    version_base=None,
 )
 def main(cfg: DictConfig) -> None:
     """
@@ -61,8 +62,16 @@ def main(cfg: DictConfig) -> None:
 
         # Use Hydra-managed paths
         train_data_path = Path(to_absolute_path(cfg.paths.data.processed.train_file))
-        output_dir = Path(to_absolute_path(cfg.paths.data.processed.base)) / cfg.model.name
-        output_dir.mkdir(parents=True, exist_ok=True)
+        artifacts_dir = Path(
+            to_absolute_path(cfg.paths.models.logistic_regression.artifacts)
+        )
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+        preprocessed_data_path = Path(
+            to_absolute_path(cfg.paths.models.logistic_regression.preprocessed_data)
+        )
+        preprocessor_path = Path(
+            to_absolute_path(cfg.paths.models.logistic_regression.preprocessor)
+        )
 
         logger.info(f"Preprocessing data for {cfg.model.name}...")
 
@@ -110,25 +119,23 @@ def main(cfg: DictConfig) -> None:
         feature_names = numeric_features + boolean_features
 
         # Convert to DataFrame
-        X_preprocessed_df = pd.DataFrame(
-            X_preprocessed, columns=feature_names
-        )
+        X_preprocessed_df = pd.DataFrame(X_preprocessed, columns=feature_names)
 
         # Add the target variable back
         X_preprocessed_df["readmitted"] = y
 
         logger.info(f"Preprocessed data shape: {X_preprocessed_df.shape}")
 
-        # Save preprocessed data
-        preprocessed_train_data_path = output_dir / "train_preprocessed.csv"
-        X_preprocessed_df.to_csv(preprocessed_train_data_path, index=False)
+        # Save preprocessed data as an artifact
+        X_preprocessed_df.to_csv(preprocessed_data_path, index=False)
+        logger.info(f"Preprocessed data saved to {preprocessed_data_path}")
 
-        logger.info(f"Preprocessed data saved to {preprocessed_train_data_path}")
+        # Save the preprocessor as an artifact
+        joblib.dump(preprocessor, preprocessor_path)
+        logger.info(f"Preprocessor saved to {preprocessor_path}")
 
     except Exception as e:
-        logger.error(
-            f"An error occurred during preprocessing: {str(e)}", exc_info=True
-        )
+        logger.error(f"An error occurred during preprocessing: {str(e)}", exc_info=True)
         logger.error(f"Configuration dump: {OmegaConf.to_yaml(cfg)}")
         raise
 

@@ -19,9 +19,15 @@ import pandas as pd
 from autogluon.tabular import TabularPredictor
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
-from sklearn.metrics import (accuracy_score, auc, confusion_matrix,
-                             precision_score, recall_score, roc_auc_score,
-                             roc_curve)
+from sklearn.metrics import (
+    accuracy_score,
+    auc,
+    confusion_matrix,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+    roc_curve,
+)
 
 from dvclive import Live
 
@@ -30,9 +36,9 @@ logger = logging.getLogger(__name__)
 
 
 @hydra.main(
-        config_path=os.getenv("CONFIG_PATH"),
-        config_name=os.getenv("CONFIG_NAME"),
-        version_base=None,
+    config_path=os.getenv("CONFIG_PATH"),
+    config_name=os.getenv("CONFIG_NAME"),
+    version_base=None,
 )
 def main(cfg: DictConfig) -> None:
     """
@@ -47,21 +53,31 @@ def main(cfg: DictConfig) -> None:
         logger.info(OmegaConf.to_yaml(cfg))
 
         # Use Hydra-managed paths
-        test_data_path = Path(to_absolute_path(cfg.paths.data.processed.test_file))
-        model_dir = Path(to_absolute_path(cfg.paths.models.autogluon.base))
-        metrics_output_dir = Path(to_absolute_path(cfg.paths.reports.metrics))
-        metrics_output_dir.mkdir(parents=True, exist_ok=True)
-        metrics_output_path = metrics_output_dir / f"{cfg.model.name}_metrics.json"
+        test_data_path = Path(
+            to_absolute_path(cfg.paths.models.autogluon.preprocessed_data_test)
+        )
+        artifacts_dir = Path(to_absolute_path(cfg.paths.models.autogluon.artifacts))
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
+        metrics_output_path = Path(
+            to_absolute_path(cfg.paths.models.autogluon.metrics_file)
+        )
+        confusion_matrix_path = Path(
+            to_absolute_path(cfg.paths.models.autogluon.confusion_matrix)
+        )
+        roc_curve_path = Path(to_absolute_path(cfg.paths.models.autogluon.roc_curve))
+        feature_importance_path = Path(
+            to_absolute_path(cfg.paths.models.autogluon.feature_importances)
+        )
 
         logger.info(f"Evaluating AutoGluon model {cfg.model.name}...")
 
-        # Load test data
+        # Load preprocessed test data
         test_df = pd.read_csv(test_data_path)
         y_true = test_df["readmitted"]
         X_test = test_df.drop(columns=["readmitted"])
 
         # Load the trained AutoGluon model
-        predictor = TabularPredictor.load(str(model_dir))
+        predictor = TabularPredictor.load(str(artifacts_dir))
         y_pred = predictor.predict(X_test)
         y_pred_proba = predictor.predict_proba(X_test)
 
@@ -77,19 +93,15 @@ def main(cfg: DictConfig) -> None:
             "precision": precision_score(
                 y_true, y_pred, average="weighted", zero_division=0
             ),
-            "recall": recall_score(
-                y_true, y_pred, average="weighted", zero_division=0
-            ),
-            "roc_auc": roc_auc_score(
-                y_true, y_pred_proba_positive, average="weighted"
-            ),
+            "recall": recall_score(y_true, y_pred, average="weighted", zero_division=0),
+            "roc_auc": roc_auc_score(y_true, y_pred_proba_positive, average="weighted"),
             "f1_score": recall_score(
                 y_true, y_pred, average="weighted", zero_division=0
             ),
         }
 
         # Initialize DVCLive
-        with Live(dir=to_absolute_path(cfg.paths.dvclive)) as live:
+        with Live(dir=str(artifacts_dir)) as live:
             try:
                 # Log evaluation parameters
                 live.log_params(
@@ -118,9 +130,7 @@ def main(cfg: DictConfig) -> None:
                     type="metrics",
                     name=f"{cfg.model.name}_metrics",
                 )
-                logger.info(
-                    f"Metrics JSON logged as artifact at {metrics_output_path}"
-                )
+                logger.info(f"Metrics JSON logged as artifact at {metrics_output_path}")
 
                 # Generate and log Confusion Matrix plot
                 conf_matrix = confusion_matrix(y_true, y_pred)
@@ -143,12 +153,11 @@ def main(cfg: DictConfig) -> None:
                 for (i, j), val in np.ndenumerate(conf_matrix):
                     ax.text(j, i, f"{val}", ha="center", va="center", color="red")
 
-                conf_matrix_path = metrics_output_dir / f"{cfg.model.name}_confusion_matrix.png"
-                plt.savefig(conf_matrix_path)
+                plt.savefig(confusion_matrix_path)
                 plt.close()
 
                 # Log the confusion matrix image
-                live.log_image("confusion", str(conf_matrix_path))
+                live.log_image("confusion", str(confusion_matrix_path))
                 logger.info("Confusion matrix logged as image artifact.")
 
                 # Generate and log ROC Curve plot
@@ -171,7 +180,6 @@ def main(cfg: DictConfig) -> None:
                 plt.title("Receiver Operating Characteristic")
                 plt.legend(loc="lower right")
 
-                roc_curve_path = metrics_output_dir / f"{cfg.model.name}_roc_curve.png"
                 plt.savefig(roc_curve_path)
                 plt.close()
 
@@ -200,9 +208,6 @@ def main(cfg: DictConfig) -> None:
                 sorted_importances.plot(kind="bar", y=importance_column)
                 plt.title("Feature Importances")
                 plt.tight_layout()
-                feature_importance_path = (
-                    metrics_output_dir / f"{cfg.model.name}_feature_importances.png"
-                )
                 plt.savefig(feature_importance_path)
                 plt.close()
 
@@ -214,9 +219,7 @@ def main(cfg: DictConfig) -> None:
                 # Always end the DVC Live run
                 live.end()
 
-        logger.info(
-            f"Evaluation completed for AutoGluon model {cfg.model.name}."
-        )
+        logger.info(f"Evaluation completed for AutoGluon model {cfg.model.name}.")
 
     except Exception as e:
         logger.error(f"An error occurred during evaluation: {str(e)}")
