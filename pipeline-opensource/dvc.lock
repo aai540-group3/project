@@ -261,9 +261,9 @@ stages:
     deps:
     - path: .venv/
       hash: md5
-      md5: 1523637f1c8241cbf66ab6b80735c867.dir
-      size: 3669082440
-      nfiles: 52484
+      md5: d2604f143ea5efddc92db602124fcb65.dir
+      size: 3669049061
+      nfiles: 52472
     - path: requirements.txt
       hash: md5
       md5: 8d0be02429cb76bd5f0b2a86f0294618
@@ -274,9 +274,9 @@ stages:
     deps:
     - path: .venv/
       hash: md5
-      md5: f3d7c100c5ff18e12e784f1d03011b94.dir
-      size: 3669082445
-      nfiles: 52484
+      md5: ee60e6fdfd14d1a9d1c711e550c90b67.dir
+      size: 3669049066
+      nfiles: 52472
     - path: scripts/fix-nvidia-gpu.py
       hash: md5
       md5: 7f910314b556d40f7c196b6f1acc513b

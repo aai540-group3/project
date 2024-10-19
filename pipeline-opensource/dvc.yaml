@@ -10,7 +10,7 @@ stages:
 
   install_dependencies:
     cmd:
-      - source .venv/bin/activate
+      - . .venv/bin/activate
       - pip install uv
       - uv pip install -r requirements.txt
     deps:
@@ -110,7 +110,7 @@ stages:
     foreach: ${models.names}
     do:
       cmd:
-        - source .venv/bin/activate
+        - . .venv/bin/activate
         - CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python models/${item}/evaluate.py
           model=${item}
       deps:
