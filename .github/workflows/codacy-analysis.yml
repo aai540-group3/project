@@ -2,7 +2,7 @@ name: Codacy Security Scan
 
 on:
   schedule:
-    - cron: "0 0,12 * * *" # Run this job at 00:00 (midnight) and 12:00 (noon) every day
+    - cron: "0 0,12 * * *" # Run this job at midnight and noon every day
   workflow_dispatch:
 
 permissions:

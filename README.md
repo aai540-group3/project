@@ -557,7 +557,7 @@ project/
 │   └── visualization/                # Visualization modules
 │       ├── __init__.py               # Makes visualization a Python package
 │       └── visualize.py              # Script for creating visualizations
-├── dvc-opensource.yaml                          # DVC pipeline configuration file
+├── dvc.yaml                          # DVC pipeline configuration file
 ├── dvc.lock                          # DVC lock file (tracks data and pipeline state)
 ├── requirements.txt                  # Python project dependencies
 ├── README.md                         # Project documentation and instructions

@@ -8,7 +8,7 @@ on:
       - ".github/workflows/mlops-pipeline.yml"
       - "v/**"
       - "dvc.lock"
-      - "dvc-opensource.yaml"
+      - "dvc.yaml"
       - "params.yaml"
       - "requirements-pipeline.txt"
       - "src/**"
@@ -19,7 +19,7 @@ on:
       - ".github/workflows/mlops-pipeline.yml"
       - "configs/**"
       - "dvc.lock"
-      - "dvc-opensource.yaml"
+      - "dvc.yaml"
       - "params.yaml"
       - "requirements-pipeline.txt"
       - "src/**"
@@ -43,7 +43,6 @@ jobs:
       DATASETS_REMOTE: ${{ secrets.DATASETS_REMOTE }}
       DVC_STUDIO_TOKEN: ${{ secrets.DVC_STUDIO_TOKEN }}
       MODELS_REMOTE: ${{ secrets.MODELS_REMOTE }}
-      CUSTOM_DVC_FILE: "dvc-opensource.yaml"
 
     steps:
       - name: Checkout Repository
@@ -105,14 +104,14 @@ jobs:
             ${{ runner.os }}-dvc-cache-
 
       - name: Pull from DVC remotes
-        run: dvc pull -f ${{ env.CUSTOM_DVC_FILE }}
+        run: dvc pull
 
       - name: Run DVC pipeline
-        run: dvc repro -f ${{ env.CUSTOM_DVC_FILE }}
+        run: dvc repro
 
       - name: Push to DVC remotes
         if: always()
-        run: dvc push -f ${{ env.CUSTOM_DVC_FILE }}
+        run: dvc push
 
       - name: Configure Git
         run: |

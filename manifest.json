@@ -3,7 +3,7 @@
   "files": [
     ".github/workflows/mlops-pipeline.yml",
     "configs/",
-    "dvc-opensource.yaml",
+    "dvc.yaml",
     "dvclive/",
     "LICENSE",
     "notebooks/",

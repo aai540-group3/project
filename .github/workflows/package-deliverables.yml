@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - "configs/**"
-      - "dvc-opensource.yaml"
+      - "dvc.yaml"
       - "dvclive/**"
       - "LICENSE"
       - "notebooks/**"
