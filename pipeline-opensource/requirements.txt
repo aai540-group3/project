@@ -1,0 +1,14 @@
+autogluon.tabular[all]
+datasets
+dask[dataframe]
+dvc[all]
+dvclive
+hydra-core
+hydra_colorlog
+joblib
+matplotlib
+numpy
+omegaconf
+pandas
+scikit-learn
+seaborn

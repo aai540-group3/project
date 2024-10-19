@@ -52,7 +52,7 @@ COMMENT_SYNTAX: Dict[str, Dict[str, Union[str, Set[str]]]] = {
     "fortran": {"start": "!", "end": "", "extensions": {"f", "f77", "f90", "f95", "f03", "f08"}},
     "haskell": {"start": "--", "end": "", "extensions": {"hs", "lhs"}},
     "html_style": {"start": "<!--", "end": "-->", "extensions": {"html", "htm", "xhtml", "shtml", "xml", "svg", "xsl", "xslt", "rss", "atom", "ejs", "hbs", "mustache", "handlebars"}},
-    "ini_style": {"start": ";", "end": "", "extensions": {"ini", "cfg", "conf"}},
+    "ini_style": {"start": ";", "end": "", "extensions": {"ini", "cfg", "../conf"}},
     "json_style": {"start": "//", "end": "", "extensions": {"json", "jsonc", "json5"}},
     "latex": {"start": "%", "end": "", "extensions": {"tex", "sty", "cls", "dtx", "ins"}},
     "lua": {"start": "--", "end": "", "extensions": {"lua"}},
@@ -70,17 +70,20 @@ COMMENT_SYNTAX: Dict[str, Dict[str, Union[str, Set[str]]]] = {
 EXCLUDE_FILES = {
     "__init__.py",
     ".DS_Store",
+    ".dvcignore",
     ".gitattributes",
     ".gitignore",
     ".gitkeep",
     "combine.sh",
     "combined.txt",
     "LICENSE",
+    "model.pkl",
     "README.md",
+    "requirements-dev.txt",
+    "requirements.txt",
     "Thumbs.db",
     "tree.txt",
     "update.sh",
-    "model.pkl",
 }
 
 EXCLUDE_FOLDERS = {
@@ -107,25 +110,13 @@ EXCLUDE_FOLDERS = {
 }
 
 EXCLUDE_FOLDERPATHS = {
-    Path(".devcontainer"),
-    Path(".dvc"),
     Path(".git"),
-    Path(".temp"),
-    Path(".venv"),
-    Path(".vscode"),
-    Path("data"),
-    Path("debug"),
-    Path("models"),
-    Path("node_modules"),
-    Path("notebooks"),
-    Path("outputs"),
-    Path("temp"),
-    Path("templates"),
-    Path("terraform"),
+    Path("models/autogluon/models"),
 }
 
 EXCLUDE_PATTERNS = [
     r".*\.bbl",
+    r".*\.json",
     r".*\.lock",
     r".*\.log",
     r".*\.mp3",
@@ -136,7 +127,9 @@ EXCLUDE_PATTERNS = [
     r".*\.pptx",
     r".*\.pyc",
     r".*\.synctex.gz",
+    r".*\.txt",
     r".*\.wav",
+    r".*\.yaml",
     r".*\.zip",
 ]
 
@@ -296,12 +289,18 @@ def should_exclude_directory(
     exclude_folderpaths: Set[Path],
 ) -> bool:
     """Determine if a directory should be excluded based on various
-    criteria."""
+    criteria.
+    """
     if directory_name in exclude_folders:
         return True
+
     for exclude_path in exclude_folderpaths:
-        if is_relative_to(relative_path, exclude_path):
+        try:
+            relative_path.relative_to(exclude_path)
             return True
+        except ValueError:
+            pass
+
     return False
 
 

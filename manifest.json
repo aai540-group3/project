@@ -2,18 +2,16 @@
   "name": "mlops-project",
   "files": [
     ".github/workflows/mlops-pipeline.yml",
-    "configs/",
-    "dvc.yaml",
-    "dvclive/",
-    "LICENSE",
-    "notebooks/",
-    "params.yaml",
-    "README.md",
-    "reports/",
-    "requirements-pipeline.txt",
-    "src/",
-    "terraform/main.tf"
+    "pipeline-opensource/conf/",
+    "pipeline-opensource/dvc.yaml",
+    "pipeline-opensource/dvclive/",
+    "pipeline-opensource/params.yaml",
+    "pipeline-opensource/requirements.txt",
+    "pipeline-opensource/",
+    "manifest.json",
+    "SECURITY.md",
+    "setup.sh"
   ],
-  "hash": "83557ee0d8c634229ef84e8c2b2b48b234286085551ebaccead15758da3773e0",
-  "size": "207"
+  "hash": "",
+  "size": ""
 }

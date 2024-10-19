@@ -1,6 +1,3 @@
 {
     "editor.formatOnSave": true,
-    "[terraform]": {
-        "editor.defaultFormatter": "hashicorp.terraform"
-    }
 }

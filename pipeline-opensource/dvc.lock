@@ -1,0 +1,524 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python3 data/ingestion.py
+    deps:
+    - path: data/ingestion.py
+      hash: md5
+      md5: e58b90ef9886081dd0454d98ae290767
+      size: 1906
+    params:
+      params.yaml:
+        dataset.name: aai540-group3/diabetes-readmission
+        dataset.path.raw: data/raw
+    outs:
+    - path: data/raw/data.csv
+      hash: md5
+      md5: dbfe12c203805ccf7fdb683042c46ab3
+      size: 49159045
+  clean:
+    cmd: python3 data/cleaning.py
+    deps:
+    - path: data/cleaning.py
+      hash: md5
+      md5: f7fe2d7968de4324882c7f8c2cc846b2
+      size: 3838
+    - path: data/raw/data.csv
+      hash: md5
+      md5: dbfe12c203805ccf7fdb683042c46ab3
+      size: 49159045
+    params:
+      params.yaml:
+        dataset.path.interim: data/interim
+        dataset.path.raw: data/raw
+    outs:
+    - path: data/interim/data.csv
+      hash: md5
+      md5: f1d6c377d981e8ba3a9f92775ecb85d6
+      size: 70117495
+  feature_engineering:
+    cmd:
+    - CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python data/build_features.py
+    deps:
+    - path: data/build_features.py
+      hash: md5
+      md5: c4e944b05215bcfa663b1e50f9d6d497
+      size: 4156
+    - path: data/interim/data_cleaned.csv
+      hash: md5
+      md5: f1d6c377d981e8ba3a9f92775ecb85d6
+      size: 70117495
+    params:
+      params.yaml:
+        data.featured_file: data/processed/data_featured.csv
+        data.interim_file: data/interim/data_cleaned.csv
+        feature_engineering:
+          add_polynomial_features: true
+          poly_degree: 2
+    outs:
+    - path: data/processed/data_featured.csv
+      hash: md5
+      md5: 0c59f6ccd93cd6b47eabd842378f78a8
+      size: 72854176
+  split:
+    cmd: python3 data/splitting.py
+    deps:
+    - path: data/interim/data.csv
+      hash: md5
+      md5: f1d6c377d981e8ba3a9f92775ecb85d6
+      size: 70117495
+    - path: data/splitting.py
+      hash: md5
+      md5: 647695c098c3af4747a54cf46a4c679c
+      size: 3379
+    params:
+      params.yaml:
+        dataset.path.interim: data/interim
+        dataset.path.processed: data/processed
+        training.split:
+          test_size: 0.2
+          random_state: 42
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: cfd9fd8441b890900bee61eaaf60a7d8
+      size: 14026237
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 63f4b9c70d6b7d30d4fa2aa564d9205d
+      size: 56094172
+  preprocess@logistic_regression:
+    cmd: python3 models/logistic_regression/preprocessing.py model=logistic_regression
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 63f4b9c70d6b7d30d4fa2aa564d9205d
+      size: 56094172
+    - path: models/logistic_regression/preprocessing.py
+      hash: md5
+      md5: f66780482f6e658537716319ce43ed85
+      size: 4403
+    params:
+      params.yaml:
+        dataset.path.processed: data/processed
+        model.logistic_regression:
+          name: logistic_regression
+          params:
+            penalty: l2
+            C: 1.0
+            solver: lbfgs
+            max_iter: 1000
+            random_state: 42
+    outs:
+    - path: data/processed/logistic_regression/train_preprocessed.csv
+      hash: md5
+      md5: 83cc48c279024b3327dc1ccebefeb4ba
+      size: 47491440
+  preprocess@autogluon:
+    cmd: python3 models/autogluon/preprocessing.py model=autogluon
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 63f4b9c70d6b7d30d4fa2aa564d9205d
+      size: 56094172
+    - path: models/autogluon/preprocessing.py
+      hash: md5
+      md5: 123a0e5e57ceeec409501150386269ad
+      size: 4986
+    params:
+      params.yaml:
+        dataset.path.processed: data/processed
+        model.autogluon:
+          name: autogluon
+          params:
+            presets: best_quality
+            eval_metric: accuracy
+    outs:
+    - path: data/processed/autogluon/train_preprocessed.csv
+      hash: md5
+      md5: ac24323e785816591d8540a9701ca25c
+      size: 47491440
+  train@logistic_regression:
+    cmd: python3 models/logistic_regression/train.py model=logistic_regression
+    deps:
+    - path: data/processed/logistic_regression/train_preprocessed.csv
+      hash: md5
+      md5: 83cc48c279024b3327dc1ccebefeb4ba
+      size: 47491440
+    - path: models/logistic_regression/train.py
+      hash: md5
+      md5: 4686c4469e113e8c1e48c758f98bdb1b
+      size: 5904
+    params:
+      params.yaml:
+        dataset.path.processed: data/processed
+        model.logistic_regression:
+          name: logistic_regression
+          params:
+            penalty: l2
+            C: 1.0
+            solver: lbfgs
+            max_iter: 1000
+            random_state: 42
+    outs:
+    - path: models/logistic_regression/model.pkl
+      hash: md5
+      md5: 7ccc3e08cb52d965e66d3a9bc3dcfb54
+      size: 6159
+  train@autogluon:
+    cmd: python3 models/autogluon/train.py model=autogluon
+    deps:
+    - path: data/processed/autogluon/train_preprocessed.csv
+      hash: md5
+      md5: ac24323e785816591d8540a9701ca25c
+      size: 47491440
+    - path: models/autogluon/train.py
+      hash: md5
+      md5: b68cccc2eaa5aec9b0cd9240c5013b06
+      size: 6531
+    params:
+      params.yaml:
+        dataset.path.processed: data/processed
+        model.autogluon:
+          name: autogluon
+          params:
+            presets: best_quality
+            eval_metric: accuracy
+    outs:
+    - path: models/autogluon/model.pkl
+      hash: md5
+      md5: 070ffe55680f3fcd5ad30368ddf0a38b
+      size: 79793
+  evaluate@logistic_regression:
+    cmd: python3 models/logistic_regression/evaluate.py model=logistic_regression
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: cfd9fd8441b890900bee61eaaf60a7d8
+      size: 14026237
+    - path: models/logistic_regression/evaluate.py
+      hash: md5
+      md5: a142859cc83a1afcca92515912496a6f
+      size: 8107
+    - path: models/logistic_regression/model.pkl
+      hash: md5
+      md5: 7ccc3e08cb52d965e66d3a9bc3dcfb54
+      size: 6159
+    params:
+      params.yaml:
+        dataset.path.processed: data/processed
+        model.logistic_regression:
+          name: logistic_regression
+          params:
+            penalty: l2
+            C: 1.0
+            solver: lbfgs
+            max_iter: 1000
+            random_state: 42
+    outs:
+    - path: reports/metrics/logistic_regression_metrics.json
+      hash: md5
+      md5: e71750b133aa7399768c7ac9e7863481
+      size: 180
+  setup:
+    cmd: python3 scripts/fix-nvidia-gpu.py
+  create_virtualenv:
+    cmd: python3 -m virtualenv .venv
+    outs:
+    - path: .venv/
+      hash: md5
+      md5: 8a140686a32a8ee42484bc10b3fcd755.dir
+      size: 10140227
+      nfiles: 1020
+  activate_virtualenv:
+    cmd: source .venv/bin/activate
+    deps:
+    - path: .venv/
+      hash: md5
+      md5: 8a140686a32a8ee42484bc10b3fcd755.dir
+      size: 10140227
+      nfiles: 1020
+  install_requirements:
+    cmd: pip install -r requirements.txt
+    deps:
+    - path: .venv/
+      hash: md5
+      md5: 8a140686a32a8ee42484bc10b3fcd755.dir
+      size: 10140227
+      nfiles: 1020
+    - path: requirements.txt
+      hash: md5
+      md5: 384284a65dae2f34c3a0d876b647301a
+      size: 151
+  setup_virtualenv:
+    cmd:
+    - python3 -m virtualenv .venv
+  install_dependencies:
+    cmd:
+    - source .venv/bin/activate
+    - pip install uv
+    - uv pip install -r requirements.txt
+    deps:
+    - path: .venv/
+      hash: md5
+      md5: 1523637f1c8241cbf66ab6b80735c867.dir
+      size: 3669082440
+      nfiles: 52484
+    - path: requirements.txt
+      hash: md5
+      md5: 8d0be02429cb76bd5f0b2a86f0294618
+      size: 153
+  fix_gpu_issue:
+    cmd:
+    - .venv/bin/python scripts/fix-nvidia-gpu.py
+    deps:
+    - path: .venv/
+      hash: md5
+      md5: f3d7c100c5ff18e12e784f1d03011b94.dir
+      size: 3669082445
+      nfiles: 52484
+    - path: scripts/fix-nvidia-gpu.py
+      hash: md5
+      md5: 7f910314b556d40f7c196b6f1acc513b
+      size: 3915
+      isexec: true
+  data_ingestion:
+    cmd:
+    - CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python data/ingestion.py
+    deps:
+    - path: data/ingestion.py
+      hash: md5
+      md5: 36629567df78057c83ca6ef6a7692361
+      size: 1849
+    params:
+      params.yaml:
+        data.raw_file: data/raw/data.csv
+        dataset.name: aai540-group3/diabetes-readmission
+    outs:
+    - path: data/raw/data.csv
+      hash: md5
+      md5: dbfe12c203805ccf7fdb683042c46ab3
+      size: 49159045
+  data_cleaning:
+    cmd:
+    - CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python data/cleaning.py
+    deps:
+    - path: data/cleaning.py
+      hash: md5
+      md5: 1320da365a9cf8c3ba619f8a0e0692f9
+      size: 4211
+    - path: data/raw/data.csv
+      hash: md5
+      md5: dbfe12c203805ccf7fdb683042c46ab3
+      size: 49159045
+    params:
+      params.yaml:
+        data.interim_file: data/interim/data_cleaned.csv
+        data.raw_file: data/raw/data.csv
+    outs:
+    - path: data/interim/data_cleaned.csv
+      hash: md5
+      md5: f1d6c377d981e8ba3a9f92775ecb85d6
+      size: 70117495
+  data_splitting:
+    cmd:
+    - CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python data/splitting.py
+    deps:
+    - path: data/processed/data_featured.csv
+      hash: md5
+      md5: 0c59f6ccd93cd6b47eabd842378f78a8
+      size: 72854176
+    - path: data/splitting.py
+      hash: md5
+      md5: 26b31d225ae103064e29b09cee554151
+      size: 2983
+    params:
+      params.yaml:
+        data.featured_file: data/processed/data_featured.csv
+        data.test_file: data/processed/test.csv
+        data.train_file: data/processed/train.csv
+        training.split:
+          test_size: 0.2
+          random_state: 42
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: cfd9fd8441b890900bee61eaaf60a7d8
+      size: 14026237
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 63f4b9c70d6b7d30d4fa2aa564d9205d
+      size: 56094172
+  model_preprocessing@logistic_regression:
+    cmd:
+    - CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python models/logistic_regression/preprocessing.py
+      model=logistic_regression
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 63f4b9c70d6b7d30d4fa2aa564d9205d
+      size: 56094172
+    - path: models/logistic_regression/preprocessing.py
+      hash: md5
+      md5: bb78b9853c9030380b4da7c27b0ae59a
+      size: 4420
+    params:
+      params.yaml:
+        data.train_file: data/processed/train.csv
+        model.logistic_regression:
+          params:
+            penalty: l2
+            C: 1.0
+            solver: lbfgs
+            max_iter: 1000
+            random_state: 42
+    outs:
+    - path: data/processed/logistic_regression/train_preprocessed.csv
+      hash: md5
+      md5: 83cc48c279024b3327dc1ccebefeb4ba
+      size: 47491440
+  model_preprocessing@autogluon:
+    cmd:
+    - CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python models/autogluon/preprocessing.py
+      model=autogluon
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 63f4b9c70d6b7d30d4fa2aa564d9205d
+      size: 56094172
+    - path: models/autogluon/preprocessing.py
+      hash: md5
+      md5: bc9b0727b2bf11302ff81c4e2efac765
+      size: 5042
+    params:
+      params.yaml:
+        data.train_file: data/processed/train.csv
+        model.autogluon:
+          params:
+            presets: best_quality
+            time_limit: 3600
+            verbosity: 2
+            gbm_num_boost_round: 100
+    outs:
+    - path: data/processed/autogluon/train_preprocessed.csv
+      hash: md5
+      md5: ac24323e785816591d8540a9701ca25c
+      size: 47491440
+  model_training@logistic_regression:
+    cmd:
+    - CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python models/logistic_regression/train.py
+      model=logistic_regression
+    deps:
+    - path: data/processed/logistic_regression/train_preprocessed.csv
+      hash: md5
+      md5: 83cc48c279024b3327dc1ccebefeb4ba
+      size: 47491440
+    - path: models/logistic_regression/train.py
+      hash: md5
+      md5: 1287b5b2863e6a3f09676752789a486a
+      size: 5630
+    params:
+      params.yaml:
+        data.processed: data/processed
+        model.logistic_regression:
+          params:
+            penalty: l2
+            C: 1.0
+            solver: lbfgs
+            max_iter: 1000
+            random_state: 42
+    outs:
+    - path: models/logistic_regression/model.pkl
+      hash: md5
+      md5: 7ccc3e08cb52d965e66d3a9bc3dcfb54
+      size: 6159
+  model_training@autogluon:
+    cmd:
+    - CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python models/autogluon/train.py
+      model=autogluon
+    deps:
+    - path: data/processed/autogluon/train_preprocessed.csv
+      hash: md5
+      md5: ac24323e785816591d8540a9701ca25c
+      size: 47491440
+    - path: models/autogluon/train.py
+      hash: md5
+      md5: 42b22eecba94b2d3c796dce0a5b95c4c
+      size: 6977
+    params:
+      params.yaml:
+        data.processed: data/processed
+        model.autogluon:
+          params:
+            presets: best_quality
+            time_limit: 3600
+            verbosity: 2
+            gbm_num_boost_round: 100
+    outs:
+    - path: models/autogluon/model.pkl
+      hash: md5
+      md5: bd337953c16b36262f6628817ff4b300
+      size: 75455
+  model_evaluation@logistic_regression:
+    cmd:
+    - source .venv/bin/activate
+    - CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python models/logistic_regression/evaluate.py
+      model=logistic_regression
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: cfd9fd8441b890900bee61eaaf60a7d8
+      size: 14026237
+    - path: models/logistic_regression/evaluate.py
+      hash: md5
+      md5: 6f0df7202a5ca53d71354d2612bd5495
+      size: 8206
+    - path: models/logistic_regression/model.pkl
+      hash: md5
+      md5: 7ccc3e08cb52d965e66d3a9bc3dcfb54
+      size: 6159
+    params:
+      params.yaml:
+        model.logistic_regression:
+          params:
+            penalty: l2
+            C: 1.0
+            solver: lbfgs
+            max_iter: 1000
+            random_state: 42
+    outs:
+    - path: reports/metrics/logistic_regression_metrics.json
+      hash: md5
+      md5: e71750b133aa7399768c7ac9e7863481
+      size: 180
+  model_evaluation@autogluon:
+    cmd:
+    - source .venv/bin/activate
+    - CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python models/autogluon/evaluate.py
+      model=autogluon
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: cfd9fd8441b890900bee61eaaf60a7d8
+      size: 14026237
+    - path: models/autogluon/evaluate.py
+      hash: md5
+      md5: acdb2d3cb787d637c1f05a4f6de75ddd
+      size: 8834
+    - path: models/autogluon/model.pkl
+      hash: md5
+      md5: bd337953c16b36262f6628817ff4b300
+      size: 75455
+    params:
+      params.yaml:
+        model.autogluon:
+          params:
+            presets: best_quality
+            time_limit: 3600
+            verbosity: 2
+            gbm_num_boost_round: 100
+    outs:
+    - path: reports/metrics/autogluon_metrics.json
+      hash: md5
+      md5: cf1922bd14ed197ace07f626e0317d98
+      size: 180

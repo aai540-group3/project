@@ -1,0 +1,66 @@
+conf:
+  name: conf
+
+defaults:
+  - data: diabetes
+  - training: base
+  - feature_engineering: base
+  - model: logistic_regression
+  - _self_
+  - override hydra/job_logging: colorlog
+  - override hydra/hydra_logging: colorlog
+
+dataset:
+  name: "aai540-group3/diabetes-readmission"
+  version: "v1.0"
+
+model:
+  active:
+    - logistic_regression
+    - autogluon
+
+paths:
+  data:
+    raw:
+      base: ${hydra:runtime.cwd}/data/raw
+      file: ${paths.data.raw.base}/data.csv
+    interim:
+      base: ${hydra:runtime.cwd}/data/interim
+      file: ${paths.data.interim.base}/data_cleaned.csv
+    processed:
+      base: ${hydra:runtime.cwd}/data/processed
+      featured_file: ${paths.data.processed.base}/data_featured.csv
+      train_file: ${paths.data.processed.base}/train.csv
+      test_file: ${paths.data.processed.base}/test.csv
+    external: ${hydra:runtime.cwd}/data/external
+  models:
+    output: ${hydra:runtime.cwd}/models
+    autogluon:
+      base: ${paths.models.output}/autogluon
+      model_file: ${paths.models.autogluon.base}/model.pkl
+      hash_file: ${paths.models.autogluon.base}/input_hash.txt
+    logistic_regression:
+      base: ${paths.models.output}/logistic_regression
+      model_file: ${paths.models.logistic_regression.base}/model.pkl
+      hash_file: ${paths.models.logistic_regression.base}/input_hash.txt
+  reports:
+    metrics: ${hydra:runtime.cwd}/reports/metrics
+    figures: ${hydra:runtime.cwd}/reports/figures
+  dvclive: ${hydra:runtime.cwd}/dvclive
+  config:
+    base: ${hydra:runtime.cwd}/${conf.name}
+    main: ${paths.config.base}/config.yaml
+    data: ${paths.config.base}/data/diabetes.yaml
+    model_logistic_regression: ${paths.config.base}/model/logistic_regression.yaml
+    model_autogluon: ${paths.config.base}/model/autogluon.yaml
+    feature_engineering: ${paths.config.base}/feature_engineering/base.yaml
+    training: ${paths.config.base}/training/base.yaml
+
+hydra:
+  run:
+    dir: ${hydra:runtime.cwd}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: ${hydra:runtime.cwd}/multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  job:
+    chdir: false
+  verbose: true

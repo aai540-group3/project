@@ -5,17 +5,14 @@ on:
     branches:
       - main
     paths:
-      - "configs/**"
-      - "dvc.yaml"
-      - "dvclive/**"
-      - "LICENSE"
-      - "notebooks/**"
-      - "params.yaml"
-      - "README.md"
-      - "reports/**"
+      - ".github/workflows/package-deliverables.yml"
+      - "pipeline-opensource/**"
+      - "scripts/**"
+      - "Makefile"
+      - "manifest.json"
       - "requirements-pipeline.txt"
-      - "src/**"
-      - "terraform/main.tf"
+      - "SECURITY.md"
+      - "setup.sh"
   repository_dispatch:
     types:
       - package-deliverables
@@ -29,7 +26,7 @@ permissions:
   contents: write
 
 env:
-  PACKAGES: packages-packaging.txt
+  PACKAGES: packages-packging.txt
   MANIFEST_FILE: manifest.json
 
 jobs:
@@ -39,12 +36,12 @@ jobs:
       manifest_changed: ${{ steps.manifest_check.outputs.manifest_changed }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           fetch-depth: 0
 
       - name: Cache Apt Archives
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
@@ -57,18 +54,18 @@ jobs:
       - name: Zip Manifest and Related Files
         run: |
           FILES=$(jq -r '.files[]' $MANIFEST_FILE)
-          zip manifest_files.zip $MANIFEST_FILE $FILES
+          zip -r -9 manifest_files.zip $MANIFEST_FILE $FILES
 
       - name: Compute Current Hash
         id: compute_hash
         run: |
-          CURRENT_HASH=$(md5sum manifest_files.zip | cut -d ' ' -f1)
+          CURRENT_HASH=$(sha256sum manifest_files.zip | awk '{print $1}')
           echo "CURRENT_HASH=$CURRENT_HASH" >> $GITHUB_ENV
 
       - name: Get Previous Hash
         id: get_previous_hash
         run: |
-          PREVIOUS_HASH=$(jq -r '.hash // ""' $MANIFEST_FILE) # Changed to .hash
+          PREVIOUS_HASH=$(jq -r '.hash // ""' $MANIFEST_FILE)
           echo "PREVIOUS_HASH=$PREVIOUS_HASH" >> $GITHUB_ENV
 
       - name: Compare Hashes
@@ -88,12 +85,12 @@ jobs:
     if: needs.check-manifest.outputs.manifest_changed == 'true'
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           fetch-depth: 1
 
       - name: Cache Apt Archives
-        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
@@ -103,10 +100,10 @@ jobs:
           sudo apt-get update
           sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
 
-      - name: Zip Repository
+      - name: Zip Deliverables
         run: |
           FILES=$(jq -r '.files[]' $MANIFEST_FILE)
-          zip -r -0 $FILES | pigz -9 > Final_Project_Team_3_Deliverable_3.zip
+          zip -r -9 Final_Project_Team_3_Deliverable_3.zip $FILES
 
       - name: Get File Size
         id: get_file_size
@@ -116,11 +113,12 @@ jobs:
 
       - name: Get File Hash
         run: |
-          echo "FILEHASH=$(sha256sum Final_Project_Team_3_Deliverable_3.zip | awk '{print $1}')" >> $GITHUB_ENV
+          FILEHASH=$(sha256sum Final_Project_Team_3_Deliverable_3.zip | awk '{print $1}')
+          echo "FILEHASH=$FILEHASH" >> $GITHUB_ENV
 
-      - name: Update manifest.json with Hash
+      - name: Update manifest.json with Hash and Size
         run: |
-          jq '.hash = env.FILEHASH' $MANIFEST_FILE > temp_manifest.json
+          jq --arg FILEHASH "$FILEHASH" --arg FILESIZE "$FILESIZE" '.hash = $FILEHASH | .size = $FILESIZE' $MANIFEST_FILE > temp_manifest.json
           mv temp_manifest.json $MANIFEST_FILE
 
       - name: Configure Git
@@ -140,10 +138,10 @@ jobs:
             git pull origin main
             git stash pop
             git add Final_Project_Team_3_Deliverable_3.zip $MANIFEST_FILE
-            git commit -m "Size: ${{ env.FILESIZE }} bytes"
+            git commit -m "Update deliverables: Size ${FILESIZE} bytes"
             git push origin main || {
               echo "Push failed. Creating a pull request..."
-              gh pr create --title "Automated Zip Update" --body "Push to main failed. Updated zip included."
+              gh pr create --title "Automated Deliverables Update" --body "Push to main failed. Updated deliverables included." --label "automated-pr"
             }
             echo "Changes committed and pushed successfully (or pull request created)."
             echo "CHANGED=true" >> $GITHUB_ENV
@@ -159,4 +157,4 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: rm -f files.txt
+        run: rm -f manifest_files.zip

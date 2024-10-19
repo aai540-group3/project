@@ -1,0 +1,5 @@
+black[jupyter]
+flake8
+isort
+ruff
+virtualenv
