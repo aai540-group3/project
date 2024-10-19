@@ -83,25 +83,11 @@ jobs:
           dvc remote modify models_remote region $AWS_DEFAULT_REGION
           dvc remote list
 
-      - name: Cache DVC Directory
-        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
-        with:
-          path: pipeline-opensource/.dvc/cache
-          key: ${{ runner.os }}-dvc-cache-${{ hashFiles('pipeline-opensource/dvc.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-dvc-cache-
-
-      - name: Pull from DVC remotes
-        working-directory: pipeline-opensource
-        run: |
-          source .venv/bin/activate
-          dvc pull -v
-
       - name: Run DVC Pipeline
         working-directory: pipeline-opensource
         run: |
           source .venv/bin/activate
-          dvc repro
+          dvc repro -f
 
       - name: Push to DVC Remotes
         if: always()
