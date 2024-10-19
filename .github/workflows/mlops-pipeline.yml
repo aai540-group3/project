@@ -6,27 +6,13 @@ on:
       - main
     paths:
       - ".github/workflows/mlops-pipeline.yml"
-      - "pipeline-opensource/conf/**"
-      - "pipeline-opensource/dvc.lock"
-      - "pipeline-opensource/dvc.yaml"
-      - "pipeline-opensource/params.yaml"
-      - "pipeline-opensource/requirements.txt"
-      - "pipeline-opensource/data/**"
-      - "pipeline-opensource/models/**"
-      - "pipeline-opensource/scripts/**"
+      - "pipeline-opensource/**"
   pull_request:
     branches:
       - main
     paths:
       - ".github/workflows/mlops-pipeline.yml"
-      - "pipeline-opensource/conf/**"
-      - "pipeline-opensource/dvc.lock"
-      - "pipeline-opensource/dvc.yaml"
-      - "pipeline-opensource/params.yaml"
-      - "pipeline-opensource/requirements.txt"
-      - "pipeline-opensource/data/**"
-      - "pipeline-opensource/models/**"
-      - "pipeline-opensource/scripts/**"
+      - "pipeline-opensource/**"
   workflow_dispatch:
 
 concurrency:
@@ -54,36 +40,37 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Cache Apt Packages
-        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
-        with:
-          path: /var/cache/apt/archives/**.deb
-          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/mlops-pipeline.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-
-
       - name: Set up Python
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.11"
 
-      - name: Cache Python Dependencies
+      - name: Cache Python Virtualenv
+        id: cache-venv
         uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('pipeline-opensource/requirements.txt') }}
+          path: pipeline-opensource/.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('pipeline-opensource/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-venv-
+
+      - name: Setup Virtual Environment
+        working-directory: pipeline-opensource
+        if: steps.cache-venv.outputs.cache-hit != 'true'
+        run: |
+          python3 -m venv .venv
 
       - name: Install Python Dependencies
         working-directory: pipeline-opensource
         run: |
+          source .venv/bin/activate
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Configure DVC
         working-directory: pipeline-opensource
         run: |
+          source .venv/bin/activate
           dvc init --no-scm
           dvc config core.analytics false
           dvc config core.autostage true
@@ -103,14 +90,24 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-dvc-cache-
 
-      - name: Run DVC pipeline
+      - name: Pull from DVC remotes
         working-directory: pipeline-opensource
-        run: dvc repro -f
+        run: |
+          source .venv/bin/activate
+          dvc pull -v
 
-      - name: Push to DVC remotes
+      - name: Run DVC Pipeline
+        working-directory: pipeline-opensource
+        run: |
+          source .venv/bin/activate
+          dvc repro
+
+      - name: Push to DVC Remotes
         if: always()
         working-directory: pipeline-opensource
-        run: dvc push
+        run: |
+          source .venv/bin/activate
+          dvc push
 
       - name: Configure Git
         run: |

@@ -237,9 +237,7 @@ def main(cfg: DictConfig) -> None:
                 logger.info(f"Feature names length: {len(feature_names)}")
 
                 # Adjust shap_values for plotting
-                shap_values_to_plot = np.squeeze(
-                    shap_values
-                )  # Remove the singleton dimension
+                shap_values_to_plot = np.squeeze(shap_values)
                 logger.info(
                     f"After squeezing, shap_values shape: {shap_values_to_plot.shape}"
                 )
