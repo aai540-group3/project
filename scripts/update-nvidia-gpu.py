@@ -18,6 +18,7 @@ Note:
     Ensure that you have the necessary permissions to modify files in the virtual environment.
     This script should be run from within the project directory or a subdirectory thereof.
 """
+
 import re
 import sys
 from pathlib import Path
@@ -60,7 +61,9 @@ def find_nvidia_gpu_py():
         return None
 
     # Find the nvidia_gpu.py file
-    nvidia_gpu_py = site_packages / "ray" / "_private" / "accelerators" / "nvidia_gpu.py"
+    nvidia_gpu_py = (
+        site_packages / "ray" / "_private" / "accelerators" / "nvidia_gpu.py"
+    )
 
     if not nvidia_gpu_py.exists():
         print(f"Could not find nvidia_gpu.py in {nvidia_gpu_py}")
@@ -86,7 +89,9 @@ def update_nvidia_gpu_py(file_path):
 
     # Define the patterns to match and replace
     old_pattern = re.compile(
-        r"@staticmethod\s*\n" r"\s*def get_current_node_accelerator_type.*?" r"return cuda_device_type\s*\n",
+        r"@staticmethod\s*\n"
+        r"\s*def get_current_node_accelerator_type.*?"
+        r"return cuda_device_type\s*\n",
         re.DOTALL,
     )
 
@@ -136,5 +141,7 @@ if __name__ == "__main__":
     if nvidia_gpu_py:
         update_nvidia_gpu_py(nvidia_gpu_py)
     else:
-        print("Failed to locate nvidia_gpu.py. Please check your virtual environment setup.")
+        print(
+            "Failed to locate nvidia_gpu.py. Please check your virtual environment setup."
+        )
         sys.exit(1)

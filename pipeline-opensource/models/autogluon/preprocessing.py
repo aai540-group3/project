@@ -144,11 +144,15 @@ def main(cfg: DictConfig) -> None:
         X_preprocessed_combined = preprocessor.fit_transform(X_combined)
 
         # Get all feature names after preprocessing
-        processed_feature_names = numeric_features + boolean_features + [
-            col
-            for col in X_combined.columns
-            if col not in numeric_features + boolean_features
-        ]
+        processed_feature_names = (
+            numeric_features
+            + boolean_features
+            + [
+                col
+                for col in X_combined.columns
+                if col not in numeric_features + boolean_features
+            ]
+        )
 
         # Convert to DataFrame
         X_preprocessed_combined_df = pd.DataFrame(
@@ -158,19 +162,27 @@ def main(cfg: DictConfig) -> None:
         # Add the target variable back
         X_preprocessed_combined_df["readmitted"] = y_combined
 
-        logger.info(f"Preprocessed combined data shape: {X_preprocessed_combined_df.shape}")
+        logger.info(
+            f"Preprocessed combined data shape: {X_preprocessed_combined_df.shape}"
+        )
 
         # Split back into training and test sets
         train_rows = len(train_df)
-        X_preprocessed_train_df = X_preprocessed_combined_df.iloc[:train_rows].reset_index(drop=True)
-        X_preprocessed_test_df = X_preprocessed_combined_df.iloc[train_rows:].reset_index(drop=True)
+        X_preprocessed_train_df = X_preprocessed_combined_df.iloc[
+            :train_rows
+        ].reset_index(drop=True)
+        X_preprocessed_test_df = X_preprocessed_combined_df.iloc[
+            train_rows:
+        ].reset_index(drop=True)
 
         # Save preprocessed training data
         preprocessed_train_data_path = Path(
             to_absolute_path(cfg.paths.models.autogluon.preprocessed_data_train)
         )
         X_preprocessed_train_df.to_csv(preprocessed_train_data_path, index=False)
-        logger.info(f"Preprocessed training data saved to {preprocessed_train_data_path}")
+        logger.info(
+            f"Preprocessed training data saved to {preprocessed_train_data_path}"
+        )
 
         # Save preprocessed test data
         preprocessed_test_data_path = Path(

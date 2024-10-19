@@ -84,18 +84,28 @@ def main(cfg: DictConfig):
         # Identify feature types
         logger.info("Identifying numerical and binary features...")
         # Exclude 'readmitted' from features
-        features = combined_df.columns.drop('readmitted')
+        features = combined_df.columns.drop("readmitted")
 
         # Separate numerical and binary features
-        numerical_features = combined_df[features].select_dtypes(include=["int64", "float64"]).columns.tolist()
-        binary_features = combined_df[features].select_dtypes(include=["bool"]).columns.tolist()
+        numerical_features = (
+            combined_df[features]
+            .select_dtypes(include=["int64", "float64"])
+            .columns.tolist()
+        )
+        binary_features = (
+            combined_df[features].select_dtypes(include=["bool"]).columns.tolist()
+        )
 
         # Convert object type columns (if any) to categorical and then to numerical codes
-        object_features = combined_df[features].select_dtypes(include=["object"]).columns.tolist()
+        object_features = (
+            combined_df[features].select_dtypes(include=["object"]).columns.tolist()
+        )
         if object_features:
-            logger.info(f"Converting object type features to categorical codes: {object_features}")
+            logger.info(
+                f"Converting object type features to categorical codes: {object_features}"
+            )
             for col in object_features:
-                combined_df[col] = combined_df[col].astype('category').cat.codes
+                combined_df[col] = combined_df[col].astype("category").cat.codes
             numerical_features.extend(object_features)
 
         logger.info(f"Numerical features: {numerical_features}")
@@ -135,7 +145,11 @@ def main(cfg: DictConfig):
 
         # Get feature names
         try:
-            feature_names_num = preprocessor.named_transformers_["num"].named_steps["scaler"].get_feature_names_out(numerical_features)
+            feature_names_num = (
+                preprocessor.named_transformers_["num"]
+                .named_steps["scaler"]
+                .get_feature_names_out(numerical_features)
+            )
         except AttributeError:
             feature_names_num = numerical_features
 
@@ -147,7 +161,9 @@ def main(cfg: DictConfig):
         X_processed_df = pd.DataFrame(X_processed, columns=feature_names)
 
         # Save the preprocessor
-        preprocessor_path = Path(to_absolute_path(cfg.paths.models.neural_network.preprocessor))
+        preprocessor_path = Path(
+            to_absolute_path(cfg.paths.models.neural_network.preprocessor)
+        )
         joblib.dump(preprocessor, preprocessor_path)
         logger.info(f"Preprocessor saved to {preprocessor_path}")
 
@@ -185,7 +201,9 @@ def main(cfg: DictConfig):
         preprocessed_df = X_train_val.copy()
         preprocessed_df["readmitted"] = y_train_val
 
-        preprocessed_data_path = Path(to_absolute_path(cfg.paths.models.neural_network.preprocessed_data))
+        preprocessed_data_path = Path(
+            to_absolute_path(cfg.paths.models.neural_network.preprocessed_data)
+        )
         preprocessed_df.to_csv(preprocessed_data_path, index=False)
         logger.info(f"Combined preprocessed data saved to {preprocessed_data_path}")
 

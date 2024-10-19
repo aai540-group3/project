@@ -173,7 +173,11 @@ RESOURCE_MAPPINGS = {
 def retry_if_not_access_denied_exception(exception):
     if isinstance(exception, ClientError):
         error_code = exception.response["Error"]["Code"]
-        return error_code not in ["AccessDenied", "ValidationException", "InvalidParameter"]
+        return error_code not in [
+            "AccessDenied",
+            "ValidationException",
+            "InvalidParameter",
+        ]
     return True
 
 
@@ -193,11 +197,11 @@ class TerraformManager:
     def is_in_state(self, address: str) -> bool:
         logger.info(f"Checking if {address} is in Terraform state")
         code, out, err = self.tf.cmd(
-            'state', 'list', capture_output=True, no_color=IsFlagged
+            "state", "list", capture_output=True, no_color=IsFlagged
         )
 
         if code == 0:
-            resources = out.strip().split('\n')
+            resources = out.strip().split("\n")
             logger.debug(f"Resources in state: {resources}")
             if address in resources:
                 logger.info(f"Resource {address} is already in Terraform state.")
@@ -206,8 +210,8 @@ class TerraformManager:
                 logger.info(f"Resource {address} is not in Terraform state.")
                 return False
         else:
-            err_str = err.decode('utf-8') if isinstance(err, bytes) else err
-            if 'No state file was found' in err_str:
+            err_str = err.decode("utf-8") if isinstance(err, bytes) else err
+            if "No state file was found" in err_str:
                 logger.warning("No state file found. Assuming state is empty.")
                 return False
             else:
@@ -223,12 +227,12 @@ class TerraformManager:
             no_color=IsFlagged,
             lock=False,
         )
-        stderr_str = stderr.decode('utf-8') if isinstance(stderr, bytes) else stderr
+        stderr_str = stderr.decode("utf-8") if isinstance(stderr, bytes) else stderr
         if code == 0:
             logger.info(f"Successfully imported: {address}")
             return True
         else:
-            if 'Resource already managed by Terraform' in stderr_str:
+            if "Resource already managed by Terraform" in stderr_str:
                 logger.info(f"EXISTS: {address}")
                 return True
             else:
@@ -265,7 +269,11 @@ class ResourceImporter:
         retry=retry_if_exception(retry_if_not_access_denied_exception),
     )
     def import_or_create(
-        self, address: str, resource_id: Any, resource_type: str, resource_config: Dict[str, Any]
+        self,
+        address: str,
+        resource_id: Any,
+        resource_type: str,
+        resource_config: Dict[str, Any],
     ) -> None:
         if self.tf_manager.is_in_state(address):
             # Resource is already in Terraform state; no need to import
@@ -326,8 +334,15 @@ class ResourceImporter:
 
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
-            if error_code in ["NoSuchEntity", "ResourceNotFoundException", "ValidationException", "NotFoundException"]:
-                logger.info(f"Resource not found: {address}. It may need to be created.")
+            if error_code in [
+                "NoSuchEntity",
+                "ResourceNotFoundException",
+                "ValidationException",
+                "NotFoundException",
+            ]:
+                logger.info(
+                    f"Resource not found: {address}. It may need to be created."
+                )
             elif error_code == "AccessDenied":
                 logger.info(f"EXISTS: {address}")
             elif error_code == "InvalidParameter":
@@ -338,7 +353,7 @@ class ResourceImporter:
     def extract_resource_id(
         self, resource_type: str, resource_name: str, resource_config: Dict[str, Any]
     ) -> Any:
-        account_id = boto3.client('sts').get_caller_identity()['Account']
+        account_id = boto3.client("sts").get_caller_identity()["Account"]
         region = boto3.session.Session().region_name
 
         if resource_type == "aws_iam_policy":
@@ -374,12 +389,12 @@ class ResourceImporter:
             return resource_config.get("name", resource_name)
         elif resource_type == "aws_iam_user_login_profile":
             user_name = resource_config.get("user", resource_name)
-            if user_name.startswith('${'):
+            if user_name.startswith("${"):
                 user_name = self.resolve_reference(user_name)
             return user_name
         elif resource_type == "aws_s3_bucket_policy":
             bucket = resource_config.get("bucket", resource_name)
-            if bucket.startswith('${'):
+            if bucket.startswith("${"):
                 bucket = self.resolve_reference(bucket)
             return bucket
         # Add more cases as needed
@@ -387,9 +402,9 @@ class ResourceImporter:
 
     def resolve_reference(self, reference: str) -> str:
         # Implement logic to resolve references like "${aws_iam_user.jagustin.name}"
-        if reference.startswith('${') and reference.endswith('}'):
+        if reference.startswith("${") and reference.endswith("}"):
             ref = reference[2:-1]
-            parts = ref.split('.')
+            parts = ref.split(".")
             if len(parts) >= 3:
                 resource_type = parts[0]
                 resource_name = parts[1]
@@ -400,49 +415,57 @@ class ResourceImporter:
         logger.info(f"Unable to resolve reference: {reference}")
         return reference
 
-    def resource_config_lookup(self, resource_type: str, resource_name: str) -> Dict[str, Any]:
-        for resource_block in self.tf_config.get('resource', []):
+    def resource_config_lookup(
+        self, resource_type: str, resource_name: str
+    ) -> Dict[str, Any]:
+        for resource_block in self.tf_config.get("resource", []):
             if resource_type in resource_block:
                 if resource_name in resource_block[resource_type]:
                     return resource_block[resource_type][resource_name]
         return {}
 
     def get_subscription_arn(self, region, account_id, resource_config):
-        sns_client = boto3.client('sns', region_name=region)
-        topic_arn = resource_config.get('topic_arn')
-        protocol = resource_config.get('protocol')
-        endpoint = resource_config.get('endpoint')
+        sns_client = boto3.client("sns", region_name=region)
+        topic_arn = resource_config.get("topic_arn")
+        protocol = resource_config.get("protocol")
+        endpoint = resource_config.get("endpoint")
 
-        paginator = sns_client.get_paginator('list_subscriptions')
+        paginator = sns_client.get_paginator("list_subscriptions")
         for page in paginator.paginate():
-            for subscription in page['Subscriptions']:
+            for subscription in page["Subscriptions"]:
                 if (
-                    subscription['TopicArn'] == topic_arn
-                    and subscription['Protocol'] == protocol
-                    and subscription['Endpoint'] == endpoint
+                    subscription["TopicArn"] == topic_arn
+                    and subscription["Protocol"] == protocol
+                    and subscription["Endpoint"] == endpoint
                 ):
-                    return subscription['SubscriptionArn']
+                    return subscription["SubscriptionArn"]
         return None  # Subscription not found
 
     def handle_iam_user_deletion(self, user_name):
-        iam_client = boto3.client('iam')
+        iam_client = boto3.client("iam")
         try:
             iam_client.delete_login_profile(UserName=user_name)
             logger.info(f"Deleted login profile for user: {user_name}")
         except ClientError as e:
-            if e.response['Error']['Code'] == 'NoSuchEntity':
+            if e.response["Error"]["Code"] == "NoSuchEntity":
                 logger.info(f"No login profile found for user: {user_name}")
             else:
                 logger.error(f"Error deleting login profile for user {user_name}: {e}")
 
     def handle_iam_group_deletion(self, group_name):
-        iam_client = boto3.client('iam')
+        iam_client = boto3.client("iam")
         try:
             # Detach policies
-            attached_policies = iam_client.list_attached_group_policies(GroupName=group_name)['AttachedPolicies']
+            attached_policies = iam_client.list_attached_group_policies(
+                GroupName=group_name
+            )["AttachedPolicies"]
             for policy in attached_policies:
-                iam_client.detach_group_policy(GroupName=group_name, PolicyArn=policy['PolicyArn'])
-                logger.info(f"Detached policy {policy['PolicyArn']} from group {group_name}")
+                iam_client.detach_group_policy(
+                    GroupName=group_name, PolicyArn=policy["PolicyArn"]
+                )
+                logger.info(
+                    f"Detached policy {policy['PolicyArn']} from group {group_name}"
+                )
 
             iam_client.delete_group(GroupName=group_name)
             logger.info(f"Deleted IAM group: {group_name}")
@@ -450,10 +473,12 @@ class ResourceImporter:
             logger.error(f"Error deleting IAM group {group_name}: {e}")
 
     def handle_iam_group_replacement(self, group_name):
-        iam_client = boto3.client('iam')
+        iam_client = boto3.client("iam")
         try:
             # Rename the existing group
-            iam_client.update_group(GroupName=group_name, NewGroupName=f"{group_name}_old")
+            iam_client.update_group(
+                GroupName=group_name, NewGroupName=f"{group_name}_old"
+            )
             logger.info(f"Renamed IAM group {group_name} to {group_name}_old")
             # Detach policies from the old group
             self.handle_iam_group_deletion(f"{group_name}_old")
@@ -472,19 +497,35 @@ class ResourceImporter:
                         logger.info(f"EXISTS: {address}")
                         continue
                     try:
-                        if resource_type == "aws_iam_user" and self.tf_manager.is_in_state(address):
-                            self.handle_iam_user_deletion(resource_id)  # Handle any IAM user deletion
-                        elif resource_type == "aws_iam_group" and self.tf_manager.is_in_state(address):
+                        if (
+                            resource_type == "aws_iam_user"
+                            and self.tf_manager.is_in_state(address)
+                        ):
+                            self.handle_iam_user_deletion(
+                                resource_id
+                            )  # Handle any IAM user deletion
+                        elif (
+                            resource_type == "aws_iam_group"
+                            and self.tf_manager.is_in_state(address)
+                        ):
                             if any(  # Check if a group with the same name is being created
-                                k.startswith(resource_type) and v.get("name") == resource_config.get("name")
+                                k.startswith(resource_type)
+                                and v.get("name") == resource_config.get("name")
                                 for k, v in resource_block.items()
-                                if k != resource_type or list(v.keys())[0] != resource_name
+                                if k != resource_type
+                                or list(v.keys())[0] != resource_name
                             ):
-                                self.handle_iam_group_replacement(resource_id)  # Handle IAM group replacement
+                                self.handle_iam_group_replacement(
+                                    resource_id
+                                )  # Handle IAM group replacement
                             else:
-                                self.handle_iam_group_deletion(resource_id)  # Handle IAM group deletion
+                                self.handle_iam_group_deletion(
+                                    resource_id
+                                )  # Handle IAM group deletion
                         else:
-                            self.import_or_create(address, resource_id, resource_type, resource_config)
+                            self.import_or_create(
+                                address, resource_id, resource_type, resource_config
+                            )
 
                     except Exception:
                         logger.info(f"EXISTS: {address}")

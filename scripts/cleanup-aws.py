@@ -30,7 +30,9 @@ import sys
 import boto3
 from botocore.exceptions import ClientError
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Global set to store resources managed by Terraform
@@ -83,7 +85,9 @@ def delete_ec2_resources(region):
     client = boto3.client("ec2", region_name=region)
 
     # Terminate EC2 Instances
-    instances = ec2.instances.filter(Filters=[{"Name": "instance-state-name", "Values": ["running", "stopped"]}])
+    instances = ec2.instances.filter(
+        Filters=[{"Name": "instance-state-name", "Values": ["running", "stopped"]}]
+    )
     for instance in instances:
         if not should_preserve(instance.id):
             logger.info(f"Terminating EC2 instance: {instance.id}")
@@ -122,7 +126,9 @@ def delete_ec2_resources(region):
                 logger.info(f"Deleting Security Group: {sg_name} ({sg_id})")
                 client.delete_security_group(GroupId=sg_id)
             except ClientError as e:
-                logger.error(f"Could not delete Security Group {sg_name} ({sg_id}): {e}")
+                logger.error(
+                    f"Could not delete Security Group {sg_name} ({sg_id}): {e}"
+                )
 
     # Delete Key Pairs
     key_pairs = client.describe_key_pairs()["KeyPairs"]
@@ -159,7 +165,9 @@ def delete_vpc_resources(vpc):
 
     # Delete route tables
     for rt in vpc.route_tables.all():
-        if not rt.associations_attribute or not rt.associations_attribute[0].get("Main", False):
+        if not rt.associations_attribute or not rt.associations_attribute[0].get(
+            "Main", False
+        ):
             if not should_preserve(rt.id):
                 logger.info(f"Deleting Route Table: {rt.id}")
                 rt.delete()
@@ -257,7 +265,14 @@ def delete_cloudformation_stacks(region):
     logger.info(f"Deleting CloudFormation stacks in region: {region}")
     cf = boto3.client("cloudformation", region_name=region)
     try:
-        stacks = cf.list_stacks(StackStatusFilter=["CREATE_COMPLETE", "ROLLBACK_COMPLETE", "UPDATE_COMPLETE", "UPDATE_ROLLBACK_COMPLETE"])["StackSummaries"]
+        stacks = cf.list_stacks(
+            StackStatusFilter=[
+                "CREATE_COMPLETE",
+                "ROLLBACK_COMPLETE",
+                "UPDATE_COMPLETE",
+                "UPDATE_ROLLBACK_COMPLETE",
+            ]
+        )["StackSummaries"]
     except ClientError as e:
         logger.error(f"Error listing CloudFormation stacks: {e}")
         return
@@ -310,7 +325,9 @@ def delete_dynamodb_tables(region):
     try:
         tables = dynamodb.list_tables()["TableNames"]
         for table_name in tables:
-            if not should_preserve(f"arn:aws:dynamodb:{region}:{boto3.client('sts').get_caller_identity().get('Account')}:table/{table_name}"):
+            if not should_preserve(
+                f"arn:aws:dynamodb:{region}:{boto3.client('sts').get_caller_identity().get('Account')}:table/{table_name}"
+            ):
                 logger.info(f"Deleting DynamoDB table: {table_name}")
                 try:
                     dynamodb.delete_table(TableName=table_name)
@@ -338,7 +355,11 @@ def delete_rds_instances(region):
             if not should_preserve(instance["DBInstanceArn"]):
                 logger.info(f"Deleting RDS instance: {instance_id}")
                 try:
-                    rds.delete_db_instance(DBInstanceIdentifier=instance_id, SkipFinalSnapshot=True, DeleteAutomatedBackups=True)
+                    rds.delete_db_instance(
+                        DBInstanceIdentifier=instance_id,
+                        SkipFinalSnapshot=True,
+                        DeleteAutomatedBackups=True,
+                    )
                     waiter = rds.get_waiter("db_instance_deleted")
                     waiter.wait(DBInstanceIdentifier=instance_id)
                 except ClientError as e:
@@ -365,7 +386,9 @@ def delete_elasticache_clusters(region):
                 try:
                     elasticache.delete_cache_cluster(CacheClusterId=cluster_id)
                 except ClientError as e:
-                    logger.error(f"Error deleting ElastiCache cluster {cluster_id}: {e}")
+                    logger.error(
+                        f"Error deleting ElastiCache cluster {cluster_id}: {e}"
+                    )
     except ClientError as e:
         logger.error(f"Error describing ElastiCache clusters: {e}")
 
@@ -502,7 +525,9 @@ def main():
         regions = [region["RegionName"] for region in ec2.describe_regions()["Regions"]]
 
         # Use ThreadPoolExecutor to delete resources in parallel
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(regions)) as executor:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=len(regions)
+        ) as executor:
             executor.map(delete_resources_in_region, regions)
 
     except Exception as e:

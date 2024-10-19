@@ -10,6 +10,7 @@ This script evaluates the neural network model on the test data and includes:
 - Computing feature importances using SHAP values.
 - Logging metrics and artifacts using DVCLive.
 """
+
 import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -45,11 +46,13 @@ import joblib
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def bool_to_int(X):
     """
     Converts boolean features to integers (True -> 1, False -> 0).
     """
     return X.astype(int)
+
 
 @hydra.main(
     config_path=os.getenv("CONFIG_PATH"),
@@ -65,19 +68,31 @@ def main(cfg: DictConfig) -> None:
     :raises Exception: If an error occurs during evaluation.
     """
     try:
-        cfg.model.name = 'neural_network'
+        cfg.model.name = "neural_network"
         logger.info(f"Starting evaluation for neural network model {cfg.model.name}...")
         logger.info("Configuration:")
         logger.info(OmegaConf.to_yaml(cfg))
 
         # Paths
-        artifacts_dir = Path(to_absolute_path(cfg.paths.models.neural_network.artifacts))
+        artifacts_dir = Path(
+            to_absolute_path(cfg.paths.models.neural_network.artifacts)
+        )
         model_path = Path(to_absolute_path(cfg.paths.models.neural_network.model_file))
-        metrics_output_path = Path(to_absolute_path(cfg.paths.models.neural_network.metrics_file))
-        confusion_matrix_path = Path(to_absolute_path(cfg.paths.models.neural_network.confusion_matrix))
-        roc_curve_path = Path(to_absolute_path(cfg.paths.models.neural_network.roc_curve))
-        feature_importance_path = Path(to_absolute_path(cfg.paths.models.neural_network.feature_importances))
-        preprocessor_path = Path(to_absolute_path(cfg.paths.models.neural_network.preprocessor))
+        metrics_output_path = Path(
+            to_absolute_path(cfg.paths.models.neural_network.metrics_file)
+        )
+        confusion_matrix_path = Path(
+            to_absolute_path(cfg.paths.models.neural_network.confusion_matrix)
+        )
+        roc_curve_path = Path(
+            to_absolute_path(cfg.paths.models.neural_network.roc_curve)
+        )
+        feature_importance_path = Path(
+            to_absolute_path(cfg.paths.models.neural_network.feature_importances)
+        )
+        preprocessor_path = Path(
+            to_absolute_path(cfg.paths.models.neural_network.preprocessor)
+        )
         artifacts_dir.mkdir(parents=True, exist_ok=True)
 
         # Load preprocessed test data
@@ -92,9 +107,13 @@ def main(cfg: DictConfig) -> None:
         preprocessor = joblib.load(preprocessor_path)
         # Retrieve feature names
         try:
-            feature_names_num = preprocessor.named_transformers_["num"].get_feature_names_out()
+            feature_names_num = preprocessor.named_transformers_[
+                "num"
+            ].get_feature_names_out()
         except AttributeError:
-            feature_names_num = preprocessor.transformers_[0][2]  # Use the column names directly
+            feature_names_num = preprocessor.transformers_[0][
+                2
+            ]  # Use the column names directly
 
         feature_names_bin = preprocessor.transformers_[1][2]
         feature_names = list(feature_names_num) + list(feature_names_bin)
@@ -218,24 +237,31 @@ def main(cfg: DictConfig) -> None:
                 logger.info(f"Feature names length: {len(feature_names)}")
 
                 # Adjust shap_values for plotting
-                shap_values_to_plot = np.squeeze(shap_values)  # Remove the singleton dimension
-                logger.info(f"After squeezing, shap_values shape: {shap_values_to_plot.shape}")
+                shap_values_to_plot = np.squeeze(
+                    shap_values
+                )  # Remove the singleton dimension
+                logger.info(
+                    f"After squeezing, shap_values shape: {shap_values_to_plot.shape}"
+                )
 
                 # Ensure shapes match
-                assert shap_values_to_plot.shape == X_sample.shape, \
-                    f"Mismatch in shapes between shap_values ({shap_values_to_plot.shape}) and X_sample ({X_sample.shape}) after squeezing"
+                assert (
+                    shap_values_to_plot.shape == X_sample.shape
+                ), f"Mismatch in shapes between shap_values ({shap_values_to_plot.shape}) and X_sample ({X_sample.shape}) after squeezing"
 
                 # Plot feature importances
                 shap.summary_plot(
                     shap_values_to_plot,
                     features=X_sample,
                     feature_names=feature_names,
-                    show=False
+                    show=False,
                 )
                 plt.savefig(feature_importance_path)
                 plt.close()
                 live.log_image("feature_importances", str(feature_importance_path))
-                logger.info(f"Feature importances plot saved to {feature_importance_path}")
+                logger.info(
+                    f"Feature importances plot saved to {feature_importance_path}"
+                )
             finally:
                 live.end()
 

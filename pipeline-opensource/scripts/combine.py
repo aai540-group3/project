@@ -196,8 +196,7 @@ EXCLUDE_FILES = {
 }
 
 EXCLUDE_FOLDERS = {
-    "LightGBM_BAG_L1"
-    "__pycache__",
+    "LightGBM_BAG_L1" "__pycache__",
     ".dvc",
     ".ruff_cache",
     ".temp",
