@@ -1,12 +1,10 @@
 
 __pycache__/
 !.gitkeep
-!src/models/
 .cache
 .coverage
 .coverage.*
 .DS_Store
-.dvc/
 .eggs/
 .env
 .hydra/
@@ -15,6 +13,7 @@ __pycache__/
 .ipynb_checkpoints/
 .mypy_cache/
 .Python
+.ruff_cache
 .spyproject/
 .tox/
 .venv/
@@ -34,6 +33,7 @@ __pycache__/
 *.manifest
 *.mo
 *.out
+*.pkl
 *.pot
 *.py[cod]
 *.rdb
@@ -66,6 +66,12 @@ outputs/
 parts/
 pip-delete-this-directory.txt
 pip-log.txt
+pipeline/models/autogluon/input_hash.txt
+pipeline/models/autogluon/metadata.json
+pipeline/models/autogluon/models
+pipeline/models/autogluon/utils
+pipeline/models/autogluon/version.txt
+pipeline/models/logistic_regression/input_hash.txt
 sdist/
 target/
 terraform/.terraform/providers/

@@ -1,33 +1,30 @@
 schema: '2.0'
 stages:
   ingest:
-    cmd: .venv/bin/python data/ingest.py
+    cmd:
+    - .venv/bin/python src/ingest.py
     deps:
-    - path: data/ingest.py
+    - path: requirements-frozen.txt
       hash: md5
-      md5: 521fb6cf07edf8a6ec5bc3b615eb2d22
-      size: 1343
+      md5: 495bf7a4ad0fc161c91a663531b153ca
+      size: 8410
+    - path: src/ingest.py
+      hash: md5
+      md5: 6fc6c6d71021ef5edd12e8d38b4bd365
+      size: 2690
     outs:
     - path: data/raw/data.csv
       hash: md5
-      md5: dbfe12c203805ccf7fdb683042c46ab3
-      size: 49159045
-  clean:
-    cmd: .venv/bin/python data/clean.py
-    deps:
-    - path: data/clean.py
+      md5: 33411fa1536aaaadb24c0c1f2a8598b9
+      size: 16246860
+    - path: data/raw/metadata.json
       hash: md5
-      md5: d003c18f796ad3da68032e53f8c631e7
-      size: 4280
-    - path: data/raw/data.csv
+      md5: eb8bd36c2cc7a6284a657c63561e0225
+      size: 5125
+    - path: data/raw/variables.json
       hash: md5
-      md5: dbfe12c203805ccf7fdb683042c46ab3
-      size: 49159045
-    outs:
-    - path: data/interim/data_cleaned.csv
-      hash: md5
-      md5: 5ced90b3e8f0fd930515c74d967ec665
-      size: 252679514
+      md5: c03764d3560b025c3f1291d585517221
+      size: 19001
   feature_engineering:
     cmd: CONFIG_PATH=$(pwd)/conf CONFIG_NAME=config .venv/bin/python data/build_features.py
     deps:
@@ -207,7 +204,28 @@ stages:
       md5: e71750b133aa7399768c7ac9e7863481
       size: 180
   setup:
-    cmd: python3 scripts/fix-nvidia-gpu.py
+    cmd:
+    - python3 -m virtualenv .venv
+    - . .venv/bin/activate
+    - pip install uv
+    - uv pip install -r requirements.txt
+    - pip freeze > requirements-frozen.txt
+    - .venv/bin/python src/utils.py patch_nvidia_gpu
+    deps:
+    - path: requirements.txt
+      hash: md5
+      md5: 645f41d82eb6992ee8dd8624d46949fb
+      size: 393
+    - path: src/utils.py
+      hash: md5
+      md5: d3ef0c89d47228cb505b52a3d0c15a6b
+      size: 1248
+      isexec: true
+    outs:
+    - path: requirements-frozen.txt
+      hash: md5
+      md5: 495bf7a4ad0fc161c91a663531b153ca
+      size: 8410
   create_virtualenv:
     cmd: python3 -m virtualenv .venv
     outs:
@@ -237,7 +255,16 @@ stages:
       md5: 384284a65dae2f34c3a0d876b647301a
       size: 151
   setup_virtualenv:
-    cmd: python3 -m virtualenv .venv
+    cmd:
+    - python3 -m virtualenv .venv
+    - . .venv/bin/activate
+    - pip install uv
+    - uv pip install -r requirements.txt
+    deps:
+    - path: requirements.txt
+      hash: md5
+      md5: 17f8ceaf396ab1ada066534e085ead96
+      size: 312
   install_dependencies:
     cmd:
     - . .venv/bin/activate
@@ -246,8 +273,8 @@ stages:
     deps:
     - path: requirements.txt
       hash: md5
-      md5: 257f136ed1b824fb5db6e67edef387fd
-      size: 276
+      md5: 17f8ceaf396ab1ada066534e085ead96
+      size: 312
   fix_gpu_issue:
     cmd:
     - .venv/bin/python scripts/fix-nvidia-gpu.py
@@ -616,3 +643,97 @@ stages:
       hash: md5
       md5: e9ebaad224ea1f60cfb18fb6d55be8ab
       size: 35705
+  push_raw_data_to_s3:
+    cmd:
+    - aws s3 cp data/raw/data.csv s3://your_bucket_name/data/raw/data.csv
+    deps:
+    - path: data/raw/data.csv
+      hash: md5
+      md5: dbfe12c203805ccf7fdb683042c46ab3
+      size: 49159045
+  infrastruct:
+    cmd:
+    - .venv/bin/python src/infrastruct.py
+    deps:
+    - path: requirements-frozen.txt
+      hash: md5
+      md5: 495bf7a4ad0fc161c91a663531b153ca
+      size: 8410
+    - path: src/infrastruct.py
+      hash: md5
+      md5: 88aa568b7d8a804cb1cdb15cf7880a52
+      size: 17745
+      isexec: true
+  preprocess:
+    cmd:
+    - .venv/bin/python src/preprocess.py
+    deps:
+    - path: data/raw/data.csv
+      hash: md5
+      md5: 33411fa1536aaaadb24c0c1f2a8598b9
+      size: 16246860
+    - path: requirements-frozen.txt
+      hash: md5
+      md5: 495bf7a4ad0fc161c91a663531b153ca
+      size: 8410
+    - path: src/preprocess.py
+      hash: md5
+      md5: 6e7e6a7f7edec1fea8ae1bcaf30769d5
+      size: 8611
+    outs:
+    - path: data/interim/data_cleaned.parquet
+      hash: md5
+      md5: a9d26b436f421e5a59a5aa563f895de8
+      size: 1990325
+  featurize:
+    cmd:
+    - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python .venv/bin/python src/featurize.py
+    deps:
+    - path: data/interim/data_cleaned.parquet
+      hash: md5
+      md5: a9d26b436f421e5a59a5aa563f895de8
+      size: 1990325
+    - path: feature_store.yaml
+      hash: md5
+      md5: fd33cd8885f2ace4a3063c10ad6b5ba5
+      size: 166
+    - path: requirements-frozen.txt
+      hash: md5
+      md5: 495bf7a4ad0fc161c91a663531b153ca
+      size: 8410
+    - path: src/featurize.py
+      hash: md5
+      md5: cd5a39a06f9532c0b55dd53d6c1ed310
+      size: 11180
+    outs:
+    - path: data/interim/data_featured.parquet
+      hash: md5
+      md5: d75c55fed7c2d09776d018f28d0c1cac
+      size: 3185849
+  explore:
+    cmd:
+    - .venv/bin/python src/explore.py
+    deps:
+    - path: data/raw/data.csv
+      hash: md5
+      md5: 33411fa1536aaaadb24c0c1f2a8598b9
+      size: 16246860
+    - path: requirements-frozen.txt
+      hash: md5
+      md5: 495bf7a4ad0fc161c91a663531b153ca
+      size: 8410
+    - path: src/explore.py
+      hash: md5
+      md5: 0d1bcfc93e297c513161b561717d01d4
+      size: 5715
+    outs:
+    - path: reports/cleanlab
+      hash: md5
+      md5: 67ded61f77ef1e146d6e671c0a650b87.dir
+      size: 1450692
+      nfiles: 1
+    - path: reports/plots
+      hash: md5
+      md5: 9b587c011ed42e6c99e4b03d3d8ac68a.dir
+      size: 1849745
+      nfiles: 60

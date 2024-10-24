@@ -1,8 +1,0 @@
-model: autogluon
-label: readmitted
-problem_type: binary
-dataset_version: v1.0
-autogluon_presets: best_quality
-autogluon_time_limit: 3600
-autogluon_verbosity: 2
-autogluon_gbm_num_boost_round: 100

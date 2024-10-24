@@ -1,0 +1,10 @@
+project: diabetes_readmission
+registry: s3://aai540-group3/registry.db
+provider: aws
+
+online_store:
+  type: dynamodb
+  region: us-east-1
+
+offline_store:
+  type: file

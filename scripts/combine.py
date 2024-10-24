@@ -1,29 +1,4 @@
 #!/usr/bin/env python3
-"""Combine contents of files within a directory into a single output file,
-excluding specified files and directories.
-
-This script combines the contents of all files within a directory into a single output file, excluding
-specified files and directories. It also generates a tree structure of the directory. The script enhances
-readability by adding separator lines between files in the combined output and handles various file types
-with appropriate comment syntax.
-
-Usage:
-    Run the script with optional command-line arguments to customize the behavior.
-
-Features:
-    - Excludes specified files and directories from the combined output.
-    - Includes specified files even if they are in the exclusion lists.
-    - Generates a tree structure of the directory, excluding specified files and directories.
-    - Adds separator lines between files in the combined output for better readability.
-    - Handles various file types with appropriate comment syntax for separator lines.
-    - Stores all outputs in a dedicated 'debug' folder.
-    - Provides detailed debug logging for troubleshooting.
-    - Allows customization via command-line arguments.
-
-Requirements:
-    - Python 3.x
-"""
-
 import argparse
 import logging
 import os
@@ -115,7 +90,7 @@ COMMENT_SYNTAX: Dict[str, Dict[str, Union[str, Set[str]]]] = {
             "handlebars",
         },
     },
-    "ini_style": {"start": ";", "end": "", "extensions": {"ini", "cfg", "conf"}},
+    "ini_style": {"start": ";", "end": "", "extensions": {"ini", "cfg", "../conf"}},
     "json_style": {"start": "//", "end": "", "extensions": {"json", "jsonc", "json5"}},
     "latex": {
         "start": "%",
@@ -178,31 +153,35 @@ COMMENT_SYNTAX: Dict[str, Dict[str, Union[str, Set[str]]]] = {
 EXCLUDE_FILES = {
     "__init__.py",
     ".DS_Store",
+    ".dvcignore",
     ".gitattributes",
     ".gitignore",
     ".gitkeep",
     "combine.sh",
     "combined.txt",
     "LICENSE",
+    "model.pkl",
     "README.md",
+    "requirements-dev.txt",
+    "requirements.txt",
     "Thumbs.db",
     "tree.txt",
     "update.sh",
-    "model.pkl",
+    "preprocessor.joblib",
 }
 
 EXCLUDE_FOLDERS = {
-    "__pycache__",
+    "LightGBM_BAG_L1" "__pycache__",
     ".dvc",
     ".ruff_cache",
     ".temp",
     ".venv",
     ".vscode",
-    "artifacts",
     "debug",
     "dvclive",
     "external",
     "interim",
+    "terraform",
     "node_modules",
     "notebooks",
     "outputs",
@@ -212,30 +191,18 @@ EXCLUDE_FOLDERS = {
     "temp",
     "templates",
     "terraform",
-    "terraform",
+    "artifacts",
     "utils",
 }
 
 EXCLUDE_FOLDERPATHS = {
-    Path(".devcontainer"),
-    Path(".dvc"),
     Path(".git"),
-    Path(".temp"),
-    Path(".venv"),
-    Path(".vscode"),
-    Path("data"),
-    Path("debug"),
-    Path("models"),
-    Path("node_modules"),
-    Path("notebooks"),
-    Path("outputs"),
-    Path("temp"),
-    Path("templates"),
-    Path("terraform"),
+    Path("models/autogluon/models"),
 }
 
 EXCLUDE_PATTERNS = [
     r".*\.bbl",
+    r".*\.h5",
     r".*\.lock",
     r".*\.log",
     r".*\.mp3",
@@ -246,6 +213,7 @@ EXCLUDE_PATTERNS = [
     r".*\.pptx",
     r".*\.pyc",
     r".*\.synctex.gz",
+    r".*\.txt",
     r".*\.wav",
     r".*\.zip",
 ]
@@ -420,12 +388,18 @@ def should_exclude_directory(
     exclude_folderpaths: Set[Path],
 ) -> bool:
     """Determine if a directory should be excluded based on various
-    criteria."""
+    criteria.
+    """
     if directory_name in exclude_folders:
         return True
+
     for exclude_path in exclude_folderpaths:
-        if is_relative_to(relative_path, exclude_path):
+        try:
+            relative_path.relative_to(exclude_path)
             return True
+        except ValueError:
+            pass
+
     return False
 
 

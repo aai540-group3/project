@@ -107,10 +107,7 @@ jobs:
         id: commit_and_push
         continue-on-error: true
         run: |
-          git add pipeline-opensource/dvc.lock
-          git add pipeline-opensource/dvclive/
-          git add pipeline-opensource/reports/
-          git add pipeline-opensource/metrics/
+          git add pipeline-opensource
           if git diff --staged --quiet; then
             echo "No changes to commit"
             echo "CHANGED=false" >> $GITHUB_ENV

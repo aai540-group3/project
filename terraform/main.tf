@@ -169,7 +169,7 @@ resource "aws_s3_bucket" "terraform_state" {
   }
 
   lifecycle {
-    prevent_destroy = true     # Prevent accidental deletion of this bucket
+    prevent_destroy = false   # Prevent accidental deletion of this bucket
     ignore_changes  = [bucket] # Ignore changes to the bucket name
   }
 }
@@ -248,7 +248,7 @@ resource "aws_dynamodb_table" "terraform_locks" {
   }
 
   lifecycle {
-    prevent_destroy = true   # Prevent accidental deletion of this table
+    prevent_destroy = false # Prevent accidental deletion of this table
     ignore_changes  = [name] # Ignore changes to the table name
   }
 
@@ -347,7 +347,7 @@ resource "aws_budgets_budget" "shared_user_budget" {
     subscriber_email_addresses = ["jagustin@sandiego.edu", "lvo@sandiego.edu", "zrobertson@sandiego.edu"]
   }
   lifecycle {
-    prevent_destroy = true   # Prevent accidental deletion of this budget
+    prevent_destroy = false # Prevent accidental deletion of this budget
     ignore_changes  = [name] # Ignore changes to the budget name
   }
 }
@@ -534,7 +534,7 @@ resource "aws_s3_bucket" "mlops_artifacts" {
   }
 
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
     ignore_changes = [bucket]
   }
 }
@@ -588,59 +588,6 @@ resource "aws_s3_bucket_policy" "mlops_bucket_policy" {
       }
     ]
   })
-}
-
-# ---------------------------------------------------------------------------------------------------------------------
-# IAM ROLE FOR GITHUB ACTIONS POLICY VALIDATION
-# ---------------------------------------------------------------------------------------------------------------------
-resource "aws_iam_role" "github_actions_policy_validator" {
-  name = "GitHub-Actions-PolicyValidator"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Federated = "arn:aws:iam::864899865811:oidc-provider/token.actions.githubusercontent.com"
-        },
-        Action = "sts:AssumeRoleWithWebIdentity",
-        Condition = {
-          StringEquals = {
-            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com",
-            "token.actions.githubusercontent.com:sub" = "repo:aai540-group3/project:ref:refs/heads/main"
-          }
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_policy" "access_analyzer_policy" {
-  name        = "AccessAnalyzerPolicy"
-  path        = "/"
-  description = "IAM policy for Access Analyzer"
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "access-analyzer:*",
-          "iam:GetRole",
-          "iam:ListRoles",
-          "organizations:DescribeAccount",
-          "organizations:DescribeOrganization",
-          "organizations:ListAccounts"
-        ]
-        Resource = "*"
-      },
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "access_analyzer_attachment" {
-  role       = "GitHub-Actions-PolicyValidator"
-  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/AccessAnalyzerPolicy"
 }
 
 data "aws_caller_identity" "current" {}

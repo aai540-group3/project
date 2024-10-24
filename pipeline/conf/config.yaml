@@ -1,0 +1,233 @@
+defaults:
+  - model: autogluon
+  - _self_
+  - override hydra/job_logging: colorlog
+  - override hydra/hydra_logging: colorlog
+
+# ------------------------------------------------------------------------------
+# HYDRA CONFIGURATION
+# ------------------------------------------------------------------------------
+hydra:
+  run:
+    dir: ${hydra:runtime.cwd}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: ${hydra:runtime.cwd}/multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  job:
+    chdir: false
+  verbose: true
+
+# ------------------------------------------------------------------------------
+# CONFIGURATION FOLDER
+# ------------------------------------------------------------------------------
+config:
+  folder: conf
+
+# ------------------------------------------------------------------------------
+# S3 BUCKET CONFIGURATION
+# ------------------------------------------------------------------------------
+aws:
+  region: us-east-1
+  s3_bucket:
+    name: aai540-group3
+    base_url: s3://aai540-group3/
+    keys:
+      datasets:
+        name: datasets
+        url: s3://aai540-group3/datasets
+      models:
+        name: models
+        url: s3://aai540-group3/models
+      dvcstore:
+        name: dvcstore
+        url: s3://aai540-group3/dvcstore
+
+# ------------------------------------------------------------------------------
+# PATHS
+# ------------------------------------------------------------------------------
+paths:
+  # ----------------------------------------------------------------------------
+  # CONFIGURATION FILE PATHS
+  # ----------------------------------------------------------------------------
+  config:
+    folder: ${hydra:runtime.cwd}/${config.folder}
+    file: ${paths.config.folder}/config.yaml
+
+  # ----------------------------------------------------------------------------
+  # DVC LIVE PATH
+  # ----------------------------------------------------------------------------
+  dvclive: ${hydra:runtime.cwd}/dvclive
+
+  # ----------------------------------------------------------------------------
+  # REPORT PATHS
+  # ----------------------------------------------------------------------------
+  reports:
+    base: ${hydra:runtime.cwd}/reports
+    metrics: ${paths.data.reports.base}/metrics
+    figures: ${paths.data.reports.base}/figures
+
+  # --------------------------------------------------------------------------
+  # DATA PATHS
+  # --------------------------------------------------------------------------
+  data:
+    # --------------------------------------------------------------------------
+    # RAW DATA PATHS
+    # --------------------------------------------------------------------------
+    raw:
+      base: ${hydra:runtime.cwd}/data/raw
+      csv: ${paths.data.raw.base}/data.csv
+      parquet: ${paths.data.raw.base}/data.parquet
+      metadata: ${paths.data.raw.base}/metadata.json
+      variables: ${paths.data.raw.base}/variables/json
+
+    # --------------------------------------------------------------------------
+    # INTERIM DATA PATHS
+    # --------------------------------------------------------------------------
+    interim:
+      base: ${hydra:runtime.cwd}/data/interim
+      file: ${paths.data.interim.base}/data_cleaned.csv
+
+    # --------------------------------------------------------------------------
+    # PROCESSED DATA PATHS
+    # --------------------------------------------------------------------------
+    processed:
+      base: ${hydra:runtime.cwd}/data/processed
+      featured_file: ${paths.data.processed.base}/data_featured.csv
+      train_file: ${paths.data.processed.base}/train.csv
+      test_file: ${paths.data.processed.base}/test.csv
+
+  # ----------------------------------------------------------------------------
+  # MODEL PATHS
+  # ----------------------------------------------------------------------------
+  models:
+    base: ${hydra:runtime.cwd}/models
+
+    # --------------------------------------------------------------------------
+    # AUTOGLUON PATHS
+    # --------------------------------------------------------------------------
+    autogluon:
+      base: ${paths.models.base}/autogluon
+      artifacts: ${paths.models.autogluon.base}/artifacts
+
+      model_file: ${paths.models.autogluon.artifacts}/model.pkl
+      hash_file: ${paths.models.autogluon.artifacts}/input_hash.txt
+      metrics_file: ${paths.models.autogluon.artifacts}/metrics.json
+      params_file: ${paths.models.autogluon.artifacts}/params.yaml
+      confusion_matrix: ${paths.models.autogluon.artifacts}/confusion_matrix.png
+      roc_curve: ${paths.models.autogluon.artifacts}/roc_curve.png
+      feature_importances: ${paths.models.autogluon.artifacts}/feature_importances.png
+      preprocessed_data: ${paths.models.autogluon.artifacts}/preprocessed_data.csv
+      preprocessed_data_train: ${paths.models.autogluon.artifacts}/preprocessed_train_data.csv
+      preprocessed_data_test: ${paths.models.autogluon.artifacts}/preprocessed_test_data.csv
+      preprocessor: ${paths.models.autogluon.artifacts}/preprocessor.joblib
+
+    # --------------------------------------------------------------------------
+    # LOGISTIC REGRESSION PATHS
+    # --------------------------------------------------------------------------
+    logistic_regression:
+      base: ${paths.models.base}/logistic_regression
+      artifacts: ${paths.models.logistic_regression.base}/artifacts
+
+      model_file: ${paths.models.logistic_regression.artifacts}/model.pkl
+      hash_file: ${paths.models.logistic_regression.artifacts}/input_hash.txt
+      metrics_file: ${paths.models.logistic_regression.artifacts}/metrics.json
+      params_file: ${paths.models.logistic_regression.artifacts}/params.yaml
+      confusion_matrix: ${paths.models.logistic_regression.artifacts}/confusion_matrix.png
+      roc_curve: ${paths.models.logistic_regression.artifacts}/roc_curve.png
+      feature_importances: ${paths.models.logistic_regression.artifacts}/feature_importances.png
+      preprocessed_data: ${paths.models.logistic_regression.artifacts}/preprocessed_data.csv
+      preprocessor: ${paths.models.logistic_regression.artifacts}/preprocessor.joblib
+
+    # --------------------------------------------------------------------------
+    # NEURAL NETWORK PATHS
+    # --------------------------------------------------------------------------
+    neural_network:
+      base: ${paths.models.base}/neural_network
+      artifacts: ${paths.models.neural_network.base}/artifacts
+
+      model_file: ${paths.models.neural_network.artifacts}/model.h5
+      history_file: ${paths.models.neural_network.artifacts}/history.pkl
+      hash_file: ${paths.models.neural_network.artifacts}/input_hash.txt
+      metrics_file: ${paths.models.neural_network.artifacts}/metrics.json
+      params_file: ${paths.models.neural_network.artifacts}/params.yaml
+      confusion_matrix: ${paths.models.neural_network.artifacts}/confusion_matrix.png
+      roc_curve: ${paths.models.neural_network.artifacts}/roc_curve.png
+      feature_importances: ${paths.models.neural_network.artifacts}/feature_importances.png
+      preprocessed_data: ${paths.models.neural_network.artifacts}/preprocessed_data.csv
+      preprocessor: ${paths.models.neural_network.artifacts}/preprocessor.pkl
+
+# ------------------------------------------------------------------------------
+# DATASET CONFIGURATION
+# ------------------------------------------------------------------------------
+dataset:
+  name: "diabetes-readmission"
+  version: "v1.0"
+  bucket:
+  uci_dataset_id: 296
+
+# ------------------------------------------------------------------------------
+# FEATURE ENGINEERING CONFIGURATION
+# ------------------------------------------------------------------------------
+feature_engineering:
+  add_polynomial_features: true
+  poly_degree: 2
+
+# ------------------------------------------------------------------------------
+# TRAINING CONFIGURATION
+# ------------------------------------------------------------------------------
+training:
+  split:
+    test_size: 0.2
+    random_state: 42
+
+# ------------------------------------------------------------------------------
+# AUTOGLUON MODEL CONFIGURATION
+# ------------------------------------------------------------------------------
+autogluon:
+  name: autogluon
+  params:
+    presets: "best_quality"
+    time_limit: 3600
+    verbosity: 2
+    gbm_num_boost_round: 100
+  class_labels: [0, 1]
+
+# ------------------------------------------------------------------------------
+# LOGISTIC REGRESSION MODEL CONFIGURATION
+# ------------------------------------------------------------------------------
+logistic_regression:
+  name: logistic_regression
+  params:
+    penalty: "l2"
+    C: 1.0
+    solver: "lbfgs"
+    max_iter: 1000
+    random_state: 42
+  class_labels: [0, 1]
+
+# ------------------------------------------------------------------------------
+# NEURAL NETWORK MODEL CONFIGURATION
+# ------------------------------------------------------------------------------
+neural_network:
+  name: neural_network
+  params:
+    layers:
+      - units: 64
+        activation: "relu"
+        dropout: 0.5
+      - units: 32
+        activation: "relu"
+        dropout: 0.5
+      - units: 32
+        activation: "relu"
+        dropout: 0.5
+      - units: 16
+        activation: "relu"
+    optimizer:
+      type: "adamw"
+      learning_rate: 0.0001
+    loss: "binary_crossentropy"
+    metrics:
+      - "accuracy"
+    batch_size: 32
+    epochs: 100
+    patience: 15

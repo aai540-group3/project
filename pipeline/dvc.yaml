@@ -1,0 +1,85 @@
+stages:
+  setup:
+    cmd:
+      - python3 -m virtualenv .venv
+      - . .venv/bin/activate
+      - pip install uv
+      - uv pip install -r requirements.txt
+      - pip freeze > requirements-frozen.txt
+      - .venv/bin/python src/utils.py patch_nvidia_gpu
+    deps:
+      - requirements.txt
+      - src/utils.py
+    outs:
+      - requirements-frozen.txt
+
+  infrastruct:
+    cmd:
+      - .venv/bin/python src/infrastruct.py
+    deps:
+      - src/infrastruct.py
+      - requirements-frozen.txt
+
+  ingest:
+    cmd:
+      - .venv/bin/python src/ingest.py
+    deps:
+      - src/ingest.py
+      - requirements-frozen.txt
+    outs:
+      - data/raw/data.csv
+      - data/raw/metadata.json
+      - data/raw/variables.json
+
+  explore:
+    cmd:
+      - .venv/bin/python src/explore.py
+    deps:
+      - src/explore.py
+      - data/raw/data.csv
+      - requirements-frozen.txt
+    outs:
+      - reports/plots:
+          cache: false
+      - reports/cleanlab:
+          cache: false
+
+  preprocess:
+    cmd:
+      - .venv/bin/python src/preprocess.py
+    deps:
+      - src/preprocess.py
+      - data/raw/data.csv
+      - requirements-frozen.txt
+    outs:
+      - data/interim/data_cleaned.parquet
+
+  featurize:
+    cmd:
+      - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python .venv/bin/python src/featurize.py
+    deps:
+      - src/featurize.py
+      - data/interim/data_cleaned.parquet
+      - feature_store.yaml
+      - requirements-frozen.txt
+    outs:
+      - data/interim/data_featured.parquet
+
+  models:
+    cmd:
+      - .venv/bin/python models/autogluon/train.py
+      - .venv/bin/python models/logistic_regression/train.py
+      - .venv/bin/python models/neural_network/train.py
+    deps:
+      - models/autogluon/train.py
+      - models/logistic_regression/train.py
+      - models/neural_network/train.py
+      - data/interim/data_featured.parquet
+      - requirements-frozen.txt
+    outs:
+      - models/autogluon/artifacts:
+          cache: false
+      - models/logistic_regression/artifacts:
+          cache: false
+      - models/neural_network/artifacts:
+          cache: false
