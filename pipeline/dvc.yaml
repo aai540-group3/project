@@ -145,8 +145,6 @@ stages:
     metrics:
       - models/autogluon/artifacts/metrics/metrics.json:
           cache: false
-      - models/autogluon/artifacts/metrics/feature_importance.json:
-          cache: false
     plots:
       - models/autogluon/artifacts/plots/confusion_matrix.png:
           cache: false
