@@ -72,7 +72,7 @@ jobs:
         working-directory: pipeline
         run: |
           source .venv/bin/activate
-          dvc init --no-scm
+          dvc init --no-scm -f
           dvc config core.analytics false
           dvc config core.autostage true
           dvc config hydra.enabled true
