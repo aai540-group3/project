@@ -71,7 +71,7 @@ jobs:
           TABLE_NAME: ${{ secrets.TABLE_NAME }}
           BUCKET_KEYS: ${{ secrets.BUCKET_KEYS }}
         run: |
-          dvc pull && dvc repro
+          dvc repro
 
       - name: Push to DVC Remotes
         if: always()
