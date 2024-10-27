@@ -37,7 +37,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Set up Python
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
@@ -53,28 +53,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-venv-
 
-      - name: Setup Virtual Environment
-        working-directory: pipeline
-        if: steps.cache-venv.outputs.cache-hit != 'true'
-        run: |
-          python3 -m venv .venv
-          pip install uv
-
       - name: Install Python Dependencies
         working-directory: pipeline
         run: |
-          source .venv/bin/activate
-          pip install --upgrade pip
-          uv pip install -r requirements.txt
+          pip install dvc
 
       - name: Configure DVC
         working-directory: pipeline
         run: |
-          source .venv/bin/activate
           dvc init --no-scm -f
           dvc config core.analytics false
           dvc config core.autostage true
-          dvc config hydra.enabled true
           dvc config studio.url https://studio.iterative.ai
           dvc remote add -f datasets_remote ${{ secrets.DATASETS_REMOTE }} -d
           dvc remote add -f models_remote ${{ secrets.MODELS_REMOTE }}
@@ -95,14 +84,12 @@ jobs:
           TABLE_NAME: ${{ secrets.TABLE_NAME }}
           BUCKET_KEYS: ${{ secrets.BUCKET_KEYS }}
         run: |
-          source .venv/bin/activate
           dvc repro -f
 
       - name: Push to DVC Remotes
         if: always()
         working-directory: pipeline
         run: |
-          source .venv/bin/activate
           dvc push
 
       - name: Configure Git
