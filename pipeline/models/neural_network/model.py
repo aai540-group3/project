@@ -481,8 +481,8 @@ def quick_run():
         "model": {
             "target": "readmitted",
             "random_state": 42,
-            "optimization_trials": 10,
-            "cv_folds": 2,
+            "optimization_trials": 3,
+            "cv_folds": 1,
         },
         "splits": {
             "test_size": 0.2,
@@ -491,16 +491,16 @@ def quick_run():
         },
         "optimization": {
             "param_space": {
-                "n_layers": {"low": 2, "high": 3},
-                "units_first": {"low": 32, "high": 128, "step": 32},
-                "units_factor": {"low": 0.6, "high": 0.8},
-                "dropout": {"low": 0.2, "high": 0.4},
+                "n_layers": {"low": 2, "high": 2},
+                "units_first": {"low": 32, "high": 64, "step": 16},
+                "units_factor": {"low": 0.7, "high": 0.8},
+                "dropout": {"low": 0.2, "high": 0.3},
                 "learning_rate": {
                     "low": 1e-3,
                     "high": 1e-2,
                     "log": True,
                 },
-                "batch_size": [32, 64],
+                "batch_size": [32],
                 "activation": ["relu"],
                 "optimizer": ["adam"],
             }
