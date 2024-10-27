@@ -10,8 +10,6 @@ on:
       - "scripts/**"
       - "Makefile"
       - "manifest.json"
-      - "requirements-pipeline.txt"
-      - "SECURITY.md"
       - "setup.sh"
   repository_dispatch:
     types:

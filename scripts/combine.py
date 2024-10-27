@@ -161,7 +161,6 @@ EXCLUDE_FILES = {
     "combined.txt",
     "LICENSE",
     "model.pkl",
-    "README.md",
     "requirements-dev.txt",
     "requirements.txt",
     "Thumbs.db",
@@ -171,7 +170,8 @@ EXCLUDE_FILES = {
 }
 
 EXCLUDE_FOLDERS = {
-    "LightGBM_BAG_L1" "__pycache__",
+    "LightGBM_BAG_L1",
+    "__pycache__",
     ".dvc",
     ".ruff_cache",
     ".temp",
@@ -187,7 +187,6 @@ EXCLUDE_FOLDERS = {
     "outputs",
     "processed",
     "raw",
-    "reports",
     "temp",
     "templates",
     "terraform",
@@ -202,6 +201,7 @@ EXCLUDE_FOLDERPATHS = {
 
 EXCLUDE_PATTERNS = [
     r".*\.bbl",
+    r".*\.csv",
     r".*\.h5",
     r".*\.lock",
     r".*\.log",

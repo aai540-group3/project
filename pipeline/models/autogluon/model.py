@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from autogluon.tabular import TabularPredictor
-from dvclive import Live
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -23,14 +22,30 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 
-warnings.filterwarnings("ignore")
-np.random.seed(42)
+from dvclive import Live
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+warnings.filterwarnings("ignore")
+np.random.seed(42)
+
+# Set the style and font settings
+plt.style.use("seaborn-v0_8")
+sns.set_theme()
+
+plt.rcParams["figure.dpi"] = 300
+plt.rcParams["savefig.dpi"] = 300
+plt.rcParams["font.size"] = 12
+plt.rcParams["axes.labelsize"] = 12
+plt.rcParams["axes.titlesize"] = 14
+plt.rcParams["xtick.labelsize"] = 10
+plt.rcParams["ytick.labelsize"] = 10
+plt.rcParams["legend.fontsize"] = 10
+plt.rcParams["figure.titlesize"] = 16
 
 
 def main():
@@ -181,6 +196,25 @@ def main():
             use_bag_holdout=CONFIG["training"]["use_bag_holdout"],
             verbosity=2,
         )
+
+        # Generate model_info.txt
+        model_info = predictor.info()
+        with open(CONFIG["paths"]["artifacts"] / "model" / "model_info.txt", "w") as f:
+            f.write(json.dumps(model_info, indent=4))
+
+        # Generate Ensemble Model Visualization
+        try:
+            ensemble_plot_path = predictor.plot_ensemble_model(
+                filename=CONFIG["paths"]["artifacts"]
+                / "plots"
+                / "best_model_architecture.png"
+            )
+            logger.info(f"Saved ensemble model visualization to: {ensemble_plot_path}")
+        except ImportError:
+            logger.warning(
+                "Could not generate ensemble model visualization. "
+                "Ensure graphviz and pygraphviz are installed."
+            )
 
         # Get predictions
         best_model_name = predictor.get_model_best()
