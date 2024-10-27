@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from feast import Entity, Feature, FeatureStore, FeatureView, FileSource, ValueType
 from sklearn.preprocessing import StandardScaler
+import feast
 
 # Configure logging
 logging.basicConfig(
@@ -359,11 +360,11 @@ def main():
 
         # 14. Set up Feast feature store
         logger.info("Setting up Feast feature store...")
-        patient = Entity(
+        patient = feast.Entity(
             name="id", value_type=ValueType.INT64, description="Patient ID"
         )
 
-        data_source = FileSource(
+        data_source = feast.FileSource(
             path=os.path.abspath(featured_data_path),
             event_timestamp_column="event_timestamp",
             created_timestamp_column="created_timestamp",
@@ -379,7 +380,7 @@ def main():
                 )
                 features.append(Feature(name=col, dtype=dtype))
 
-        feature_view = FeatureView(
+        feature_view = feast.FeatureView(
             name="diabetes_features",
             entities=["id"],
             ttl=timedelta(days=365 * 10),
@@ -388,7 +389,7 @@ def main():
             online=True,
         )
 
-        store = FeatureStore(repo_path=".")
+        store = feast.FeatureStore(repo_path=".")
         store.apply([patient, feature_view])
 
         # 15. Materialize features
