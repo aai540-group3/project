@@ -115,18 +115,32 @@ def train_autogluon(CONFIG):
             problem_type=CONFIG["model"]["problem_type"],
         )
 
-        predictor.fit(
-            train_data=train_data,
-            tuning_data=val_data,
-            time_limit=CONFIG["training"]["time_limit"],
-            hyperparameters=CONFIG["hyperparameters"],
-            presets=CONFIG["model"]["presets"],
-            num_bag_folds=CONFIG["training"]["bag_folds"],
-            num_stack_levels=CONFIG["training"]["stack_levels"],
-            use_bag_holdout=CONFIG["training"]["use_bag_holdout"],
-            verbosity=2,
-            **CONFIG["training"]["extra_params"],
-        )
+        if CONFIG["training"]["use_bag_holdout"]:
+            predictor.fit(
+                train_data=train_data,
+                tuning_data=val_data,
+                time_limit=CONFIG["training"]["time_limit"],
+                hyperparameters=CONFIG["hyperparameters"],
+                presets=CONFIG["model"]["presets"],
+                num_bag_folds=CONFIG["training"]["bag_folds"],
+                num_stack_levels=CONFIG["training"]["stack_levels"],
+                use_bag_holdout=CONFIG["training"]["use_bag_holdout"],
+                verbosity=2,
+                **CONFIG["training"]["extra_params"],
+            )
+        else:
+            combined_data = pd.concat([train_data, val_data], axis=0)
+            predictor.fit(
+                train_data=combined_data,
+                time_limit=CONFIG["training"]["time_limit"],
+                hyperparameters=CONFIG["hyperparameters"],
+                presets=CONFIG["model"]["presets"],
+                num_bag_folds=CONFIG["training"]["bag_folds"],
+                num_stack_levels=CONFIG["training"]["stack_levels"],
+                use_bag_holdout=CONFIG["training"]["use_bag_holdout"],
+                verbosity=2,
+                **CONFIG["training"]["extra_params"],
+            )
 
         # Generate model_info.txt
         model_info = predictor.info()
