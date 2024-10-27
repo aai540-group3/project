@@ -1,3 +1,4 @@
-protobuf-compiler
-libprotobuf-dev
 graphviz
+libgraphviz-dev
+libprotobuf-dev
+protobuf-compiler
