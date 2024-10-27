@@ -27,7 +27,6 @@ seaborn
 shap
 tenacity
 tensorflow
-tensorflow-addons
 tensorflow-cpu
 ucimlrepo
 virtualenv
