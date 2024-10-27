@@ -39,8 +39,8 @@ from tensorflow.keras.utils import plot_model
 from dvclive import Live
 
 
-def main():
-    """Main function implementing the complete neural network pipeline."""
+def train_neural_network(CONFIG):
+    """Trains a neural network model based on provided configuration."""
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
     )
@@ -62,52 +62,6 @@ def main():
     plt.rcParams["ytick.labelsize"] = 10
     plt.rcParams["legend.fontsize"] = 10
     plt.rcParams["figure.titlesize"] = 16
-
-    CONFIG = {
-        "paths": {
-            "data": "data/interim/data_featured.parquet",
-            "artifacts": Path("models/neural_network/artifacts"),
-            "subdirs": ["model", "metrics", "plots"],
-        },
-        "model": {
-            "target": "readmitted",
-            "random_state": 42,
-            "optimization_trials": 50,
-            "cv_folds": 3,
-        },
-        "splits": {
-            "test_size": 0.2,
-            "val_size": 0.25,
-            "random_state": 42,
-        },
-        "optimization": {
-            "param_space": {
-                "n_layers": {"low": 2, "high": 4},
-                "units_first": {"low": 32, "high": 256, "step": 32},
-                "units_factor": {"low": 0.5, "high": 0.8},
-                "dropout": {"low": 0.1, "high": 0.5},
-                "learning_rate": {"low": 1e-4, "high": 1e-2, "log": True},
-                "batch_size": [32, 64, 128, 256],
-                "activation": ["relu", "selu"],
-                "optimizer": ["adam", "sgd"],
-            }
-        },
-        "plots": {
-            "style": "seaborn-v0_8-bright",
-            "context": "paper",
-            "font_scale": 1.2,
-            "figure": {
-                "figsize": (10, 6),
-                "dpi": 300,
-            },
-            "colors": {
-                "primary": "#2196F3",
-                "secondary": "#FF9800",
-                "error": "#F44336",
-                "success": "#4CAF50",
-            },
-        },
-    }
 
     # Clean up and recreate artifact directories
     if CONFIG["paths"]["artifacts"].exists():
@@ -303,7 +257,7 @@ def main():
                 X_train_scaled,
                 y_train,
                 validation_data=(X_val_scaled, y_val),
-                epochs=50,
+                epochs=CONFIG["training"]["epochs"],
                 batch_size=batch_size,
                 callbacks=[early_stopping],
                 verbose=0,
@@ -382,7 +336,7 @@ def main():
             X_train_scaled,
             y_train,
             validation_data=(X_val_scaled, y_val),
-            epochs=100,
+            epochs=CONFIG["training"]["epochs"],
             batch_size=batch_size,
             callbacks=[early_stopping, dvc_callback],
             verbose=1,
@@ -870,7 +824,8 @@ def train_logistic_regression(CONFIG):
 
 
 def quick_run():
-    """Runs the logistic regression pipeline with quick configuration."""
+    """Runs an ultra-minimal configuration for instant feedback.
+    Optimized for absolute minimum runtime - useful for code testing and debugging."""
     CONFIG = {
         "paths": {
             "data": "data/interim/data_featured.parquet",
@@ -880,8 +835,13 @@ def quick_run():
         "model": {
             "target": "readmitted",
             "random_state": 42,
-            "optimization_trials": 1,
-            "cv_folds": 1,
+            "optimization_trials": 1,  # Single trial
+            "cv_folds": 1,  # No cross-validation
+        },
+        "training": {
+            "epochs": 1,  # Single epoch
+            "patience": 1,  # Minimal early stopping
+            "batch_size": 512  # Large batch size for faster processing
         },
         "splits": {
             "test_size": 0.2,
@@ -890,20 +850,27 @@ def quick_run():
         },
         "optimization": {
             "param_space": {
-                "C": {"low": 1e-1, "high": 1e1, "log": True},
-                "penalty": ["l1", "l2"],
+                # Fixed parameters - no real optimization
+                "C": {"low": 1.0, "high": 1.0, "log": True},
+                "penalty": ["l2"],  # Single option
                 "solver": ["saga"],
-                "l1_ratio": {"low": 0.0, "high": 1.0},
+                "l1_ratio": {"low": 0.5, "high": 0.5},  # Fixed value
+                # Minimal neural network settings
+                "batch_size": [512],  # Single large batch size
+                "learning_rate": {"low": 0.01, "high": 0.01, "log": True},  # Fixed
+                "n_layers": {"low": 1, "high": 1},  # Single layer
+                "units_first": {"low": 32, "high": 32, "step": 32},  # Fixed
+                "units_factor": {"low": 0.5, "high": 0.5},  # Fixed
+                "dropout": {"low": 0.1, "high": 0.1},  # Fixed
+                "activation": ["relu"],  # Single option
+                "optimizer": ["adam"]  # Single option
             }
         },
         "plots": {
             "style": "seaborn-v0_8-bright",
             "context": "paper",
             "font_scale": 1.2,
-            "figure": {
-                "figsize": (10, 6),
-                "dpi": 300,
-            },
+            "figure": {"figsize": (10, 6), "dpi": 300},
             "colors": {
                 "primary": "#2196F3",
                 "secondary": "#FF9800",
@@ -914,9 +881,9 @@ def quick_run():
     }
     train_logistic_regression(CONFIG)
 
-
 def full_run():
-    """Runs the logistic regression pipeline with the full configuration."""
+    """Runs a comprehensive training configuration optimized for model performance.
+    Includes extensive hyperparameter search and validation."""
     CONFIG = {
         "paths": {
             "data": "data/interim/data_featured.parquet",
@@ -926,8 +893,13 @@ def full_run():
         "model": {
             "target": "readmitted",
             "random_state": 42,
-            "optimization_trials": 50,
-            "cv_folds": 3,
+            "optimization_trials": 100,  # Extensive search
+            "cv_folds": 5,  # Robust cross-validation
+        },
+        "training": {
+            "epochs": 100,  # Thorough training
+            "patience": 10,  # Patient early stopping
+            "batch_size": 64  # Balanced batch size
         },
         "splits": {
             "test_size": 0.2,
@@ -936,20 +908,27 @@ def full_run():
         },
         "optimization": {
             "param_space": {
-                "C": {"low": 1e-4, "high": 1e2, "log": True},
+                # Wide parameter search space
+                "C": {"low": 1e-4, "high": 1e4, "log": True},
                 "penalty": ["l1", "l2", "elasticnet", None],
                 "solver": ["saga"],
                 "l1_ratio": {"low": 0.0, "high": 1.0},
+                # Comprehensive neural network parameters
+                "batch_size": [32, 64, 128, 256],
+                "learning_rate": {"low": 1e-5, "high": 1e-2, "log": True},
+                "n_layers": {"low": 1, "high": 5},
+                "units_first": {"low": 32, "high": 256, "step": 32},
+                "units_factor": {"low": 0.25, "high": 1.0},
+                "dropout": {"low": 0.1, "high": 0.5},
+                "activation": ["relu", "elu", "selu"],
+                "optimizer": ["adam", "sgd"]
             }
         },
         "plots": {
             "style": "seaborn-v0_8-bright",
             "context": "paper",
             "font_scale": 1.2,
-            "figure": {
-                "figsize": (10, 6),
-                "dpi": 300,
-            },
+            "figure": {"figsize": (10, 6), "dpi": 300},
             "colors": {
                 "primary": "#2196F3",
                 "secondary": "#FF9800",

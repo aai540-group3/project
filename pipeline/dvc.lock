@@ -11,8 +11,8 @@ stages:
     deps:
     - path: requirements.txt
       hash: md5
-      md5: 19831d93db18b11d973a80076186132a
-      size: 400
+      md5: 1759e119dacdc25fb158aeef9df29b65
+      size: 409
     - path: src/utils.py
       hash: md5
       md5: fa0c7868e939589e8646c7275141ddcc

@@ -50,6 +50,11 @@ plt.rcParams["figure.titlesize"] = 16
 
 def train_autogluon(CONFIG):
     """Trains AutoGluon models based on provided configuration."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
+    logger = logging.getLogger(__name__)
 
     # Clean up and recreate artifact directories
     if CONFIG["paths"]["artifacts"].exists():
@@ -132,7 +137,7 @@ def train_autogluon(CONFIG):
         else:
             combined_data = pd.concat([train_data, val_data], axis=0)
             predictor.fit(
-                train_data=combined_data,  # Use combined data
+                train_data=combined_data,
                 time_limit=CONFIG["training"]["time_limit"],
                 hyperparameters=CONFIG["hyperparameters"],
                 presets=CONFIG["model"]["presets"],
@@ -143,24 +148,22 @@ def train_autogluon(CONFIG):
                 **CONFIG["training"]["extra_params"],
             )
 
-        # Generate model_info.txt
+        # Save model info with proper serialization
         model_info = predictor.info()
-        with open(CONFIG["paths"]["artifacts"] / "model" / "model_info.txt", "w") as f:
-            f.write(json.dumps(model_info, indent=4))
+        serializable_info = {
+            "type_of_learner": str(model_info.get("type_of_learner", "")),
+            "model_types": str(model_info.get("model_types", [])),
+            "model_performance": str(model_info.get("model_performance", {})),
+            "model_best": str(model_info.get("model_best", "")),
+            "model_paths": str(model_info.get("model_paths", {})),
+            "model_fit_times": str(model_info.get("model_fit_times", {})),
+            "model_pred_times": str(model_info.get("model_pred_times", {})),
+            "num_bag_folds": str(model_info.get("num_bag_folds", "")),
+            "max_stack_level": str(model_info.get("max_stack_level", "")),
+        }
 
-        # Generate Ensemble Model Visualization
-        try:
-            ensemble_plot_path = predictor.plot_ensemble_model(
-                filename=CONFIG["paths"]["artifacts"]
-                / "plots"
-                / "best_model_architecture.png"
-            )
-            logger.info(f"Saved ensemble model visualization to: {ensemble_plot_path}")
-        except ImportError:
-            logger.warning(
-                "Could not generate ensemble model visualization. "
-                "Ensure graphviz and pygraphviz are installed."
-            )
+        with open(CONFIG["paths"]["artifacts"] / "model" / "model_info.txt", "w") as f:
+            json.dump(serializable_info, f, indent=4)
 
         # Get predictions
         best_model_name = predictor.get_model_best()
@@ -195,35 +198,38 @@ def train_autogluon(CONFIG):
             json.dump(metrics, f, indent=4)
 
         # Feature importance
-        feature_importance = predictor.feature_importance(test_data)
-        feature_importance.to_csv(
-            CONFIG["paths"]["artifacts"] / "model" / "feature_importance.csv"
-        )
-        feature_importance_dict = feature_importance["importance"].to_dict()
+        try:
+            feature_importance = predictor.feature_importance(test_data)
+            feature_importance.to_csv(
+                CONFIG["paths"]["artifacts"] / "model" / "feature_importance.csv"
+            )
+            feature_importance_dict = feature_importance["importance"].to_dict()
 
-        # Generate plots
-        plt.style.use(CONFIG["plots"]["style"])
-        sns.set_context(
-            CONFIG["plots"]["context"], font_scale=CONFIG["plots"]["font_scale"]
-        )
+            # Generate plots
+            plt.style.use(CONFIG["plots"]["style"])
+            sns.set_context(
+                CONFIG["plots"]["context"], font_scale=CONFIG["plots"]["font_scale"]
+            )
 
-        # Feature Importance Plot
-        plt.figure(figsize=CONFIG["plots"]["figure"]["figsize"])
-        importance_data = pd.Series(feature_importance_dict).sort_values(
-            ascending=True
-        )[-20:]
-        sns.barplot(
-            x=importance_data.values, y=importance_data.index, palette="viridis"
-        )
-        plt.title("Feature Importance", pad=20)
-        plt.xlabel("Importance Score")
-        plt.tight_layout()
-        plt.savefig(
-            CONFIG["paths"]["artifacts"] / "plots" / "feature_importance.png",
-            bbox_inches="tight",
-            dpi=CONFIG["plots"]["figure"]["dpi"],
-        )
-        plt.close()
+            # Feature Importance Plot
+            plt.figure(figsize=CONFIG["plots"]["figure"]["figsize"])
+            importance_data = pd.Series(feature_importance_dict).sort_values(
+                ascending=True
+            )[-20:]  # Top 20 features
+            sns.barplot(
+                x=importance_data.values, y=importance_data.index, palette="viridis"
+            )
+            plt.title("Feature Importance", pad=20)
+            plt.xlabel("Importance Score")
+            plt.tight_layout()
+            plt.savefig(
+                CONFIG["paths"]["artifacts"] / "plots" / "feature_importance.png",
+                bbox_inches="tight",
+                dpi=CONFIG["plots"]["figure"]["dpi"],
+            )
+            plt.close()
+        except Exception as e:
+            logger.warning(f"Could not generate feature importance: {str(e)}")
 
         # Confusion Matrix
         plt.figure(figsize=CONFIG["plots"]["figure"]["figsize"])
@@ -287,43 +293,54 @@ def train_autogluon(CONFIG):
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
         logger.error("Full error:", exc_info=True)
+        live.end()
         raise
 
 
 def quick_run():
-    """Runs the AutoGluon pipeline with quick configuration."""
+    """Runs an ultra-minimal AutoGluon configuration for instant feedback.
+    Perfect for code testing, debugging, and development iterations."""
     CONFIG = {
         "training": {
-            "time_limit": 60,
-            "bag_folds": 2,
-            "stack_levels": 1,
+            "time_limit": 10,  # 10 seconds only
+            "bag_folds": 0,    # No bagging
+            "stack_levels": 0, # No stacking
             "use_bag_holdout": False,
-            "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
+            "splits": {
+                "train_test": 0.2,
+                "val_test": 0.5,
+                "random_state": 42
+            },
             "extra_params": {
-                "dynamic_stacking": True,
+                "dynamic_stacking": False,  # Disable dynamic stacking
+                "ds_args": {
+                    "enable_ray_logging": False  # Disable Ray logging
+                },
+                "num_gpus": 0,  # CPU only for testing
+                "feature_generator": None,  # Skip feature generation
+                "auto_stack": False,  # Disable auto stacking
+                "cache_data": False,  # Disable caching
+                "save_space": True,  # Minimize disk usage
             },
         },
         "model": {
             "label": "readmitted",
             "eval_metric": "roc_auc",
             "problem_type": "binary",
-            "presets": "best_quality",
+            "presets": None,  # No presets to speed up
         },
         "hyperparameters": {
-            "GBM": [
+            "GBM": [  # Single lightweight GBM model
                 {
-                    "extra_trees": True,
-                    "ag_args": {"name_suffix": "ExtraTrees"},
+                    "extra_trees": False,  # Simpler model
+                    "ag_args": {"name_suffix": "Basic"},
                     "learning_rate": 0.1,
-                    "num_boost_round": 100,
-                    "num_leaves": 32,
+                    "num_boost_round": 10,  # Minimal iterations
+                    "num_leaves": 4,        # Tiny tree
+                    "deterministic": True,  # For reproducibility
+                    "early_stopping_rounds": 3,  # Quick stopping
                 },
             ],
-            "CAT": {
-                "iterations": 100,
-                "learning_rate": 0.1,
-                "depth": 4,
-            },
         },
         "paths": {
             "artifacts": Path("models/autogluon/artifacts"),
@@ -345,21 +362,36 @@ def quick_run():
     }
     train_autogluon(CONFIG)
 
-
 def full_run():
-    """Runs the AutoGluon pipeline with the full configuration."""
+    """Runs a comprehensive AutoGluon configuration optimized for model performance.
+    Includes extensive hyperparameter search and model stacking."""
     CONFIG = {
         "training": {
-            "time_limit": 7200,
-            "bag_folds": 5,
-            "stack_levels": 1,
+            "time_limit": 7200,  # 2 hours
+            "bag_folds": 5,    # K-fold bagging
+            "stack_levels": 2, # Multi-level stacking
             "use_bag_holdout": True,
-            "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
+            "splits": {
+                "train_test": 0.2,
+                "val_test": 0.5,
+                "random_state": 42
+            },
             "extra_params": {
-                "dynamic_stacking": True,
+                "dynamic_stacking": True,  # Enable dynamic stacking
+                "ds_args": {
+                    "enable_ray_logging": True,
+                    "time_limit_ratio": 0.25,  # DyStack time allocation
+                },
+                "num_gpus": -1,  # Use all available GPUs
+                "feature_generator": "auto",  # Automatic feature generation
+                "auto_stack": True,  # Enable auto stacking
+                "cache_data": True,  # Enable caching
+                "save_space": False,  # Prioritize performance over space
                 "hyperparameter_tune_kwargs": {
-                    "search_strategy": "grid_search",
-                    "n_jobs": 4,
+                    "search_strategy": "auto",
+                    "num_trials": 100,
+                    "scheduler": "local",
+                    "searcher": "random",
                 },
             },
         },
@@ -367,42 +399,78 @@ def full_run():
             "label": "readmitted",
             "eval_metric": "roc_auc",
             "problem_type": "binary",
-            "presets": "best_quality",
+            "presets": "best_quality",  # Use best quality preset
         },
         "hyperparameters": {
-            "GBM": [
+            "GBM": [  # LightGBM configurations
                 {
                     "extra_trees": True,
                     "ag_args": {"name_suffix": "ExtraTrees"},
                     "learning_rate": 0.05,
                     "num_boost_round": 500,
                     "num_leaves": 128,
+                    "feature_fraction": 0.8,
+                    "min_data_in_leaf": 20,
                 },
                 {
                     "learning_rate": 0.01,
                     "num_boost_round": 1000,
                     "num_leaves": 64,
+                    "feature_fraction": 0.9,
+                    "min_data_in_leaf": 10,
                 },
             ],
-            "CAT": {
+            "CAT": {  # CatBoost configurations
                 "iterations": 1000,
                 "learning_rate": 0.05,
                 "depth": 8,
+                "l2_leaf_reg": 3,
+                "random_strength": 1,
+                "min_data_in_leaf": 20,
             },
-            "XGB": {
+            "XGB": {  # XGBoost configurations
                 "learning_rate": 0.05,
                 "n_estimators": 500,
                 "max_depth": 8,
+                "subsample": 0.8,
+                "colsample_bytree": 0.8,
+                "min_child_weight": 3,
             },
-            "RF": [
-                {"criterion": "gini", "max_depth": 15},
-                {"criterion": "entropy", "max_depth": 15},
+            "RF": [  # Random Forest configurations
+                {
+                    "criterion": "gini",
+                    "max_depth": 15,
+                    "min_samples_split": 10,
+                    "min_samples_leaf": 5,
+                },
+                {
+                    "criterion": "entropy",
+                    "max_depth": 15,
+                    "min_samples_split": 15,
+                    "min_samples_leaf": 8,
+                },
             ],
-            "XT": {"n_estimators": 500, "max_depth": 15},
-            "NN_TORCH": {
+            "XT": {  # Extra Trees configurations
+                "n_estimators": 500,
+                "max_depth": 15,
+                "min_samples_split": 10,
+                "min_samples_leaf": 5,
+            },
+            "NN_TORCH": {  # Neural Network configurations
                 "num_epochs": 100,
                 "learning_rate": 0.001,
                 "dropout_prob": 0.1,
+                "weight_decay": 0.01,
+                "batch_size": 512,
+                "optimizer": "adam",
+                "activation": "relu",
+                "layers": [200, 100],
+            },
+            "FASTAI": {  # FastAI configurations
+                "layers": [200, 100],
+                "bs": 512,
+                "epochs": 50,
+                "lr": 0.01,
             },
         },
         "paths": {
@@ -424,7 +492,6 @@ def full_run():
         },
     }
     train_autogluon(CONFIG)
-
 
 if __name__ == "__main__":
     MODE = "quick"
