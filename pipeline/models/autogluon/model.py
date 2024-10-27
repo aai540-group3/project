@@ -126,6 +126,7 @@ def train_autogluon(CONFIG):
             num_stack_levels=CONFIG["training"]["stack_levels"],
             use_bag_holdout=CONFIG["training"]["use_bag_holdout"],
             verbosity=2,
+            **CONFIG["training"]["extra_params"]
         )
 
         # Generate model_info.txt
@@ -289,6 +290,7 @@ def quick_run():
             "stack_levels": 1,
             "use_bag_holdout": False,
             "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
+            "extra_params": {"dynamic_stacking": False}
         },
         "model": {
             "label": "readmitted",
