@@ -165,6 +165,20 @@ def train_autogluon(CONFIG):
         with open(CONFIG["paths"]["artifacts"] / "model" / "model_info.txt", "w") as f:
             json.dump(serializable_info, f, indent=4)
 
+        # Generate Ensemble Model Visualization
+        try:
+            ensemble_plot_path = predictor.plot_ensemble_model(
+                filename=CONFIG["paths"]["artifacts"]
+                / "plots"
+                / "best_model_architecture.png"
+            )
+            logger.info(f"Saved ensemble model visualization to: {ensemble_plot_path}")
+        except ImportError:
+            logger.warning(
+                "Could not generate ensemble model visualization. "
+                "Ensure graphviz and pygraphviz are installed."
+            )
+
         # Get predictions
         best_model_name = predictor.get_model_best()
         logger.info(f"Best Model: {best_model_name}")

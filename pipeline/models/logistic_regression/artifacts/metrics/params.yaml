@@ -1,4 +1,4 @@
-data_hash: 363d0d01b72eb50fbdbdd9f00e1f52a7
+data_hash: e8501a4bee4256b1999b0985ef9d5707
 n_samples: 100121
 n_features: 95
 class_distribution_before_smote:
@@ -13,6 +13,3 @@ train_size: 60072
 val_size: 20024
 test_size: 20025
 train_size_after_smote: 106514
-best_C: '1.0'
-best_penalty: l2
-best_solver: saga

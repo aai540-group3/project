@@ -77,7 +77,7 @@ stages:
     outs:
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: de90f78babb366d8b5e28180feb10cfc
+      md5: e8501a4bee4256b1999b0985ef9d5707
       size: 4971379
   explore:
     cmd: .venv/bin/python src/explore.py
