@@ -56,8 +56,11 @@ jobs:
         run: |
           # Print the output of jq to debug
           echo "Files from manifest.json: $(jq -r '.files[]' $MANIFEST_FILE)"
-          files_to_zip=$(jq -r '.files[]' $MANIFEST_FILE | paste -s -d ' ')
-          pigz -r -9 manifest_files.zip $MANIFEST_FILE $files_to_zip
+          files_to_zip=$(jq -r '.files | join(" ")' $MANIFEST_FILE)
+          pigz -r -9 manifest_files.zip $MANIFEST_FILE pipeline $files_to_zip || {
+            echo "Error creating manifest_files.zip"
+            exit 1
+          }
 
       - name: Compute Current Hash
         id: compute_hash
