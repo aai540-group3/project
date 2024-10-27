@@ -260,7 +260,7 @@ def train_neural_network(CONFIG):
                 X_train_scaled,
                 y_train,
                 validation_data=(X_val_scaled, y_val),
-                epochs=50,
+                epochs=CONFIG["training"]["epochs"],
                 batch_size=batch_size,
                 callbacks=[early_stopping],
                 verbose=0,
@@ -339,7 +339,7 @@ def train_neural_network(CONFIG):
             X_train_scaled,
             y_train,
             validation_data=(X_val_scaled, y_val),
-            epochs=100,
+            epochs=CONFIG["training"]["epochs"],
             batch_size=batch_size,
             callbacks=[early_stopping, dvc_callback],
             verbose=1,
@@ -521,6 +521,7 @@ def quick_run():
                 "success": "#4CAF50",
             },
         },
+        "training": {"epochs": 1},
     }
     train_neural_network(CONFIG)
 
@@ -571,6 +572,7 @@ def full_run():
                 "success": "#4CAF50",
             },
         },
+        "training": {"epochs": 100},
     }
     train_neural_network(CONFIG)
 
