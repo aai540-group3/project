@@ -96,12 +96,12 @@ jobs:
     if: needs.check-manifest.outputs.manifest_changed == 'true'
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 1
 
       - name: Cache Apt Archives
-        uses: actions/cache@v4.1.2
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
@@ -175,14 +175,14 @@ jobs:
           echo "Changes pushed successfully (or pull request created)."
 
       - name: Upload ZIP File as Artifact
-        uses: actions/upload-artifact@v4.4.3
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: Final_Project_Team_3_Deliverable_3
           path: Final_Project_Team_3_Deliverable_3.zip
 
       - name: Repository Dispatch
         if: env.CHANGED == 'true'
-        uses: peter-evans/repository-dispatch@v3.0.0
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: aai540-group3/project
