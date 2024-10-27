@@ -8,7 +8,7 @@ import pandas as pd
 import shap
 import tensorflow as tf
 from autogluon.tabular import TabularPredictor
-from seaborn import sns
+import seaborn as sns
 
 # Set the style and font settings
 plt.style.use("seaborn-v0_8")
