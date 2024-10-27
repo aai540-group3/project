@@ -80,16 +80,20 @@ def main():
     # Load test data for SHAP
     X_test = pd.read_parquet("data/processed/test.parquet")
 
-    # AutoGluon SHAP
+    # --- AutoGluon SHAP ---
     model_path = "models/autogluon/artifacts/model"
     predictor = TabularPredictor.load(model_path)
     explainer = shap.TreeExplainer(predictor)
     shap_values = explainer.shap_values(X_test)
     output_dir = "models/autogluon/artifacts/plots"
     os.makedirs(output_dir, exist_ok=True)
+
+    # SHAP Summary Plot (AutoGluon)
     shap.summary_plot(shap_values, X_test, show=False)
     plt.savefig(os.path.join(output_dir, "shap_summary.png"))
     plt.close()
+
+    # SHAP Force Plot (AutoGluon) - Example for first instance in X_test
     shap.force_plot(
         explainer.expected_value,
         shap_values[0, :],
@@ -100,16 +104,30 @@ def main():
     plt.savefig(os.path.join(output_dir, "shap_force_plot.png"))
     plt.close()
 
-    # Logistic Regression SHAP
+    # SHAP Importance Plot (AutoGluon)
+    shap.summary_plot(
+        shap_values,
+        X_test,
+        plot_type="bar",
+        show=False
+    )
+    plt.savefig(os.path.join(output_dir, "shap_importance.png"))
+    plt.close()
+
+    # --- Logistic Regression SHAP ---
     model_path = "models/logistic_regression/artifacts/model"
     model = joblib.load(os.path.join(model_path, "model.joblib"))
     explainer = shap.LinearExplainer(model, X_test)
     shap_values = explainer.shap_values(X_test)
     output_dir = "models/logistic_regression/artifacts/plots"
     os.makedirs(output_dir, exist_ok=True)
+
+    # SHAP Summary Plot (Logistic Regression)
     shap.summary_plot(shap_values, X_test, show=False)
     plt.savefig(os.path.join(output_dir, "shap_summary.png"))
     plt.close()
+
+    # SHAP Force Plot (Logistic Regression) - Example for first instance in X_test
     shap.force_plot(
         explainer.expected_value,
         shap_values[0, :],
@@ -120,16 +138,30 @@ def main():
     plt.savefig(os.path.join(output_dir, "shap_force_plot.png"))
     plt.close()
 
-    # Neural Network SHAP
+    # SHAP Importance Plot (Logistic Regression) - Using bar plot for consistency
+    shap.summary_plot(
+        shap_values,
+        X_test,
+        plot_type="bar",
+        show=False
+    )
+    plt.savefig(os.path.join(output_dir, "shap_importance.png"))
+    plt.close()
+
+    # --- Neural Network SHAP ---
     model_path = "models/neural_network/artifacts/model"
     model = tf.keras.models.load_model(os.path.join(model_path, "model.h5"))
     explainer = shap.DeepExplainer(model, X_test)
     shap_values = explainer.shap_values(X_test)
     output_dir = "models/neural_network/artifacts/plots"
     os.makedirs(output_dir, exist_ok=True)
+
+    # SHAP Summary Plot (Neural Network)
     shap.summary_plot(shap_values, X_test, show=False)
     plt.savefig(os.path.join(output_dir, "shap_summary.png"))
     plt.close()
+
+    # SHAP Force Plot (Neural Network) - Example for first instance in X_test
     shap.force_plot(
         explainer.expected_value,
         shap_values[0, :],
@@ -138,6 +170,16 @@ def main():
         matplotlib=True,
     )
     plt.savefig(os.path.join(output_dir, "shap_force_plot.png"))
+    plt.close()
+
+    # SHAP Importance Plot (Neural Network)
+    shap.summary_plot(
+        shap_values,
+        X_test,
+        plot_type="bar",
+        show=False
+    )
+    plt.savefig(os.path.join(output_dir, "shap_importance.png"))
     plt.close()
 
     logger.info("Visualization and SHAP explanations completed.")
