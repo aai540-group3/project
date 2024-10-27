@@ -259,7 +259,7 @@ def train_neural_network(CONFIG):
                 X_train_scaled,
                 y_train,
                 validation_data=(X_val_scaled, y_val),
-                epochs=50,
+                epochs=CONFIG["training"]["epochs"],
                 batch_size=batch_size,
                 callbacks=[early_stopping],
                 verbose=0,
@@ -338,7 +338,7 @@ def train_neural_network(CONFIG):
             X_train_scaled,
             y_train,
             validation_data=(X_val_scaled, y_val),
-            epochs=100,
+            epochs=CONFIG["training"]["epochs"],
             batch_size=batch_size,
             callbacks=[early_stopping, dvc_callback],
             verbose=1,
@@ -484,6 +484,9 @@ def quick_run():
             "optimization_trials": 1,
             "cv_folds": 1,
         },
+        "training": {
+            "epochs": 1
+        },
         "splits": {
             "test_size": 0.2,
             "val_size": 0.25,
@@ -537,6 +540,9 @@ def full_run():
             "random_state": 42,
             "optimization_trials": 50,
             "cv_folds": 3,
+        },
+        "training": {
+            "epochs": 100
         },
         "splits": {
             "test_size": 0.2,
