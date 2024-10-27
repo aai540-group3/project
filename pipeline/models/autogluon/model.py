@@ -285,12 +285,12 @@ def quick_run():
     """Runs the AutoGluon pipeline with quick configuration."""
     CONFIG = {
         "training": {
-            "time_limit": 1,
+            "time_limit": 120,
             "bag_folds": 2,
             "stack_levels": 1,
             "use_bag_holdout": False,
             "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
-            "extra_params": {"dynamic_stacking": False}
+            "extra_params": {"dynamic_stacking": True, "n_jobs": 4}
         },
         "model": {
             "label": "readmitted",
@@ -313,16 +313,6 @@ def quick_run():
                 "learning_rate": 0.1,
                 "depth": 4,
             },
-            "XGB": {
-                "learning_rate": 0.1,
-                "n_estimators": 100,
-                "max_depth": 4,
-            },
-            "RF": {
-                "criterion": "gini",
-                "max_depth": 5,
-            },
-            "XT": {"n_estimators": 100, "max_depth": 5},
         },
         "paths": {
             "artifacts": Path("models/autogluon/artifacts"),
