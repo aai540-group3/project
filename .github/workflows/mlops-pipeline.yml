@@ -58,19 +58,6 @@ jobs:
         run: |
           pip install dvc[all]
 
-      - name: Configure DVC
-        working-directory: pipeline
-        run: |
-          dvc init --no-scm -f
-          dvc config core.analytics false
-          dvc config core.autostage true
-          dvc config studio.url https://studio.iterative.ai
-          dvc remote add -f datasets_remote ${{ secrets.DATASETS_REMOTE }} -d
-          dvc remote add -f models_remote ${{ secrets.MODELS_REMOTE }}
-          dvc remote modify datasets_remote region ${{ secrets.AWS_DEFAULT_REGION }}
-          dvc remote modify models_remote region ${{ secrets.AWS_DEFAULT_REGION }}
-          dvc remote list
-
       - name: Run DVC Pipeline
         working-directory: pipeline
         env:
