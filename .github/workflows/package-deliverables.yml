@@ -57,7 +57,12 @@ jobs:
           # Print the output of jq to debug
           echo "Files from manifest.json: $(jq -r '.files[]' $MANIFEST_FILE)"
           files_to_zip=$(jq -r '.files | join(" ")' $MANIFEST_FILE)
-          pigz -r -9 manifest_files.zip $MANIFEST_FILE pipeline $files_to_zip || {
+
+          # Find files in the root directory
+          root_files=$(find . -maxdepth 1 -type f -not -name manifest_files.zip -print0 | xargs -0 -I {} echo "{}" )
+
+          # Combine root files and files in pipeline
+          pigz -r -9 manifest_files.zip $MANIFEST_FILE $root_files pipeline $files_to_zip || {
             echo "Error creating manifest_files.zip"
             exit 1
           }
