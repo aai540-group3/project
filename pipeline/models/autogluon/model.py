@@ -339,11 +339,15 @@ def full_run():
     """Runs the AutoGluon pipeline with the full configuration."""
     CONFIG = {
         "training": {
-            "time_limit": 7200,
-            "bag_folds": 5,
+            "time_limit": 120,
+            "bag_folds": 2,
             "stack_levels": 1,
-            "use_bag_holdout": True,
+            "use_bag_holdout": False,
             "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
+            "extra_params": {"dynamic_stacking": True,
+                             "hyperparameter_tune_kwargs": {"search_strategy": "grid_search",
+                                                           "n_jobs": 4}
+                            }
         },
         "model": {
             "label": "readmitted",

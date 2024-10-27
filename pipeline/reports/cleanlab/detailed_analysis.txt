@@ -2,24 +2,24 @@ Cleanlab Analysis Report
 =======================
 
 1. Overall Statistics
-Total label issues detected: 7422
+Total label issues detected: 8029
 Percentage of dataset: 100.00%
 
 2. Confidence Statistics
-mean_confidence: 0.845
-median_confidence: 0.848
-min_confidence: 0.500
-max_confidence: 0.943
+mean_confidence: 0.839
+median_confidence: 0.839
+min_confidence: 0.503
+max_confidence: 0.931
 
 3. Misclassification Patterns
 predicted_label   0     1   All
 actual_label                   
-0                 0  7398  7398
-1                24     0    24
-All              24  7398  7422
+0                 0  8013  8013
+1                16     0    16
+All              16  8013  8029
 
 4. High Confidence Issues
-Number of high confidence issues: 1071
+Number of high confidence issues: 603
 
 5. Recommendations
 - Review high confidence issues first

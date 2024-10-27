@@ -391,8 +391,8 @@ def quick_run():
         "model": {
             "target": "readmitted",
             "random_state": 42,
-            "optimization_trials": 10,  # Reduced trials for quick run
-            "cv_folds": 2,  # Reduced folds for quick run
+            "optimization_trials": 5,
+            "cv_folds": 2,
         },
         "splits": {
             "test_size": 0.2,
@@ -401,8 +401,8 @@ def quick_run():
         },
         "optimization": {
             "param_space": {
-                "C": {"low": 1e-2, "high": 1e1, "log": True},  # Reduced search space
-                "penalty": ["l1", "l2"],  # Fewer penalty options
+                "C": {"low": 1e-1, "high": 1e1, "log": True},
+                "penalty": ["l1", "l2"],
                 "solver": ["saga"],
                 "l1_ratio": {"low": 0.0, "high": 1.0},
             }

@@ -488,8 +488,8 @@ def quick_run():
         "model": {
             "target": "readmitted",
             "random_state": 42,
-            "optimization_trials": 10,  # Reduced trials for quick run
-            "cv_folds": 2,  # Reduced folds for quick run
+            "optimization_trials": 10,
+            "cv_folds": 2,
         },
         "splits": {
             "test_size": 0.2,
@@ -498,22 +498,18 @@ def quick_run():
         },
         "optimization": {
             "param_space": {
-                "n_layers": {"low": 2, "high": 3},  # Reduced layers for quick run
-                "units_first": {
-                    "low": 32,
-                    "high": 128,
-                    "step": 32,
-                },  # Smaller units range for quick run
-                "units_factor": {"low": 0.6, "high": 0.8},  # Reduced range for quick run
-                "dropout": {"low": 0.2, "high": 0.4},  # Reduced range for quick run
+                "n_layers": {"low": 2, "high": 3},
+                "units_first": {"low": 32, "high": 128, "step": 32},
+                "units_factor": {"low": 0.6, "high": 0.8},
+                "dropout": {"low": 0.2, "high": 0.4},
                 "learning_rate": {
                     "low": 1e-3,
                     "high": 1e-2,
                     "log": True,
-                },  # Reduced range for quick run
-                "batch_size": [32, 64, 128],  # Fewer batch sizes for quick run
-                "activation": ["relu"],  # Single activation for quick run
-                "optimizer": ["adam"],  # Single optimizer for quick run
+                },
+                "batch_size": [32, 64],
+                "activation": ["relu"],
+                "optimizer": ["adam"],
             }
         },
         "plots": {
