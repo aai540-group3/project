@@ -112,7 +112,7 @@ stages:
       - data/interim/data_featured.parquet
       - requirements-frozen.txt
     outs:
-      - models/neural_network/artifacts/model/model.h5:
+      - models/neural_network/artifacts/model/model.keras:
           cache: true
       - models/neural_network/artifacts/model/model_summary.txt:
           cache: true
