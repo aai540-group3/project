@@ -1,0 +1,5 @@
+outs:
+- md5: 326b9cdfb3a6b921db7a1ddefd6c4727
+  size: 19953
+  hash: md5
+  path: learner.pkl

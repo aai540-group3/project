@@ -1,0 +1,5 @@
+outs:
+- md5: 99c217ae7835e50992aedfcdc2e629b6
+  size: 726
+  hash: md5
+  path: predictor.pkl
