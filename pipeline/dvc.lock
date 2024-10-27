@@ -235,3 +235,18 @@ stages:
       hash: md5
       md5: 495bf7a4ad0fc161c91a663531b153ca
       size: 8410
+  train_neural_network:
+    cmd: .venv/bin/python models/neural_network/model.py
+    deps:
+    - path: data/interim/data_featured.parquet
+      hash: md5
+      md5: bcfcb4257ebc5523176cabc88c2278c3
+      size: 4971381
+    - path: models/neural_network/model.py
+      hash: md5
+      md5: e0dab3b3599ff9845ddc32e38cfed965
+      size: 20372
+    - path: requirements-frozen.txt
+      hash: md5
+      md5: 495bf7a4ad0fc161c91a663531b153ca
+      size: 8410
