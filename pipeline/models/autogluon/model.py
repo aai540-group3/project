@@ -199,8 +199,13 @@ def main():
 
         # Generate model_info.txt
         model_info = predictor.info()
+
+        # Custom serializer to handle non-serializable objects
+        def default_serializer(obj):
+            return str(obj)
+
         with open(CONFIG["paths"]["artifacts"] / "model" / "model_info.txt", "w") as f:
-            f.write(json.dumps(model_info, indent=4))
+            json.dump(model_info, f, indent=4, default=default_serializer)
 
         # Generate Ensemble Model Visualization
         try:

@@ -50,15 +50,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
-          sudo apt-get install pigz jq
+          sudo apt-get install -y jq zip
 
       - name: Create Manifest Zip File
         run: |
-          # Print the output of jq to debug
-          echo "Files from manifest.json: $(jq -r '.files[]' $MANIFEST_FILE)"
-          files_to_zip=$(jq -r '.files | join(" ")' $MANIFEST_FILE)
+          echo "Files from manifest.json:"
+          jq -r '.files[]' "$MANIFEST_FILE"
 
-          pigz -r -9 $GITHUB_WORKSPACE/manifest_files.zip $GITHUB_WORKSPACE/$MANIFEST_FILE $files_to_zip || {
+          files_to_zip=$(jq -r '.files | @sh' "$MANIFEST_FILE")
+          echo "Zipping the following files: $files_to_zip"
+
+          # Use eval to correctly handle spaces in filenames
+          eval zip -r manifest_files.zip "$MANIFEST_FILE" $files_to_zip || {
             echo "Error creating manifest_files.zip"
             exit 1
           }
@@ -66,7 +69,7 @@ jobs:
       - name: Compute Current Hash
         id: compute_hash
         run: |
-          CURRENT_HASH=$(sha256sum $GITHUB_WORKSPACE/manifest_files.zip | awk '{print $1}')
+          CURRENT_HASH=$(sha256sum manifest_files.zip | awk '{print $1}')
           echo "CURRENT_HASH=$CURRENT_HASH" >> $GITHUB_ENV
 
       - name: Get Previous Hash
@@ -106,11 +109,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
-          sudo apt-get install pigz
+          sudo apt-get install -y jq zip
 
       - name: Zip Deliverables
         run: |
-          pigz -r -9 Final_Project_Team_3_Deliverable_3.zip $(jq -r '.files[]' $MANIFEST_FILE)
+          files_to_zip=$(jq -r '.files | @sh' "$MANIFEST_FILE")
+          echo "Zipping the following files: $files_to_zip"
+
+          # Use eval to correctly handle spaces in filenames
+          eval zip -r Final_Project_Team_3_Deliverable_3.zip $files_to_zip || {
+            echo "Error creating Final_Project_Team_3_Deliverable_3.zip"
+            exit 1
+          }
 
       - name: Get File Size
         id: get_file_size
@@ -126,8 +136,8 @@ jobs:
 
       - name: Update manifest.json with Hash and Size
         run: |
-          jq --arg FILEHASH "$FILEHASH" --arg FILESIZE "$FILESIZE" '.hash = $FILEHASH | .size = $FILESIZE' $MANIFEST_FILE > temp_manifest.json
-          mv temp_manifest.json $MANIFEST_FILE
+          jq --arg FILEHASH "$FILEHASH" --arg FILESIZE "$FILESIZE" '.hash = $FILEHASH | .size = $FILESIZE' "$MANIFEST_FILE" > temp_manifest.json
+          mv temp_manifest.json "$MANIFEST_FILE"
 
       - name: Configure Git
         run: |
@@ -137,7 +147,7 @@ jobs:
 
       - name: Push to Remote
         run: |
-          git add Final_Project_Team_3_Deliverable_3.zip $MANIFEST_FILE
+          git add Final_Project_Team_3_Deliverable_3.zip "$MANIFEST_FILE"
           if git diff --staged --quiet; then
             echo "No changes detected. Skipping commit and push."
             echo "CHANGED=false" >> $GITHUB_ENV
@@ -145,7 +155,7 @@ jobs:
             git stash
             git pull origin main
             git stash pop
-            git add Final_Project_Team_3_Deliverable_3.zip $MANIFEST_FILE
+            git add Final_Project_Team_3_Deliverable_3.zip "$MANIFEST_FILE"
             git commit -m "Update deliverables: Size ${FILESIZE} bytes"
             git push origin main || {
               echo "Push failed. Creating a pull request..."
