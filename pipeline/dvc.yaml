@@ -19,16 +19,23 @@ stages:
       - src/infrastruct.py
       - requirements-frozen.txt
 
-  ingest:
+  ingest_csv:
     cmd: .venv/bin/python src/ingest.py
     deps:
       - src/ingest.py
       - requirements-frozen.txt
     outs:
       - data/raw/data.csv
-      - data/raw/data.parquet
       - data/raw/metadata.json
       - data/raw/variables.json
+
+  ingest_parquet:
+    cmd: .venv/bin/python src/ingest.py
+    deps:
+      - src/ingest.py
+      - requirements-frozen.txt
+    outs:
+      - data/raw/data.parquet
 
   preprocess:
     cmd: .venv/bin/python src/preprocess.py

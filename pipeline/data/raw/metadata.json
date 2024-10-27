@@ -1,0 +1,73 @@
+{
+    "uci_id": 296,
+    "name": "Diabetes 130-US Hospitals for Years 1999-2008",
+    "repository_url": "https://archive.ics.uci.edu/dataset/296/diabetes+130-us+hospitals+for+years+1999-2008",
+    "data_url": "https://archive.ics.uci.edu/static/public/296/data.csv",
+    "abstract": "The dataset represents ten years (1999-2008) of clinical care at 130 US hospitals and integrated delivery networks. Each row concerns hospital records of patients diagnosed with diabetes, who underwent laboratory, medications, and stayed up to 14 days. The goal is to determine the early readmission of the patient within 30 days of discharge.\nThe problem is important for the following reasons. Despite high-quality evidence showing improved clinical outcomes for diabetic patients who receive various preventive and therapeutic interventions, many patients do not receive them. This can be partially attributed to arbitrary diabetes management in hospital environments, which fail to attend to glycemic control. Failure to provide proper diabetes care not only increases the managing costs for the hospitals (as the patients are readmitted) but also impacts the morbidity and mortality of the patients, who may face complications associated with diabetes.\n",
+    "area": "Health and Medicine",
+    "tasks": [
+        "Classification",
+        "Clustering"
+    ],
+    "characteristics": [
+        "Multivariate"
+    ],
+    "num_instances": 101766,
+    "num_features": 47,
+    "feature_types": [
+        "Categorical",
+        "Integer"
+    ],
+    "demographics": [
+        "Race",
+        "Gender",
+        "Age"
+    ],
+    "target_col": [
+        "readmitted"
+    ],
+    "index_col": [
+        "encounter_id",
+        "patient_nbr"
+    ],
+    "has_missing_values": "yes",
+    "missing_values_symbol": "NaN",
+    "year_of_dataset_creation": 2014,
+    "last_updated": "Tue Sep 24 2024",
+    "dataset_doi": "10.24432/C5230J",
+    "creators": [
+        "John Clore",
+        "Krzysztof Cios",
+        "Jon DeShazo",
+        "Beata Strack"
+    ],
+    "intro_paper": {
+        "ID": 225,
+        "type": "NATIVE",
+        "title": "Impact of HbA1c Measurement on Hospital Readmission Rates: Analysis of 70,000 Clinical Database Patient Record",
+        "authors": "Beata Strack, Jonathan DeShazo, Chris Gennings, Juan Olmo, Sebastian Ventura, Krzysztof Cios, John Clore",
+        "venue": "BioMed Research International, vol. 2014",
+        "year": 2014,
+        "journal": null,
+        "DOI": null,
+        "URL": "https://www.hindawi.com/journals/bmri/2014/781670/",
+        "sha": null,
+        "corpus": null,
+        "arxiv": null,
+        "mag": null,
+        "acl": null,
+        "pmid": null,
+        "pmcid": null
+    },
+    "additional_info": {
+        "summary": "The dataset represents ten years (1999-2008) of clinical care at 130 US hospitals and integrated delivery networks. It includes over 50 features representing patient and hospital outcomes. Information was extracted from the database for encounters that satisfied the following criteria.\n(1)\tIt is an inpatient encounter (a hospital admission).\n(2)\tIt is a diabetic encounter, that is, one during which any kind of diabetes was entered into the system as a diagnosis.\n(3)\tThe length of stay was at least 1 day and at most 14 days.\n(4)\tLaboratory tests were performed during the encounter.\n(5)\tMedications were administered during the encounter.\n\nThe data contains such attributes as patient number, race, gender, age, admission type, time in hospital, medical specialty of admitting physician, number of lab tests performed, HbA1c test result, diagnosis, number of medications, diabetic medications, number of outpatient, inpatient, and emergency visits in the year before the hospitalization, etc.",
+        "purpose": null,
+        "funded_by": null,
+        "instances_represent": "The instances represent hospitalized patient records diagnosed with diabetes.",
+        "recommended_data_splits": "No recommendation. The standard train-test split could be used. Can use three-way holdout split (i.e., train-validation-test) when doing model selection.",
+        "sensitive_data": "Yes. The dataset contains information about the age, gender, and race of the patients.",
+        "preprocessing_description": null,
+        "variable_info": "Detailed description of all the atrributes is provided in Table 1 Beata Strack, Jonathan P. DeShazo, Chris Gennings,  Juan L. Olmo, Sebastian Ventura,  Krzysztof J. Cios, and John N. Clore, \u201cImpact of HbA1c Measurement on Hospital Readmission Rates: Analysis of 70,000 Clinical Database Patient Records,\u201d BioMed Research International, vol. 2014, Article ID 781670, 11 pages, 2014.\n\nhttp://www.hindawi.com/journals/bmri/2014/781670/",
+        "citation": "Please cite:\nBeata Strack, Jonathan P. DeShazo, Chris Gennings, Juan L. Olmo, Sebastian Ventura, Krzysztof J. Cios, and John N. Clore, \u201cImpact of HbA1c Measurement on Hospital Readmission Rates: Analysis of 70,000 Clinical Database Patient Records,\u201d BioMed Research International, vol. 2014, Article ID 781670, 11 pages, 2014."
+    }
+}

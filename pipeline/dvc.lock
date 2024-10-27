@@ -35,30 +35,6 @@ stages:
       md5: 007ddab3349fca1540e75fc7add9923b
       size: 17745
       isexec: true
-  ingest:
-    cmd: .venv/bin/python src/ingest.py
-    deps:
-    - path: requirements-frozen.txt
-      hash: md5
-      md5: 495bf7a4ad0fc161c91a663531b153ca
-      size: 8410
-    - path: src/ingest.py
-      hash: md5
-      md5: 4834dee50d39bc8738573b1d25632ce3
-      size: 2691
-    outs:
-    - path: data/raw/data.csv
-      hash: md5
-      md5: 33411fa1536aaaadb24c0c1f2a8598b9
-      size: 16246860
-    - path: data/raw/metadata.json
-      hash: md5
-      md5: eb8bd36c2cc7a6284a657c63561e0225
-      size: 5125
-    - path: data/raw/variables.json
-      hash: md5
-      md5: c03764d3560b025c3f1291d585517221
-      size: 19001
   preprocess:
     cmd: .venv/bin/python src/preprocess.py
     deps:
