@@ -36,12 +36,12 @@ jobs:
       manifest_changed: ${{ steps.manifest_check.outputs.manifest_changed }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Cache Apt Archives
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        uses: actions/cache@v4
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
@@ -58,11 +58,10 @@ jobs:
           echo "Files from manifest.json: $(jq -r '.files[]' $MANIFEST_FILE)"
           files_to_zip=$(jq -r '.files | join(" ")' $MANIFEST_FILE)
 
-          # Find files in the root directory
-          root_files=$(find . -maxdepth 1 -type f -not -name manifest_files.zip -print0 | xargs -0 -I {} echo "{}" )
+          # Find all files (including root and pipeline)
+          all_files=$(find $GITHUB_WORKSPACE -type f -not -name manifest_files.zip -print0 | xargs -0 -I {} echo "{}" )
 
-          # Combine root files and files in pipeline
-          pigz -r -9 manifest_files.zip $MANIFEST_FILE $root_files pipeline $files_to_zip || {
+          pigz -r -9 manifest_files.zip $MANIFEST_FILE $all_files || {
             echo "Error creating manifest_files.zip"
             exit 1
           }
@@ -96,12 +95,12 @@ jobs:
     if: needs.check-manifest.outputs.manifest_changed == 'true'
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
       - name: Cache Apt Archives
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        uses: actions/cache@v4
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}

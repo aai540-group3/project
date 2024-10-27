@@ -16,8 +16,6 @@
     "pipeline/models/autogluon/model.py",
     "pipeline/models/neural_network/model.py",
     "pipeline/models/logistic_regression/model.py",
-    "pipeline/packages.txt",
-    "pipeline/requirements-frozen.txt",
     "pipeline/requirements.txt",
     "pipeline/src/visualize.py",
     "pipeline/src/featurize.py",
