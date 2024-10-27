@@ -317,14 +317,10 @@ def quick_run():
     CONFIG = {
         "training": {
             "time_limit": 10,  # 10 seconds only
-            "bag_folds": 0,    # No bagging
-            "stack_levels": 0, # No stacking
+            "bag_folds": 0,  # No bagging
+            "stack_levels": 0,  # No stacking
             "use_bag_holdout": False,
-            "splits": {
-                "train_test": 0.2,
-                "val_test": 0.5,
-                "random_state": 42
-            },
+            "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
             "extra_params": {
                 "dynamic_stacking": False,  # Disable dynamic stacking
                 "ds_args": {
@@ -349,7 +345,7 @@ def quick_run():
                     "ag_args": {"name_suffix": "Basic"},
                     "learning_rate": 0.1,
                     "num_boost_round": 10,  # Minimal iterations
-                    "num_leaves": 4,        # Tiny tree
+                    "num_leaves": 4,  # Tiny tree
                     "deterministic": True,  # For reproducibility
                     "early_stopping_rounds": 3,  # Quick stopping
                 },
@@ -375,20 +371,17 @@ def quick_run():
     }
     train_autogluon(CONFIG)
 
+
 def full_run():
     """Runs a comprehensive AutoGluon configuration optimized for model performance.
     Includes extensive hyperparameter search and model stacking."""
     CONFIG = {
         "training": {
             "time_limit": 7200,  # 2 hours
-            "bag_folds": 5,    # K-fold bagging
-            "stack_levels": 2, # Multi-level stacking
+            "bag_folds": 5,  # K-fold bagging
+            "stack_levels": 2,  # Multi-level stacking
             "use_bag_holdout": True,
-            "splits": {
-                "train_test": 0.2,
-                "val_test": 0.5,
-                "random_state": 42
-            },
+            "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
             "extra_params": {
                 "dynamic_stacking": True,  # Enable dynamic stacking
                 "ds_args": {
@@ -504,6 +497,7 @@ def full_run():
         },
     }
     train_autogluon(CONFIG)
+
 
 if __name__ == "__main__":
     MODE = "quick"

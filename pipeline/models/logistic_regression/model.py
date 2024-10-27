@@ -824,6 +824,7 @@ def train_logistic_regression(CONFIG):
         live.end()
         raise
 
+
 def quick_run():
     """Runs an ultra-minimal configuration for instant feedback.
     Optimized for absolute minimum runtime - useful for code testing and debugging."""
@@ -842,7 +843,7 @@ def quick_run():
         "training": {
             "epochs": 1,  # Single epoch
             "patience": 1,  # Minimal early stopping
-            "batch_size": 512  # Large batch size for faster processing
+            "batch_size": 512,  # Large batch size for faster processing
         },
         "splits": {
             "test_size": 0.2,
@@ -864,7 +865,7 @@ def quick_run():
                 "units_factor": {"low": 0.5, "high": 0.5},  # Fixed
                 "dropout": {"low": 0.1, "high": 0.1},  # Fixed
                 "activation": ["relu"],  # Single option
-                "optimizer": ["adam"]  # Single option
+                "optimizer": ["adam"],  # Single option
             }
         },
         "plots": {
@@ -881,6 +882,7 @@ def quick_run():
         },
     }
     train_logistic_regression(CONFIG)
+
 
 def full_run():
     """Runs a comprehensive training configuration optimized for model performance.
@@ -900,7 +902,7 @@ def full_run():
         "training": {
             "epochs": 100,  # Thorough training
             "patience": 10,  # Patient early stopping
-            "batch_size": 64  # Balanced batch size
+            "batch_size": 64,  # Balanced batch size
         },
         "splits": {
             "test_size": 0.2,
@@ -922,7 +924,7 @@ def full_run():
                 "units_factor": {"low": 0.25, "high": 1.0},
                 "dropout": {"low": 0.1, "high": 0.5},
                 "activation": ["relu", "elu", "selu"],
-                "optimizer": ["adam", "sgd"]
+                "optimizer": ["adam", "sgd"],
             }
         },
         "plots": {

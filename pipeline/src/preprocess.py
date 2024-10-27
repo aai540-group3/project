@@ -327,7 +327,9 @@ def main():
         # Save feature names
         logger.info(f"Saving feature names to {feature_names_path}")
         feature_names = df.columns.tolist()
-        pd.DataFrame(feature_names, columns=["features"]).to_csv(feature_names_path, index=False)
+        pd.DataFrame(feature_names, columns=["features"]).to_csv(
+            feature_names_path, index=False
+        )
 
         logger.info("Data preprocessing completed successfully!")
         logger.info(f"Final shape: {df.shape}")
