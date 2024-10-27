@@ -21,7 +21,6 @@ Pillow
 pydantic<2.0
 pyjanitor
 python-pptx
-ray
 ruff
 scikit-learn
 seaborn
