@@ -13,3 +13,6 @@ train_size: 60072
 val_size: 20024
 test_size: 20025
 train_size_after_smote: 106514
+best_C: '1.0'
+best_penalty: l2
+best_solver: saga

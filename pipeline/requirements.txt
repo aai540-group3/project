@@ -10,7 +10,6 @@ dvc[all]
 dvclive
 feast[aws]
 flake8
-graphviz
 hydra_colorlog
 hydra-core
 imblearn
