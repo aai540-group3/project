@@ -146,8 +146,6 @@ stages:
           cache: true
       - models/autogluon/artifacts/model/feature_importance.csv:
           cache: true
-      - models/autogluon/artifacts/plots/best_model_architecture.png:
-          cache: false
     metrics:
       - models/autogluon/artifacts/metrics/metrics.json:
           cache: false

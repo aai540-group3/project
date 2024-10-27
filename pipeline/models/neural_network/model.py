@@ -15,6 +15,7 @@ import optuna
 import pandas as pd
 import seaborn as sns
 import tensorflow as tf
+from dvclive import Live
 from dvclive.keras import DVCLiveCallback
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import (
@@ -34,8 +35,6 @@ from tensorflow.keras.layers import BatchNormalization, Dense, Dropout
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD, Adam
 from tensorflow.keras.utils import plot_model
-
-from dvclive import Live
 
 
 def train_neural_network(CONFIG):
@@ -260,7 +259,7 @@ def train_neural_network(CONFIG):
                 X_train_scaled,
                 y_train,
                 validation_data=(X_val_scaled, y_val),
-                epochs=CONFIG["training"]["epochs"],
+                epochs=50,
                 batch_size=batch_size,
                 callbacks=[early_stopping],
                 verbose=0,
@@ -339,7 +338,7 @@ def train_neural_network(CONFIG):
             X_train_scaled,
             y_train,
             validation_data=(X_val_scaled, y_val),
-            epochs=CONFIG["training"]["epochs"],
+            epochs=100,
             batch_size=batch_size,
             callbacks=[early_stopping, dvc_callback],
             verbose=1,
@@ -521,7 +520,6 @@ def quick_run():
                 "success": "#4CAF50",
             },
         },
-        "training": {"epochs": 1},
     }
     train_neural_network(CONFIG)
 
@@ -572,7 +570,6 @@ def full_run():
                 "success": "#4CAF50",
             },
         },
-        "training": {"epochs": 100},
     }
     train_neural_network(CONFIG)
 
