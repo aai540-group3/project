@@ -5,6 +5,7 @@ dask[dataframe]
 datasets
 dvc[all]
 dvclive
+feast
 flake8
 hydra_colorlog
 hydra-core
