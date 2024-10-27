@@ -158,4 +158,4 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: rm -f manifest_files.zip
+        run: rm -f manifest_files.zip Final_Project_Team_3_Deliverable_3.zip
