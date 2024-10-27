@@ -1,11 +1,10 @@
 stages:
   setup:
     cmd:
-      - python3 -m virtualenv .venv
-      - . .venv/bin/activate
-      - pip install uv
-      - uv pip install -r requirements.txt
-      - pip freeze > requirements-frozen.txt
+      - pip install uv virtualenv
+      - uv venv --python 3.10
+      - source .venv/bin/activate && uv pip install -r requirements.txt
+      - source .venv/bin/activate && pip freeze > requirements-frozen.txt
     deps:
       - requirements.txt
     outs:
