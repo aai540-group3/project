@@ -34,12 +34,12 @@ jobs:
       manifest_changed: ${{ steps.manifest_check.outputs.manifest_changed }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Cache Apt Archives
-        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
+        uses: actions/cache@v3
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
@@ -83,12 +83,12 @@ jobs:
     if: needs.check-manifest.outputs.manifest_changed == 'true'
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
 
       - name: Cache Apt Archives
-        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
+        uses: actions/cache@v3
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
@@ -101,7 +101,8 @@ jobs:
       - name: Zip Deliverables
         run: |
           FILES=$(jq -r '.files[]' $MANIFEST_FILE)
-          zip -r -9 Final_Project_Team_3_Deliverable_3.zip $FILES
+          # Use quotes to handle paths with spaces or special characters
+          zip -r -9 Final_Project_Team_3_Deliverable_3.zip "$FILES"
 
       - name: Get File Size
         id: get_file_size
@@ -147,7 +148,7 @@ jobs:
 
       - name: Repository Dispatch
         if: env.CHANGED == 'true'
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: aai540-group3/project
