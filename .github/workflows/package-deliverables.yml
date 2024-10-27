@@ -52,9 +52,12 @@ jobs:
           sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
           sudo apt-get install pigz
 
-      - name: Zip Manifest and Related Files
+      - name: Create Manifest Zip File
         run: |
-          pigz -r -9 manifest_files.zip $MANIFEST_FILE $(jq -r '.files[]' $MANIFEST_FILE)
+          # Get the list of files from manifest.json
+          files_to_zip=$(jq -r '.files[]' $MANIFEST_FILE)
+          # Zip the manifest file and the specified files
+          pigz -r -9 manifest_files.zip $MANIFEST_FILE $files_to_zip
 
       - name: Compute Current Hash
         id: compute_hash
