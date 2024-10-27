@@ -7,10 +7,12 @@ on:
     paths:
       - ".github/workflows/package-deliverables.yml"
       - "pipeline/**"
-      - "scripts/**"
-      - "Makefile"
+      - "LICENSE"
+      - "README.md"
+      - "Final_Project_Team_3_Deliverable_1.pdf"
+      - "Final_Project_Team_3_Deliverable_2.mp4"
+      - "Final_Project_Team_3_Deliverable_2.pptx"
       - "manifest.json"
-      - "setup.sh"
   repository_dispatch:
     types:
       - package-deliverables
@@ -48,11 +50,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
+          sudo apt-get install pigz
 
       - name: Zip Manifest and Related Files
         run: |
-          FILES=$(jq -r '.files[]' $MANIFEST_FILE)
-          zip -r -9 manifest_files.zip $MANIFEST_FILE $FILES
+          pigz -r -9 manifest_files.zip $MANIFEST_FILE $(jq -r '.files[]' $MANIFEST_FILE)
 
       - name: Compute Current Hash
         id: compute_hash
@@ -97,12 +99,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
+          sudo apt-get install pigz
 
       - name: Zip Deliverables
         run: |
-          FILES=$(jq -r '.files[]' $MANIFEST_FILE)
-          # Use quotes to handle paths with spaces or special characters
-          zip -r -9 Final_Project_Team_3_Deliverable_3.zip "$FILES"
+          pigz -r -9 Final_Project_Team_3_Deliverable_3.zip $(jq -r '.files[]' $MANIFEST_FILE)
 
       - name: Get File Size
         id: get_file_size
@@ -111,6 +112,7 @@ jobs:
           echo "FILESIZE=$FILESIZE" >> $GITHUB_ENV
 
       - name: Get File Hash
+        id: get_file_hash
         run: |
           FILEHASH=$(sha256sum Final_Project_Team_3_Deliverable_3.zip | awk '{print $1}')
           echo "FILEHASH=$FILEHASH" >> $GITHUB_ENV

@@ -1,17 +1,13 @@
 {
   "name": "mlops-project",
   "files": [
-    ".github/workflows/mlops-pipeline.yml",
-    "pipeline/conf/",
-    "pipeline/dvc.yaml",
-    "pipeline/dvclive/",
-    "pipeline/params.yaml",
-    "pipeline/requirements.txt",
-    "pipeline/",
-    "manifest.json",
-    "SECURITY.md",
-    "setup.sh"
+    "pipeline",
+    "LICENSE",
+    "README.md",
+    "Final_Project_Team_3_Deliverable_1.pdf",
+    "Final_Project_Team_3_Deliverable_2.mp4",
+    "Final_Project_Team_3_Deliverable_2.pptx"
   ],
-  "hash": "34341398d1263dee3b42e666c1525fed2d3c9f82144a8d60af5f6800beb3116a",
-  "size": "207"
+  "hash": "",
+  "size": ""
 }
