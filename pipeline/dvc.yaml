@@ -85,23 +85,6 @@ stages:
       - models/logistic_regression/model.py
       - data/interim/data_featured.parquet
       - requirements-frozen.txt
-    outs:
-      - models/logistic_regression/artifacts/model/model.joblib:
-          cache: true
-      - models/logistic_regression/artifacts/model/model_summary.txt:
-          cache: true
-      - models/logistic_regression/artifacts/model/scaler.joblib:
-          cache: true
-    metrics:
-      - models/logistic_regression/artifacts/metrics/metrics.json:
-          cache: false
-      - models/logistic_regression/artifacts/metrics/feature_importance.csv:
-          cache: false
-    plots:
-      - models/logistic_regression/artifacts/plots/confusion_matrix.png:
-          cache: false
-      - models/logistic_regression/artifacts/plots/roc_curve.png:
-          cache: false
 
   train_neural_network:
     cmd: .venv/bin/python models/neural_network/model.py
@@ -109,25 +92,6 @@ stages:
       - models/neural_network/model.py
       - data/interim/data_featured.parquet
       - requirements-frozen.txt
-    outs:
-      - models/neural_network/artifacts/model/model.keras:
-          cache: true
-      - models/neural_network/artifacts/model/model_summary.txt:
-          cache: true
-      - models/neural_network/artifacts/model/scaler.joblib:
-          cache: true
-    metrics:
-      - models/neural_network/artifacts/metrics/metrics.json:
-          cache: false
-      - models/neural_network/artifacts/metrics/history.json:
-          cache: false
-    plots:
-      - models/neural_network/artifacts/plots/confusion_matrix.png:
-          cache: false
-      - models/neural_network/artifacts/plots/roc_curve.png:
-          cache: false
-      - models/neural_network/artifacts/plots/model_architecture.png:
-          cache: false
 
   train_autogluon:
     cmd: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python .venv/bin/python models/autogluon/model.py
@@ -135,25 +99,6 @@ stages:
       - models/autogluon/model.py
       - data/interim/data_featured.parquet
       - requirements-frozen.txt
-    outs:
-      - models/autogluon/artifacts/model/model_info.txt:
-          cache: true
-      - models/autogluon/artifacts/model/leaderboard.csv:
-          cache: true
-      - models/autogluon/artifacts/model/feature_importance.csv:
-          cache: true
-    metrics:
-      - models/autogluon/artifacts/metrics/metrics.json:
-          cache: false
-    plots:
-      - models/autogluon/artifacts/plots/confusion_matrix.png:
-          cache: false
-      - models/autogluon/artifacts/plots/roc_curve.png:
-          cache: false
-      - models/autogluon/artifacts/plots/feature_importance.png:
-          cache: false
-      - models/autogluon/artifacts/plots/model_feature_importance.png:
-          cache: false
 
   visualize:
     cmd: .venv/bin/python src/visualize.py
@@ -162,26 +107,4 @@ stages:
       - models/autogluon/artifacts/metrics/metrics.json
       - models/logistic_regression/artifacts/metrics/metrics.json
       - models/neural_network/artifacts/metrics/metrics.json
-      - data/processed/test.parquet
       - requirements-frozen.txt
-    outs:
-      - reports/figures/model_comparison.png:
-          cache: false
-      - models/autogluon/artifacts/plots/shap_force_plot.png:
-          cache: false
-      - models/autogluon/artifacts/plots/shap_summary.png:
-          cache: false
-      - models/autogluon/artifacts/plots/shap_importance.png:
-          cache: false
-      - models/logistic_regression/artifacts/plots/shap_force_plot.png:
-          cache: false
-      - models/logistic_regression/artifacts/plots/shap_summary.png:
-          cache: false
-      - models/logistic_regression/artifacts/plots/shap_importance.png:
-          cache: false
-      - models/neural_network/artifacts/plots/shap_force_plot.png:
-          cache: false
-      - models/neural_network/artifacts/plots/shap_summary.png:
-          cache: false
-      - models/neural_network/artifacts/plots/shap_importance.png:
-          cache: false
