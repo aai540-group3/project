@@ -294,7 +294,7 @@ def quick_run():
             "label": "readmitted",
             "eval_metric": "roc_auc",
             "problem_type": "binary",
-            "presets": "fast_inference",
+            "presets": "best_quality",
         },
         "hyperparameters": {
             "GBM": [
