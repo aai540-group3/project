@@ -54,14 +54,9 @@ jobs:
 
       - name: Create Manifest Zip File
         run: |
-          # Print the output of jq to debug
           echo "Files from manifest.json: $(jq -r '.files[]' $MANIFEST_FILE)"
           files_to_zip=$(jq -r '.files | join(" ")' $MANIFEST_FILE)
-
-          # Find all files (including root and pipeline)
-          all_files=$(find $GITHUB_WORKSPACE -type f -not -name manifest_files.zip -print0 | xargs -0 -I {} echo "{}" )
-
-          pigz -r -9 manifest_files.zip $MANIFEST_FILE $all_files || {
+          pigz -r -9 manifest_files.zip $MANIFEST_FILE $files_to_zip || {
             echo "Error creating manifest_files.zip"
             exit 1
           }
