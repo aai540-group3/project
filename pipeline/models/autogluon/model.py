@@ -48,77 +48,8 @@ plt.rcParams["legend.fontsize"] = 10
 plt.rcParams["figure.titlesize"] = 16
 
 
-def main():
-    """Main function implementing the AutoGluon pipeline."""
-
-    CONFIG = {
-        "training": {
-            "time_limit": 7200,  # 2 hours
-            "bag_folds": 5,
-            "stack_levels": 1,
-            "use_bag_holdout": True,
-            "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
-        },
-        "model": {
-            "label": "readmitted",
-            "eval_metric": "roc_auc",
-            "problem_type": "binary",
-            "presets": "best_quality",
-        },
-        "hyperparameters": {
-            "GBM": [
-                {
-                    "extra_trees": True,
-                    "ag_args": {"name_suffix": "ExtraTrees"},
-                    "learning_rate": 0.05,
-                    "num_boost_round": 500,
-                    "num_leaves": 128,
-                },
-                {
-                    "learning_rate": 0.01,
-                    "num_boost_round": 1000,
-                    "num_leaves": 64,
-                },
-            ],
-            "CAT": {
-                "iterations": 1000,
-                "learning_rate": 0.05,
-                "depth": 8,
-            },
-            "XGB": {
-                "learning_rate": 0.05,
-                "n_estimators": 500,
-                "max_depth": 8,
-            },
-            "RF": [
-                {"criterion": "gini", "max_depth": 15},
-                {"criterion": "entropy", "max_depth": 15},
-            ],
-            "XT": {"n_estimators": 500, "max_depth": 15},
-            "NN_TORCH": {
-                "num_epochs": 100,
-                "learning_rate": 0.001,
-                "dropout_prob": 0.1,
-            },
-        },
-        "paths": {
-            "artifacts": Path("models/autogluon/artifacts"),
-            "data": "data/interim/data_featured.parquet",
-            "subdirs": ["model", "metrics", "plots"],
-        },
-        "plots": {
-            "style": "seaborn-v0_8-darkgrid",
-            "context": "paper",
-            "font_scale": 1.2,
-            "figure": {"figsize": (10, 6), "dpi": 300},
-            "colors": {
-                "primary": "#2196F3",
-                "secondary": "#FF9800",
-                "error": "#F44336",
-                "success": "#4CAF50",
-            },
-        },
-    }
+def train_autogluon(CONFIG):
+    """Trains AutoGluon models based on provided configuration."""
 
     # Clean up and recreate artifact directories
     if CONFIG["paths"]["artifacts"].exists():
@@ -349,5 +280,147 @@ def main():
         raise
 
 
+def quick_run():
+    """Runs the AutoGluon pipeline with quick configuration."""
+    CONFIG = {
+        "training": {
+            "time_limit": 1,
+            "bag_folds": 2,
+            "stack_levels": 1,
+            "use_bag_holdout": False,
+            "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
+        },
+        "model": {
+            "label": "readmitted",
+            "eval_metric": "roc_auc",
+            "problem_type": "binary",
+            "presets": "fast_inference",
+        },
+        "hyperparameters": {
+            "GBM": [
+                {
+                    "extra_trees": True,
+                    "ag_args": {"name_suffix": "ExtraTrees"},
+                    "learning_rate": 0.1,
+                    "num_boost_round": 100,
+                    "num_leaves": 32,
+                },
+            ],
+            "CAT": {
+                "iterations": 100,
+                "learning_rate": 0.1,
+                "depth": 4,
+            },
+            "XGB": {
+                "learning_rate": 0.1,
+                "n_estimators": 100,
+                "max_depth": 4,
+            },
+            "RF": {
+                "criterion": "gini",
+                "max_depth": 5,
+            },
+            "XT": {"n_estimators": 100, "max_depth": 5},
+        },
+        "paths": {
+            "artifacts": Path("models/autogluon/artifacts"),
+            "data": "data/interim/data_featured.parquet",
+            "subdirs": ["model", "metrics", "plots"],
+        },
+        "plots": {
+            "style": "seaborn-v0_8-darkgrid",
+            "context": "paper",
+            "font_scale": 1.2,
+            "figure": {"figsize": (10, 6), "dpi": 300},
+            "colors": {
+                "primary": "#2196F3",
+                "secondary": "#FF9800",
+                "error": "#F44336",
+                "success": "#4CAF50",
+            },
+        },
+    }
+    train_autogluon(CONFIG)
+
+
+def full_run():
+    """Runs the AutoGluon pipeline with the full configuration."""
+    CONFIG = {
+        "training": {
+            "time_limit": 7200,
+            "bag_folds": 5,
+            "stack_levels": 1,
+            "use_bag_holdout": True,
+            "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
+        },
+        "model": {
+            "label": "readmitted",
+            "eval_metric": "roc_auc",
+            "problem_type": "binary",
+            "presets": "best_quality",
+        },
+        "hyperparameters": {
+            "GBM": [
+                {
+                    "extra_trees": True,
+                    "ag_args": {"name_suffix": "ExtraTrees"},
+                    "learning_rate": 0.05,
+                    "num_boost_round": 500,
+                    "num_leaves": 128,
+                },
+                {
+                    "learning_rate": 0.01,
+                    "num_boost_round": 1000,
+                    "num_leaves": 64,
+                },
+            ],
+            "CAT": {
+                "iterations": 1000,
+                "learning_rate": 0.05,
+                "depth": 8,
+            },
+            "XGB": {
+                "learning_rate": 0.05,
+                "n_estimators": 500,
+                "max_depth": 8,
+            },
+            "RF": [
+                {"criterion": "gini", "max_depth": 15},
+                {"criterion": "entropy", "max_depth": 15},
+            ],
+            "XT": {"n_estimators": 500, "max_depth": 15},
+            "NN_TORCH": {
+                "num_epochs": 100,
+                "learning_rate": 0.001,
+                "dropout_prob": 0.1,
+            },
+        },
+        "paths": {
+            "artifacts": Path("models/autogluon/artifacts"),
+            "data": "data/interim/data_featured.parquet",
+            "subdirs": ["model", "metrics", "plots"],
+        },
+        "plots": {
+            "style": "seaborn-v0_8-darkgrid",
+            "context": "paper",
+            "font_scale": 1.2,
+            "figure": {"figsize": (10, 6), "dpi": 300},
+            "colors": {
+                "primary": "#2196F3",
+                "secondary": "#FF9800",
+                "error": "#F44336",
+                "success": "#4CAF50",
+            },
+        },
+    }
+    train_autogluon(CONFIG)
+
+
 if __name__ == "__main__":
-    main()
+    MODE = "quick"
+    if MODE.lower() == "quick":
+        quick_run()
+    elif MODE.lower() == "full" :
+        full_run()
+    else:
+        print("Invalid mode. Please choose 'quick' or 'full'.")

@@ -38,8 +38,8 @@ from tensorflow.keras.utils import plot_model
 from dvclive import Live
 
 
-def main():
-    """Main function implementing the complete neural network pipeline."""
+def train_neural_network(CONFIG):
+    """Trains a neural network model based on provided configuration."""
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
     )
@@ -61,52 +61,6 @@ def main():
     plt.rcParams["ytick.labelsize"] = 10
     plt.rcParams["legend.fontsize"] = 10
     plt.rcParams["figure.titlesize"] = 16
-
-    CONFIG = {
-        "paths": {
-            "data": "data/interim/data_featured.parquet",
-            "artifacts": Path("models/neural_network/artifacts"),
-            "subdirs": ["model", "metrics", "plots"],
-        },
-        "model": {
-            "target": "readmitted",
-            "random_state": 42,
-            "optimization_trials": 50,
-            "cv_folds": 3,
-        },
-        "splits": {
-            "test_size": 0.2,
-            "val_size": 0.25,
-            "random_state": 42,
-        },
-        "optimization": {
-            "param_space": {
-                "n_layers": {"low": 2, "high": 4},
-                "units_first": {"low": 32, "high": 256, "step": 32},
-                "units_factor": {"low": 0.5, "high": 0.8},
-                "dropout": {"low": 0.1, "high": 0.5},
-                "learning_rate": {"low": 1e-4, "high": 1e-2, "log": True},
-                "batch_size": [32, 64, 128, 256],
-                "activation": ["relu", "selu"],
-                "optimizer": ["adam", "sgd"],
-            }
-        },
-        "plots": {
-            "style": "seaborn-v0_8-bright",
-            "context": "paper",
-            "font_scale": 1.2,
-            "figure": {
-                "figsize": (10, 6),
-                "dpi": 300,
-            },
-            "colors": {
-                "primary": "#2196F3",
-                "secondary": "#FF9800",
-                "error": "#F44336",
-                "success": "#4CAF50",
-            },
-        },
-    }
 
     # Clean up and recreate artifact directories
     if CONFIG["paths"]["artifacts"].exists():
@@ -523,5 +477,119 @@ def main():
         raise
 
 
+def quick_run():
+    """Runs the neural network pipeline with quick configuration."""
+    CONFIG = {
+        "paths": {
+            "data": "data/interim/data_featured.parquet",
+            "artifacts": Path("models/neural_network/artifacts"),
+            "subdirs": ["model", "metrics", "plots"],
+        },
+        "model": {
+            "target": "readmitted",
+            "random_state": 42,
+            "optimization_trials": 10,  # Reduced trials for quick run
+            "cv_folds": 2,  # Reduced folds for quick run
+        },
+        "splits": {
+            "test_size": 0.2,
+            "val_size": 0.25,
+            "random_state": 42,
+        },
+        "optimization": {
+            "param_space": {
+                "n_layers": {"low": 2, "high": 3},  # Reduced layers for quick run
+                "units_first": {
+                    "low": 32,
+                    "high": 128,
+                    "step": 32,
+                },  # Smaller units range for quick run
+                "units_factor": {"low": 0.6, "high": 0.8},  # Reduced range for quick run
+                "dropout": {"low": 0.2, "high": 0.4},  # Reduced range for quick run
+                "learning_rate": {
+                    "low": 1e-3,
+                    "high": 1e-2,
+                    "log": True,
+                },  # Reduced range for quick run
+                "batch_size": [32, 64, 128],  # Fewer batch sizes for quick run
+                "activation": ["relu"],  # Single activation for quick run
+                "optimizer": ["adam"],  # Single optimizer for quick run
+            }
+        },
+        "plots": {
+            "style": "seaborn-v0_8-bright",
+            "context": "paper",
+            "font_scale": 1.2,
+            "figure": {
+                "figsize": (10, 6),
+                "dpi": 300,
+            },
+            "colors": {
+                "primary": "#2196F3",
+                "secondary": "#FF9800",
+                "error": "#F44336",
+                "success": "#4CAF50",
+            },
+        },
+    }
+    train_neural_network(CONFIG)
+
+
+def full_run():
+    """Runs the neural network pipeline with the full configuration."""
+    CONFIG = {
+        "paths": {
+            "data": "data/interim/data_featured.parquet",
+            "artifacts": Path("models/neural_network/artifacts"),
+            "subdirs": ["model", "metrics", "plots"],
+        },
+        "model": {
+            "target": "readmitted",
+            "random_state": 42,
+            "optimization_trials": 50,
+            "cv_folds": 3,
+        },
+        "splits": {
+            "test_size": 0.2,
+            "val_size": 0.25,
+            "random_state": 42,
+        },
+        "optimization": {
+            "param_space": {
+                "n_layers": {"low": 2, "high": 4},
+                "units_first": {"low": 32, "high": 256, "step": 32},
+                "units_factor": {"low": 0.5, "high": 0.8},
+                "dropout": {"low": 0.1, "high": 0.5},
+                "learning_rate": {"low": 1e-4, "high": 1e-2, "log": True},
+                "batch_size": [32, 64, 128, 256],
+                "activation": ["relu", "selu"],
+                "optimizer": ["adam", "sgd"],
+            }
+        },
+        "plots": {
+            "style": "seaborn-v0_8-bright",
+            "context": "paper",
+            "font_scale": 1.2,
+            "figure": {
+                "figsize": (10, 6),
+                "dpi": 300,
+            },
+            "colors": {
+                "primary": "#2196F3",
+                "secondary": "#FF9800",
+                "error": "#F44336",
+                "success": "#4CAF50",
+            },
+        },
+    }
+    train_neural_network(CONFIG)
+
+
 if __name__ == "__main__":
-    main()
+    MODE = "quick"
+    if MODE.lower() == "quick":
+        quick_run()
+    elif MODE.lower() == "full" :
+        full_run()
+    else:
+        print("Invalid mode. Please choose 'quick' or 'full'.")

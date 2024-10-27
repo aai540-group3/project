@@ -29,8 +29,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 
-def main():
-    """Main function implementing the complete logistic regression pipeline."""
+def train_logistic_regression(CONFIG):
+    """Trains a logistic regression model based on provided configuration."""
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
     )
@@ -51,48 +51,6 @@ def main():
     plt.rcParams["ytick.labelsize"] = 10
     plt.rcParams["legend.fontsize"] = 10
     plt.rcParams["figure.titlesize"] = 16
-
-    CONFIG = {
-        "paths": {
-            "data": "data/interim/data_featured.parquet",
-            "artifacts": Path("models/logistic_regression/artifacts"),
-            "subdirs": ["model", "metrics", "plots"],
-        },
-        "model": {
-            "target": "readmitted",
-            "random_state": 42,
-            "optimization_trials": 50,
-            "cv_folds": 3,
-        },
-        "splits": {
-            "test_size": 0.2,
-            "val_size": 0.25,
-            "random_state": 42,
-        },
-        "optimization": {
-            "param_space": {
-                "C": {"low": 1e-4, "high": 1e2, "log": True},
-                "penalty": ["l1", "l2", "elasticnet", None],  # Changed 'none' to None
-                "solver": ["saga"],  # 'saga' supports l1, l2, elasticnet, and none
-                "l1_ratio": {"low": 0.0, "high": 1.0},
-            }
-        },
-        "plots": {
-            "style": "seaborn-v0_8-bright",
-            "context": "paper",
-            "font_scale": 1.2,
-            "figure": {
-                "figsize": (10, 6),
-                "dpi": 300,
-            },
-            "colors": {
-                "primary": "#2196F3",
-                "secondary": "#FF9800",
-                "error": "#F44336",
-                "success": "#4CAF50",
-            },
-        },
-    }
 
     # Clean up and recreate artifact directories
     if CONFIG["paths"]["artifacts"].exists():
@@ -422,5 +380,103 @@ def main():
         raise
 
 
+def quick_run():
+    """Runs the logistic regression pipeline with quick configuration."""
+    CONFIG = {
+        "paths": {
+            "data": "data/interim/data_featured.parquet",
+            "artifacts": Path("models/logistic_regression/artifacts"),
+            "subdirs": ["model", "metrics", "plots"],
+        },
+        "model": {
+            "target": "readmitted",
+            "random_state": 42,
+            "optimization_trials": 10,  # Reduced trials for quick run
+            "cv_folds": 2,  # Reduced folds for quick run
+        },
+        "splits": {
+            "test_size": 0.2,
+            "val_size": 0.25,
+            "random_state": 42,
+        },
+        "optimization": {
+            "param_space": {
+                "C": {"low": 1e-2, "high": 1e1, "log": True},  # Reduced search space
+                "penalty": ["l1", "l2"],  # Fewer penalty options
+                "solver": ["saga"],
+                "l1_ratio": {"low": 0.0, "high": 1.0},
+            }
+        },
+        "plots": {
+            "style": "seaborn-v0_8-bright",
+            "context": "paper",
+            "font_scale": 1.2,
+            "figure": {
+                "figsize": (10, 6),
+                "dpi": 300,
+            },
+            "colors": {
+                "primary": "#2196F3",
+                "secondary": "#FF9800",
+                "error": "#F44336",
+                "success": "#4CAF50",
+            },
+        },
+    }
+    train_logistic_regression(CONFIG)
+
+
+def full_run():
+    """Runs the logistic regression pipeline with the full configuration."""
+    CONFIG = {
+        "paths": {
+            "data": "data/interim/data_featured.parquet",
+            "artifacts": Path("models/logistic_regression/artifacts"),
+            "subdirs": ["model", "metrics", "plots"],
+        },
+        "model": {
+            "target": "readmitted",
+            "random_state": 42,
+            "optimization_trials": 50,
+            "cv_folds": 3,
+        },
+        "splits": {
+            "test_size": 0.2,
+            "val_size": 0.25,
+            "random_state": 42,
+        },
+        "optimization": {
+            "param_space": {
+                "C": {"low": 1e-4, "high": 1e2, "log": True},
+                "penalty": ["l1", "l2", "elasticnet", None],
+                "solver": ["saga"],
+                "l1_ratio": {"low": 0.0, "high": 1.0},
+            }
+        },
+        "plots": {
+            "style": "seaborn-v0_8-bright",
+            "context": "paper",
+            "font_scale": 1.2,
+            "figure": {
+                "figsize": (10, 6),
+                "dpi": 300,
+            },
+            "colors": {
+                "primary": "#2196F3",
+                "secondary": "#FF9800",
+                "error": "#F44336",
+                "success": "#4CAF50",
+            },
+        },
+    }
+    train_logistic_regression(CONFIG)
+
+
 if __name__ == "__main__":
-    main()
+    MODE = "quick"
+    if MODE.lower() == "quick":
+        quick_run()
+    elif MODE.lower() == "full" :
+        full_run()
+    else:
+        print("Invalid mode. Please choose 'quick' or 'full'.")
