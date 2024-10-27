@@ -83,9 +83,7 @@ def train_logistic_regression(CONFIG):
 
         # Log data info
         class_distribution = y.value_counts().to_dict()
-        class_distribution_str = {
-            str(k): int(v) for k, v in class_distribution.items()
-        }
+        class_distribution_str = {str(k): int(v) for k, v in class_distribution.items()}
         imbalance_ratio = max(class_distribution.values()) / min(
             class_distribution.values()
         )
@@ -123,14 +121,18 @@ def train_logistic_regression(CONFIG):
         X_train_balanced, y_train_balanced = smote.fit_resample(X_train, y_train)
 
         # Update class distribution after SMOTE
-        class_distribution_after_smote = pd.Series(y_train_balanced).value_counts().to_dict()
+        class_distribution_after_smote = (
+            pd.Series(y_train_balanced).value_counts().to_dict()
+        )
         class_distribution_after_smote_str = {
             str(k): int(v) for k, v in class_distribution_after_smote.items()
         }
-        imbalance_ratio_after_smote = max(class_distribution_after_smote.values()) / min(
+        imbalance_ratio_after_smote = max(
             class_distribution_after_smote.values()
+        ) / min(class_distribution_after_smote.values())
+        logger.info(
+            f"Class imbalance ratio after SMOTE: {imbalance_ratio_after_smote:.2f}"
         )
-        logger.info(f"Class imbalance ratio after SMOTE: {imbalance_ratio_after_smote:.2f}")
 
         live.log_params(
             {
@@ -356,7 +358,9 @@ def train_logistic_regression(CONFIG):
         logger.info("Saving artifacts...")
 
         # Save model and scaler
-        joblib.dump(final_model, CONFIG["paths"]["artifacts"] / "model" / "model.joblib")
+        joblib.dump(
+            final_model, CONFIG["paths"]["artifacts"] / "model" / "model.joblib"
+        )
         joblib.dump(scaler, CONFIG["paths"]["artifacts"] / "model" / "scaler.joblib")
 
         # Save metrics
@@ -476,7 +480,7 @@ if __name__ == "__main__":
     MODE = "quick"
     if MODE.lower() == "quick":
         quick_run()
-    elif MODE.lower() == "full" :
+    elif MODE.lower() == "full":
         full_run()
     else:
         print("Invalid mode. Please choose 'quick' or 'full'.")

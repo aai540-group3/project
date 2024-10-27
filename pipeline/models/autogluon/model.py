@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from autogluon.tabular import TabularPredictor
+from dvclive import Live
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -21,8 +22,6 @@ from sklearn.metrics import (
     roc_curve,
 )
 from sklearn.model_selection import train_test_split
-
-from dvclive import Live
 
 logging.basicConfig(
     level=logging.INFO,
@@ -126,7 +125,7 @@ def train_autogluon(CONFIG):
             num_stack_levels=CONFIG["training"]["stack_levels"],
             use_bag_holdout=CONFIG["training"]["use_bag_holdout"],
             verbosity=2,
-            **CONFIG["training"]["extra_params"]
+            **CONFIG["training"]["extra_params"],
         )
 
         # Generate model_info.txt
@@ -290,7 +289,7 @@ def quick_run():
             "stack_levels": 1,
             "use_bag_holdout": False,
             "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
-            "extra_params": {"dynamic_stacking": True, "n_jobs": 4}
+            "extra_params": {"dynamic_stacking": True, "n_jobs": 4},
         },
         "model": {
             "label": "readmitted",
@@ -344,10 +343,13 @@ def full_run():
             "stack_levels": 1,
             "use_bag_holdout": False,
             "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
-            "extra_params": {"dynamic_stacking": True,
-                             "hyperparameter_tune_kwargs": {"search_strategy": "grid_search",
-                                                           "n_jobs": 4}
-                            }
+            "extra_params": {
+                "dynamic_stacking": True,
+                "hyperparameter_tune_kwargs": {
+                    "search_strategy": "grid_search",
+                    "n_jobs": 4,
+                },
+            },
         },
         "model": {
             "label": "readmitted",
@@ -416,7 +418,7 @@ if __name__ == "__main__":
     MODE = "quick"
     if MODE.lower() == "quick":
         quick_run()
-    elif MODE.lower() == "full" :
+    elif MODE.lower() == "full":
         full_run()
     else:
         print("Invalid mode. Please choose 'quick' or 'full'.")

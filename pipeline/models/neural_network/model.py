@@ -15,6 +15,7 @@ import optuna
 import pandas as pd
 import seaborn as sns
 import tensorflow as tf
+from dvclive import Live
 from dvclive.keras import DVCLiveCallback
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import (
@@ -34,8 +35,6 @@ from tensorflow.keras.layers import BatchNormalization, Dense, Dropout
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD, Adam
 from tensorflow.keras.utils import plot_model
-
-from dvclive import Live
 
 
 def train_neural_network(CONFIG):
@@ -93,9 +92,7 @@ def train_neural_network(CONFIG):
 
         # Log data info
         class_distribution = y.value_counts().to_dict()
-        class_distribution_str = {
-            str(k): int(v) for k, v in class_distribution.items()
-        }
+        class_distribution_str = {str(k): int(v) for k, v in class_distribution.items()}
         imbalance_ratio = max(class_distribution.values()) / min(
             class_distribution.values()
         )
@@ -133,14 +130,18 @@ def train_neural_network(CONFIG):
         X_train_balanced, y_train_balanced = smote.fit_resample(X_train, y_train)
 
         # Update class distribution after SMOTE
-        class_distribution_after_smote = pd.Series(y_train_balanced).value_counts().to_dict()
+        class_distribution_after_smote = (
+            pd.Series(y_train_balanced).value_counts().to_dict()
+        )
         class_distribution_after_smote_str = {
             str(k): int(v) for k, v in class_distribution_after_smote.items()
         }
-        imbalance_ratio_after_smote = max(class_distribution_after_smote.values()) / min(
+        imbalance_ratio_after_smote = max(
             class_distribution_after_smote.values()
+        ) / min(class_distribution_after_smote.values())
+        logger.info(
+            f"Class imbalance ratio after SMOTE: {imbalance_ratio_after_smote:.2f}"
         )
-        logger.info(f"Class imbalance ratio after SMOTE: {imbalance_ratio_after_smote:.2f}")
 
         live.log_params(
             {
@@ -246,9 +247,7 @@ def train_neural_network(CONFIG):
 
         def objective(trial):
             # Create model
-            model, batch_size = create_model(
-                trial, input_dim=X_train_scaled.shape[1]
-            )
+            model, batch_size = create_model(trial, input_dim=X_train_scaled.shape[1])
 
             # Early stopping
             early_stopping = EarlyStopping(
@@ -451,21 +450,15 @@ def train_neural_network(CONFIG):
         joblib.dump(scaler, CONFIG["paths"]["artifacts"] / "model" / "scaler.joblib")
 
         # Save metrics
-        with open(
-            CONFIG["paths"]["artifacts"] / "metrics" / "metrics.json", "w"
-        ) as f:
+        with open(CONFIG["paths"]["artifacts"] / "metrics" / "metrics.json", "w") as f:
             json.dump(metrics, f, indent=4)
 
         # Save parameters
-        with open(
-            CONFIG["paths"]["artifacts"] / "model" / "params.json", "w"
-        ) as f:
+        with open(CONFIG["paths"]["artifacts"] / "model" / "params.json", "w") as f:
             json.dump(best_params, f, indent=4)
 
         # Save training history
-        with open(
-            CONFIG["paths"]["artifacts"] / "metrics" / "history.json", "w"
-        ) as f:
+        with open(CONFIG["paths"]["artifacts"] / "metrics" / "history.json", "w") as f:
             json.dump(final_history.history, f, indent=4)
 
         live.end()
@@ -585,7 +578,7 @@ if __name__ == "__main__":
     MODE = "quick"
     if MODE.lower() == "quick":
         quick_run()
-    elif MODE.lower() == "full" :
+    elif MODE.lower() == "full":
         full_run()
     else:
         print("Invalid mode. Please choose 'quick' or 'full'.")
