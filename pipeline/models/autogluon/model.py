@@ -131,7 +131,7 @@ def train_autogluon(CONFIG):
         else:
             combined_data = pd.concat([train_data, val_data], axis=0)
             predictor.fit(
-                train_data=combined_data,
+                train_data=combined_data,  # Use combined data
                 time_limit=CONFIG["training"]["time_limit"],
                 hyperparameters=CONFIG["hyperparameters"],
                 presets=CONFIG["model"]["presets"],
@@ -144,13 +144,8 @@ def train_autogluon(CONFIG):
 
         # Generate model_info.txt
         model_info = predictor.info()
-
-        # Custom serializer to handle non-serializable objects
-        def default_serializer(obj):
-            return str(obj)
-
         with open(CONFIG["paths"]["artifacts"] / "model" / "model_info.txt", "w") as f:
-            json.dump(model_info, f, indent=4, default=default_serializer)
+            f.write(json.dumps(model_info, indent=4))
 
         # Generate Ensemble Model Visualization
         try:
