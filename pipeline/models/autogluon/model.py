@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from autogluon.tabular import TabularPredictor
-from dvclive import Live
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -22,6 +21,8 @@ from sklearn.metrics import (
     roc_curve,
 )
 from sklearn.model_selection import train_test_split
+
+from dvclive import Live
 
 logging.basicConfig(
     level=logging.INFO,

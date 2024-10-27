@@ -15,7 +15,6 @@ import optuna
 import pandas as pd
 import seaborn as sns
 import tensorflow as tf
-from dvclive import Live
 from dvclive.keras import DVCLiveCallback
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import (
@@ -35,6 +34,8 @@ from tensorflow.keras.layers import BatchNormalization, Dense, Dropout
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD, Adam
 from tensorflow.keras.utils import plot_model
+
+from dvclive import Live
 
 
 def train_neural_network(CONFIG):
