@@ -56,7 +56,7 @@ jobs:
       - name: Install Python Dependencies
         working-directory: pipeline
         run: |
-          pip install dvc[all]
+          pip install virtualenv dvc[all]
 
       - name: Run DVC Pipeline
         working-directory: pipeline
