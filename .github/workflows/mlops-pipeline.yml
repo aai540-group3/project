@@ -6,13 +6,13 @@ on:
       - main
     paths:
       - ".github/workflows/mlops-pipeline.yml"
-      - "pipeline-opensource/**"
+      - "pipeline/**"
   pull_request:
     branches:
       - main
     paths:
       - ".github/workflows/mlops-pipeline.yml"
-      - "pipeline-opensource/**"
+      - "pipeline/**"
   workflow_dispatch:
 
 concurrency:
@@ -49,19 +49,19 @@ jobs:
         id: cache-venv
         uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
         with:
-          path: pipeline-opensource/.venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('pipeline-opensource/requirements.txt') }}
+          path: pipeline/.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('pipeline/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-venv-
 
       - name: Setup Virtual Environment
-        working-directory: pipeline-opensource
+        working-directory: pipeline
         if: steps.cache-venv.outputs.cache-hit != 'true'
         run: |
           python3 -m venv .venv
 
       - name: Install Python Dependencies
-        working-directory: pipeline-opensource
+        working-directory: pipeline
         run: |
           source .venv/bin/activate
           python -m pip install --upgrade pip
@@ -69,7 +69,7 @@ jobs:
           uv pip install -r requirements.txt
 
       - name: Configure DVC
-        working-directory: pipeline-opensource
+        working-directory: pipeline
         run: |
           source .venv/bin/activate
           dvc init --no-scm
@@ -84,14 +84,14 @@ jobs:
           dvc remote list
 
       - name: Run DVC Pipeline
-        working-directory: pipeline-opensource
+        working-directory: pipeline
         run: |
           source .venv/bin/activate
           dvc repro -f
 
       - name: Push to DVC Remotes
         if: always()
-        working-directory: pipeline-opensource
+        working-directory: pipeline
         run: |
           source .venv/bin/activate
           dvc push
@@ -107,7 +107,7 @@ jobs:
         id: commit_and_push
         continue-on-error: true
         run: |
-          git add pipeline-opensource
+          git add pipeline
           if git diff --staged --quiet; then
             echo "No changes to commit"
             echo "CHANGED=false" >> $GITHUB_ENV

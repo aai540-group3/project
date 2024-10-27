@@ -12,6 +12,7 @@ feast[aws]
 flake8
 hydra_colorlog
 hydra-core
+imblearn
 isort
 joblib
 matplotlib
@@ -19,6 +20,7 @@ missingno
 numba<=0.58.1
 numpy
 omegaconf
+optuna
 pandas
 pyjanitor
 python-dotenv
@@ -28,7 +30,6 @@ ruff
 scikit-learn
 seaborn
 shap
-sweetviz
 tenacity
 tensorflow
 tensorflow-addons

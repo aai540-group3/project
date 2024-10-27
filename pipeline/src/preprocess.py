@@ -1,80 +1,106 @@
-import sys
-import pandas as pd
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
 import logging
 import os
+import sys
+from typing import Dict, List, Set
+
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
 def main():
-    logger.info("Starting data preprocessing pipeline")
-
-    # Define data paths
-    raw_data_path = "data/raw/data.csv"
-    interim_data_path = "data/interim/data_cleaned.parquet"
-
+    """Main function implementing the complete preprocessing pipeline."""
     try:
-        # Read CSV data with proper options
+        # Define paths
+        raw_data_path = "data/raw/data.csv"
+        interim_data_path = "data/interim/data_cleaned.parquet"
+
+        # Load raw data
         logger.info(f"Reading raw data from {raw_data_path}")
         df = pd.read_csv(raw_data_path, low_memory=False)
-    except FileNotFoundError as e:
-        logger.error(f"Error: The file at {raw_data_path} was not found.")
-        logger.error(e)
-        sys.exit(1)
-    except Exception as e:
-        logger.error(f"An error occurred while reading the file: {raw_data_path}")
-        logger.error(e)
-        sys.exit(1)
+        logger.info(f"Initial shape: {df.shape}")
 
-    # Clean column names
-    df.columns = df.columns.str.strip().str.lower()
+        # Log initial readmitted distribution
+        logger.info(
+            f"Initial readmitted distribution: {df['readmitted'].value_counts().to_dict()}"
+        )
 
-    # Standardize 'gender' values
-    if "gender" in df.columns:
-        df["gender"] = df["gender"].str.capitalize()
+        # Clean column names
+        df.columns = df.columns.str.strip().str.lower()
+        logger.info(f"Columns after cleaning: {df.columns.tolist()}")
 
-    # Generate a unique 'id' column based on the DataFrame's index
-    df.reset_index(inplace=True)
-    df.rename(columns={"index": "id"}, inplace=True)
-    logger.info("Generated unique 'id' column for each record")
+        # Drop columns with too many missing values
+        columns_to_drop = [
+            "weight",
+            "payer_code",
+            "medical_specialty",
+            "citoglipton",
+            "examide",
+        ]
+        df = df.drop(columns_to_drop, axis=1)
+        logger.info(f"Dropped columns with high missing values: {columns_to_drop}")
 
-    # Remove duplicates
-    logger.info("Removing duplicate entries")
-    df.drop_duplicates(inplace=True)
+        # Replace '?' with NaN
+        df.replace("?", np.nan, inplace=True)
 
-    # Handle missing values for specific columns
-    logger.info("Handling missing values")
+        # Handle missing values
+        logger.info("Handling missing values...")
 
-    # Replace missing '?' with NaN
-    df.replace("?", pd.NA, inplace=True)
+        # Identify numeric and categorical columns
+        numeric_columns = df.select_dtypes(include=[np.number]).columns
+        categorical_columns = df.select_dtypes(exclude=[np.number]).columns
 
-    # Drop columns with too many missing values
-    columns_to_drop = ["weight", "payer_code", "medical_specialty"]
-    df.drop(columns=[col for col in columns_to_drop if col in df.columns], inplace=True)
+        logger.info(f"Numeric columns: {numeric_columns.tolist()}")
+        logger.info(f"Categorical columns: {categorical_columns.tolist()}")
 
-    # Impute missing values in 'race' with the mode
-    if "race" in df.columns:
-        df["race"].fillna(df["race"].mode()[0], inplace=True)
+        # For numeric columns, impute with median
+        if len(numeric_columns) > 0:
+            logger.info("Imputing numeric columns with median")
+            df[numeric_columns] = df[numeric_columns].fillna(
+                df[numeric_columns].median()
+            )
 
-    # Impute missing values in diagnosis columns with a placeholder
-    diagnosis_columns = ["diag_1", "diag_2", "diag_3"]
-    for col in diagnosis_columns:
-        if col in df.columns:
-            df[col] = df[col].fillna("Unknown")
+        # For categorical columns, impute with mode
+        if len(categorical_columns) > 0:
+            logger.info("Imputing categorical columns with mode")
+            for col in categorical_columns:
+                df[col] = df[col].fillna(df[col].mode().iloc[0])
 
-    # Remove entries with invalid 'gender' values
-    if "gender" in df.columns:
+        # Remove invalid entries
+        logger.info("Removing invalid entries...")
+
+        # Gender validation
         df = df[df["gender"].isin(["Male", "Female"])]
 
-    # Map 'age' to numerical values (midpoint of age ranges)
-    if "age" in df.columns:
-        logger.info("Encoding 'age' as numerical values")
+        # Race validation
+        df = df.dropna(subset=["race"])
+        df = df[df["race"] != "?"]
+
+        # Diagnosis validation
+        diagnosis_columns = ["diag_1", "diag_2", "diag_3"]
+        df = df.dropna(subset=diagnosis_columns)
+        for col in diagnosis_columns:
+            df = df[df[col] != "?"]
+
+        # Remove expired patients
+        df = df[df["discharge_disposition_id"] != 11]
+
+        logger.info(f"Shape after removing invalid entries: {df.shape}")
+
+        # Generate unique ID
+        df.reset_index(drop=True, inplace=True)
+        df["id"] = df.index
+
+        # Handle categorical variables
+        logger.info("Encoding categorical variables...")
+
+        # Map age to numerical values
         age_map = {
             "[0-10)": 5,
             "[10-20)": 15,
@@ -89,160 +115,221 @@ def main():
         }
         df["age"] = df["age"].map(age_map)
 
-    # Convert 'readmitted' to binary outcome
-    logger.info("Converting 'readmitted' to binary outcome")
-    df["readmitted"] = df["readmitted"].replace({"NO": 0, ">30": 0, "<30": 1})
+        # Encode binary variables
+        binary_mappings = {
+            "gender": {"Male": 1, "Female": 0},
+            "change": {"Ch": 1, "No": 0},
+            "diabetesmed": {"Yes": 1, "No": 0},
+        }
 
-    # Standardize medication column names
-    medication_columns = [
-        "metformin",
-        "repaglinide",
-        "nateglinide",
-        "chlorpropamide",
-        "glimepiride",
-        "acetohexamide",
-        "glipizide",
-        "glyburide",
-        "tolbutamide",
-        "pioglitazone",
-        "rosiglitazone",
-        "acarbose",
-        "miglitol",
-        "troglitazone",
-        "tolazamide",
-        "examide",
-        "citoglipton",
-        "insulin",
-        "glyburide-metformin",
-        "glipizide-metformin",
-        "glimepiride-pioglitazone",
-        "metformin-rosiglitazone",
-        "metformin-pioglitazone",
-    ]
-    medication_columns = [col.lower() for col in medication_columns]
+        for col, mapping in binary_mappings.items():
+            df[col] = df[col].map(mapping)
+            logger.info(f"Encoded binary variable: {col}")
 
-    # Ensure medication columns are in the dataframe
-    available_medication_columns = [
-        col for col in medication_columns if col in df.columns
-    ]
-
-    # Define the target variable
-    target = "readmitted"
-
-    # Separate features and target
-    logger.info("Separating features and target variable")
-    cols_to_drop = [target]
-    X = df.drop(columns=cols_to_drop)
-    y = df[target]
-
-    # Identify numeric and categorical columns
-    logger.info("Identifying numeric and categorical columns")
-    # Exclude diagnosis, medication, and 'id' columns from categorical features
-    all_categorical_features = X.select_dtypes(include=["object"]).columns.tolist()
-    exclude_columns = diagnosis_columns + available_medication_columns + ["id"]
-    categorical_features = [
-        col for col in all_categorical_features if col not in exclude_columns
-    ]
-    numeric_features = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
-    # Remove 'id' from numeric features
-    numeric_features = [col for col in numeric_features if col != "id"]
-
-    logger.debug(f"Numeric Features: {numeric_features}")
-    logger.debug(
-        f"Categorical Features (excluding diagnosis, medication, and 'id' columns): {categorical_features}"
-    )
-    logger.debug(f"Diagnosis Columns: {diagnosis_columns}")
-    logger.debug(f"Medication Columns: {available_medication_columns}")
-    logger.debug(f"'id' Column: ['id']")
-
-    # Define preprocessing steps for numeric features
-    logger.info("Setting up preprocessing pipelines")
-    numeric_transformer = Pipeline(
-        steps=[
-            ("imputer", SimpleImputer(strategy="median")),
-            ("scaler", StandardScaler()),
+        # Encode medication columns
+        medication_cols = [
+            "metformin",
+            "repaglinide",
+            "nateglinide",
+            "chlorpropamide",
+            "glimepiride",
+            "glipizide",
+            "glyburide",
+            "pioglitazone",
+            "rosiglitazone",
+            "acarbose",
+            "miglitol",
+            "insulin",
+            "glyburide-metformin",
+            "tolazamide",
+            "metformin-pioglitazone",
+            "metformin-rosiglitazone",
+            "glimepiride-pioglitazone",
+            "glipizide-metformin",
+            "troglitazone",
+            "tolbutamide",
+            "acetohexamide",
         ]
-    )
 
-    # Define preprocessing steps for categorical features
-    categorical_transformer = Pipeline(
-        steps=[
-            (
-                "imputer",
-                SimpleImputer(strategy="constant", fill_value="Unknown"),
-            ),
-            (
-                "onehot",
-                OneHotEncoder(handle_unknown="ignore", sparse_output=False),
-            ),
-        ]
-    )
+        for col in medication_cols:
+            df[col] = df[col].replace({"No": 0, "Steady": 1, "Up": 1, "Down": 1})
 
-    # Combine preprocessing for numeric and categorical features
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", numeric_transformer, numeric_features),
-            ("cat", categorical_transformer, categorical_features),
-        ],
-        remainder="passthrough",  # Keep diagnosis, medication, and 'id' columns as is
-    )
+        # Encode lab results
+        df["a1cresult"] = df["a1cresult"].replace(
+            {">7": 1, ">8": 1, "Norm": 0, "None": -99}
+        )
 
-    # Create a preprocessing pipeline
-    preprocessing_pipeline = Pipeline(steps=[("preprocessor", preprocessor)])
+        df["max_glu_serum"] = df["max_glu_serum"].replace(
+            {">200": 1, ">300": 1, "Norm": 0, "None": -99}
+        )
 
-    # Fit and transform the data
-    logger.info("Starting data transformation")
-    try:
-        X_processed = preprocessing_pipeline.fit_transform(X)
-    except Exception as e:
-        logger.error(f"An error occurred during preprocessing: {e}")
-        return
+        # Encode admission type
+        df["admission_type_id"] = df["admission_type_id"].replace(
+            {2: 1, 7: 1, 6: 5, 8: 5}
+        )
 
-    # Get feature names after one-hot encoding
-    logger.info("Processing feature names and creating final DataFrame")
-    try:
-        onehot_encoder = preprocessor.named_transformers_["cat"].named_steps["onehot"]
-        cat_feature_names = onehot_encoder.get_feature_names_out(
-            categorical_features
-        ).tolist()
+        # Encode discharge disposition
+        discharge_mapping = {
+            6: 1,
+            8: 1,
+            9: 1,
+            13: 1,  # Home
+            3: 2,
+            4: 2,
+            5: 2,
+            14: 2,
+            22: 2,
+            23: 2,
+            24: 2,  # Healthcare Facility
+            12: 10,
+            15: 10,
+            16: 10,
+            17: 10,  # Outpatient
+            25: 18,
+            26: 18,  # Psychiatric
+        }
+        df["discharge_disposition_id"] = df["discharge_disposition_id"].replace(
+            discharge_mapping
+        )
 
-        # Get passthrough feature names (diagnosis, medication, and 'id' columns)
-        passthrough_indices = preprocessor.transformers_[-1][2]
-        passthrough_features = [X.columns[i] for i in passthrough_indices]
+        # Encode admission source
+        admission_mapping = {
+            2: 1,
+            3: 1,  # Physician Referral
+            5: 4,
+            6: 4,
+            10: 4,
+            22: 4,
+            25: 4,  # Transfer
+            15: 9,
+            17: 9,
+            20: 9,
+            21: 9,  # Emergency
+            13: 11,
+            14: 11,  # Other
+        }
+        df["admission_source_id"] = df["admission_source_id"].replace(admission_mapping)
 
-        # Combine all feature names
-        feature_names = numeric_features + cat_feature_names + passthrough_features
+        # Create diagnosis level features
+        logger.info("Creating diagnosis level features...")
+        for i in range(1, 4):
+            col = f"diag_{i}"
+            level_col = f"level1_diag{i}"
+            df[level_col] = df[col].astype(str)
 
-        # Convert the processed features into a DataFrame
-        X_df = pd.DataFrame(X_processed, columns=feature_names)
-        # Ensure correct data types for passthrough features
-        X_df[passthrough_features] = X_df[passthrough_features].astype(object)
+            # Handle V and E codes
+            df.loc[df[level_col].str.contains("V", na=False), level_col] = "0"
+            df.loc[df[level_col].str.contains("E", na=False), level_col] = "0"
 
-        # Display the preprocessed data overview
-        logger.debug("Preprocessed Data Overview:")
-        logger.debug(f"Shape: {X_df.shape}")
-        logger.debug(f"Feature Names: {feature_names}")
-        logger.debug("First Few Rows:")
-        logger.debug(X_df.head())
+            # Convert to numeric
+            df[level_col] = pd.to_numeric(df[level_col], errors="coerce")
 
-        # Combine features and target for saving
-        final_df = X_df.copy()
-        final_df["readmitted"] = y.reset_index(drop=True)
+            # Map to categories
+            conditions = [
+                ((df[level_col] >= 390) & (df[level_col] < 460))
+                | (df[level_col] == 785),
+                ((df[level_col] >= 460) & (df[level_col] < 520))
+                | (df[level_col] == 786),
+                ((df[level_col] >= 520) & (df[level_col] < 580))
+                | (df[level_col] == 787),
+                (df[level_col] == 250),
+                ((df[level_col] >= 800) & (df[level_col] < 1000)),
+                ((df[level_col] >= 710) & (df[level_col] < 740)),
+                ((df[level_col] >= 580) & (df[level_col] < 630))
+                | (df[level_col] == 788),
+                ((df[level_col] >= 140) & (df[level_col] < 240)),
+            ]
+            choices = range(1, 9)
+            df[level_col] = np.select(conditions, choices, default=0)
+
+        # Handle duplicates
+        logger.info("Handling duplicates...")
+        patient_id_col = "patient_nbr"
+        if patient_id_col not in df.columns:
+            patient_id_col = "patient_number"
+            if patient_id_col not in df.columns:
+                logger.warning(
+                    "No patient number column found. Using encounter_id instead."
+                )
+                patient_id_col = "encounter_id"
+
+        if patient_id_col in df.columns:
+            original_len = len(df)
+            df = df.drop_duplicates(subset=[patient_id_col], keep="first")
+            logger.info(f"Removed {original_len - len(df)} duplicate records")
+
+        # Handle outliers using IQR method for numeric columns
+        logger.info("Handling outliers...")
+        # Exclude certain columns from outlier detection
+        columns_to_exclude = ["readmitted", "id", "patient_nbr", "encounter_id"]
+        numeric_cols = df.select_dtypes(include=[np.number]).columns.difference(
+            columns_to_exclude
+        )
+
+        logger.info("Capping outliers...")
+        for col in numeric_cols:
+            Q1 = df[col].quantile(0.25)
+            Q3 = df[col].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+
+            # Instead of removing rows, cap the values
+            df[col] = df[col].clip(lower=lower_bound, upper=upper_bound)
+
+        logger.info(f"Capped outliers in {len(numeric_cols)} columns")
+
+        # Process readmitted variable
+        logger.info("Processing readmitted variable...")
+        logger.info(
+            f"Original readmitted distribution: {df['readmitted'].value_counts().to_dict()}"
+        )
+
+        # Convert readmitted to binary
+        df["readmitted"] = df["readmitted"].replace({">30": 0, "<30": 1, "NO": 0})
+
+        logger.info(
+            f"Readmitted distribution after conversion: {df['readmitted'].value_counts().to_dict()}"
+        )
+
+        # Verify we have both classes
+        if len(df["readmitted"].unique()) < 2:
+            raise ValueError("Lost all positive cases during preprocessing!")
+
+        # Final verification
+        logger.info("Performing final verification...")
+
+        # Check for remaining missing values
+        missing_values = df.isnull().sum()
+        if missing_values.any():
+            logger.warning("Remaining missing values:")
+            logger.warning(missing_values[missing_values > 0])
+
+        # Check data types
+        logger.info("Final data types:")
+        logger.info(df.dtypes)
+
+        # Final verification of target variable
+        logger.info("Final verification of target variable...")
+        readmitted_dist = df["readmitted"].value_counts().to_dict()
+        logger.info(f"Final readmitted distribution: {readmitted_dist}")
+        if len(readmitted_dist) < 2:
+            raise ValueError(f"Invalid target variable distribution: {readmitted_dist}")
 
         # Create output directory if it doesn't exist
-        os.makedirs("data/interim", exist_ok=True)
+        os.makedirs(os.path.dirname(interim_data_path), exist_ok=True)
 
+        # Save processed data
         logger.info(f"Saving processed data to {interim_data_path}")
-        final_df.to_parquet(interim_data_path, index=False)
-        logger.info(f"Successfully saved processed data to {interim_data_path}")
+        df.to_parquet(interim_data_path, index=False)
+
+        logger.info("Data preprocessing completed successfully!")
+        logger.info(f"Final shape: {df.shape}")
 
     except Exception as e:
-        logger.error(
-            f"An error occurred while processing feature names or saving data: {e}"
-        )
-        return
-
-    logger.info("Data preprocessing pipeline completed successfully")
+        logger.error(f"An error occurred during preprocessing: {str(e)}")
+        logger.error("Full error:", exc_info=True)
+        raise
 
 
 if __name__ == "__main__":

@@ -2,12 +2,12 @@
   "name": "mlops-project",
   "files": [
     ".github/workflows/mlops-pipeline.yml",
-    "pipeline-opensource/conf/",
-    "pipeline-opensource/dvc.yaml",
-    "pipeline-opensource/dvclive/",
-    "pipeline-opensource/params.yaml",
-    "pipeline-opensource/requirements.txt",
-    "pipeline-opensource/",
+    "pipeline/conf/",
+    "pipeline/dvc.yaml",
+    "pipeline/dvclive/",
+    "pipeline/params.yaml",
+    "pipeline/requirements.txt",
+    "pipeline/",
     "manifest.json",
     "SECURITY.md",
     "setup.sh"

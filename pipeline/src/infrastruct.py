@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-import os
 import json
-from typing import List, Dict
+import logging
+import os
+from typing import Dict, List
 
 import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

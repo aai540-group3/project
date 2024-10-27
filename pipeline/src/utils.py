@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import logging
-from pathlib import Path
 import site
+from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

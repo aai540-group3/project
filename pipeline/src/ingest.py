@@ -1,11 +1,12 @@
+import json
 import logging
 import os
+
 import boto3
-from ucimlrepo import fetch_ucirepo
+import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-import pandas as pd
-import json
+from ucimlrepo import fetch_ucirepo
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

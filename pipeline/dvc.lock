@@ -1,8 +1,7 @@
 schema: '2.0'
 stages:
   ingest:
-    cmd:
-    - .venv/bin/python src/ingest.py
+    cmd: .venv/bin/python src/ingest.py
     deps:
     - path: requirements-frozen.txt
       hash: md5
@@ -10,8 +9,8 @@ stages:
       size: 8410
     - path: src/ingest.py
       hash: md5
-      md5: 6fc6c6d71021ef5edd12e8d38b4bd365
-      size: 2690
+      md5: 4834dee50d39bc8738573b1d25632ce3
+      size: 2691
     outs:
     - path: data/raw/data.csv
       hash: md5
@@ -214,11 +213,11 @@ stages:
     deps:
     - path: requirements.txt
       hash: md5
-      md5: 645f41d82eb6992ee8dd8624d46949fb
-      size: 393
+      md5: 19831d93db18b11d973a80076186132a
+      size: 400
     - path: src/utils.py
       hash: md5
-      md5: d3ef0c89d47228cb505b52a3d0c15a6b
+      md5: fa0c7868e939589e8646c7275141ddcc
       size: 1248
       isexec: true
     outs:
@@ -652,8 +651,7 @@ stages:
       md5: dbfe12c203805ccf7fdb683042c46ab3
       size: 49159045
   infrastruct:
-    cmd:
-    - .venv/bin/python src/infrastruct.py
+    cmd: .venv/bin/python src/infrastruct.py
     deps:
     - path: requirements-frozen.txt
       hash: md5
@@ -661,12 +659,11 @@ stages:
       size: 8410
     - path: src/infrastruct.py
       hash: md5
-      md5: 88aa568b7d8a804cb1cdb15cf7880a52
+      md5: 007ddab3349fca1540e75fc7add9923b
       size: 17745
       isexec: true
   preprocess:
-    cmd:
-    - .venv/bin/python src/preprocess.py
+    cmd: .venv/bin/python src/preprocess.py
     deps:
     - path: data/raw/data.csv
       hash: md5
@@ -678,21 +675,20 @@ stages:
       size: 8410
     - path: src/preprocess.py
       hash: md5
-      md5: 6e7e6a7f7edec1fea8ae1bcaf30769d5
-      size: 8611
+      md5: 0b7744d4f077b48b6305fb99a25bd9c8
+      size: 11197
     outs:
     - path: data/interim/data_cleaned.parquet
       hash: md5
-      md5: a9d26b436f421e5a59a5aa563f895de8
-      size: 1990325
+      md5: 134acddfa1711ae8b4da5ae4a2563557
+      size: 1699934
   featurize:
-    cmd:
-    - PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python .venv/bin/python src/featurize.py
+    cmd: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python .venv/bin/python src/featurize.py
     deps:
     - path: data/interim/data_cleaned.parquet
       hash: md5
-      md5: a9d26b436f421e5a59a5aa563f895de8
-      size: 1990325
+      md5: 134acddfa1711ae8b4da5ae4a2563557
+      size: 1699934
     - path: feature_store.yaml
       hash: md5
       md5: fd33cd8885f2ace4a3063c10ad6b5ba5
@@ -703,37 +699,70 @@ stages:
       size: 8410
     - path: src/featurize.py
       hash: md5
-      md5: cd5a39a06f9532c0b55dd53d6c1ed310
-      size: 11180
+      md5: a062a48a81781f5acc1d7389bb52b0fe
+      size: 17895
     outs:
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: d75c55fed7c2d09776d018f28d0c1cac
-      size: 3185849
+      md5: 2ed4d4b80edccfe6a1d6d088610b6e5f
+      size: 26827726
   explore:
-    cmd:
-    - .venv/bin/python src/explore.py
+    cmd: .venv/bin/python src/explore.py
     deps:
-    - path: data/raw/data.csv
+    - path: data/interim/data_cleaned.parquet
       hash: md5
-      md5: 33411fa1536aaaadb24c0c1f2a8598b9
-      size: 16246860
+      md5: 134acddfa1711ae8b4da5ae4a2563557
+      size: 1699934
+    - path: data/raw/data.parquet
+      hash: md5
+      md5: 70194fd7340a638e7a98b5d5a2a99ed6
+      size: 1419892
     - path: requirements-frozen.txt
       hash: md5
       md5: 495bf7a4ad0fc161c91a663531b153ca
       size: 8410
     - path: src/explore.py
       hash: md5
-      md5: 0d1bcfc93e297c513161b561717d01d4
-      size: 5715
+      md5: a82f7a15e6df316bf21ce22fd5aafb54
+      size: 12410
     outs:
-    - path: reports/cleanlab
+    - path: reports/cleanlab/cleanlab_confidence_distribution.png
       hash: md5
-      md5: 67ded61f77ef1e146d6e671c0a650b87.dir
-      size: 1450692
-      nfiles: 1
-    - path: reports/plots
+      md5: 706bf37c1bdd1f2a894fa9c9e2d071b9
+      size: 159782
+    - path: reports/cleanlab/cleanlab_confusion_matrix.png
       hash: md5
-      md5: 9b587c011ed42e6c99e4b03d3d8ac68a.dir
-      size: 1849745
-      nfiles: 60
+      md5: 02fb99ed2f166c6690d23f223ea3e83e
+      size: 99624
+    - path: reports/cleanlab/detailed_analysis.txt
+      hash: md5
+      md5: 463c91840fe41b211352ee2dfeac7d89
+      size: 675
+    - path: reports/cleanlab/feature_importance.csv
+      hash: md5
+      md5: 8fc113b9389194e3d5adb3fa3d1dde55
+      size: 52807
+    - path: reports/cleanlab/problematic_cases.csv
+      hash: md5
+      md5: 23f89ee798c93af697a8af45905342a7
+      size: 220479
+    - path: reports/plots/age_vs_readmission.png
+      hash: md5
+      md5: 8a40bd9fb68422f1fe4fe48da768cd01
+      size: 184203
+    - path: reports/plots/correlation_matrix.png
+      hash: md5
+      md5: b8d3693618e7ab03f4ca80e19009a35e
+      size: 676101
+    - path: reports/plots/readmitted_distribution.png
+      hash: md5
+      md5: 6b8c2cd4f4c2c346e54bccc300fbca54
+      size: 93876
+    - path: reports/plots/service_utilization_vs_readmission.png
+      hash: md5
+      md5: bd6ef7a2dbeb2b59ee003de7ae96c8ac
+      size: 101081
+    - path: reports/plots/time_in_hospital_vs_readmission.png
+      hash: md5
+      md5: 27667f6e3a4c238b25c3805b2753aa21
+      size: 93844
