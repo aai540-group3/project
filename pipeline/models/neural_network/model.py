@@ -481,7 +481,7 @@ def quick_run():
         "model": {
             "target": "readmitted",
             "random_state": 42,
-            "optimization_trials": 3,
+            "optimization_trials": 1,
             "cv_folds": 1,
         },
         "splits": {
