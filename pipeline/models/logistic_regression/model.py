@@ -292,6 +292,13 @@ def train_logistic_regression(CONFIG):
         for metric_name, value in metrics.items():
             live.log_metric(metric_name, value)
 
+        # Calculate feature importance
+        feature_importance = pd.Series(final_model.coef_[0], index=X.columns)
+        feature_importance.to_csv(
+            CONFIG["paths"]["artifacts"] / "metrics" / "feature_importance.csv",
+            index=False
+        )
+
         # Set plotting style
         plt.style.use(CONFIG["plots"]["style"])
         sns.set_context(
