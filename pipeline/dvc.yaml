@@ -8,6 +8,7 @@ stages:
     deps:
       - requirements.txt
     outs:
+      - .venv/bin/activate
       - requirements-frozen.txt
 
   infrastruct:
