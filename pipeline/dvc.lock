@@ -86,10 +86,10 @@ stages:
       hash: md5
       md5: 134acddfa1711ae8b4da5ae4a2563557
       size: 1699934
-    - path: data/raw/data.parquet
+    - path: data/raw/data.csv
       hash: md5
-      md5: 70194fd7340a638e7a98b5d5a2a99ed6
-      size: 1419892
+      md5: 33411fa1536aaaadb24c0c1f2a8598b9
+      size: 16246860
     - path: requirements-frozen.txt
       hash: md5
       md5: 495bf7a4ad0fc161c91a663531b153ca
@@ -139,3 +139,43 @@ stages:
       hash: md5
       md5: 27667f6e3a4c238b25c3805b2753aa21
       size: 93844
+  ingest_parquet:
+    cmd: .venv/bin/python src/ingest.py
+    deps:
+    - path: requirements-frozen.txt
+      hash: md5
+      md5: 495bf7a4ad0fc161c91a663531b153ca
+      size: 8410
+    - path: src/ingest.py
+      hash: md5
+      md5: 4834dee50d39bc8738573b1d25632ce3
+      size: 2691
+    outs:
+    - path: data/raw/data.parquet
+      hash: md5
+      md5: 70194fd7340a638e7a98b5d5a2a99ed6
+      size: 1419892
+  ingest_csv:
+    cmd: .venv/bin/python src/ingest.py
+    deps:
+    - path: requirements-frozen.txt
+      hash: md5
+      md5: 495bf7a4ad0fc161c91a663531b153ca
+      size: 8410
+    - path: src/ingest.py
+      hash: md5
+      md5: 4834dee50d39bc8738573b1d25632ce3
+      size: 2691
+    outs:
+    - path: data/raw/data.csv
+      hash: md5
+      md5: 33411fa1536aaaadb24c0c1f2a8598b9
+      size: 16246860
+    - path: data/raw/metadata.json
+      hash: md5
+      md5: eb8bd36c2cc7a6284a657c63561e0225
+      size: 5125
+    - path: data/raw/variables.json
+      hash: md5
+      md5: c03764d3560b025c3f1291d585517221
+      size: 19001
