@@ -444,7 +444,9 @@ def train_neural_network(CONFIG):
         logger.info("Saving artifacts...")
 
         # Save model and scaler
-        final_model.save(CONFIG["paths"]["artifacts"] / "model" / "model.h5")
+        joblib.dump(
+            final_model, CONFIG["paths"]["artifacts"] / "model" / "model.joblib"
+        )
         joblib.dump(scaler, CONFIG["paths"]["artifacts"] / "model" / "scaler.joblib")
 
         # Save metrics
@@ -452,12 +454,12 @@ def train_neural_network(CONFIG):
             json.dump(metrics, f, indent=4)
 
         # Save parameters
+        # Convert None to string 'None' for JSON serialization
+        best_params_serializable = {
+            k: (str(v) if v is None else v) for k, v in best_params.items()
+        }
         with open(CONFIG["paths"]["artifacts"] / "model" / "params.json", "w") as f:
-            json.dump(best_params, f, indent=4)
-
-        # Save training history
-        with open(CONFIG["paths"]["artifacts"] / "metrics" / "history.json", "w") as f:
-            json.dump(final_history.history, f, indent=4)
+            json.dump(best_params_serializable, f, indent=4)
 
         live.end()
         logger.info("Pipeline completed successfully!")
