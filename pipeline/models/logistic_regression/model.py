@@ -697,6 +697,10 @@ def train_logistic_regression(CONFIG):
         # Train final model
         final_model.fit(X_train_scaled, y_train)
 
+        # Save model summary to text file
+        with open(CONFIG["paths"]["artifacts"] / "model" / "model_summary.txt", "w") as f:
+            final_model.summary(print_fn=lambda x: f.write(x + "\n"))
+
         # Step 4: Evaluate Model
         logger.info("Evaluating model...")
 

@@ -42,8 +42,8 @@ stages:
       size: 8410
     - path: src/preprocess.py
       hash: md5
-      md5: a94ea1b8b1360ee502edfdea8218951f
-      size: 11592
+      md5: 948838f570aa710cc894402282f37a75
+      size: 11614
     outs:
     - path: data/interim/data_cleaned.parquet
       hash: md5
