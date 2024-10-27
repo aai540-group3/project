@@ -26,6 +26,7 @@ stages:
       - requirements-frozen.txt
     outs:
       - data/raw/data.csv
+      - data/raw/data.parquet
       - data/raw/metadata.json
       - data/raw/variables.json
 
@@ -42,7 +43,7 @@ stages:
     cmd: .venv/bin/python src/explore.py
     deps:
       - src/explore.py
-      - data/raw/data.parquet
+      - data/raw/data.csv
       - data/interim/data_cleaned.parquet
       - requirements-frozen.txt
     outs:
