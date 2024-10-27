@@ -331,7 +331,7 @@ def train_neural_network(CONFIG):
 
         dvc_callback = DVCLiveCallback(
             live=live,
-            model_file=str(CONFIG["paths"]["artifacts"] / "model" / "model.h5"),
+            model_file=str(CONFIG["paths"]["artifacts"] / "model" / "model.keras"),
         )
 
         final_history = final_model.fit(
@@ -446,7 +446,7 @@ def train_neural_network(CONFIG):
         logger.info("Saving artifacts...")
 
         # Save model and scaler
-        final_model.save(CONFIG["paths"]["artifacts"] / "model" / "model.h5")
+        final_model.save(CONFIG["paths"]["artifacts"] / "model" / "model.keras")
         joblib.dump(scaler, CONFIG["paths"]["artifacts"] / "model" / "scaler.joblib")
 
         # Save metrics
