@@ -36,12 +36,12 @@ jobs:
       manifest_changed: ${{ steps.manifest_check.outputs.manifest_changed }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
       - name: Cache Apt Archives
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        uses: actions/cache@v4.1.2
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
@@ -54,14 +54,12 @@ jobs:
 
       - name: Create Manifest Zip File
         run: |
-          echo "Files from manifest.json:"
-          jq -r '.files[]' "$MANIFEST_FILE"
+          echo "Reading files from $MANIFEST_FILE"
+          readarray -t files_to_zip_array < <(jq -r '.files[]' "$MANIFEST_FILE")
+          echo "Zipping the following files:"
+          printf '%s\n' "${files_to_zip_array[@]}"
 
-          files_to_zip=$(jq -r '.files | @sh' "$MANIFEST_FILE")
-          echo "Zipping the following files: $files_to_zip"
-
-          # Use eval to correctly handle spaces in filenames
-          eval zip -r manifest_files.zip "$MANIFEST_FILE" $files_to_zip || {
+          zip -r manifest_files.zip "$MANIFEST_FILE" "${files_to_zip_array[@]}" || {
             echo "Error creating manifest_files.zip"
             exit 1
           }
@@ -95,12 +93,12 @@ jobs:
     if: needs.check-manifest.outputs.manifest_changed == 'true'
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 1
 
       - name: Cache Apt Archives
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        uses: actions/cache@v4.1.2
         with:
           path: /var/cache/apt/archives
           key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
@@ -113,11 +111,12 @@ jobs:
 
       - name: Zip Deliverables
         run: |
-          files_to_zip=$(jq -r '.files | @sh' "$MANIFEST_FILE")
-          echo "Zipping the following files: $files_to_zip"
+          echo "Reading files from $MANIFEST_FILE"
+          readarray -t files_to_zip_array < <(jq -r '.files[]' "$MANIFEST_FILE")
+          echo "Zipping the following files:"
+          printf '%s\n' "${files_to_zip_array[@]}"
 
-          # Use eval to correctly handle spaces in filenames
-          eval zip -r Final_Project_Team_3_Deliverable_3.zip $files_to_zip || {
+          zip -r Final_Project_Team_3_Deliverable_3.zip "${files_to_zip_array[@]}" || {
             echo "Error creating Final_Project_Team_3_Deliverable_3.zip"
             exit 1
           }
@@ -167,7 +166,7 @@ jobs:
 
       - name: Repository Dispatch
         if: env.CHANGED == 'true'
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
           repository: aai540-group3/project
