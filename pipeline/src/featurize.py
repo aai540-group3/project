@@ -361,7 +361,7 @@ def main():
         # 14. Set up Feast feature store
         logger.info("Setting up Feast feature store...")
         patient = feast.Entity(
-            name="id", value_type=ValueType.INT64, description="Patient ID"
+            name="id", value_type=feast.ValueType.INT64, description="Patient ID"
         )
 
         data_source = feast.FileSource(
@@ -374,9 +374,9 @@ def main():
         for col in df.columns:
             if col not in ["readmitted", "event_timestamp", "created_timestamp", "id"]:
                 dtype = (
-                    ValueType.DOUBLE
+                    feast.ValueType.DOUBLE
                     if pd.api.types.is_numeric_dtype(df[col])
-                    else ValueType.STRING
+                    else feast.ValueType.STRING
                 )
                 features.append(Feature(name=col, dtype=dtype))
 
