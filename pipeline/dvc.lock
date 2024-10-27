@@ -205,3 +205,33 @@ stages:
       hash: md5
       md5: c03764d3560b025c3f1291d585517221
       size: 19001
+  train_logistic_regression:
+    cmd: .venv/bin/python models/logistic_regression/model.py
+    deps:
+    - path: data/interim/data_featured.parquet
+      hash: md5
+      md5: bcfcb4257ebc5523176cabc88c2278c3
+      size: 4971381
+    - path: models/logistic_regression/model.py
+      hash: md5
+      md5: df7d5793fa43b6d64227fb82088ddd52
+      size: 18556
+    - path: requirements-frozen.txt
+      hash: md5
+      md5: 495bf7a4ad0fc161c91a663531b153ca
+      size: 8410
+  train_autogluon:
+    cmd: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python .venv/bin/python models/autogluon/model.py
+    deps:
+    - path: data/interim/data_featured.parquet
+      hash: md5
+      md5: bcfcb4257ebc5523176cabc88c2278c3
+      size: 4971381
+    - path: models/autogluon/model.py
+      hash: md5
+      md5: 24b83fd37beaf1a56bb794a50036dcde
+      size: 18491
+    - path: requirements-frozen.txt
+      hash: md5
+      md5: 495bf7a4ad0fc161c91a663531b153ca
+      size: 8410
