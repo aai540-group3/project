@@ -319,7 +319,6 @@ def quick_run():
                 "num_gpus": 0,  # CPU only for testing
                 "feature_generator": None,  # Skip feature generation
                 "auto_stack": False,  # Disable auto stacking
-                "cache_data": False,  # Disable caching
                 "save_space": True,  # Minimize disk usage
             },
         },
@@ -385,7 +384,6 @@ def full_run():
                 "num_gpus": -1,  # Use all available GPUs
                 "feature_generator": "auto",  # Automatic feature generation
                 "auto_stack": True,  # Enable auto stacking
-                "cache_data": True,  # Enable caching
                 "save_space": False,  # Prioritize performance over space
                 "hyperparameter_tune_kwargs": {
                     "search_strategy": "auto",

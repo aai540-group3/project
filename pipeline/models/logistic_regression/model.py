@@ -822,7 +822,6 @@ def train_logistic_regression(CONFIG):
         live.end()
         raise
 
-
 def quick_run():
     """Runs an ultra-minimal configuration for instant feedback.
     Optimized for absolute minimum runtime - useful for code testing and debugging."""
