@@ -20,6 +20,7 @@ def main():
         # Define paths
         raw_data_path = "data/raw/data.csv"
         interim_data_path = "data/interim/data_cleaned.parquet"
+        feature_names_path = "data/interim/feature_names.joblib"
 
         # Load raw data
         logger.info(f"Reading raw data from {raw_data_path}")
@@ -322,6 +323,11 @@ def main():
         # Save processed data
         logger.info(f"Saving processed data to {interim_data_path}")
         df.to_parquet(interim_data_path, index=False)
+
+        # Save feature names
+        logger.info(f"Saving feature names to {feature_names_path}")
+        feature_names = df.columns.tolist()
+        pd.DataFrame(feature_names, columns=["features"]).to_csv(feature_names_path, index=False)
 
         logger.info("Data preprocessing completed successfully!")
         logger.info(f"Final shape: {df.shape}")

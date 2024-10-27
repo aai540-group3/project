@@ -348,7 +348,7 @@ def main():
         logger.info("Adding timestamp fields...")
         start_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
         df["event_timestamp"] = pd.date_range(
-            start=start_date, periods=len(df), freq="T", tz="UTC"
+            start=start_date, periods=len(df), freq="min", tz="UTC"
         )
         df["created_timestamp"] = pd.Timestamp.now(tz="UTC")
 

@@ -7,17 +7,11 @@ stages:
     - pip install uv
     - uv pip install -r requirements.txt
     - pip freeze > requirements-frozen.txt
-    - .venv/bin/python src/utils.py patch_nvidia_gpu
     deps:
     - path: requirements.txt
       hash: md5
-      md5: d43fca63c24309ac9e5a262c9a73749c
-      size: 338
-    - path: src/utils.py
-      hash: md5
-      md5: fa0c7868e939589e8646c7275141ddcc
-      size: 1248
-      isexec: true
+      md5: eac02b8a58ddb33da68533bcfa0737cd
+      size: 321
     outs:
     - path: requirements-frozen.txt
       hash: md5
@@ -48,19 +42,23 @@ stages:
       size: 8410
     - path: src/preprocess.py
       hash: md5
-      md5: 2bc43cea6c2be849c83ec2f7afeb4639
-      size: 11286
+      md5: a94ea1b8b1360ee502edfdea8218951f
+      size: 11592
     outs:
     - path: data/interim/data_cleaned.parquet
       hash: md5
-      md5: 134acddfa1711ae8b4da5ae4a2563557
+      md5: 52418c151fcc4029bed2b6fc5050b5e9
       size: 1699934
+    - path: data/interim/feature_names.joblib
+      hash: md5
+      md5: 7223e8718fe6f7173ebc871bf4d5cc6d
+      size: 637
   featurize:
     cmd: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python .venv/bin/python src/featurize.py
     deps:
     - path: data/interim/data_cleaned.parquet
       hash: md5
-      md5: 134acddfa1711ae8b4da5ae4a2563557
+      md5: 52418c151fcc4029bed2b6fc5050b5e9
       size: 1699934
     - path: feature_store.yaml
       hash: md5
@@ -72,19 +70,19 @@ stages:
       size: 8410
     - path: src/featurize.py
       hash: md5
-      md5: 48767b2e09faa7f78e0f8a23bcb6ab5c
-      size: 15263
+      md5: ec07d69a01cbf5f2b35840f40139f58b
+      size: 15265
     outs:
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: 3cecc5f5ddca79640f967b69e9296672
-      size: 4971379
+      md5: bcfcb4257ebc5523176cabc88c2278c3
+      size: 4971381
   explore:
     cmd: .venv/bin/python src/explore.py
     deps:
     - path: data/interim/data_cleaned.parquet
       hash: md5
-      md5: 134acddfa1711ae8b4da5ae4a2563557
+      md5: 52418c151fcc4029bed2b6fc5050b5e9
       size: 1699934
     - path: data/raw/data.csv
       hash: md5
@@ -101,44 +99,44 @@ stages:
     outs:
     - path: reports/cleanlab/cleanlab_confidence_distribution.png
       hash: md5
-      md5: 2dd410c2939f1501af05e7a7b28e2ccb
-      size: 146691
+      md5: 0616affc7242f85f5451826c55df82ce
+      size: 161293
     - path: reports/cleanlab/cleanlab_confusion_matrix.png
       hash: md5
-      md5: ae3b86a9b8ba3c407b74d3f9052d4e90
-      size: 104855
+      md5: 8a885443373dbb45858052b261da65ea
+      size: 102421
     - path: reports/cleanlab/detailed_analysis.txt
       hash: md5
-      md5: a585b94e68dd4bc4b0250d64fdb357e2
+      md5: 307ce3343fc0827a3c4ff18a6e2cdb7e
       size: 675
     - path: reports/cleanlab/feature_importance.csv
       hash: md5
-      md5: 69bf9affbdd6efe55341d84e4247647b
-      size: 52265
+      md5: ffa5511b494e72bde4c6fb7adf26f36c
+      size: 52412
     - path: reports/cleanlab/problematic_cases.csv
       hash: md5
-      md5: d7d4ba2624e199c3fd460457663e12d5
-      size: 232729
+      md5: 251ce7c020c5fbf3876532f98a9e5ad3
+      size: 218660
     - path: reports/plots/age_vs_readmission.png
       hash: md5
-      md5: 8a40bd9fb68422f1fe4fe48da768cd01
-      size: 184203
+      md5: 480cd634ff6177de5d3c70da9540db60
+      size: 185455
     - path: reports/plots/correlation_matrix.png
       hash: md5
-      md5: b8d3693618e7ab03f4ca80e19009a35e
-      size: 676101
+      md5: 4422abf47b3b73a3c3e206ce6561572d
+      size: 1012505
     - path: reports/plots/readmitted_distribution.png
       hash: md5
-      md5: 6b8c2cd4f4c2c346e54bccc300fbca54
-      size: 93876
+      md5: 4548dca5267dfe53e0505cda33a9da66
+      size: 93849
     - path: reports/plots/service_utilization_vs_readmission.png
       hash: md5
-      md5: bd6ef7a2dbeb2b59ee003de7ae96c8ac
-      size: 101081
+      md5: b7f6b4c74aae03e15d5bc9d7772e641a
+      size: 100897
     - path: reports/plots/time_in_hospital_vs_readmission.png
       hash: md5
-      md5: 27667f6e3a4c238b25c3805b2753aa21
-      size: 93844
+      md5: 41452169c3dfb9b9acfc5e438b9a1fee
+      size: 93487
   ingest_parquet:
     cmd: .venv/bin/python src/ingest.py
     deps:
@@ -171,6 +169,34 @@ stages:
       hash: md5
       md5: 33411fa1536aaaadb24c0c1f2a8598b9
       size: 16246860
+    - path: data/raw/metadata.json
+      hash: md5
+      md5: eb8bd36c2cc7a6284a657c63561e0225
+      size: 5125
+    - path: data/raw/variables.json
+      hash: md5
+      md5: c03764d3560b025c3f1291d585517221
+      size: 19001
+  ingest:
+    cmd: .venv/bin/python src/ingest.py
+    deps:
+    - path: requirements-frozen.txt
+      hash: md5
+      md5: 495bf7a4ad0fc161c91a663531b153ca
+      size: 8410
+    - path: src/ingest.py
+      hash: md5
+      md5: 4834dee50d39bc8738573b1d25632ce3
+      size: 2691
+    outs:
+    - path: data/raw/data.csv
+      hash: md5
+      md5: 33411fa1536aaaadb24c0c1f2a8598b9
+      size: 16246860
+    - path: data/raw/data.parquet
+      hash: md5
+      md5: 715fc5c0f345a1e7efc9136c4c5da15a
+      size: 1419892
     - path: data/raw/metadata.json
       hash: md5
       md5: eb8bd36c2cc7a6284a657c63561e0225

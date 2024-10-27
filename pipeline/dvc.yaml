@@ -193,29 +193,3 @@ stages:
           cache: false
       - models/neural_network/artifacts/plots/shap_importance.png:
           cache: false
-
-  train_uv:
-    cmd: .venv/bin/python models/uv/model.py
-    deps:
-      - models/uv/model.py
-      - data/interim/data_featured.parquet
-      - requirements-frozen.txt
-    outs:
-      - models/uv/artifacts/model/model.joblib:
-          cache: true
-      - models/uv/artifacts/model/model_summary.txt:
-          cache: true
-      - models/uv/artifacts/model/scaler.joblib:
-          cache: true
-    metrics:
-      - models/uv/artifacts/metrics/metrics.json:
-          cache: false
-      - models/uv/artifacts/metrics/feature_importance.csv:
-          cache: false
-    plots:
-      - models/uv/artifacts/plots/confusion_matrix.png:
-          cache: false
-      - models/uv/artifacts/plots/roc_curve.png:
-          cache: false
-      - models/uv/artifacts/plots/feature_importance.png:
-          cache: false
