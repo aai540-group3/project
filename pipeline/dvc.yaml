@@ -140,8 +140,6 @@ stages:
     outs:
       - models/autogluon/artifacts/model/model_info.txt:
           cache: true
-      - models/autogluon/artifacts/model/best_model_architecture.txt:
-          cache: true
       - models/autogluon/artifacts/model/leaderboard.csv:
           cache: true
       - models/autogluon/artifacts/model/feature_importance.csv:
