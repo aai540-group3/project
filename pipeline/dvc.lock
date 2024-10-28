@@ -56,6 +56,11 @@ stages:
       md5: 6e228dfee240417d5c1cde30098bf9cc
       size: 11521
     outs:
+    - path: .venv-preprocess
+      hash: md5
+      md5: 9d8b7ff24ce1fd16f1f271af471c3e51.dir
+      size: 374730349
+      nfiles: 16192
     - path: data/interim/data_cleaned.parquet
       hash: md5
       md5: 8a993448e091a2345c5a95bd3f487f3e
@@ -66,7 +71,7 @@ stages:
       size: 637
     - path: requirements-preprocess-frozen.txt
       hash: md5
-      md5: c2305f39a4e93dcf492f05d387313fc1
+      md5: c1c9e5fcaba196be4c96911ddc597dda
       size: 3182
   featurize:
     cmd:
@@ -93,13 +98,18 @@ stages:
       md5: 4ccca48843ebfc7015b379ad1b4c2b17
       size: 15282
     outs:
+    - path: .venv-featurize
+      hash: md5
+      md5: 82fd22e86227c93f1106d4d5936f0018.dir
+      size: 421489684
+      nfiles: 18508
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: 88b9b757e826fe71dd0767283db452a0
+      md5: 8e4fb4bf7bd6888831698134986a6445
       size: 4960350
     - path: requirements-featurize-frozen.txt
       hash: md5
-      md5: f8e5faf3be1ed9b9d9f23762897407d2
+      md5: 77d7410e040682fbe49ed6b7a28cc621
       size: 3792
   explore:
     cmd:
@@ -185,6 +195,11 @@ stages:
       md5: 4834dee50d39bc8738573b1d25632ce3
       size: 2691
     outs:
+    - path: .venv-ingest
+      hash: md5
+      md5: d8ccf5a525b42ac0882a372eae231c49.dir
+      size: 374803008
+      nfiles: 16220
     - path: data/raw/data.csv
       hash: md5
       md5: 33411fa1536aaaadb24c0c1f2a8598b9
@@ -203,7 +218,7 @@ stages:
       size: 19001
     - path: requirements-ingest-frozen.txt
       hash: md5
-      md5: e0c178753978f90b57418df096b18cca
+      md5: bbf7e249541619d0455edee9bfac1e04
       size: 3220
   train_logistic_regression:
     cmd: .venv/bin/python models/logistic_regression/model.py

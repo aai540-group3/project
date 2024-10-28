@@ -386,7 +386,6 @@ def full_run():
                 "dynamic_stacking": True,  # Enable dynamic stacking
                 "ds_args": {
                     "enable_ray_logging": True,
-                    "time_limit_ratio": 0.25,  # DyStack time allocation
                 },
                 "num_gpus": -1,  # Use all available GPUs
                 "feature_generator": "auto",  # Automatic feature generation

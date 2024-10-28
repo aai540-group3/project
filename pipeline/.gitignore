@@ -1,1 +1,5 @@
 /reports
+/requirements-preprocess-frozen.txt
+/.venv-preprocess
+/requirements-featurize-frozen.txt
+/.venv-featurize
