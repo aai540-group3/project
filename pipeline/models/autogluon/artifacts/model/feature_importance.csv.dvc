@@ -1,5 +1,0 @@
-outs:
-- md5: 1b93b41477957f69e27b758b8bb029a4
-  size: 4499
-  hash: md5
-  path: feature_importance.csv
