@@ -1,0 +1,11 @@
+boto3
+dask[dataframe]
+dvc[all]
+dvclive
+feast
+matplotlib
+numpy
+pandas
+pydantic<2.0
+scikit-learn
+seaborn

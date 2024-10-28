@@ -1,0 +1,9 @@
+dvc[all]
+dvclive
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+cleanlab
+joblib

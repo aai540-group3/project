@@ -1,0 +1,11 @@
+dvc[all]
+dvclive
+pandas
+numpy
+scikit-learn
+autogluon
+optuna
+matplotlib
+seaborn
+graphviz
+joblib

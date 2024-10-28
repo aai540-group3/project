@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from feast import Entity, Feature, FeatureStore, FeatureView, FileSource, ValueType
 from sklearn.preprocessing import StandardScaler
-import feast
 
 # Configure logging
 logging.basicConfig(
@@ -27,7 +26,7 @@ def ignore_astimezone_error():
 
 
 def main():
-    """Main function implementing the complete feature engineering pipeline."""
+    """Main function implementing the complete feature engineering pipeline with Feast integration."""
 
     # Define target feature set
     TARGET_FEATURES = [
@@ -84,6 +83,7 @@ def main():
     # Define paths
     interim_data_path = "data/interim/data_cleaned.parquet"
     featured_data_path = "data/interim/data_featured.parquet"
+    feature_store_path = "."
 
     try:
         # Load preprocessed data
@@ -169,7 +169,7 @@ def main():
 
         df = df.drop("readmitted", axis=1)
 
-        # 1. Create medication-related features
+        # Create medication-related features
         logger.info("Creating medication-related features...")
         medication_cols = [
             "metformin",
@@ -205,14 +205,14 @@ def main():
         df["numchange"] = df[medication_cols].sum(axis=1)
         df["nummed"] = df[medication_cols].sum(axis=1)
 
-        # 2. Create service utilization features
+        # Create service utilization features
         logger.info("Creating service utilization features...")
         df["total_encounters"] = (
             df["number_outpatient"] + df["number_emergency"] + df["number_inpatient"]
         )
         df["encounter_per_time"] = df["total_encounters"] / df["time_in_hospital"]
 
-        # 3. Create procedure-related features
+        # Create procedure-related features
         logger.info("Creating procedure-related features...")
         df["procedures_per_day"] = df["num_procedures"] / df["time_in_hospital"]
         df["lab_procedures_per_day"] = df["num_lab_procedures"] / df["time_in_hospital"]
@@ -220,13 +220,13 @@ def main():
             df["num_medications"] + 1
         )
 
-        # 4. Create diagnostic-related features
+        # Create diagnostic-related features
         logger.info("Creating diagnostic-related features...")
         df["diagnoses_per_encounter"] = df["number_diagnoses"] / (
             df["total_encounters"] + 1
         )
 
-        # 5. Log transform features with high skewness
+        # Log transform features with high skewness
         logger.info("Applying log transformations...")
         skewed_features = ["number_outpatient", "number_emergency", "number_inpatient"]
         for col in skewed_features:
@@ -243,7 +243,7 @@ def main():
             ]
         )
 
-        # 6. Create interaction features
+        # Create interaction features
         logger.info("Creating interaction features...")
         interactions = [
             ("num_medications", "time_in_hospital"),
@@ -266,7 +266,7 @@ def main():
                 df[feature_name] = df[feat1] * df[feat2]
                 logger.info(f"Created interaction feature: {feature_name}")
 
-        # 7. Create ratio features
+        # Create ratio features
         logger.info("Creating ratio features...")
         df["procedure_medication_ratio"] = df["num_procedures"] / (
             df["num_medications"] + 1
@@ -278,7 +278,7 @@ def main():
             df["num_procedures"] + 1
         )
 
-        # 8. One-hot encode categorical variables
+        # One-hot encode categorical variables
         logger.info("One-hot encoding categorical variables...")
         categorical_cols = [
             "race",
@@ -295,7 +295,7 @@ def main():
                 df.drop(columns=[col], inplace=True)
                 logger.info(f"Created dummy variables for {col}")
 
-        # 9. Ensure all required features exist
+        # Ensure all required features exist
         for feature in TARGET_FEATURES:
             if feature not in df.columns:
                 logger.warning(f"Missing expected feature: {feature}")
@@ -304,13 +304,13 @@ def main():
                     logger.info(f"Creating dummy variable {feature}")
                     df[feature] = 0
 
-        # 10. Standardize numeric features
+        # Standardize numeric features
         logger.info("Standardizing numeric features...")
         numeric_columns = df.select_dtypes(include=[np.number]).columns
         scaler = StandardScaler()
         df[numeric_columns] = scaler.fit_transform(df[numeric_columns])
 
-        # 11. Handle outliers
+        # Handle outliers
         logger.info("Handling outliers...")
         key_features = [
             "time_in_hospital",
@@ -345,7 +345,7 @@ def main():
         # Add target variable back to the dataframe
         df["readmitted"] = y
 
-        # 12. Add timestamps for Feast
+        # 13. Add timestamps for Feast
         logger.info("Adding timestamp fields...")
         start_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
         df["event_timestamp"] = pd.date_range(
@@ -360,11 +360,11 @@ def main():
 
         # 14. Set up Feast feature store
         logger.info("Setting up Feast feature store...")
-        patient = feast.Entity(
-            name="id", value_type=feast.ValueType.INT64, description="Patient ID"
+        patient = Entity(
+            name="id", value_type=ValueType.INT64, description="Patient ID"
         )
 
-        data_source = feast.FileSource(
+        data_source = FileSource(
             path=os.path.abspath(featured_data_path),
             event_timestamp_column="event_timestamp",
             created_timestamp_column="created_timestamp",
@@ -374,13 +374,13 @@ def main():
         for col in df.columns:
             if col not in ["readmitted", "event_timestamp", "created_timestamp", "id"]:
                 dtype = (
-                    feast.ValueType.DOUBLE
+                    ValueType.DOUBLE
                     if pd.api.types.is_numeric_dtype(df[col])
-                    else feast.ValueType.STRING
+                    else ValueType.STRING
                 )
                 features.append(Feature(name=col, dtype=dtype))
 
-        feature_view = feast.FeatureView(
+        feature_view = FeatureView(
             name="diabetes_features",
             entities=["id"],
             ttl=timedelta(days=365 * 10),
@@ -389,7 +389,7 @@ def main():
             online=True,
         )
 
-        store = feast.FeatureStore(repo_path=".")
+        store = FeatureStore(repo_path=".")
         store.apply([patient, feature_view])
 
         # 15. Materialize features

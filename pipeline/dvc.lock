@@ -2,141 +2,133 @@ schema: '2.0'
 stages:
   setup:
     cmd:
-    - python3 -m virtualenv .venv
-    - . .venv/bin/activate
-    - pip install uv
-    - uv pip install -r requirements.txt
-    - pip freeze > requirements-frozen.txt
+    - uv venv .venv-setup --python 3.10
+    - . .venv-setup/bin/activate && uv pip install -r requirements.txt
+    - . .venv-setup/bin/activate && uv pip freeze > requirements-frozen.txt
     deps:
     - path: requirements.txt
       hash: md5
-      md5: eac02b8a58ddb33da68533bcfa0737cd
-      size: 321
+      md5: 2fa59e3161e5d835f2147f8fa931df01
+      size: 33
     outs:
     - path: requirements-frozen.txt
       hash: md5
-      md5: 495bf7a4ad0fc161c91a663531b153ca
-      size: 8410
+      md5: 81e44ab0c6698a83b40884bbfbe22b03
+      size: 2702
   infrastruct:
-    cmd: .venv/bin/python src/infrastruct.py
+    cmd:
+    - uv venv .venv-infrastruct --python 3.10
+    - . .venv-infrastruct/bin/activate && uv pip install -r requirements-infrastruct.txt
+    - . .venv-infrastruct/bin/activate && uv pip freeze > requirements-infrastruct-frozen.txt
+    - . .venv-infrastruct/bin/activate && python src/infrastruct.py
     deps:
-    - path: requirements-frozen.txt
+    - path: requirements-infrastruct.txt
       hash: md5
-      md5: 495bf7a4ad0fc161c91a663531b153ca
-      size: 8410
+      md5: 60b865dddcfe1ba5e216406717be77a4
+      size: 19
     - path: src/infrastruct.py
       hash: md5
       md5: 007ddab3349fca1540e75fc7add9923b
       size: 17745
       isexec: true
+    outs:
+    - path: requirements-infrastruct-frozen.txt
+      hash: md5
+      md5: 7a6a7eeb309a45fd9b797ba5f283ef4e
+      size: 145
   preprocess:
-    cmd: .venv/bin/python src/preprocess.py
+    cmd:
+    - uv venv .venv-preprocess --python 3.10
+    - . .venv-preprocess/bin/activate && uv pip install -r requirements-preprocess.txt
+    - . .venv-preprocess/bin/activate && uv pip freeze > requirements-preprocess-frozen.txt
+    - . .venv-preprocess/bin/activate && python src/preprocess.py
     deps:
     - path: data/raw/data.csv
       hash: md5
       md5: 33411fa1536aaaadb24c0c1f2a8598b9
       size: 16246860
-    - path: requirements-frozen.txt
+    - path: requirements-preprocess.txt
       hash: md5
-      md5: 495bf7a4ad0fc161c91a663531b153ca
-      size: 8410
+      md5: 2e6b6474c7d7de529a7e5dc2b1761a27
+      size: 50
     - path: src/preprocess.py
       hash: md5
-      md5: 948838f570aa710cc894402282f37a75
-      size: 11614
+      md5: 6e228dfee240417d5c1cde30098bf9cc
+      size: 11521
     outs:
     - path: data/interim/data_cleaned.parquet
       hash: md5
-      md5: 52418c151fcc4029bed2b6fc5050b5e9
-      size: 1699934
+      md5: 8a993448e091a2345c5a95bd3f487f3e
+      size: 1694762
     - path: data/interim/feature_names.joblib
       hash: md5
       md5: 7223e8718fe6f7173ebc871bf4d5cc6d
       size: 637
+    - path: requirements-preprocess-frozen.txt
+      hash: md5
+      md5: c2305f39a4e93dcf492f05d387313fc1
+      size: 3182
   featurize:
-    cmd: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python .venv/bin/python src/featurize.py
+    cmd:
+    - uv venv .venv-featurize --python 3.11
+    - . .venv-featurize/bin/activate && uv pip install -r requirements-featurize.txt
+    - . .venv-featurize/bin/activate && uv pip freeze > requirements-featurize-frozen.txt
+    - . .venv-featurize/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
+      python src/featurize.py
     deps:
     - path: data/interim/data_cleaned.parquet
       hash: md5
-      md5: 52418c151fcc4029bed2b6fc5050b5e9
-      size: 1699934
+      md5: 8a993448e091a2345c5a95bd3f487f3e
+      size: 1694762
     - path: feature_store.yaml
       hash: md5
-      md5: fd33cd8885f2ace4a3063c10ad6b5ba5
-      size: 166
-    - path: requirements-frozen.txt
+      md5: f690725d429449b466c260205d8da47a
+      size: 202
+    - path: requirements-featurize.txt
       hash: md5
-      md5: 495bf7a4ad0fc161c91a663531b153ca
-      size: 8410
+      md5: 4f9f52b9fe2d29796d3f210c33ed92d0
+      size: 102
     - path: src/featurize.py
       hash: md5
-      md5: ec07d69a01cbf5f2b35840f40139f58b
-      size: 15265
+      md5: 4ccca48843ebfc7015b379ad1b4c2b17
+      size: 15282
     outs:
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: bcfcb4257ebc5523176cabc88c2278c3
-      size: 4971381
+      md5: 88b9b757e826fe71dd0767283db452a0
+      size: 4960350
+    - path: requirements-featurize-frozen.txt
+      hash: md5
+      md5: f8e5faf3be1ed9b9d9f23762897407d2
+      size: 3792
   explore:
-    cmd: .venv/bin/python src/explore.py
+    cmd:
+    - uv venv .venv-explore --python 3.10
+    - . .venv-explore/bin/activate && uv pip install -r requirements-explore.txt
+    - . .venv-explore/bin/activate && uv pip freeze > requirements-explore-frozen.txt
+    - . .venv-explore/bin/activate && python src/explore.py
     deps:
     - path: data/interim/data_cleaned.parquet
       hash: md5
-      md5: 52418c151fcc4029bed2b6fc5050b5e9
-      size: 1699934
+      md5: 8a993448e091a2345c5a95bd3f487f3e
+      size: 1694762
     - path: data/raw/data.csv
       hash: md5
       md5: 33411fa1536aaaadb24c0c1f2a8598b9
       size: 16246860
-    - path: requirements-frozen.txt
+    - path: requirements-explore.txt
       hash: md5
-      md5: 495bf7a4ad0fc161c91a663531b153ca
-      size: 8410
+      md5: 4b77418d951d952f692eb79b45b0fe7e
+      size: 78
     - path: src/explore.py
       hash: md5
       md5: 5db5255030273c94d257a5799ff2e917
       size: 12372
     outs:
-    - path: reports/cleanlab/cleanlab_confidence_distribution.png
+    - path: requirements-explore-frozen.txt
       hash: md5
-      md5: 0616affc7242f85f5451826c55df82ce
-      size: 161293
-    - path: reports/cleanlab/cleanlab_confusion_matrix.png
-      hash: md5
-      md5: 8a885443373dbb45858052b261da65ea
-      size: 102421
-    - path: reports/cleanlab/detailed_analysis.txt
-      hash: md5
-      md5: 307ce3343fc0827a3c4ff18a6e2cdb7e
-      size: 675
-    - path: reports/cleanlab/feature_importance.csv
-      hash: md5
-      md5: ffa5511b494e72bde4c6fb7adf26f36c
-      size: 52412
-    - path: reports/cleanlab/problematic_cases.csv
-      hash: md5
-      md5: 251ce7c020c5fbf3876532f98a9e5ad3
-      size: 218660
-    - path: reports/plots/age_vs_readmission.png
-      hash: md5
-      md5: 480cd634ff6177de5d3c70da9540db60
-      size: 185455
-    - path: reports/plots/correlation_matrix.png
-      hash: md5
-      md5: 4422abf47b3b73a3c3e206ce6561572d
-      size: 1012505
-    - path: reports/plots/readmitted_distribution.png
-      hash: md5
-      md5: 4548dca5267dfe53e0505cda33a9da66
-      size: 93849
-    - path: reports/plots/service_utilization_vs_readmission.png
-      hash: md5
-      md5: b7f6b4c74aae03e15d5bc9d7772e641a
-      size: 100897
-    - path: reports/plots/time_in_hospital_vs_readmission.png
-      hash: md5
-      md5: 41452169c3dfb9b9acfc5e438b9a1fee
-      size: 93487
+      md5: 39573a2880e1d810ca446d0a99246799
+      size: 3332
   ingest_parquet:
     cmd: .venv/bin/python src/ingest.py
     deps:
@@ -178,12 +170,16 @@ stages:
       md5: c03764d3560b025c3f1291d585517221
       size: 19001
   ingest:
-    cmd: .venv/bin/python src/ingest.py
+    cmd:
+    - uv venv .venv-ingest --python 3.10
+    - . .venv-ingest/bin/activate && uv pip install -r requirements-ingest.txt
+    - . .venv-ingest/bin/activate && uv pip freeze > requirements-ingest-frozen.txt
+    - . .venv-ingest/bin/activate && python src/ingest.py
     deps:
-    - path: requirements-frozen.txt
+    - path: requirements-ingest.txt
       hash: md5
-      md5: 495bf7a4ad0fc161c91a663531b153ca
-      size: 8410
+      md5: b6ace7c12bf4b84c615e2b4e80cd6b96
+      size: 81
     - path: src/ingest.py
       hash: md5
       md5: 4834dee50d39bc8738573b1d25632ce3
@@ -195,8 +191,8 @@ stages:
       size: 16246860
     - path: data/raw/data.parquet
       hash: md5
-      md5: 715fc5c0f345a1e7efc9136c4c5da15a
-      size: 1419892
+      md5: 80180ca21b2e0a18573675cdb3f741de
+      size: 1415409
     - path: data/raw/metadata.json
       hash: md5
       md5: eb8bd36c2cc7a6284a657c63561e0225
@@ -205,6 +201,10 @@ stages:
       hash: md5
       md5: c03764d3560b025c3f1291d585517221
       size: 19001
+    - path: requirements-ingest-frozen.txt
+      hash: md5
+      md5: e0c178753978f90b57418df096b18cca
+      size: 3220
   train_logistic_regression:
     cmd: .venv/bin/python models/logistic_regression/model.py
     deps:

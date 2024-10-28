@@ -31,6 +31,7 @@ from sklearn.preprocessing import StandardScaler
 
 from dvclive import Live
 
+
 def train_logistic_regression(CONFIG):
     """Trains a logistic regression model based on provided configuration."""
     logging.basicConfig(
@@ -259,7 +260,9 @@ def train_logistic_regression(CONFIG):
         final_model.fit(X_train_scaled, y_train)
 
         # Save model parameters to text file
-        with open(CONFIG["paths"]["artifacts"] / "model" / "model_summary.txt", "w") as f:
+        with open(
+            CONFIG["paths"]["artifacts"] / "model" / "model_summary.txt", "w"
+        ) as f:
             f.write(f"Model Parameters:\n{final_model.get_params()}\n")
 
         # Step 4: Evaluate Model
@@ -296,7 +299,7 @@ def train_logistic_regression(CONFIG):
         feature_importance = pd.Series(final_model.coef_[0], index=X.columns)
         feature_importance.to_csv(
             CONFIG["paths"]["artifacts"] / "metrics" / "feature_importance.csv",
-            index=False
+            index=False,
         )
 
         # Set plotting style

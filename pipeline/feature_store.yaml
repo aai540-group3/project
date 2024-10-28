@@ -8,3 +8,5 @@ online_store:
 
 offline_store:
   type: file
+
+entity_key_serialization_version: 2

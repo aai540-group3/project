@@ -1,4 +1,3 @@
-
 __pycache__/
 !.gitkeep
 .cache
@@ -16,6 +15,7 @@ __pycache__/
 .ruff_cache
 .spyproject/
 .tox/
+.uv_cache/
 .venv/
 .vscode/
 *.aux
@@ -66,14 +66,9 @@ outputs/
 parts/
 pip-delete-this-directory.txt
 pip-log.txt
-pipeline/models/autogluon/input_hash.txt
-pipeline/models/autogluon/metadata.json
-pipeline/models/autogluon/models
-pipeline/models/autogluon/utils
-pipeline/models/autogluon/version.txt
-pipeline/models/logistic_regression/input_hash.txt
 sdist/
 target/
 terraform/.terraform/providers/
 tree.txt
 var/
+.venv-*/
