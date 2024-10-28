@@ -148,7 +148,7 @@ pyasn1==0.6.1
 pyasn1-modules==0.4.1
 pycparser==2.22
 pycryptodome==3.21.0
-pydantic==1.10.18
+pydantic==2.9.2
 pydot==3.0.2
 pydrive2==1.20.0
 pygit2==1.16.0
