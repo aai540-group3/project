@@ -1,3 +1,7 @@
+# dvc.yaml
+
+# Project: (You'll need to fill this in)
+
 stages:
   setup:
     cmd:
@@ -36,12 +40,16 @@ stages:
       - requirements-ingest-frozen.txt:
           persist: false
       - data/raw/data.csv:
+          cache: true
           persist: true
       - data/raw/metadata.json:
-          persist: false
+          cache: true
+          persist: true
       - data/raw/variables.json:
-          persist: false
+          cache: true
+          persist: true
       - data/raw/data.parquet:
+          cache: true
           persist: true
 
   preprocess:
@@ -58,9 +66,11 @@ stages:
       - requirements-preprocess-frozen.txt:
           persist: false
       - data/interim/data_cleaned.parquet:
+          cache: true
           persist: true
       - data/interim/feature_names.joblib:
-          persist: false
+          cache: true
+          persist: true
 
   explore:
     cmd:
@@ -76,6 +86,42 @@ stages:
     outs:
       - requirements-explore-frozen.txt:
           persist: false
+      - reports/plots/readmitted_distribution.png:
+          cache: true
+          persist: true
+      - reports/plots/time_in_hospital_vs_readmission.png:
+          cache: true
+          persist: true
+      - reports/plots/age_vs_readmission.png:
+          cache: true
+          persist: true
+      - reports/plots/service_utilization_vs_readmission.png:
+          cache: true
+          persist: true
+      - reports/plots/correlation_matrix.png:
+          cache: true
+          persist: true
+      - reports/cleanlab/cleanlab_confusion_matrix.png:
+          cache: true
+          persist: true
+      - reports/cleanlab/cleanlab_confidence_distribution.png:
+          cache: true
+          persist: true
+      - reports/cleanlab/cleanlab_feature_importance.png:
+          cache: true
+          persist: true
+      - reports/cleanlab/detailed_analysis.txt:
+          cache: true
+          persist: true
+      - reports/cleanlab/problematic_cases.csv:
+          cache: true
+          persist: true
+      - reports/cleanlab/feature_importance.csv:
+          cache: true
+          persist: true
+      - data/interim/data_cleanlab.parquet:
+          cache: true
+          persist: true
 
   featurize:
     cmd:
@@ -86,12 +132,13 @@ stages:
     deps:
       - src/featurize.py
       - requirements-featurize.txt
-      - data/interim/data_cleaned.parquet
+      - data/interim/data_cleanlab.parquet
       - feature_store.yaml
     outs:
       - requirements-featurize-frozen.txt:
           persist: false
       - data/interim/data_featured.parquet:
+          cache: true
           persist: true
 
   train_logisticregression:
@@ -107,7 +154,25 @@ stages:
     outs:
       - requirements-logisticregression-frozen.txt:
           persist: false
-      - models/logistic_regression/trained_model.joblib:
+      - models/logistic_regression/artifacts/model:
+          cache: true
+          persist: true
+      - models/logistic_regression/artifacts/metrics.json:
+          cache: true
+          persist: true
+    metrics:
+      - models/logistic_regression/artifacts/metrics.json:
+          cache: true
+          persist: true
+    plots:
+      - models/logistic_regression/artifacts/plots/confusion_matrix.png:
+          cache: true
+          persist: true
+      - models/logistic_regression/artifacts/plots/precision_recall.png:
+          cache: true
+          persist: true
+      - models/logistic_regression/artifacts/plots/roc.png:
+          cache: true
           persist: true
 
   train_neuralnetwork:
@@ -123,7 +188,25 @@ stages:
     outs:
       - requirements-neuralnetwork-frozen.txt:
           persist: false
-      - models/neural_network/trained_model.joblib:
+      - models/neural_network/artifacts/model:
+          cache: true
+          persist: true
+      - models/neural_network/artifacts/metrics.json:
+          cache: true
+          persist: true
+    metrics:
+      - models/neural_network/artifacts/metrics.json:
+          cache: true
+          persist: true
+    plots:
+      - models/neural_network/artifacts/plots/confusion_matrix.png:
+          cache: true
+          persist: true
+      - models/neural_network/artifacts/plots/precision_recall.png:
+          cache: true
+          persist: true
+      - models/neural_network/artifacts/plots/roc.png:
+          cache: true
           persist: true
 
   train_autogluon:
@@ -140,5 +223,23 @@ stages:
     outs:
       - requirements-autogluon-frozen.txt:
           persist: false
-      - models/autogluon/trained_model.joblib:
+      - models/autogluon/artifacts/model:
+          cache: true
+          persist: true
+      - models/autogluon/artifacts/metrics.json:
+          cache: true
+          persist: true
+    metrics:
+      - models/autogluon/artifacts/metrics.json:
+          cache: true
+          persist: true
+    plots:
+      - models/autogluon/artifacts/plots/confusion_matrix.png:
+          cache: true
+          persist: true
+      - models/autogluon/artifacts/plots/precision_recall.png:
+          cache: true
+          persist: true
+      - models/autogluon/artifacts/plots/roc.png:
+          cache: true
           persist: true
