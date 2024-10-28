@@ -154,8 +154,6 @@ source = [
 show_missing = true
 
 [tool.uv]
-cache-dir = "./.uv_cache"
-managed = true
 environments = [
     "sys_platform == 'linux'",
 ]

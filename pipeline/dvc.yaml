@@ -107,9 +107,6 @@ stages:
       - reports/cleanlab/cleanlab_confidence_distribution.png:
           cache: true
           persist: true
-      - reports/cleanlab/cleanlab_feature_importance.png:
-          cache: true
-          persist: true
       - reports/cleanlab/detailed_analysis.txt:
           cache: true
           persist: true
@@ -157,9 +154,6 @@ stages:
       - models/logistic_regression/artifacts/model:
           cache: true
           persist: true
-      - models/logistic_regression/artifacts/metrics.json:
-          cache: true
-          persist: true
     metrics:
       - models/logistic_regression/artifacts/metrics.json:
           cache: true
@@ -189,9 +183,6 @@ stages:
       - requirements-neuralnetwork-frozen.txt:
           persist: false
       - models/neural_network/artifacts/model:
-          cache: true
-          persist: true
-      - models/neural_network/artifacts/metrics.json:
           cache: true
           persist: true
     metrics:
@@ -224,9 +215,6 @@ stages:
       - requirements-autogluon-frozen.txt:
           persist: false
       - models/autogluon/artifacts/model:
-          cache: true
-          persist: true
-      - models/autogluon/artifacts/metrics.json:
           cache: true
           persist: true
     metrics:

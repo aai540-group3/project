@@ -1,9 +1,10 @@
+cleanlab
 dvc[all]
 dvclive
-pandas
-numpy
-scikit-learn
-matplotlib
-seaborn
-cleanlab
 joblib
+matplotlib
+numpy
+pandas
+pyparsing
+scikit-learn
+seaborn
