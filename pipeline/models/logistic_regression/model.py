@@ -519,8 +519,8 @@ def full_run():
 
 
 if __name__ == "__main__":
-    MODE = "full"
-    if MODE.lower() == "quick":
+    MODE = "quick"
+    if MODE.lower() == "full":
         quick_run()
     elif MODE.lower() == "full":
         full_run()
