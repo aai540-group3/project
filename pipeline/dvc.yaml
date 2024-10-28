@@ -116,9 +116,6 @@ stages:
       - reports/cleanlab/feature_importance.csv:
           cache: true
           persist: true
-      - data/interim/data_cleanlab.parquet:
-          cache: true
-          persist: true
 
   featurize:
     cmd:
