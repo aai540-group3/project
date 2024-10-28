@@ -126,9 +126,7 @@ known_third_party = [
     "feast",
     "yaml",
 ]
-skip = [
-    "site-packages",
-]
+skip_glob = [".venv-*/*"]
 
 [tool.pylint]
 disable = [
