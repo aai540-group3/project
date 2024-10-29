@@ -1,0 +1,10 @@
+cleanlab
+dvc[all]
+dvclive
+joblib
+matplotlib
+numpy
+pandas
+pyparsing
+scikit-learn
+seaborn

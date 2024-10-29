@@ -1,0 +1,6 @@
+aiohttp
+openai
+pdf2image
+Pillow
+python-pptx
+tenacity
