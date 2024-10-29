@@ -98,8 +98,7 @@ stages:
     - uv venv .venv-featurize --python 3.11
     - . .venv-featurize/bin/activate && uv pip install -r requirements-featurize.txt
     - . .venv-featurize/bin/activate && uv pip freeze > requirements-featurize-frozen.txt
-    - . .venv-featurize/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
-      python src/featurize.py
+    - . .venv-featurize/bin/activate && python src/featurize.py
     - echo "done" > .markers/featurize.done
     deps:
     - path: .markers/explore.done
@@ -120,8 +119,8 @@ stages:
       size: 102
     - path: src/featurize.py
       hash: md5
-      md5: 4ccca48843ebfc7015b379ad1b4c2b17
-      size: 15282
+      md5: a561076dd413ab2a74293d096c15b078
+      size: 15383
     outs:
     - path: .markers/featurize.done
       hash: md5
@@ -129,16 +128,16 @@ stages:
       size: 5
     - path: .venv-featurize
       hash: md5
-      md5: 5bbb019a4233e9aa936d1b24f785304f.dir
-      size: 421483022
+      md5: 90b3f17f833f2d1707bb7e8d3e428d5a.dir
+      size: 421494223
       nfiles: 18508
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: 6ecf081afc8ca3513f1f6b3f8606c0c5
+      md5: f508abc6a720c94f159db3c2139edc8d
       size: 5210972
     - path: requirements-featurize-frozen.txt
       hash: md5
-      md5: 00749f8c17ee669e93004380e655d14e
+      md5: d7ef7573f0a519e25352f65bd353cd8b
       size: 3792
   explore:
     cmd:
