@@ -281,7 +281,7 @@ class PPTXtoVideo:
         # Determine the output directory
         repo_root = self._get_repo_root()
         if repo_root:
-            self.output_dir = os.path.join(repo_root, "video-assets")
+            self.output_dir = os.path.join(repo_root, "pptx2video", "video-assets")
         else:
             # Fallback to using the PPTX file's directory
             self.output_dir = os.path.join(
