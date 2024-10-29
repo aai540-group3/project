@@ -366,7 +366,7 @@ stages:
     deps:
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: '2780051e714710100282977488932568'
+      md5: f6a67e2d2bfcbb6d3ce0026abf45034c
       size: 5210972
     - path: models/logistic_regression/model.py
       hash: md5
@@ -380,7 +380,7 @@ stages:
     - path: .venv-logisticregression
       hash: md5
       md5: 227d5ab4be46fbf2e442a769519967be.dir
-      size: 421947640
+      size: 421954362
       nfiles: 18184
     - path: models/logistic_regression/artifacts/metrics/metrics.json
       hash: md5
