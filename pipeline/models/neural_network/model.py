@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+pipeline.models.neural_network.model
 Neural Network Model Training Script
 
 This script trains a neural network model with hyperparameter tuning, data balancing,
