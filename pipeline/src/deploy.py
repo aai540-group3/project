@@ -10,7 +10,7 @@ import pandas as pd
 import tf2onnx
 import tensorflow as tf
 from dotenv import load_dotenv
-from huggingface_hub import ModelCard, ModelCardData
+from huggingface_hub import ModelCard, ModelCardData, upload_folder
 
 # Setup logging and environment
 load_dotenv()
@@ -586,7 +586,7 @@ Last updated: {pd.Timestamp.now().strftime('%Y-%m-%d')}
 
 
 def upload_to_huggingface() -> bool:
-    """Upload the model directory to Hugging Face."""
+    """Upload the model directory to Hugging Face using rsync-like functionality."""
     token = get_hf_token()
     os.environ["HF_TRANSFER"] = "1"  # Enable faster uploads
 
@@ -596,24 +596,17 @@ def upload_to_huggingface() -> bool:
         login_cmd = ["huggingface-cli", "login", "--token", token]
         subprocess.run(login_cmd, check=True, capture_output=True, text=True)
 
-        # Upload command
+        # Upload folder
         logger.info(f"Starting upload to {REPO_ID}...")
-        upload_cmd = [
-            "huggingface-cli",
-            "upload",
-            REPO_ID,
-            str(OUTPUT_DIR),
-            "--repo-type",
-            "model",
-        ]
-        subprocess.run(upload_cmd, check=True, text=True)
+        upload_folder(
+            repo_id=REPO_ID,
+            folder_path=str(OUTPUT_DIR),
+            repo_type="model"
+        )
         logger.info(f"Successfully uploaded model to {REPO_ID}")
         return True
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Error uploading to Hugging Face: {str(e)}")
-        return False
     except Exception as e:
-        logger.error(f"Unexpected error during upload: {e}")
+        logger.error(f"Error uploading to Hugging Face: {str(e)}")
         return False
 
 
@@ -627,24 +620,17 @@ def upload_ui_to_huggingface() -> bool:
         login_cmd = ["huggingface-cli", "login", "--token", token]
         subprocess.run(login_cmd, check=True, capture_output=True, text=True)
 
-        # Upload command
+        # Upload folder
         logger.info(f"Starting upload to {REPO_ID}...")
-        upload_cmd = [
-            "huggingface-cli",
-            "upload",
-            REPO_ID,
-            str(SPACES_DIR),
-            "--repo-type",
-            "space",
-        ]
-        subprocess.run(upload_cmd, check=True, text=True)
+        upload_folder(
+            repo_id=REPO_ID,
+            folder_path=str(SPACES_DIR),
+            repo_type="space"
+        )
         logger.info(f"Successfully uploaded space to {REPO_ID}")
         return True
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Error uploading to Hugging Face: {str(e)}")
-        return False
     except Exception as e:
-        logger.error(f"Unexpected error during upload: {e}")
+        logger.error(f"Error uploading to Hugging Face: {str(e)}")
         return False
 
 
