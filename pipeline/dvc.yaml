@@ -12,12 +12,6 @@ stages:
     deps:
       - src/infrastruct.py
       - requirements-infrastruct.txt
-    outs:
-      - requirements-infrastruct-frozen.txt:
-          persist: false
-      - .venv-infrastruct:
-          cache: true
-          persist: false
 
   ingest:
     cmd:
@@ -29,24 +23,6 @@ stages:
       - requirements-infrastruct-frozen.txt
       - src/ingest.py
       - requirements-ingest.txt
-    outs:
-      - requirements-ingest-frozen.txt:
-          persist: false
-      - data/raw/data.csv:
-          cache: true
-          persist: true
-      - data/raw/metadata.json:
-          cache: true
-          persist: true
-      - data/raw/variables.json:
-          cache: true
-          persist: true
-      - data/raw/data.parquet:
-          cache: true
-          persist: true
-      - .venv-ingest:
-          cache: true
-          persist: false
 
   preprocess:
     cmd:
@@ -59,18 +35,6 @@ stages:
       - src/preprocess.py
       - requirements-preprocess.txt
       - data/raw/data.csv
-    outs:
-      - requirements-preprocess-frozen.txt:
-          persist: false
-      - data/interim/data_cleaned.parquet:
-          cache: true
-          persist: true
-      - data/interim/feature_names.joblib:
-          cache: true
-          persist: true
-      - .venv-preprocess:
-          cache: true
-          persist: false
 
   explore:
     cmd:
@@ -84,42 +48,6 @@ stages:
       - requirements-explore.txt
       - data/raw/data.csv
       - data/interim/data_cleaned.parquet
-    outs:
-      - requirements-explore-frozen.txt:
-          persist: false
-      - reports/plots/readmitted_distribution.png:
-          cache: true
-          persist: true
-      - reports/plots/time_in_hospital_vs_readmission.png:
-          cache: true
-          persist: true
-      - reports/plots/age_vs_readmission.png:
-          cache: true
-          persist: true
-      - reports/plots/service_utilization_vs_readmission.png:
-          cache: true
-          persist: true
-      - reports/plots/correlation_matrix.png:
-          cache: true
-          persist: true
-      - reports/cleanlab/cleanlab_confusion_matrix.png:
-          cache: true
-          persist: true
-      - reports/cleanlab/cleanlab_confidence_distribution.png:
-          cache: true
-          persist: true
-      - reports/cleanlab/detailed_analysis.txt:
-          cache: true
-          persist: true
-      - reports/cleanlab/problematic_cases.csv:
-          cache: true
-          persist: true
-      - reports/cleanlab/feature_importance.csv:
-          cache: true
-          persist: true
-      - .venv-explore:
-          cache: true
-          persist: false
 
   featurize:
     cmd:
@@ -133,15 +61,6 @@ stages:
       - requirements-featurize.txt
       - data/interim/data_cleaned.parquet
       - feature_store.yaml
-    outs:
-      - requirements-featurize-frozen.txt:
-          persist: false
-      - data/interim/data_featured.parquet:
-          cache: true
-          persist: true
-      - .venv-featurize:
-          cache: true
-          persist: false
 
   train_logisticregression:
     cmd:
@@ -154,27 +73,6 @@ stages:
       - models/logistic_regression/model.py
       - requirements-logisticregression.txt
       - data/interim/data_featured.parquet
-    outs:
-      - requirements-logisticregression-frozen.txt:
-          persist: false
-      - models/logistic_regression/artifacts/model:
-          cache: true
-          persist: true
-      - .venv-logisticregression:
-          cache: true
-          persist: false
-    metrics:
-      - models/logistic_regression/artifacts/metrics/metrics.json:
-          cache: true
-          persist: true
-    plots:
-      - models/logistic_regression/artifacts/plots/confusion_matrix.png:
-          cache: true
-          persist: true
-      - models/logistic_regression/artifacts/plots/roc_curve.png:
-          cache: true
-          persist: true
-
 
   train_neuralnetwork:
     cmd:
@@ -187,29 +85,6 @@ stages:
       - models/neural_network/model.py
       - requirements-neuralnetwork.txt
       - data/interim/data_featured.parquet
-    outs:
-      - requirements-neuralnetwork-frozen.txt:
-          persist: false
-      - models/neural_network/artifacts/model:
-          cache: true
-          persist: true
-      - .venv-neuralnetwork:
-          cache: true
-          persist: false
-    metrics:
-      - models/neural_network/artifacts/metrics/metrics.json:
-          cache: true
-          persist: true
-    plots:
-      - models/neural_network/artifacts/plots/confusion_matrix.png:
-          cache: true
-          persist: true
-      - models/neural_network/artifacts/plots/model_architecture.png:
-          cache: true
-          persist: true
-      - models/neural_network/artifacts/plots/roc_curve.png:
-          cache: true
-          persist: true
 
   train_autogluon:
     cmd:
@@ -224,27 +99,6 @@ stages:
       - models/autogluon/model.py
       - requirements-autogluon.txt
       - data/interim/data_featured.parquet
-    outs:
-      - requirements-autogluon-frozen.txt:
-          persist: false
-      - models/autogluon/artifacts/model:
-          cache: true
-          persist: true
-      - models/autogluon/artifacts/metrics/metrics.json:
-          cache: true
-          persist: true
-      - models/autogluon/artifacts/plots/confusion_matrix.png:
-          cache: true
-          persist: true
-      - models/autogluon/artifacts/plots/feature_importance.png:
-          cache: true
-          persist: true
-      - models/autogluon/artifacts/plots/roc_curve.png:
-          cache: true
-          persist: true
-      - .venv-autogluon:
-          cache: true
-          persist: false
 
 artifacts:
   diabetes-dataset:
