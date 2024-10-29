@@ -6,3 +6,13 @@
 /requirements-logisticregression-frozen.txt
 /.venv-logisticregression
 /requirements-frozen.txt
+/requirements-infrastruct-frozen.txt
+/.venv-infrastruct
+/requirements-ingest-frozen.txt
+/.venv-ingest
+/requirements-preprocess-frozen.txt
+/.venv-preprocess
+/requirements-explore-frozen.txt
+/.venv-explore
+/requirements-featurize-frozen.txt
+/.venv-featurize

@@ -52,7 +52,7 @@ stages:
     - path: .venv-preprocess
       hash: md5
       md5: 9d8b7ff24ce1fd16f1f271af471c3e51.dir
-      size: 374730349
+      size: 374723645
       nfiles: 16192
     - path: data/interim/data_cleaned.parquet
       hash: md5
@@ -94,7 +94,7 @@ stages:
     - path: .venv-featurize
       hash: md5
       md5: 82fd22e86227c93f1106d4d5936f0018.dir
-      size: 421489684
+      size: 421483022
       nfiles: 18508
     - path: data/interim/data_featured.parquet
       hash: md5
@@ -131,7 +131,7 @@ stages:
     - path: .venv-explore
       hash: md5
       md5: e343220ed6080a7fe0ee09a87d2088d3.dir
-      size: 410750415
+      size: 410743707
       nfiles: 17395
     - path: reports/cleanlab/cleanlab_confidence_distribution.png
       hash: md5
@@ -236,7 +236,7 @@ stages:
     - path: .venv-ingest
       hash: md5
       md5: d8ccf5a525b42ac0882a372eae231c49.dir
-      size: 374803008
+      size: 374796304
       nfiles: 16220
     - path: data/raw/data.csv
       hash: md5
@@ -299,7 +299,7 @@ stages:
     - path: .venv-autogluon
       hash: md5
       md5: 57e5169f62232085cc1a6a5c26046cd7.dir
-      size: 3861437303
+      size: 3861437351
       nfiles: 68274
     - path: models/autogluon/artifacts/metrics/metrics.json
       hash: md5
@@ -364,7 +364,7 @@ stages:
     - path: .venv-logisticregression
       hash: md5
       md5: 227d5ab4be46fbf2e442a769519967be.dir
-      size: 421954362
+      size: 421947640
       nfiles: 18184
     - path: models/logistic_regression/artifacts/metrics/metrics.json
       hash: md5
@@ -411,7 +411,7 @@ stages:
     - path: .venv-neuralnetwork
       hash: md5
       md5: 67407a0760dadb315c4bc4bbecc7d866.dir
-      size: 1979322560
+      size: 1979315831
       nfiles: 35636
     - path: models/neural_network/artifacts/metrics/metrics.json
       hash: md5

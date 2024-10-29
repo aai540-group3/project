@@ -65,8 +65,7 @@ jobs:
           MODE: full
           TABLE_NAME: ${{ secrets.TABLE_NAME }}
         run: |
-          git rm --cached *requirements*
-          dvc repro -f
+          dvc repro --verbose --force
 
       - name: Push to DVC Remotes
         if: always()
@@ -76,8 +75,8 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          dvc commit
-          dvc push
+          dvc commit --verbose --force
+          dvc push --verbose
 
       - name: Configure Git
         run: |
