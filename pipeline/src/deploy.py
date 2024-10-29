@@ -7,26 +7,8 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 import pandas as pd
-from dotenv import load_dotenv
-from huggingface_hub import ModelCard, ModelCardData
-
-# Setup logging and environment
-load_dotenv()
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
-# Constants
-import json
-import logging
-import os
-import shutil
-import subprocess
-from pathlib import Path
-from typing import Dict, Optional, Tuple
-
-import pandas as pd
+import tf2onnx
+import transformers as tf
 from dotenv import load_dotenv
 from huggingface_hub import ModelCard, ModelCardData
 
@@ -78,6 +60,34 @@ def get_hf_token() -> str:
         logger.error("HF_TOKEN environment variable must be set")
         raise EnvironmentError("HF_TOKEN environment variable must be set")
     return token
+
+
+def convert_keras_to_onnx(keras_model_path: Path, output_dir: Path) -> Optional[Path]:
+    """Convert a Keras model to ONNX format."""
+    try:
+        # Load the Keras model
+        keras_model = tf.keras.models.load_model(keras_model_path)
+
+        # Define the input signature for the model
+        input_signature = (
+            tf.TensorSpec((None, keras_model.input_shape[1]), tf.float32, name="input"),
+        )
+
+        # Convert the model to ONNX
+        model_proto, _ = tf2onnx.convert.from_keras(
+            keras_model, input_signature=input_signature
+        )
+
+        # Save the ONNX model
+        onnx_model_path = output_dir / "model.onnx"
+        with open(onnx_model_path, "wb") as f:
+            f.write(model_proto.SerializeToString())
+
+        logger.info(f"Converted Keras model to ONNX and saved at {onnx_model_path}")
+        return onnx_model_path
+    except Exception as e:
+        logger.error(f"Error converting Keras model to ONNX: {e}")
+        return None
 
 
 def load_metrics(metrics_path: Path) -> Optional[Dict]:
@@ -267,6 +277,16 @@ def copy_model_artifacts(output_dir: Path) -> bool:
                                 src_file = Path(root) / file
                                 dst_file = model_dest / relative_path / file
                                 shutil.copy2(src_file, dst_file)
+                elif model_type == "neural_network":
+                    # Convert Keras model to ONNX
+                    onnx_model_path = convert_keras_to_onnx(paths["model"], output_dir)
+                    if onnx_model_path:
+                        # Delete the original Keras model file
+                        if paths["model"].exists():
+                            os.remove(paths["model"])
+                            logger.info(
+                                f"Deleted original Keras model: {paths['model']}"
+                            )
                 else:
                     # Regular model file copying
                     if paths["model"].exists():
@@ -365,7 +385,7 @@ def create_model_card(best_model: str, metrics: Dict, output_dir: Path) -> None:
 
     content = f"""
 ---
-pipeline_tag: tabular-binary-classification
+pipeline_tag: tabular-classification
 {card_data.to_yaml()}
 ---
 
