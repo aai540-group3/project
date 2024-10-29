@@ -1,16 +1,12 @@
 stages:
   setup:
     cmd:
-      - uv venv .venv-setup --python 3.10
-      - . .venv-setup/bin/activate && uv pip install -r requirements.txt
-      - . .venv-setup/bin/activate && uv pip freeze > requirements-frozen.txt
+      - pip install -r requirements.txt
+      - pip freeze > requirements-frozen.txt
     deps:
       - requirements.txt
     outs:
       - requirements-frozen.txt:
-          persist: false
-      - .venv-setup:
-          cache: true
           persist: false
 
   infrastruct:
