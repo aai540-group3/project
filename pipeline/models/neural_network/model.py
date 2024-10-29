@@ -462,13 +462,14 @@ def train_neural_network(CONFIG):
         with open(CONFIG["paths"]["artifacts"] / "metrics" / "history.json", "w") as f:
             json.dump(final_history.history, f, indent=4)
 
-        live.end()
         logger.info("Pipeline completed successfully!")
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
-        live.end()
         raise
+    finally:
+        if live:
+            live.end()
 
 
 def quick_run():

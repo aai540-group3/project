@@ -462,8 +462,7 @@ stages:
     - uv venv .venv-neuralnetwork --python 3.10
     - . .venv-neuralnetwork/bin/activate && uv pip install -r requirements-neuralnetwork.txt
     - . .venv-neuralnetwork/bin/activate && uv pip freeze > requirements-neuralnetwork-frozen.txt
-    - . .venv-neuralnetwork/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
-      python models/neural_network/model.py
+    - . .venv-neuralnetwork/bin/activate && python models/neural_network/model.py
     - echo "done" > .markers/train_neuralnetwork.done
     deps:
     - path: .markers/train_logisticregression.done
@@ -472,12 +471,12 @@ stages:
       size: 5
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: 6ecf081afc8ca3513f1f6b3f8606c0c5
+      md5: f508abc6a720c94f159db3c2139edc8d
       size: 5210972
     - path: models/neural_network/model.py
       hash: md5
-      md5: 92c40c0c3ded8d6c1b3c5a5b7774117c
-      size: 20294
+      md5: 1ebc159f381c5e620a0bb3cec8705a9d
+      size: 20371
     - path: requirements-neuralnetwork.txt
       hash: md5
       md5: 4df5a9fd8258b79c4c9af987eafd5007
@@ -490,29 +489,29 @@ stages:
     - path: .venv-neuralnetwork
       hash: md5
       md5: 0266dda7a6777fc216cc5f1c2f512565.dir
-      size: 1979320370
+      size: 1979327099
       nfiles: 35636
     - path: models/neural_network/artifacts/metrics/metrics.json
       hash: md5
-      md5: 72f11cb12909f56495f4219db43d3359
-      size: 758
+      md5: 7753d0c2a530654b5d450a426f0a11d0
+      size: 756
     - path: models/neural_network/artifacts/model
       hash: md5
-      md5: eb0c36f1e23ae08c7e5361eba4bbe425.dir
+      md5: 775350f2f4f94594919bd908a36b8e5e.dir
       size: 131997
       nfiles: 4
     - path: models/neural_network/artifacts/plots/confusion_matrix.png
       hash: md5
-      md5: ed9a5f2fbcc3c451e9765c1db151aa9c
-      size: 111670
+      md5: 0c7d7c280b3097186e2b82bd6524cd42
+      size: 111756
     - path: models/neural_network/artifacts/plots/model_architecture.png
       hash: md5
       md5: 03cd8da41577c10e36416a2a9c4c9dec
       size: 220369
     - path: models/neural_network/artifacts/plots/roc_curve.png
       hash: md5
-      md5: b6ddf3f04dba0624280205a3d8191825
-      size: 197869
+      md5: fa92d86cd63fbf5b35f482327889c34b
+      size: 197264
     - path: requirements-neuralnetwork-frozen.txt
       hash: md5
       md5: b16d8ab17bb28065eee0b78277a1cc97

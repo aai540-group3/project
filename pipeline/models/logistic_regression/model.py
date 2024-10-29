@@ -389,14 +389,14 @@ def train_logistic_regression(CONFIG):
         with open(CONFIG["paths"]["artifacts"] / "model" / "params.json", "w") as f:
             json.dump(best_params_serializable, f, indent=4)
 
-        live.end()
         logger.info("Pipeline completed successfully!")
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
-        live.end()
         raise
-
+    finally:
+        if live:
+            live.end()
 
 def quick_run():
     """Runs an ultra-minimal configuration for instant feedback.

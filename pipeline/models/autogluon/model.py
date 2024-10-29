@@ -286,7 +286,6 @@ def train_autogluon(CONFIG):
             os.path.join(artifacts_path, "model", "leaderboard.csv"), index=False
         )
 
-        live.end()
         logger.info(f"Pipeline completed successfully! Best model: {best_model_name}")
         logger.info(f"Model artifacts saved to: {artifacts_path}")
         logger.info(f"Test AUC-ROC: {metrics['test_auc']:.4f}")
@@ -294,9 +293,9 @@ def train_autogluon(CONFIG):
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
         logger.error("Full error:", exc_info=True)
-        live.end()
         raise
-
+    finally:
+        live.end()
 
 def quick_run():
     """Runs an ultra-minimal AutoGluon configuration for instant feedback.
