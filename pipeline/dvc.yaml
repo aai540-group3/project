@@ -26,6 +26,7 @@ stages:
       - . .venv-ingest/bin/activate && uv pip freeze > requirements-ingest-frozen.txt
       - . .venv-ingest/bin/activate && python src/ingest.py
     deps:
+      - requirements-infrastruct-frozen.txt
       - src/ingest.py
       - requirements-ingest.txt
     outs:
@@ -54,6 +55,7 @@ stages:
       - . .venv-preprocess/bin/activate && uv pip freeze > requirements-preprocess-frozen.txt
       - . .venv-preprocess/bin/activate && python src/preprocess.py
     deps:
+      - requirements-ingest-frozen.txt
       - src/preprocess.py
       - requirements-preprocess.txt
       - data/raw/data.csv
@@ -77,6 +79,7 @@ stages:
       - . .venv-explore/bin/activate && uv pip freeze > requirements-explore-frozen.txt
       - . .venv-explore/bin/activate && python src/explore.py
     deps:
+      - requirements-preprocess-frozen.txt
       - src/explore.py
       - requirements-explore.txt
       - data/raw/data.csv
@@ -125,6 +128,7 @@ stages:
       - . .venv-featurize/bin/activate && uv pip freeze > requirements-featurize-frozen.txt
       - . .venv-featurize/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python src/featurize.py
     deps:
+      - requirements-explore-frozen.txt
       - src/featurize.py
       - requirements-featurize.txt
       - data/interim/data_cleaned.parquet
