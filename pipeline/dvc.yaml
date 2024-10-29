@@ -40,6 +40,7 @@ stages:
       - . .venv-ingest/bin/activate && python src/ingest.py
       - echo "done" > .markers/ingest.done
     deps:
+      - .markers/setup.done
       - .markers/infrastruct.done
       - src/ingest.py
       - requirements-ingest.txt
@@ -73,6 +74,7 @@ stages:
       - . .venv-preprocess/bin/activate && python src/preprocess.py
       - echo "done" > .markers/preprocess.done
     deps:
+      - .markers/setup.done
       - .markers/ingest.done
       - src/preprocess.py
       - requirements-preprocess.txt
@@ -101,6 +103,7 @@ stages:
       - . .venv-explore/bin/activate && python src/explore.py
       - echo "done" > .markers/explore.done
     deps:
+      - .markers/setup.done
       - .markers/preprocess.done
       - src/explore.py
       - requirements-explore.txt
@@ -154,6 +157,7 @@ stages:
       - . .venv-featurize/bin/activate && python src/featurize.py
       - echo "done" > .markers/featurize.done
     deps:
+      - .markers/setup.done
       - .markers/explore.done
       - src/featurize.py
       - requirements-featurize.txt
@@ -180,6 +184,7 @@ stages:
       - . .venv-logisticregression/bin/activate && python models/logistic_regression/model.py
       - echo "done" > .markers/train_logisticregression.done
     deps:
+      - .markers/setup.done
       - .markers/featurize.done
       - models/logistic_regression/model.py
       - requirements-logisticregression.txt
@@ -216,6 +221,7 @@ stages:
       - . .venv-neuralnetwork/bin/activate && python models/neural_network/model.py
       - echo "done" > .markers/train_neuralnetwork.done
     deps:
+      - .markers/setup.done
       - .markers/featurize.done
       - models/neural_network/model.py
       - requirements-neuralnetwork.txt
@@ -256,6 +262,7 @@ stages:
       - . .venv-autogluon/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python models/autogluon/model.py
       - echo "done" > .markers/train_autogluon.done
     deps:
+      - .markers/setup.done
       - .markers/featurize.done
       - models/autogluon/model.py
       - requirements-autogluon.txt
@@ -295,6 +302,7 @@ stages:
       - . .venv-deploy/bin/activate && python src/deploy.py
       - echo "done" > .markers/deploy.done
     deps:
+      - .markers/setup.done
       - .markers/train_logisticregression.done
       - .markers/train_neuralnetwork.done
       - .markers/train_autogluon.done

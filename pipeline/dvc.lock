@@ -336,7 +336,7 @@ stages:
       python models/autogluon/model.py
     - echo "done" > .markers/train_autogluon.done
     deps:
-    - path: .markers/train_neuralnetwork.done
+    - path: .markers/featurize.done
       hash: md5
       md5: 678e5e019a79526d0fcca5e29f6e5f78
       size: 5
@@ -346,8 +346,8 @@ stages:
       size: 5210972
     - path: models/autogluon/model.py
       hash: md5
-      md5: 222dbeb84f00eba39873445817747ed5
-      size: 16466
+      md5: 3fa0cdcd5b25b81a3449b7d93bfb0e25
+      size: 16487
     - path: requirements-autogluon.txt
       hash: md5
       md5: 2a3814eba1bc90e700e781a357c06ede
@@ -360,7 +360,7 @@ stages:
     - path: .venv-autogluon
       hash: md5
       md5: 2915eff68d524cad9276ebfdd895e87d.dir
-      size: 3861441842
+      size: 3861441890
       nfiles: 68274
     - path: models/autogluon/artifacts/metrics/metrics.json
       hash: md5
@@ -368,8 +368,8 @@ stages:
       size: 191
     - path: models/autogluon/artifacts/model
       hash: md5
-      md5: b512e5475db259f0631817537b668cf9.dir
-      size: 51183
+      md5: 39ebe9123168d9caaadccb2f6a01d1f3.dir
+      size: 51178
       nfiles: 10
     - path: models/autogluon/artifacts/plots/confusion_matrix.png
       hash: md5
@@ -465,7 +465,7 @@ stages:
     - . .venv-neuralnetwork/bin/activate && python models/neural_network/model.py
     - echo "done" > .markers/train_neuralnetwork.done
     deps:
-    - path: .markers/train_logisticregression.done
+    - path: .markers/featurize.done
       hash: md5
       md5: 678e5e019a79526d0fcca5e29f6e5f78
       size: 5
@@ -493,25 +493,25 @@ stages:
       nfiles: 35636
     - path: models/neural_network/artifacts/metrics/metrics.json
       hash: md5
-      md5: 40dad20f90baf9bd08d36d0945b205ca
-      size: 761
+      md5: 7345181225c2969b3d7f43296a6259f1
+      size: 756
     - path: models/neural_network/artifacts/model
       hash: md5
-      md5: 80757a65bc74659932cf26e1370dd786.dir
+      md5: cf5f5f81aae123e5195a08531ebb3339.dir
       size: 131997
       nfiles: 4
     - path: models/neural_network/artifacts/plots/confusion_matrix.png
       hash: md5
-      md5: 82a855facdda171297a6c82367b30b43
-      size: 112544
+      md5: 910f2c4adc742230a05af102dfd8b804
+      size: 109270
     - path: models/neural_network/artifacts/plots/model_architecture.png
       hash: md5
       md5: 03cd8da41577c10e36416a2a9c4c9dec
       size: 220369
     - path: models/neural_network/artifacts/plots/roc_curve.png
       hash: md5
-      md5: 7dcb46bdc4fee4e4954a443a684feb0b
-      size: 197395
+      md5: 0b305509f53aa6c199bebe291b57f770
+      size: 199723
     - path: requirements-neuralnetwork-frozen.txt
       hash: md5
       md5: b16d8ab17bb28065eee0b78277a1cc97
@@ -558,11 +558,11 @@ stages:
       size: 1631
     - path: models/neural_network/artifacts/metrics/metrics.json
       hash: md5
-      md5: 40dad20f90baf9bd08d36d0945b205ca
-      size: 761
+      md5: 7345181225c2969b3d7f43296a6259f1
+      size: 756
     - path: models/neural_network/artifacts/model/model.keras
       hash: md5
-      md5: adf2ab881771e3e245cb3f19b8eb94af
+      md5: dbebfc74bc94ff7776c4ab645dc1610a
       size: 122759
     - path: src/deploy.py
       hash: md5
@@ -575,8 +575,8 @@ stages:
       size: 5
     - path: huggingface/models/diabetes-readmission
       hash: md5
-      md5: 09a16df4db0f80ba38325ed897f91e66.dir
-      size: 1632092
+      md5: 023b04defd929b51c240902cfb8ae7d0.dir
+      size: 1631549
       nfiles: 38
     - path: requirements-deploy-frozen.txt
       hash: md5
