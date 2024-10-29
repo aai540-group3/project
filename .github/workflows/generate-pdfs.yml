@@ -17,7 +17,7 @@ permissions:
   contents: write
 
 env:
-  PACKAGES: packages-tex.txt
+  PACKAGES: docs/packages.txt
 
 jobs:
   check-tex:
