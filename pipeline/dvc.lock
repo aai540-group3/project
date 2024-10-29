@@ -16,19 +16,9 @@ stages:
       size: 19
     - path: src/infrastruct.py
       hash: md5
-      md5: 007ddab3349fca1540e75fc7add9923b
-      size: 17745
+      md5: 86b25d1c810e9c582bf48b43218052b3
+      size: 13750
       isexec: true
-    outs:
-    - path: .venv-infrastruct
-      hash: md5
-      md5: ef140a34660064bd776dc27b42f2826d.dir
-      size: 18727288
-      nfiles: 1985
-    - path: requirements-infrastruct-frozen.txt
-      hash: md5
-      md5: 7a6a7eeb309a45fd9b797ba5f283ef4e
-      size: 145
   preprocess:
     cmd:
     - uv venv .venv-preprocess --python 3.10
@@ -246,34 +236,8 @@ stages:
       size: 81
     - path: src/ingest.py
       hash: md5
-      md5: 4834dee50d39bc8738573b1d25632ce3
-      size: 2691
-    outs:
-    - path: .venv-ingest
-      hash: md5
-      md5: d8ccf5a525b42ac0882a372eae231c49.dir
-      size: 374796304
-      nfiles: 16220
-    - path: data/raw/data.csv
-      hash: md5
-      md5: 33411fa1536aaaadb24c0c1f2a8598b9
-      size: 16246860
-    - path: data/raw/data.parquet
-      hash: md5
-      md5: 80180ca21b2e0a18573675cdb3f741de
-      size: 1415409
-    - path: data/raw/metadata.json
-      hash: md5
-      md5: eb8bd36c2cc7a6284a657c63561e0225
-      size: 5125
-    - path: data/raw/variables.json
-      hash: md5
-      md5: c03764d3560b025c3f1291d585517221
-      size: 19001
-    - path: requirements-ingest-frozen.txt
-      hash: md5
-      md5: bbf7e249541619d0455edee9bfac1e04
-      size: 3220
+      md5: b42f8ed096ed4bb97e8f2c17328dbc8c
+      size: 3860
   train_logistic_regression:
     cmd: .venv/bin/python models/logistic_regression/model.py
     deps:
