@@ -69,14 +69,18 @@ def convert_keras_to_onnx(keras_model_path: Path, output_dir: Path) -> Optional[
         keras_model = tf.keras.models.load_model(keras_model_path)
 
         # Set output names to avoid the error
-        keras_model.output_names = ['output']
+        keras_model.output_names = ["output"]
 
         # Define the input signature for the model
         input_shape = keras_model.input_shape[1:]  # Exclude batch size
-        input_signature = (tf.TensorSpec((None, *input_shape), tf.float32, name="input"),)
+        input_signature = (
+            tf.TensorSpec((None, *input_shape), tf.float32, name="input"),
+        )
 
         # Convert the model to ONNX
-        model_proto, _ = tf2onnx.convert.from_keras(keras_model, input_signature=input_signature)
+        model_proto, _ = tf2onnx.convert.from_keras(
+            keras_model, input_signature=input_signature
+        )
 
         # Save the ONNX model
         onnx_model_path = output_dir / "model.onnx"
@@ -263,17 +267,13 @@ def copy_model_artifacts(output_dir: Path) -> bool:
                 model_dest = dest_dir / "model"
                 model_dest.mkdir(parents=True, exist_ok=True)
 
-                if model_type == "neural_network":
-                    # Convert Keras model to ONNX
-                    convert_keras_to_onnx(paths["model"], output_dir)
-                else:
-                    # Regular model file copying
-                    if paths["model"].exists():
-                        shutil.copy2(paths["model"], model_dest)
-                        model_dir = paths["model"].parent
-                        for file in model_dir.glob("*"):
-                            if file.is_file():
-                                shutil.copy2(file, model_dest)
+                # Copy all files to the destination first
+                if paths["model"].exists():
+                    shutil.copy2(paths["model"], model_dest)
+                model_dir = paths["model"].parent
+                for file in model_dir.glob("*"):
+                    if file.is_file():
+                        shutil.copy2(file, model_dest)
 
                 # Copy metrics
                 metrics_dest = dest_dir / "metrics"
@@ -299,6 +299,19 @@ def copy_model_artifacts(output_dir: Path) -> bool:
                         shutil.copy2(plot, plots_dest)
 
                 logger.info(f"Copied {model_type} artifacts to {dest_dir}")
+
+                # Now perform the conversion for the neural network model
+                if model_type == "neural_network":
+                    # Convert Keras model to ONNX in the destination directory
+                    onnx_model_path = convert_keras_to_onnx(model_dest / "model.keras", model_dest)
+                    if onnx_model_path:
+                        # Delete the original Keras model file in the destination
+                        keras_model_path = model_dest / "model.keras"
+                        if keras_model_path.exists():
+                            os.remove(keras_model_path)
+                            logger.info(f"Deleted original Keras model file: {keras_model_path}")
+                        else:
+                            logger.warning(f"Keras model file not found for deletion: {keras_model_path}")
 
         return True
     except Exception as e:

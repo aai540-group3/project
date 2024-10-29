@@ -572,8 +572,8 @@ stages:
       size: 122759
     - path: src/deploy.py
       hash: md5
-      md5: 4b32df7ed2fa35e601b2ea67e7bf3d7f
-      size: 24263
+      md5: 3e4a96987ea47166c69f2d79ddaf8329
+      size: 23883
     outs:
     - path: .markers/deploy.done
       hash: md5
@@ -581,8 +581,8 @@ stages:
       size: 5
     - path: huggingface/models/diabetes-readmission
       hash: md5
-      md5: e1f5e50f08b3f808ee2753e580b704d3.dir
-      size: 1600336
+      md5: 0e0c1f5217dd71e7f54f021ad0ea9ff4.dir
+      size: 1603475
       nfiles: 37
     - path: requirements-deploy-frozen.txt
       hash: md5
