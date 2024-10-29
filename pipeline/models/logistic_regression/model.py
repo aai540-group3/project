@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+pipeline.models.logistic_regression.model
+
 Logistic Regression Model Training Script
 
 This script trains a logistic regression model using configuration-specified hyperparameter optimization, data balancing,
