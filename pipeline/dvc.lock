@@ -522,3 +522,69 @@ stages:
       hash: md5
       md5: a37f96c5eb364380e7308f3b023ea367
       size: 3825
+  deploy:
+    cmd:
+    - uv venv .venv-deploy --python 3.10
+    - . .venv-deploy/bin/activate && uv pip install -r requirements-deploy.txt
+    - . .venv-deploy/bin/activate && uv pip freeze > requirements-deploy-frozen.txt
+    - . .venv-deploy/bin/activate && python src/deploy.py
+    - echo "done" > .markers/deploy.done
+    deps:
+    - path: .markers/train_autogluon.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
+    - path: .markers/train_logisticregression.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
+    - path: .markers/train_neuralnetwork.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
+    - path: models/autogluon/artifacts/metrics/metrics.json
+      hash: md5
+      md5: 6cedbbb5a3bd24b170f72ce5d12d8b21
+      size: 191
+    - path: models/autogluon/artifacts/model/feature_importance.csv
+      hash: md5
+      md5: 1b93b41477957f69e27b758b8bb029a4
+      size: 4499
+    - path: models/autogluon/artifacts/model/predictor.pkl
+      hash: md5
+      md5: 4ab5049f6ea274bdfcb4657386a6fd74
+      size: 498
+    - path: models/logistic_regression/artifacts/metrics/metrics.json
+      hash: md5
+      md5: f3624ca6827354fb4780c2c9a68943c7
+      size: 480
+    - path: models/logistic_regression/artifacts/model/model.joblib
+      hash: md5
+      md5: f33f24d5505d2b3409e5f6d235cdf246
+      size: 1631
+    - path: models/neural_network/artifacts/metrics/metrics.json
+      hash: md5
+      md5: d12b2c3e41c8ce56706ddfd646ba658f
+      size: 759
+    - path: models/neural_network/artifacts/model/model.keras
+      hash: md5
+      md5: d040c5972420841e82c67197a5f0ebfb
+      size: 122759
+    - path: src/deploy.py
+      hash: md5
+      md5: dd2222f772ae4d5009ee5b6f3159e649
+      size: 22095
+    outs:
+    - path: .markers/deploy.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
+    - path: huggingface/models/diabetes-readmission
+      hash: md5
+      md5: bcb3de5f4758bd239e6956abae6a8cd7.dir
+      size: 1570660
+      nfiles: 36
+    - path: requirements-deploy-frozen.txt
+      hash: md5
+      md5: 05c901cfe2503ad79126870d61afba95
+      size: 3176

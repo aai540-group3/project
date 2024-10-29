@@ -17,3 +17,4 @@
 /requirements-featurize-frozen.txt
 /.venv-featurize
 /dag.md
+/requirements-deploy-frozen.txt
