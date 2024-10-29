@@ -23,6 +23,7 @@ stages:
       - echo "done" > .markers/infrastruct.done
     deps:
       - .markers/setup.done
+      - dag.md
       - src/infrastruct.py
       - requirements-infrastruct.txt
     outs:
