@@ -1,4 +1,7 @@
+version: 2.0
+
 engines:
+  # Duplication detection
   duplication:
     enabled: true
     exclude_patterns:
@@ -14,28 +17,19 @@ engines:
     min_tokens: 70
     identical_nodes_only: true
 
-  pylintpython3:
-    enabled: true
-  flake8:
-    enabled: true
-  bandit:
-    enabled: true
-  mypy:
-    enabled: true
-  pydocstyle:
-    enabled: true
-  trivy:
-    enabled: true
-  shellcheck:
-    enabled: true
-  semgrep:
-    enabled: true
-  markdownlint:
-    enabled: true
-  hadolint:
-    enabled: true
+  # Enabled engines
+  pylintpython3: { enabled: true }
+  flake8: { enabled: true }
+  bandit: { enabled: true }
+  mypy: { enabled: true }
+  pydocstyle: { enabled: true }
+  trivy: { enabled: true }
+  shellcheck: { enabled: true }
+  semgrep: { enabled: true }
+  markdownlint: { enabled: true }
+  hadolint: { enabled: true }
 
-  # Disabled engines
+  # Explicitly disabled engines
   ameba: { enabled: false }
   brakeman: { enabled: false }
   checkov: { enabled: false }
@@ -167,3 +161,6 @@ ignore:
   - "**/*_test.py"
   - "**/test_*.py"
   - "**/tests/**"
+
+# File encoding settings to handle MalformedInputException
+file_encoding: utf-8
