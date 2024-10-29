@@ -49,7 +49,7 @@ jobs:
       - name: Install Python Dependencies
         working-directory: pipeline
         run: |
-          pip install virtualenv uv dvc
+          pip install virtualenv uv dvc[all]
 
       - name: Run DVC Pipeline
         working-directory: pipeline
