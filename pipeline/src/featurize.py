@@ -3,6 +3,9 @@ import logging
 import os
 from datetime import datetime, timedelta, timezone
 
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+os.environ["FEAST_USAGE"] = "False"
+
 import numpy as np
 import pandas as pd
 from feast import Entity, Feature, FeatureStore, FeatureView, FileSource, ValueType

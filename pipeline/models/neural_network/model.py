@@ -6,6 +6,7 @@ import shutil
 import warnings
 from pathlib import Path
 
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 import joblib

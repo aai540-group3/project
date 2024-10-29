@@ -151,7 +151,7 @@ stages:
       - uv venv .venv-featurize --python 3.11
       - . .venv-featurize/bin/activate && uv pip install -r requirements-featurize.txt
       - . .venv-featurize/bin/activate && uv pip freeze > requirements-featurize-frozen.txt
-      - . .venv-featurize/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python src/featurize.py
+      - . .venv-featurize/bin/activate && python src/featurize.py
       - echo "done" > .markers/featurize.done
     deps:
       - .markers/explore.done
@@ -213,7 +213,7 @@ stages:
       - uv venv .venv-neuralnetwork --python 3.10
       - . .venv-neuralnetwork/bin/activate && uv pip install -r requirements-neuralnetwork.txt
       - . .venv-neuralnetwork/bin/activate && uv pip freeze > requirements-neuralnetwork-frozen.txt
-      - . .venv-neuralnetwork/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python models/neural_network/model.py
+      - . .venv-neuralnetwork/bin/activate && python models/neural_network/model.py
       - echo "done" > .markers/train_neuralnetwork.done
     deps:
       - .markers/train_logisticregression.done
