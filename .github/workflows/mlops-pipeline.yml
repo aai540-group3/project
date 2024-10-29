@@ -49,7 +49,7 @@ jobs:
       - name: Install Python Dependencies
         working-directory: pipeline
         run: |
-          pip install virtualenv dvc[all]
+          pip install virtualenv uv dvc
 
       - name: Run DVC Pipeline
         working-directory: pipeline
@@ -65,7 +65,7 @@ jobs:
           MODE: full
           TABLE_NAME: ${{ secrets.TABLE_NAME }}
         run: |
-          dvc repro
+          dvc repro -f
 
       - name: Push to DVC Remotes
         if: always()
