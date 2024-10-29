@@ -572,8 +572,8 @@ stages:
       size: 122759
     - path: src/deploy.py
       hash: md5
-      md5: 28305dd502495ae1f1b133c016c5bb95
-      size: 23844
+      md5: 86089842b505c669de6a99faf6f78074
+      size: 24984
     outs:
     - path: .markers/deploy.done
       hash: md5
@@ -586,5 +586,5 @@ stages:
       nfiles: 36
     - path: requirements-deploy-frozen.txt
       hash: md5
-      md5: 05c901cfe2503ad79126870d61afba95
-      size: 3176
+      md5: 67e6872012e8def4945da48dfe1198f8
+      size: 3598

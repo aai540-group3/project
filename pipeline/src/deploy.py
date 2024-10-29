@@ -69,14 +69,11 @@ def convert_keras_to_onnx(keras_model_path: Path, output_dir: Path) -> Optional[
         keras_model = tf.keras.models.load_model(keras_model_path)
 
         # Define the input signature for the model
-        input_signature = (
-            tf.TensorSpec((None, keras_model.input_shape[1]), tf.float32, name="input"),
-        )
+        input_shape = keras_model.input_shape[1:]  # Exclude batch size
+        input_signature = (tf.TensorSpec((None, *input_shape), tf.float32, name="input"),)
 
         # Convert the model to ONNX
-        model_proto, _ = tf2onnx.convert.from_keras(
-            keras_model, input_signature=input_signature
-        )
+        model_proto, _ = tf2onnx.convert.from_keras(keras_model, input_signature=input_signature)
 
         # Save the ONNX model
         onnx_model_path = output_dir / "model.onnx"
