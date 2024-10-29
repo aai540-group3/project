@@ -260,30 +260,14 @@ def copy_model_artifacts(output_dir: Path) -> bool:
                 model_dest = dest_dir / "model"
                 model_dest.mkdir(parents=True, exist_ok=True)
 
-                # Special handling for AutoGluon
-                if model_type == "autogluon":
-                    model_source = paths["model"].parent
-                    if model_source.exists():
-                        # Recursive copy for AutoGluon model directory
-                        for root, dirs, files in os.walk(model_source):
-                            relative_path = Path(root).relative_to(model_source)
-                            (model_dest / relative_path).mkdir(
-                                parents=True, exist_ok=True
-                            )
-                            for file in files:
-                                src_file = Path(root) / file
-                                dst_file = model_dest / relative_path / file
-                                shutil.copy2(src_file, dst_file)
-                elif model_type == "neural_network":
+                if model_type == "neural_network":
                     # Convert Keras model to ONNX
                     onnx_model_path = convert_keras_to_onnx(paths["model"], output_dir)
                     if onnx_model_path:
                         # Delete the original Keras model file
                         if paths["model"].exists():
                             os.remove(paths["model"])
-                            logger.info(
-                                f"Deleted original Keras model: {paths['model']}"
-                            )
+                            logger.info(f"Deleted original Keras model: {paths['model']}")
                 else:
                     # Regular model file copying
                     if paths["model"].exists():
