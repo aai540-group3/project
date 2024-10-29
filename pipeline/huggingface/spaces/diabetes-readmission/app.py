@@ -31,18 +31,18 @@ def predict(
         "num_procedures": num_procedures,
         "num_medications": num_medications,
         "number_diagnoses": number_diagnoses,
-        "metformin": metformin,
-        "repaglinide": repaglinide,
-        "nateglinide": nateglinide,
-        "chlorpropamide": chlorpropamide,
-        "glimepiride": glimepiride,
-        "glipizide": glipizide,
-        "glyburide": glyburide,
-        "pioglitazone": pioglitazone,
-        "rosiglitazone": rosiglitazone,
-        "acarbose": acarbose,
-        "insulin": insulin,
-        "readmitted": readmitted
+        "metformin": int(metformin),
+        "repaglinide": int(repaglinide),
+        "nateglinide": int(nateglinide),
+        "chlorpropamide": int(chlorpropamide),
+        "glimepiride": int(glimepiride),
+        "glipizide": int(glipizide),
+        "glyburide": int(glyburide),
+        "pioglitazone": int(pioglitazone),
+        "rosiglitazone": int(rosiglitazone),
+        "acarbose": int(acarbose),
+        "insulin": int(insulin),
+        "readmitted": readmitted  # Ensure this is correctly mapped
     }
 
     try:

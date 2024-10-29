@@ -18,8 +18,29 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Constants
+import json
+import logging
+import os
+import shutil
+import subprocess
+from pathlib import Path
+from typing import Dict, Optional, Tuple
+
+import pandas as pd
+from dotenv import load_dotenv
+from huggingface_hub import ModelCard, ModelCardData
+
+# Setup logging and environment
+load_dotenv()
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# Constants
 OUTPUT_DIR = Path("huggingface/models/diabetes-readmission")
 REPO_ID = "aai540-group3/diabetes-readmission"
+SPACES_DIR = Path("huggingface/spaces/diabetes-readmission")
 MODEL_DIRS = {
     "logistic_regression": {
         "root": Path("models/logistic_regression/artifacts"),
@@ -344,6 +365,7 @@ def create_model_card(best_model: str, metrics: Dict, output_dir: Path) -> None:
 
     content = f"""
 ---
+pipeline_tag: tabular-binary-classification
 {card_data.to_yaml()}
 ---
 
@@ -573,6 +595,36 @@ def upload_to_huggingface() -> bool:
         return False
 
 
+def upload_ui_to_huggingface() -> bool:
+    """Upload the UI files to Hugging Face Spaces."""
+    try:
+        # Ensure the Spaces directory exists
+        if not SPACES_DIR.exists():
+            logger.error(f"UI directory does not exist: {SPACES_DIR}")
+            return False
+
+        # Upload command
+        logger.info(f"Starting upload of UI to {REPO_ID}...")
+        upload_cmd = [
+            "huggingface-cli",
+            "upload",
+            str(SPACES_DIR),
+            "--repo-id",
+            REPO_ID,
+            "--repo-type",
+            "space",
+        ]
+        subprocess.run(upload_cmd, check=True, text=True)
+        logger.info(f"Successfully uploaded UI to {REPO_ID}")
+        return True
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error uploading UI to Hugging Face: {str(e)}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error during UI upload: {e}")
+        return False
+
+
 def main():
     """Main deployment function."""
     try:
@@ -598,6 +650,11 @@ def main():
         # Upload to Hugging Face
         if not upload_to_huggingface():
             logger.error("Failed to upload to Hugging Face")
+            return False
+
+        # Upload UI to Hugging Face Spaces
+        if not upload_ui_to_huggingface():
+            logger.error("Failed to upload UI to Hugging Face Spaces")
             return False
 
         logger.info("Deployment completed successfully")
