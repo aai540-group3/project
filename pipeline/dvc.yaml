@@ -221,11 +221,11 @@ stages:
       - . .venv-neuralnetwork/bin/activate && python models/neural_network/model.py
       - echo "done" > .markers/train_neuralnetwork.done
     deps:
-      - .markers/setup.done
       - .markers/featurize.done
+      - .markers/train_logisticregression.done
+      - data/interim/data_featured.parquet
       - models/neural_network/model.py
       - requirements-neuralnetwork.txt
-      - data/interim/data_featured.parquet
     outs:
       - requirements-neuralnetwork-frozen.txt:
           persist: false
@@ -262,11 +262,12 @@ stages:
       - . .venv-autogluon/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python models/autogluon/model.py
       - echo "done" > .markers/train_autogluon.done
     deps:
-      - .markers/setup.done
       - .markers/featurize.done
+      - .markers/setup.done
+      - .markers/train_neuralnetwork.done
+      - data/interim/data_featured.parquet
       - models/autogluon/model.py
       - requirements-autogluon.txt
-      - data/interim/data_featured.parquet
     outs:
       - requirements-autogluon-frozen.txt:
           persist: false
@@ -303,16 +304,17 @@ stages:
       - echo "done" > .markers/deploy.done
     deps:
       - .markers/setup.done
+      - .markers/featurize.done
+      - .markers/train_autogluon.done
       - .markers/train_logisticregression.done
       - .markers/train_neuralnetwork.done
-      - .markers/train_autogluon.done
-      - models/logistic_regression/artifacts/metrics/metrics.json
-      - models/neural_network/artifacts/metrics/metrics.json
       - models/autogluon/artifacts/metrics/metrics.json
-      - models/logistic_regression/artifacts/model/model.joblib
-      - models/neural_network/artifacts/model/model.keras
-      - models/autogluon/artifacts/model/predictor.pkl
       - models/autogluon/artifacts/model/feature_importance.csv
+      - models/autogluon/artifacts/model/predictor.pkl
+      - models/logistic_regression/artifacts/metrics/metrics.json
+      - models/logistic_regression/artifacts/model/model.joblib
+      - models/neural_network/artifacts/metrics/metrics.json
+      - models/neural_network/artifacts/model/model.keras
       - src/deploy.py
     outs:
       - huggingface/models/diabetes-readmission:
