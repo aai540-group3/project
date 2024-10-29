@@ -1,4 +1,29 @@
 #!/usr/bin/env python3
+"""Combine contents of files within a directory into a single output file,
+excluding specified files and directories.
+
+This script combines the contents of all files within a directory into a single output file, excluding
+specified files and directories. It also generates a tree structure of the directory. The script enhances
+readability by adding separator lines between files in the combined output and handles various file types
+with appropriate comment syntax.
+
+Usage:
+    Run the script with optional command-line arguments to customize the behavior.
+
+Features:
+    - Excludes specified files and directories from the combined output.
+    - Includes specified files even if they are in the exclusion lists.
+    - Generates a tree structure of the directory, excluding specified files and directories.
+    - Adds separator lines between files in the combined output for better readability.
+    - Handles various file types with appropriate comment syntax for separator lines.
+    - Stores all outputs in a dedicated 'debug' folder.
+    - Provides detailed debug logging for troubleshooting.
+    - Allows customization via command-line arguments.
+
+Requirements:
+    - Python 3.x
+"""
+
 import argparse
 import logging
 import os
@@ -161,6 +186,7 @@ EXCLUDE_FILES = {
     "combined.txt",
     "LICENSE",
     "model.pkl",
+    "README.md",
     "requirements-dev.txt",
     "requirements.txt",
     "Thumbs.db",
@@ -170,39 +196,28 @@ EXCLUDE_FILES = {
 }
 
 EXCLUDE_FOLDERS = {
-    "__pycache__",
+    "LightGBM_BAG_L1" "__pycache__",
     ".dvc",
     ".ruff_cache",
     ".temp",
-    ".uv_cache",
-    ".venv-autogluon",
-    ".venv-explore",
-    ".venv-featurize",
-    ".venv-infrastruct",
-    ".venv-ingest",
-    ".venv-logisticregression",
-    ".venv-neuralnetwork",
-    ".venv-preprocess",
-    ".venv-setup",
     ".venv",
     ".vscode",
-    "artifacts",
     "debug",
     "dvclive",
     "external",
     "interim",
-    "LightGBM_BAG_L1",
+    "terraform",
     "node_modules",
     "notebooks",
     "outputs",
     "processed",
     "raw",
+    "reports",
     "temp",
     "templates",
     "terraform",
-    "terraform",
+    "artifacts",
     "utils",
-    "webfonts",
 }
 
 EXCLUDE_FOLDERPATHS = {
@@ -212,10 +227,7 @@ EXCLUDE_FOLDERPATHS = {
 
 EXCLUDE_PATTERNS = [
     r".*\.bbl",
-    r".*\.csv",
-    r".*\.eot",
     r".*\.h5",
-    r".*\.jpg",
     r".*\.lock",
     r".*\.log",
     r".*\.mp3",
@@ -225,13 +237,9 @@ EXCLUDE_PATTERNS = [
     r".*\.png",
     r".*\.pptx",
     r".*\.pyc",
-    r".*\.svg",
     r".*\.synctex.gz",
     r".*\.txt",
-    r".*\.uv_cache/*",
-    r".*\.venv-*",
     r".*\.wav",
-    r".*\.woff2",
     r".*\.zip",
 ]
 

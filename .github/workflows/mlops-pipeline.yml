@@ -62,14 +62,15 @@ jobs:
         working-directory: pipeline
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-          EMAILS: ${{ secrets.EMAILS }}
-          INITIAL_PASSWORD: ${{ secrets.INITIAL_PASSWORD }}
-          GROUP_NAME: ${{ secrets.GROUP_NAME }}
-          BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
-          TABLE_NAME: ${{ secrets.TABLE_NAME }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           BUCKET_KEYS: ${{ secrets.BUCKET_KEYS }}
+          BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+          EMAILS: ${{ secrets.EMAILS }}
+          GROUP_NAME: ${{ secrets.GROUP_NAME }}
+          INITIAL_PASSWORD: ${{ secrets.INITIAL_PASSWORD }}
+          MODE: full
+          TABLE_NAME: ${{ secrets.TABLE_NAME }}
         run: |
           dvc repro
 

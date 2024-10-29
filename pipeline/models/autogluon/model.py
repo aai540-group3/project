@@ -1,9 +1,9 @@
 import hashlib
 import json
 import logging
+import os
 import shutil
 import warnings
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,7 +34,7 @@ warnings.filterwarnings("ignore")
 np.random.seed(42)
 
 # Set the style and font settings
-plt.style.use("seaborn-v0_8")
+plt.style.use("seaborn-v0_8-bright")
 sns.set_theme()
 
 plt.rcParams["figure.dpi"] = 300
@@ -56,14 +56,15 @@ def train_autogluon(CONFIG):
     )
     logger = logging.getLogger(__name__)
 
+    artifacts_path = CONFIG["paths"]["artifacts"]
     # Clean up and recreate artifact directories
-    if CONFIG["paths"]["artifacts"].exists():
-        shutil.rmtree(CONFIG["paths"]["artifacts"])
+    if os.path.exists(artifacts_path):
+        shutil.rmtree(artifacts_path)
     for subdir in CONFIG["paths"]["subdirs"]:
-        (CONFIG["paths"]["artifacts"] / subdir).mkdir(parents=True, exist_ok=True)
+        os.makedirs(os.path.join(artifacts_path, subdir), exist_ok=True)
 
     # Initialize DVC Live
-    live = Live(dir=str(CONFIG["paths"]["artifacts"] / "metrics"), dvcyaml=False)
+    live = Live(dir=os.path.join(artifacts_path, "metrics"), dvcyaml=False)
 
     try:
         # Load data
@@ -114,9 +115,10 @@ def train_autogluon(CONFIG):
 
         # Initialize and train predictor
         logger.info("Training AutoGluon models...")
+        model_path = os.path.join(artifacts_path, "model")
         predictor = TabularPredictor(
             label=CONFIG["model"]["label"],
-            path=str(CONFIG["paths"]["artifacts"] / "model"),
+            path=model_path,
             eval_metric=CONFIG["model"]["eval_metric"],
             problem_type=CONFIG["model"]["problem_type"],
         )
@@ -162,17 +164,14 @@ def train_autogluon(CONFIG):
             "max_stack_level": str(model_info.get("max_stack_level", "")),
         }
 
-        with open(CONFIG["paths"]["artifacts"] / "model" / "model_info.txt", "w") as f:
+        with open(
+            os.path.join(artifacts_path, "model", "model_info.txt"), "w"
+        ) as f:
             json.dump(serializable_info, f, indent=4)
 
         # Generate Ensemble Model Visualization
         try:
-            ensemble_plot_path = predictor.plot_ensemble_model(
-                filename=CONFIG["paths"]["artifacts"]
-                / "plots"
-                / "best_model_architecture.png"
-            )
-            logger.info(f"Saved ensemble model visualization to: {ensemble_plot_path}")
+            predictor.plot_ensemble_model(filename="best_model_architecture.png")
         except ImportError:
             logger.warning(
                 "Could not generate ensemble model visualization. "
@@ -208,14 +207,16 @@ def train_autogluon(CONFIG):
             logger.info(f"{metric_name}: {value:.4f}")
 
         # Save metrics
-        with open(CONFIG["paths"]["artifacts"] / "metrics" / "metrics.json", "w") as f:
+        with open(
+            os.path.join(artifacts_path, "metrics", "metrics.json"), "w"
+        ) as f:
             json.dump(metrics, f, indent=4)
 
         # Feature importance
         try:
             feature_importance = predictor.feature_importance(test_data)
             feature_importance.to_csv(
-                CONFIG["paths"]["artifacts"] / "model" / "feature_importance.csv"
+                os.path.join(artifacts_path, "model", "feature_importance.csv")
             )
             feature_importance_dict = feature_importance["importance"].to_dict()
 
@@ -237,7 +238,7 @@ def train_autogluon(CONFIG):
             plt.xlabel("Importance Score")
             plt.tight_layout()
             plt.savefig(
-                CONFIG["paths"]["artifacts"] / "plots" / "feature_importance.png",
+                os.path.join(artifacts_path, "plots", "feature_importance.png"),
                 bbox_inches="tight",
                 dpi=CONFIG["plots"]["figure"]["dpi"],
             )
@@ -261,7 +262,7 @@ def train_autogluon(CONFIG):
         plt.xlabel("Predicted Label")
         plt.tight_layout()
         plt.savefig(
-            CONFIG["paths"]["artifacts"] / "plots" / "confusion_matrix.png",
+            os.path.join(artifacts_path, "plots", "confusion_matrix.png"),
             bbox_inches="tight",
             dpi=CONFIG["plots"]["figure"]["dpi"],
         )
@@ -288,7 +289,7 @@ def train_autogluon(CONFIG):
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
         plt.savefig(
-            CONFIG["paths"]["artifacts"] / "plots" / "roc_curve.png",
+            os.path.join(artifacts_path, "plots", "roc_curve.png"),
             bbox_inches="tight",
             dpi=CONFIG["plots"]["figure"]["dpi"],
         )
@@ -296,12 +297,12 @@ def train_autogluon(CONFIG):
 
         # Save leaderboard
         predictor.leaderboard(test_data, silent=True).to_csv(
-            CONFIG["paths"]["artifacts"] / "model" / "leaderboard.csv", index=False
+            os.path.join(artifacts_path, "model", "leaderboard.csv"), index=False
         )
 
         live.end()
         logger.info(f"Pipeline completed successfully! Best model: {best_model_name}")
-        logger.info(f"Model artifacts saved to: {CONFIG['paths']['artifacts']}")
+        logger.info(f"Model artifacts saved to: {artifacts_path}")
         logger.info(f"Test AUC-ROC: {metrics['test_auc']:.4f}")
 
     except Exception as e:
@@ -316,43 +317,43 @@ def quick_run():
     Perfect for code testing, debugging, and development iterations."""
     CONFIG = {
         "training": {
-            "time_limit": 10,  # 10 seconds only
-            "bag_folds": 0,  # No bagging
-            "stack_levels": 0,  # No stacking
+            "time_limit": 10,
+            "bag_folds": 0,
+            "stack_levels": 0,
             "use_bag_holdout": False,
             "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
             "extra_params": {
-                "dynamic_stacking": False,  # Disable dynamic stacking
+                "dynamic_stacking": False,
                 "ds_args": {
-                    "enable_ray_logging": False  # Disable Ray logging
+                    "enable_ray_logging": False
                 },
-                "num_gpus": 0,  # CPU only for testing
-                "feature_generator": None,  # Skip feature generation
-                "auto_stack": False,  # Disable auto stacking
-                "save_space": True,  # Minimize disk usage
+                "num_gpus": 0,
+                "feature_generator": None,
+                "auto_stack": False,
+                "save_space": True,
             },
         },
         "model": {
             "label": "readmitted",
             "eval_metric": "roc_auc",
             "problem_type": "binary",
-            "presets": None,  # No presets to speed up
+            "presets": None,
         },
         "hyperparameters": {
-            "GBM": [  # Single lightweight GBM model
+            "GBM": [
                 {
-                    "extra_trees": False,  # Simpler model
+                    "extra_trees": False,
                     "ag_args": {"name_suffix": "Basic"},
                     "learning_rate": 0.1,
-                    "num_boost_round": 10,  # Minimal iterations
-                    "num_leaves": 4,  # Tiny tree
-                    "deterministic": True,  # For reproducibility
-                    "early_stopping_rounds": 3,  # Quick stopping
+                    "num_boost_round": 10,
+                    "num_leaves": 4,
+                    "deterministic": True,
+                    "early_stopping_rounds": 3,
                 },
             ],
         },
         "paths": {
-            "artifacts": Path("models/autogluon/artifacts"),
+            "artifacts": "models/autogluon/artifacts",
             "data": "data/interim/data_featured.parquet",
             "subdirs": ["model", "metrics", "plots"],
         },
@@ -377,20 +378,20 @@ def full_run():
     Includes extensive hyperparameter search and model stacking."""
     CONFIG = {
         "training": {
-            "time_limit": 7200,  # 2 hours
-            "bag_folds": 5,  # K-fold bagging
-            "stack_levels": 2,  # Multi-level stacking
+            "time_limit": 7200,
+            "bag_folds": 5,
+            "stack_levels": 2,
             "use_bag_holdout": True,
             "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
             "extra_params": {
-                "dynamic_stacking": True,  # Enable dynamic stacking
+                "dynamic_stacking": True,
                 "ds_args": {
                     "enable_ray_logging": True,
                 },
-                "num_gpus": -1,  # Use all available GPUs
-                "feature_generator": "auto",  # Automatic feature generation
-                "auto_stack": True,  # Enable auto stacking
-                "save_space": False,  # Prioritize performance over space
+                "num_gpus": -1,
+                "feature_generator": "auto",
+                "auto_stack": True,
+                "save_space": False,
                 "hyperparameter_tune_kwargs": {
                     "search_strategy": "auto",
                     "num_trials": 100,
@@ -403,10 +404,10 @@ def full_run():
             "label": "readmitted",
             "eval_metric": "roc_auc",
             "problem_type": "binary",
-            "presets": "best_quality",  # Use best quality preset
+            "presets": "best_quality",
         },
         "hyperparameters": {
-            "GBM": [  # LightGBM configurations
+            "GBM": [
                 {
                     "extra_trees": True,
                     "ag_args": {"name_suffix": "ExtraTrees"},
@@ -424,7 +425,7 @@ def full_run():
                     "min_data_in_leaf": 10,
                 },
             ],
-            "CAT": {  # CatBoost configurations
+            "CAT": {
                 "iterations": 1000,
                 "learning_rate": 0.05,
                 "depth": 8,
@@ -432,7 +433,7 @@ def full_run():
                 "random_strength": 1,
                 "min_data_in_leaf": 20,
             },
-            "XGB": {  # XGBoost configurations
+            "XGB": {
                 "learning_rate": 0.05,
                 "n_estimators": 500,
                 "max_depth": 8,
@@ -440,7 +441,7 @@ def full_run():
                 "colsample_bytree": 0.8,
                 "min_child_weight": 3,
             },
-            "RF": [  # Random Forest configurations
+            "RF": [
                 {
                     "criterion": "gini",
                     "max_depth": 15,
@@ -454,13 +455,13 @@ def full_run():
                     "min_samples_leaf": 8,
                 },
             ],
-            "XT": {  # Extra Trees configurations
+            "XT": {
                 "n_estimators": 500,
                 "max_depth": 15,
                 "min_samples_split": 10,
                 "min_samples_leaf": 5,
             },
-            "NN_TORCH": {  # Neural Network configurations
+            "NN_TORCH": {
                 "num_epochs": 100,
                 "learning_rate": 0.001,
                 "dropout_prob": 0.1,
@@ -470,7 +471,7 @@ def full_run():
                 "activation": "relu",
                 "layers": [200, 100],
             },
-            "FASTAI": {  # FastAI configurations
+            "FASTAI": {
                 "layers": [200, 100],
                 "bs": 512,
                 "epochs": 50,
@@ -478,7 +479,7 @@ def full_run():
             },
         },
         "paths": {
-            "artifacts": Path("models/autogluon/artifacts"),
+            "artifacts": "models/autogluon/artifacts",
             "data": "data/interim/data_featured.parquet",
             "subdirs": ["model", "metrics", "plots"],
         },
@@ -499,10 +500,11 @@ def full_run():
 
 
 if __name__ == "__main__":
-    MODE = "quick"
-    if MODE.lower() == "quick":
+    MODE = os.getenv("MODE", "quick").lower()
+
+    if MODE == "quick":
         quick_run()
-    elif MODE.lower() == "full":
+    elif MODE == "full":
         full_run()
     else:
         print("Invalid mode. Please choose 'quick' or 'full'.")

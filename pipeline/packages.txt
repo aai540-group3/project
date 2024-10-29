@@ -1,4 +1,0 @@
-graphviz
-libgraphviz-dev
-libprotobuf-dev
-protobuf-compiler

@@ -16,6 +16,7 @@ __pycache__/
 .spyproject/
 .tox/
 .uv_cache/
+.venv-*/
 .venv/
 .vscode/
 *.aux
@@ -71,4 +72,3 @@ target/
 terraform/.terraform/providers/
 tree.txt
 var/
-.venv-*/

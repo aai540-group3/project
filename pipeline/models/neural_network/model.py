@@ -72,7 +72,7 @@ def train_neural_network(CONFIG):
     live = Live(dir=str(CONFIG["paths"]["artifacts"] / "metrics"), dvcyaml=False)
 
     try:
-        # Step 1: Data Loading and Preprocessing
+        # Data Loading and Preprocessing
         logger.info("Loading and preparing data...")
         data_path = CONFIG["paths"]["data"]
 
@@ -170,7 +170,7 @@ def train_neural_network(CONFIG):
             }
         )
 
-        # Step 2: Hyperparameter Optimization
+        # Hyperparameter Optimization
         logger.info("Starting hyperparameter optimization...")
 
         def create_model(trial, input_dim):
@@ -292,7 +292,7 @@ def train_neural_network(CONFIG):
         for param_name, param_value in best_params.items():
             live.log_param(f"best_{param_name}", str(param_value))
 
-        # Step 3: Train Final Model
+        # Train Final Model
         logger.info("Training final model with best parameters...")
 
         # Determine if GPU is available
@@ -345,7 +345,7 @@ def train_neural_network(CONFIG):
             verbose=1,
         )
 
-        # Step 4: Evaluate Model
+        # Evaluate Model
         logger.info("Evaluating model...")
 
         # Get predictions
@@ -384,7 +384,7 @@ def train_neural_network(CONFIG):
         # Generate plots
         logger.info("Generating visualization plots...")
 
-        # 1. Confusion Matrix
+        # Confusion Matrix
         plt.figure(figsize=CONFIG["plots"]["figure"]["figsize"])
         cm = confusion_matrix(y_test, test_pred_classes)
         sns.heatmap(
@@ -406,7 +406,7 @@ def train_neural_network(CONFIG):
         )
         plt.close()
 
-        # 2. ROC Curve
+        # ROC Curve
         plt.figure(figsize=CONFIG["plots"]["figure"]["figsize"])
 
         # Plot validation ROC
@@ -443,7 +443,7 @@ def train_neural_network(CONFIG):
         )
         plt.close()
 
-        # Step 5: Save Artifacts
+        # Save Artifacts
         logger.info("Saving artifacts...")
 
         # Save model and scaler
@@ -578,10 +578,11 @@ def full_run():
 
 
 if __name__ == "__main__":
-    MODE = "quick"
-    if MODE.lower() == "quick":
+    MODE = os.getenv("MODE", "quick").lower()
+
+    if MODE == "quick":
         quick_run()
-    elif MODE.lower() == "full":
+    elif MODE == "full":
         full_run()
     else:
         print("Invalid mode. Please choose 'quick' or 'full'.")

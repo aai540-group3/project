@@ -311,7 +311,7 @@ def train_logistic_regression(CONFIG):
         # Generate plots
         logger.info("Generating visualization plots...")
 
-        # 1. Confusion Matrix
+        # Confusion Matrix
         plt.figure(figsize=CONFIG["plots"]["figure"]["figsize"])
         cm = confusion_matrix(y_test, test_pred_classes)
         sns.heatmap(
@@ -333,7 +333,7 @@ def train_logistic_regression(CONFIG):
         )
         plt.close()
 
-        # 2. ROC Curve
+        # ROC Curve
         plt.figure(figsize=CONFIG["plots"]["figure"]["figsize"])
 
         # Plot validation ROC
@@ -370,7 +370,7 @@ def train_logistic_regression(CONFIG):
         )
         plt.close()
 
-        # Step 5: Save Artifacts
+        # Save Artifacts
         logger.info("Saving artifacts...")
 
         # Save model and scaler
@@ -384,7 +384,6 @@ def train_logistic_regression(CONFIG):
             json.dump(metrics, f, indent=4)
 
         # Save parameters
-        # Convert None to string 'None' for JSON serialization
         best_params_serializable = {
             k: (str(v) if v is None else v) for k, v in best_params.items()
         }
@@ -412,13 +411,13 @@ def quick_run():
         "model": {
             "target": "readmitted",
             "random_state": 42,
-            "optimization_trials": 1,  # Single trial
-            "cv_folds": 1,  # No cross-validation
+            "optimization_trials": 1,
+            "cv_folds": 1,
         },
         "training": {
-            "epochs": 1,  # Single epoch
-            "patience": 1,  # Minimal early stopping
-            "batch_size": 512,  # Large batch size for faster processing
+            "epochs": 1,
+            "patience": 1,
+            "batch_size": 512,
         },
         "splits": {
             "test_size": 0.2,
@@ -427,20 +426,18 @@ def quick_run():
         },
         "optimization": {
             "param_space": {
-                # Fixed parameters - no real optimization
                 "C": {"low": 1.0, "high": 1.0, "log": True},
-                "penalty": ["l2"],  # Single option
+                "penalty": ["l2"],
                 "solver": ["saga"],
-                "l1_ratio": {"low": 0.5, "high": 0.5},  # Fixed value
-                # Minimal neural network settings
-                "batch_size": [512],  # Single large batch size
-                "learning_rate": {"low": 0.01, "high": 0.01, "log": True},  # Fixed
-                "n_layers": {"low": 1, "high": 1},  # Single layer
-                "units_first": {"low": 32, "high": 32, "step": 32},  # Fixed
-                "units_factor": {"low": 0.5, "high": 0.5},  # Fixed
-                "dropout": {"low": 0.1, "high": 0.1},  # Fixed
-                "activation": ["relu"],  # Single option
-                "optimizer": ["adam"],  # Single option
+                "l1_ratio": {"low": 0.5, "high": 0.5},
+                "batch_size": [512],
+                "learning_rate": {"low": 0.01, "high": 0.01, "log": True},
+                "n_layers": {"low": 1, "high": 1},
+                "units_first": {"low": 32, "high": 32, "step": 32},
+                "units_factor": {"low": 0.5, "high": 0.5},
+                "dropout": {"low": 0.1, "high": 0.1},
+                "activation": ["relu"],
+                "optimizer": ["adam"],
             }
         },
         "plots": {
@@ -471,13 +468,13 @@ def full_run():
         "model": {
             "target": "readmitted",
             "random_state": 42,
-            "optimization_trials": 100,  # Extensive search
-            "cv_folds": 5,  # Robust cross-validation
+            "optimization_trials": 100,
+            "cv_folds": 5,
         },
         "training": {
-            "epochs": 100,  # Thorough training
-            "patience": 10,  # Patient early stopping
-            "batch_size": 64,  # Balanced batch size
+            "epochs": 100,
+            "patience": 10,
+            "batch_size": 64,
         },
         "splits": {
             "test_size": 0.2,
@@ -486,12 +483,10 @@ def full_run():
         },
         "optimization": {
             "param_space": {
-                # Wide parameter search space
                 "C": {"low": 1e-4, "high": 1e4, "log": True},
                 "penalty": ["l1", "l2", "elasticnet", None],
                 "solver": ["saga"],
                 "l1_ratio": {"low": 0.0, "high": 1.0},
-                # Comprehensive neural network parameters
                 "batch_size": [32, 64, 128, 256],
                 "learning_rate": {"low": 1e-5, "high": 1e-2, "log": True},
                 "n_layers": {"low": 1, "high": 5},
@@ -519,10 +514,11 @@ def full_run():
 
 
 if __name__ == "__main__":
-    MODE = "quick"
-    if MODE.lower() == "full":
+    MODE = os.getenv("MODE", "quick").lower()
+
+    if MODE == "quick":
         quick_run()
-    elif MODE.lower() == "full":
+    elif MODE == "full":
         full_run()
     else:
         print("Invalid mode. Please choose 'quick' or 'full'.")

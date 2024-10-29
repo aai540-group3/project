@@ -1,1 +1,7 @@
 /reports
+/requirements-autogluon-frozen.txt
+/.venv-autogluon
+/requirements-neuralnetwork-frozen.txt
+/.venv-neuralnetwork
+/requirements-logisticregression-frozen.txt
+/.venv-logisticregression

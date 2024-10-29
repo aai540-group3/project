@@ -169,17 +169,14 @@ stages:
           cache: true
           persist: false
     metrics:
-      - models/logistic_regression/artifacts/metrics.json:
+      - models/logistic_regression/artifacts/metrics/metrics.json:
           cache: true
           persist: true
     plots:
       - models/logistic_regression/artifacts/plots/confusion_matrix.png:
           cache: true
           persist: true
-      - models/logistic_regression/artifacts/plots/precision_recall.png:
-          cache: true
-          persist: true
-      - models/logistic_regression/artifacts/plots/roc.png:
+      - models/logistic_regression/artifacts/plots/roc_curve.png:
           cache: true
           persist: true
 
@@ -204,22 +201,23 @@ stages:
           cache: true
           persist: false
     metrics:
-      - models/neural_network/artifacts/metrics.json:
+      - models/neural_network/artifacts/metrics/metrics.json:
           cache: true
           persist: true
     plots:
       - models/neural_network/artifacts/plots/confusion_matrix.png:
           cache: true
           persist: true
-      - models/neural_network/artifacts/plots/precision_recall.png:
+      - models/neural_network/artifacts/plots/model_architecture.png:
           cache: true
           persist: true
-      - models/neural_network/artifacts/plots/roc.png:
+      - models/neural_network/artifacts/plots/roc_curve.png:
           cache: true
           persist: true
 
   train_autogluon:
     cmd:
+      - sudo apt install --yes --no-install-recommends $(cat packages-autogluon.txt)
       - uv venv .venv-autogluon --python 3.10
       - . .venv-autogluon/bin/activate && uv pip install -r requirements-autogluon.txt
       - . .venv-autogluon/bin/activate && uv pip freeze > requirements-autogluon-frozen.txt
@@ -235,16 +233,16 @@ stages:
       - models/autogluon/artifacts/model:
           cache: true
           persist: true
-      - models/autogluon/artifacts/metrics.json:
+      - models/autogluon/artifacts/metrics/metrics.json:
           cache: true
           persist: true
       - models/autogluon/artifacts/plots/confusion_matrix.png:
           cache: true
           persist: true
-      - models/autogluon/artifacts/plots/precision_recall.png:
+      - models/autogluon/artifacts/plots/feature_importance.png:
           cache: true
           persist: true
-      - models/autogluon/artifacts/plots/roc.png:
+      - models/autogluon/artifacts/plots/roc_curve.png:
           cache: true
           persist: true
       - .venv-autogluon:
@@ -252,6 +250,18 @@ stages:
           persist: false
 
 artifacts:
+  diabetes-dataset:
+    path: data/raw/data.csv
+    type: dataset
+    desc: "Diabetes 130-US hospitals for years 1999-2008 dataset"
+    labels:
+      - tabular
+      - healthcare
+    meta:
+      source: "UCI Machine Learning Repository"
+      url: https://archive.ics.uci.edu/ml/datasets/diabetes+130-us+hospitals+for+years+1999-2008
+      records: 101766
+      features: 55
   logistic_regression:
     path: models/logistic_regression/artifacts/model/model.joblib
     type: model
