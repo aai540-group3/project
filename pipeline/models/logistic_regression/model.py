@@ -14,6 +14,7 @@ import numpy as np
 import optuna
 import pandas as pd
 import seaborn as sns
+from dvclive import Live
 from imblearn.over_sampling import SMOTE
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -28,8 +29,6 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-
-from dvclive import Live
 
 
 def train_logistic_regression(CONFIG):
