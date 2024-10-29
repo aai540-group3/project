@@ -42,7 +42,7 @@ jobs:
         uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
           path: pipeline/.venv
-          key: ${{ runner.os }}-venv-${{ hashFiles('pipeline/requirements.txt') }}
+          key: ${{ runner.os }}-venv-${{ hashFiles('pipeline/requirements*.txt') }}
           restore-keys: |
             ${{ runner.os }}-venv-
 
