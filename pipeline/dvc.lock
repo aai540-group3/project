@@ -416,7 +416,7 @@ stages:
       size: 5
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: 6ecf081afc8ca3513f1f6b3f8606c0c5
+      md5: f508abc6a720c94f159db3c2139edc8d
       size: 5210972
     - path: models/logistic_regression/model.py
       hash: md5
@@ -433,8 +433,8 @@ stages:
       size: 5
     - path: .venv-logisticregression
       hash: md5
-      md5: 227d5ab4be46fbf2e442a769519967be.dir
-      size: 421947640
+      md5: 39f0ed7ad079450a8f9811f7bec12dbc.dir
+      size: 421958901
       nfiles: 18184
     - path: models/logistic_regression/artifacts/metrics/metrics.json
       hash: md5
@@ -455,7 +455,7 @@ stages:
       size: 195054
     - path: requirements-logisticregression-frozen.txt
       hash: md5
-      md5: 74ceb32d42ea550034047da3864a9df4
+      md5: be5c30cefe795fc8ed72d1fdac85a1bf
       size: 3449
   train_neuralnetwork:
     cmd:

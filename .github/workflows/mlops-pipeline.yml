@@ -79,12 +79,6 @@ jobs:
           dvc commit --verbose --force
           dvc push --verbose
 
-      - name: Remove DVC Experiments
-        if: always()
-        working-directory: pipeline
-        run: |
-          dvc exp remove --all --force
-
       - name: Configure Git
         if: always()
         run: |
