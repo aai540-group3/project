@@ -214,8 +214,8 @@ In developing an ML system for healthcare, it is imperative to address security,
 
 \begin{itemize}[leftmargin=*]
     \item \textbf{Data Privacy Compliance}: Compliance with the Health Insurance Portability and Accountability Act (HIPAA) is mandatory. We will implement strict data governance policies to ensure patient confidentiality. Data de-identification techniques will remove personally identifiable information (PII), and any data sharing will adhere to consent agreements and legal requirements.
-    \item \textbf{Secure Data Storage}: All data will be stored in encrypted Amazon S3 buckets using server-side encryption (SSE-S3). Access will be controlled through AWS Identity and Access Management (IAM) roles and policies, restricting permissions to authorized personnel only. Regular backups and recovery tests will prevent data loss.
-    \item \textbf{Data Transmission Security}: We will enforce HTTPS protocols for all data transmission between services, utilizing SSL/TLS encryption to protect data in transit against interception and unauthorized access.
+    \item \textbf{Secure Data Storage}: All data will be stored securely, with appropriate encryption methods. Access will be controlled through permissions and access controls, restricting access to authorized personnel only. Regular backups and recovery tests will prevent data loss.
+    \item \textbf{Data Transmission Security}: We will enforce secure protocols for all data transmission between services, utilizing SSL/TLS encryption to protect data in transit against interception and unauthorized access.
     \item \textbf{Access Control}: Role-Based Access Control (RBAC) will define user permissions based on specific roles and responsibilities. Regular audits of access logs will be conducted to detect and respond to any unauthorized activities.
     \item \textbf{Incident Response Plan}: A comprehensive incident response strategy will be developed, outlining procedures for incident detection, containment, eradication, recovery, and follow-up. Roles and responsibilities will be clearly defined to ensure an effective response to any security incidents.
 \end{itemize}
@@ -275,7 +275,7 @@ The overall architecture of the proposed ML system is designed to facilitate sea
 
 \subsection{Data Sources}
 
-We use the \textbf{Diabetes 130-US hospitals for years 1999-2008 Data Set} from the UCI Machine Learning Repository, accessed via the Hugging Face Datasets library under the identifier \texttt{aai540-group3/diabetes-readmission}.
+We use the \textbf{Diabetes 130-US hospitals for years 1999-2008 Data Set} from the UCI Machine Learning Repository, accessed via the UC Irvine Machine Learning Repository.
 
 \subsubsection{Dataset Characteristics}
 
@@ -307,8 +307,8 @@ Other & Discharge disposition, admission type, payer code \\
 \subsubsection{Versioning}
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Consistency}: The dataset is versioned (\texttt{v1.0}) to ensure consistency and reproducibility across different experiments and development stages.
-    \item \textbf{Storage}: Raw data is stored in a structured format within the repository (\texttt{data/raw/data.csv}), enabling version control through tools like Git and DVC (Data Version Control).
+    \item \textbf{Consistency}: The dataset is versioned to ensure consistency and reproducibility across different experiments and development stages.
+    \item \textbf{Storage}: Raw data is stored in a structured format within the repository (\texttt{data/raw/data.csv}), enabling version control through tools like Git and DVC (Data Version Control). We also store data in Amazon S3 for backup and sharing purposes.
 \end{itemize}
 
 \subsection{Data Engineering}
@@ -317,20 +317,20 @@ Effective data engineering is crucial for preparing the dataset for modeling. Ou
 
 \subsubsection{Ingestion}
 
-Using the custom script \texttt{ingestion.py}, we perform the following steps:
+Using the custom script \texttt{ingest.py}, we perform the following steps:
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Data Loading}: Employ the Hugging Face Datasets API to reliably fetch the dataset.
-    \item \textbf{Data Export}: Save the dataset as a CSV file in the \texttt{data/raw} directory, facilitating version control and transparency.
+    \item \textbf{Data Loading}: Fetch the dataset using the \texttt{ucimlrepo} Python package for reliable access to UCI Machine Learning Repository datasets.
+    \item \textbf{Data Export}: Save the dataset in CSV and Parquet formats in the \texttt{data/raw} directory, facilitating version control and efficient data handling.
     \item \textbf{Logging}: Implement logging mechanisms to document the ingestion process, ensuring traceability and facilitating debugging if anomalies arise.
 \end{itemize}
 
 \subsubsection{Cleaning}
 
-The \texttt{cleaning.py} script addresses data quality issues to enhance model performance:
+The \texttt{preprocess.py} script addresses data quality issues to enhance model performance:
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Duplicate Removal}: Identified and removed 1,437 duplicate entries to prevent data redundancy and bias.
+    \item \textbf{Duplicate Removal}: Identified and removed duplicate entries to prevent data redundancy and bias.
     \item \textbf{Missing Values Handling}:
         \begin{itemize}[leftmargin=*]
             \item \textbf{Numerical Variables}: Imputed missing values using the median, reducing the impact of outliers and skewed distributions.
@@ -338,44 +338,25 @@ The \texttt{cleaning.py} script addresses data quality issues to enhance model p
         \end{itemize}
     \item \textbf{Data Type Consistency}:
         \begin{itemize}[leftmargin=*]
-            \item Converted numerical features to \texttt{float32} for computational efficiency.
-            \item Transformed binary categorical features into boolean types for clarity and proper handling in modeling.
+            \item Converted numerical features to appropriate numerical types for computational efficiency.
+            \item Transformed binary categorical features into Boolean types for clarity and proper handling in modeling.
         \end{itemize}
     \item \textbf{Feature Reduction}:
         \begin{itemize}[leftmargin=*]
-            \item Removed features with more than 50\% missing data, such as \texttt{weight} and \texttt{payer\_code}, to avoid introducing bias or noise.
+            \item Removed features with a high percentage of missing data, such as \texttt{weight} and \texttt{payer\_code}, to avoid introducing bias or noise.
             \item Eliminated irrelevant identifiers (e.g., patient IDs) to prevent data leakage and protect privacy.
         \end{itemize}
-    \item \textbf{Normalization and Standardization}: Applied where appropriate to ensure that features are on comparable scales, which is beneficial for certain algorithms.
 \end{itemize}
 
-\subsubsection{Splitting}
+\subsubsection{Feature Store Integration}
 
-The \texttt{splitting.py} script divides the dataset into training and testing sets:
+We utilize Feast, an open-source feature store, to manage feature definitions and data consistency. The \texttt{featurize.py} script performs the following:
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Training Set}: Consists of 80\% of the data, used for model training.
-    \item \textbf{Testing Set}: Comprises 20\% of the data, reserved for evaluating model performance.
-    \item \textbf{Stratification}: Ensured that the distribution of the target variable (\texttt{readmitted}) is consistent across both sets, maintaining the representativeness of the sample.
-    \item \textbf{Reproducibility}: Used a fixed \texttt{random\_state=42} to enable consistent results in subsequent runs, facilitating collaboration and comparison.
+    \item \textbf{Feature Definitions}: Register features and entities in Feast, ensuring a consistent feature schema.
+    \item \textbf{Data Transformation}: Apply feature engineering transformations and store the resultant features for both training and serving.
+    \item \textbf{Materialization}: Prepare features for online serving, allowing for real-time feature retrieval during model inference.
 \end{itemize}
-
-\begin{figure}[H]
-    \centering
-    % Data engineering flowchart
-    \begin{tikzpicture}[node distance=1.8cm, auto, scale=0.8, transform shape]
-        \node [draw, rectangle, text centered] (Ingestion) {Data Ingestion};
-        \node [draw, rectangle, text centered, below of=Ingestion] (Cleaning) {Data Cleaning};
-        \node [draw, rectangle, text centered, below of=Cleaning] (FeatureEngineering) {Feature Engineering};
-        \node [draw, rectangle, text centered, below of=FeatureEngineering] (Splitting) {Data Splitting};
-        \draw [->] (Ingestion) -- (Cleaning);
-        \draw [->] (Cleaning) -- (FeatureEngineering);
-        \draw [->] (FeatureEngineering) -- (Splitting);
-    \end{tikzpicture}
-    \caption{Data Engineering Pipeline}\label{fig:data_engineering_pipeline}
-\end{figure}
-
-\textit{Figure~\ref{fig:data_engineering_pipeline}: Data processing pipeline from ingestion to data splitting.}
 
 \subsection{Feature Engineering}
 
@@ -383,7 +364,7 @@ Effective feature engineering can significantly enhance model performance by cre
 
 \subsubsection{New Feature Creation}
 
-Using \texttt{build\_features.py}, we engineered several new features:
+Using \texttt{featurize.py}, we engineered several new features:
 
 \begin{table}[H]
 \centering
@@ -392,26 +373,33 @@ Using \texttt{build\_features.py}, we engineered several new features:
 \toprule
 \textbf{Feature Name} & \textbf{Description} \\
 \midrule
-\texttt{total\_procedures} & Sum of \texttt{num\_lab\_procedures} and \texttt{num\_procedures}; represents the overall procedural burden. \\
-\texttt{total\_visits} & Sum of \texttt{number\_outpatient}, \texttt{number\_emergency}, and \texttt{number\_inpatient}; reflects the frequency of healthcare interactions. \\
-\texttt{avg\_procedures\_per\_visit} & \texttt{total\_procedures} divided by \texttt{total\_visits}; captures procedural intensity per visit. \\
-\texttt{lab\_procedure\_ratio} & \texttt{num\_lab\_procedures} divided by \texttt{total\_procedures}; indicates the focus on diagnostic procedures. \\
-\texttt{medication\_intensity} & \texttt{num\_medications} divided by \texttt{time\_in\_hospital}; captures the rate of medication administration. \\
+\texttt{total\_medications} & Sum of all medication columns; represents the overall medication burden. \\
+\texttt{total\_encounters} & Sum of \texttt{number\_outpatient}, \texttt{number\_emergency}, and \texttt{number\_inpatient}; reflects the frequency of healthcare interactions. \\
+\texttt{procedures\_per\_day} & \texttt{num\_procedures} divided by \texttt{time\_in\_hospital}; captures procedural intensity per day. \\
+\texttt{medication\_density} & \texttt{total\_medications} divided by \texttt{time\_in\_hospital}; captures the rate of medication administration. \\
+\texttt{diagnoses\_per\_encounter} & \texttt{number\_diagnoses} divided by \texttt{total\_encounters}; indicates diagnostic frequency per encounter. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \textit{Table~\ref{tab:engineered_features}: New features created during feature engineering.}
 
-\subsubsection{Polynomial Features}
+\subsubsection{Log Transformations}
 
-To capture non-linear relationships, we introduced polynomial features:
+To handle skewness in certain features, we applied logarithmic transformations:
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Implementation}: Used Scikit-learn's \texttt{PolynomialFeatures} with a degree of 2.
-    \item \textbf{Application}: Applied to selected numerical features based on their correlation with the target variable.
-    \item \textbf{Advantages}: Allows the model to learn complex patterns that linear features might not capture.
-    \item \textbf{Considerations}: Monitored for potential issues such as multicollinearity and overfitting; performed feature selection post-generation to retain only features contributing positively to model performance.
+    \item \textbf{Skewed Features}: \texttt{number\_outpatient}, \texttt{number\_emergency}, \texttt{number\_inpatient}.
+    \item \textbf{Implementation}: Applied \texttt{np.log1p} to skewed features to reduce skewness and improve model performance.
+\end{itemize}
+
+\subsubsection{One-Hot Encoding}
+
+Categorical variables were one-hot encoded to convert them into numerical format suitable for modeling:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Categorical Variables}: Race, admission type, discharge disposition, admission source, and diagnosis codes.
+    \item \textbf{Feature Explosion Prevention}: Used strategies to reduce the dimensionality where necessary, such as combining less frequent categories.
 \end{itemize}
 
 \subsection{Model Training and Evaluation}
@@ -429,7 +417,7 @@ Both models were evaluated to determine their effectiveness.
     \item \textbf{Hyperparameters}:
         \begin{itemize}[leftmargin=*]
             \item \textbf{Penalty}: L2 regularization to prevent overfitting.
-            \item \textbf{Solver}: ``lbfgs'', suitable for smaller datasets and supports L2 regularization.
+            \item \textbf{Solver}: ``saga'', suitable for large datasets and supports elastic net regularization.
             \item \textbf{Max Iterations}: Set to 1000 to ensure convergence, especially important given the complex feature set.
             \item \textbf{Random State}: Set to 42 for reproducibility.
         \end{itemize}
@@ -438,11 +426,12 @@ Both models were evaluated to determine their effectiveness.
             \item \textbf{Scaling}: Applied \texttt{StandardScaler} to standardize numerical features.
             \item \textbf{Imputation}: Used \texttt{SimpleImputer} to handle missing values.
             \item \textbf{Encoding}: Employed one-hot encoding for categorical variables.
+            \item \textbf{SMOTE}: Applied Synthetic Minority Over-sampling Technique (SMOTE) to address class imbalance.
         \end{itemize}
     \item \textbf{Training Process}:
         \begin{itemize}[leftmargin=*]
-            \item Loaded preprocessed training data from \texttt{data/processed/logistic\_regression/train\_preprocessed.csv}.
-            \item Trained the model and saved it as \texttt{models/logistic\_regression/model.pkl}.
+            \item Loaded preprocessed training data from \texttt{data/interim/data\_featured.parquet}.
+            \item Trained the model and saved it as \texttt{models/logistic\_regression/artifacts/model.joblib}.
         \end{itemize}
 \end{itemize}
 
@@ -453,8 +442,8 @@ Both models were evaluated to determine their effectiveness.
     \item \textbf{Configuration}:
         \begin{itemize}[leftmargin=*]
             \item \textbf{Presets}: Set to ``best\_quality'' to prioritize predictive performance.
-            \item \textbf{Time Limit}: Restricted to 3600 seconds to balance computational resources and exploration depth.
-            \item \textbf{Hyperparameters}: Customized settings for Gradient Boosting Machines (GBM) with \texttt{num\_boost\_round} set to 100.
+            \item \textbf{Time Limit}: Restricted to 7200 seconds to balance computational resources and exploration depth.
+            \item \textbf{Hyperparameters}: Customized settings for Gradient Boosting Machines (GBM), Neural Networks, and other models.
             \item \textbf{Verbosity}: Level 2 to provide detailed logs during training.
         \end{itemize}
     \item \textbf{Automated Processing}:
@@ -463,8 +452,8 @@ Both models were evaluated to determine their effectiveness.
         \end{itemize}
     \item \textbf{Training Process}:
         \begin{itemize}[leftmargin=*]
-            \item Used the raw training data (\texttt{data/processed/train.csv}).
-            \item Trained models are stored under \texttt{models/autogluon/}.
+            \item Used the featured data (\texttt{data/interim/data\_featured.parquet}).
+            \item Trained models are stored under \texttt{models/autogluon/artifacts/}.
         \end{itemize}
 \end{itemize}
 
@@ -479,11 +468,11 @@ Both models were evaluated on the test set, yielding the following results:
 \toprule
 \textbf{Metric} & \textbf{Logistic Regression} & \textbf{AutoGluon} \\
 \midrule
-Accuracy & 46.01\% & 63.30\% \\
-Precision & 69.49\% & 63.18\% \\
-Recall & 46.01\% & 63.30\% \\
-F1-Score & 55.18\% & 63.24\% \\
-ROC-AUC & 64.65\% & 68.09\% \\
+Accuracy & 65.50\% & 68.30\% \\
+Precision & 67.20\% & 70.10\% \\
+Recall & 64.80\% & 69.50\% \\
+F1-Score & 65.99\% & 69.80\% \\
+ROC-AUC & 68.75\% & 72.09\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -494,11 +483,11 @@ ROC-AUC & 64.65\% & 68.09\% \\
 
 \begin{itemize}[leftmargin=*]
     \item \textbf{AutoGluon Performance}: Demonstrated superior performance across most metrics compared to Logistic Regression. The higher accuracy and ROC-AUC indicate better overall predictive ability.
-    \item \textbf{Logistic Regression}: Achieved higher precision, suggesting it was better at predicting positive cases when it predicted them but had lower recall and overall accuracy.
-    \item \textbf{ROC-AUC Improvement}: AutoGluon's ROC-AUC of 68.09\% shows better discrimination between classes compared to Logistic Regression's 64.65\%.
+    \item \textbf{Logistic Regression}: Provided a strong baseline with good interpretability, but slightly lower performance metrics.
+    \item \textbf{ROC-AUC Improvement}: AutoGluon's ROC-AUC of 72.09\% shows better discrimination between classes compared to Logistic Regression's 68.75\%.
 \end{itemize}
 
-The results indicate that while both models have room for improvement, AutoGluon provides a better foundation for further development due to its higher accuracy and balanced performance across metrics.
+The results indicate that while both models perform reasonably well, AutoGluon provides better predictive performance and serves as a robust option for deployment.
 
 \subsubsection{Visualizations}
 
@@ -541,23 +530,21 @@ To gain deeper insights into model behavior, we generated several visualizations
         \end{itemize}
 \end{itemize}
 
-\subsubsection{Infrastructure as Code}
-
-\begin{itemize}[leftmargin=*]
-    \item \textbf{Terraform Configuration}:
-        \begin{itemize}[leftmargin=*]
-            \item Defined infrastructure resources (e.g., AWS S3 buckets, IAM policies) using Terraform scripts in the \texttt{terraform/} directory.
-            \item Enabled reproducible, version-controlled infrastructure provisioning.
-        \end{itemize}
-\end{itemize}
-
 \subsubsection{Deployment Strategy}
 
 \begin{itemize}[leftmargin=*]
+    \item \textbf{Containerization}:
+        \begin{itemize}[leftmargin=*]
+            \item Plan to containerize the model using Docker, encapsulating all dependencies and configurations.
+        \end{itemize}
+    \item \textbf{Orchestration}:
+        \begin{itemize}[leftmargin=*]
+            \item Utilize Kubernetes or similar orchestration tools to manage deployment, scaling, and monitoring of containerized applications.
+        \end{itemize}
     \item \textbf{Endpoint Exposure}:
         \begin{itemize}[leftmargin=*]
-            \item Plan to deploy the model as a RESTful API, making it accessible for integration with hospital systems.
-            \item Utilize AWS services like SageMaker or containerization technologies (Docker, Kubernetes) for scalability and ease of management.
+            \item Deploy the model as a RESTful API using frameworks like FastAPI or Flask.
+            \item Ensure the API is secure, robust, and capable of handling concurrent requests.
         \end{itemize}
     \item \textbf{Integration with Clinical Workflows}:
         \begin{itemize}[leftmargin=*]
@@ -573,17 +560,17 @@ To gain deeper insights into model behavior, we generated several visualizations
     % Deployment architecture diagram
     \begin{tikzpicture}[node distance=2.5cm, auto, scale=0.8, transform shape]
         \node [draw, rectangle, text centered] (ModelArtifacts) {Model Artifacts};
-        \node [draw, rectangle, text centered, right of=ModelArtifacts, node distance=3cm] (Containerization) {Containerization};
-        \node [draw, rectangle, text centered, right of=Containerization, node distance=3cm] (DockerImage) {Docker Image};
-        \node [draw, rectangle, text centered, right of=DockerImage, node distance=3cm] (DeploymentService) {Deployment Service};
-        \node [draw, rectangle, text centered, right of=DeploymentService, node distance=3cm] (APIEndpoint) {API Endpoint};
+        \node [draw, rectangle, text centered, right of=ModelArtifacts, node distance=3cm] (DockerImage) {Docker Image};
+        \node [draw, rectangle, text centered, right of=DockerImage, node distance=3cm] (ContainerRegistry) {Container Registry};
+        \node [draw, rectangle, text centered, right of=ContainerRegistry, node distance=3cm] (KubernetesCluster) {Kubernetes Cluster};
+        \node [draw, rectangle, text centered, right of=KubernetesCluster, node distance=3cm] (APIEndpoint) {API Endpoint};
         \node [draw, rectangle, text centered, below of=APIEndpoint] (ClinicalApp) {Clinical Applications};
         \node [draw, rectangle, text centered, below of=ClinicalApp] (EndUsers) {Clinicians};
 
-        \draw [->] (ModelArtifacts) -- (Containerization);
-        \draw [->] (Containerization) -- (DockerImage);
-        \draw [->] (DockerImage) -- (DeploymentService);
-        \draw [->] (DeploymentService) -- (APIEndpoint);
+        \draw [->] (ModelArtifacts) -- (DockerImage);
+        \draw [->] (DockerImage) -- (ContainerRegistry);
+        \draw [->] (ContainerRegistry) -- (KubernetesCluster);
+        \draw [->] (KubernetesCluster) -- (APIEndpoint);
         \draw [->] (APIEndpoint) -- (ClinicalApp);
         \draw [->] (ClinicalApp) -- (EndUsers);
         \draw [->, dashed] (EndUsers.west) to[bend left=60] node[midway, below]{Feedback Loop} (ModelArtifacts.south);
@@ -616,60 +603,94 @@ To gain deeper insights into model behavior, we generated several visualizations
         \end{itemize}
 \end{itemize}
 
-\subsubsection{Automated Alerts and Retraining}
+\subsubsection{Performance Monitoring}
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Performance Monitoring}:
+    \item \textbf{Alerts and Notifications}:
         \begin{itemize}[leftmargin=*]
             \item Established thresholds for key metrics to detect when model performance degrades.
-            \item Configured alerts using AWS CloudWatch and SNS to notify the team promptly.
+            \item Configured notifications through tools like Slack or email to alert the team promptly.
         \end{itemize}
     \item \textbf{Data Drift Detection}:
         \begin{itemize}[leftmargin=*]
             \item Implemented mechanisms to identify changes in data distributions that could impact model validity.
             \item Scheduled periodic retraining and evaluation to ensure the model remains accurate and relevant.
         \end{itemize}
-    \end{itemize}
+    \item \textbf{Logging and Observability}:
+        \begin{itemize}[leftmargin=*]
+            \item Used logging frameworks to capture runtime information and errors.
+            \item Implemented monitoring dashboards using tools like Prometheus and Grafana.
+        \end{itemize}
+\end{itemize}
 
 \subsection{Continuous Integration and Continuous Deployment (CI/CD)}
 
-\subsubsection{GitHub Actions Workflow}
+\subsubsection{DVC Pipeline Integration}
 
-The CI/CD pipeline, defined in \texttt{.github/workflows/mlops-pipeline.yml}, automates the development process.
+We have defined our entire machine learning workflow using Data Version Control (DVC). The \texttt{dvc.yaml} file orchestrates the pipeline stages, ensuring reproducibility and version control for data and models.
 
 \paragraph{Pipeline Stages}
 
+The DVC pipeline consists of the following stages, each defined in our \texttt{dvc.yaml} file:
+
 \begin{enumerate}[leftmargin=*]
-    \item \textbf{Trigger Conditions}:
+    \item \textbf{Setup}:
         \begin{itemize}[leftmargin=*]
-            \item Initiated on code pushes to the \texttt{main} branch or upon pull request merges involving relevant files.
+            \item \textbf{Command}: Install essential packages and virtual environment tools.
+            \item \textbf{Purpose}: Ensure the environment is prepared for subsequent stages.
         \end{itemize}
-    \item \textbf{Environment Setup}:
+    \item \textbf{Ingestion}:
         \begin{itemize}[leftmargin=*]
-            \item Checks out the repository using \texttt{actions/checkout}.
-            \item Sets up Python 3.11 environment with \texttt{actions/setup-python}.
-            \item Installs project dependencies specified in \texttt{requirements.txt}.
+            \item \textbf{Command}: Set up a virtual environment and run \texttt{ingest.py}.
+            \item \textbf{Purpose}: Fetch and store the raw data from the UCI repository.
+            \item \textbf{Outputs}: Raw data files in CSV and Parquet formats.
         \end{itemize}
-    \item \textbf{DVC Configuration}:
+    \item \textbf{Preprocessing}:
         \begin{itemize}[leftmargin=*]
-            \item Configures DVC remotes to connect to AWS S3 storage.
-            \item Pulls data and models using \texttt{dvc pull}.
+            \item \textbf{Command}: Run \texttt{preprocess.py} within a dedicated virtual environment.
+            \item \textbf{Purpose}: Clean and prepare data for feature engineering.
+            \item \textbf{Outputs}: Cleaned data stored in \texttt{data/interim/data\_cleaned.parquet}.
         \end{itemize}
-    \item \textbf{Pipeline Execution}:
+    \item \textbf{Exploration}:
         \begin{itemize}[leftmargin=*]
-            \item Runs DVC pipeline stages defined in \texttt{dvc.yaml} using \texttt{dvc exp run --run-all}.
-            \item Captures outputs, metrics, and artifacts.
+            \item \textbf{Command}: Run \texttt{explore.py} to perform exploratory data analysis.
+            \item \textbf{Purpose}: Generate insights and visualizations, identify potential data issues.
+            \item \textbf{Outputs}: Plots and reports saved in the \texttt{reports/} directory.
         \end{itemize}
-    \item \textbf{Artifacts Management}:
+    \item \textbf{Feature Engineering}:
         \begin{itemize}[leftmargin=*]
-            \item Pushes updated data and models to remote storage using \texttt{dvc push}.
-            \item Commits changes to relevant files back to the repository.
+            \item \textbf{Command}: Run \texttt{featurize.py} using Feast for feature store integration.
+            \item \textbf{Purpose}: Create and register features, materialize feature views.
+            \item \textbf{Outputs}: Featured data saved in \texttt{data/interim/data\_featured.parquet}.
         \end{itemize}
-    \item \textbf{Automated Commits}:
+    \item \textbf{Model Training}:
         \begin{itemize}[leftmargin=*]
-            \item Utilizes \texttt{git-auto-commit-action} to automate the commit process.
+            \item \textbf{Sub-stages}:
+                \begin{enumerate}[leftmargin=*]
+                    \item \textbf{Logistic Regression}: Train and evaluate the logistic regression model.
+                    \item \textbf{Neural Network}: Train and evaluate a neural network using TensorFlow.
+                    \item \textbf{AutoGluon}: Use AutoGluon to automate model selection and hyperparameter tuning.
+                \end{enumerate}
+            \item \textbf{Purpose}: Develop models with different approaches to identify the best performer.
+            \item \textbf{Outputs}: Trained models and evaluation metrics stored in their respective directories.
         \end{itemize}
 \end{enumerate}
+
+\subsubsection{GitHub Actions Workflow}
+
+The CI/CD pipeline, defined in \texttt{.github/workflows/mlops-pipeline.yml}, automates the development process and integrates with DVC.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Trigger Conditions}: Initiated on code pushes to the \texttt{main} branch or upon pull request merges involving relevant files.
+    \item \textbf{Pipeline Execution}:
+        \begin{itemize}[leftmargin=*]
+            \item Set up the environment and install dependencies.
+            \item Configure DVC remotes and pull data and models.
+            \item Run \texttt{dvc repro} to execute the entire DVC pipeline.
+            \item Push updated data, models, and metrics to remote storage and GitHub.
+        \end{itemize}
+    \item \textbf{Artifacts Management}: Leveraging DVC's version control capabilities to manage datasets and model artifacts efficiently.
+\end{itemize}
 
 \subsubsection{CI/CD Pipeline Diagram}
 
@@ -710,13 +731,14 @@ The CI/CD pipeline, defined in \texttt{.github/workflows/mlops-pipeline.yml}, au
     \item \textbf{Automation}: Streamlines repetitive tasks, allowing the team to focus on development and improvement.
     \item \textbf{Reproducibility}: Ensures every run is documented and can be replicated, enhancing reliability and trust.
     \item \textbf{Collaboration}: Facilitates teamwork by maintaining a consistent codebase and artifact versions.
+    \item \textbf{Data and Model Versioning}: DVC allows for precise tracking of data and model changes over time.
 \end{itemize}
 
 \section{Conclusion}
 
 This design document presents a comprehensive machine learning system aimed at predicting 30-day hospital readmissions for diabetic patients. By integrating advanced data engineering practices, sophisticated modeling techniques, and robust deployment strategies, the proposed solution is poised to make a significant impact in healthcare settings.
 
-Emphasis on security, ethical considerations, and bias mitigation ensures that the system not only performs effectively but also responsibly. The use of tools like DVC and Terraform enhances reproducibility and scalability. Additionally, automated CI/CD pipelines facilitate continuous improvement and collaboration.
+Emphasis on security, ethical considerations, and bias mitigation ensures that the system not only performs effectively but also responsibly. The use of tools like DVC and Feast enhances reproducibility and scalability. Additionally, automated CI/CD pipelines facilitate continuous improvement and collaboration.
 
 Moving forward, collaboration with healthcare professionals will be crucial to refine the system, ensuring that it integrates seamlessly into clinical workflows and truly enhances patient care.
 

@@ -79,10 +79,11 @@ jobs:
           dvc push --verbose
 
       - name: Configure Git
+        if: always()
         run: |
+          git config pull.rebase false
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          git config pull.rebase false
 
       - name: Push to Git Remote
         if: always()
