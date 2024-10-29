@@ -1,3 +1,2 @@
 autogluon
-gradio
 pandas

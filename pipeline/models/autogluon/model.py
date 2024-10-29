@@ -295,7 +295,8 @@ def train_autogluon(CONFIG):
         logger.error("Full error:", exc_info=True)
         raise
     finally:
-        live.end()
+        if live:
+            live.end()
 
 def quick_run():
     """Runs an ultra-minimal AutoGluon configuration for instant feedback.

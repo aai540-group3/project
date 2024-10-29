@@ -129,7 +129,7 @@ stages:
     - path: .venv-featurize
       hash: md5
       md5: 90b3f17f833f2d1707bb7e8d3e428d5a.dir
-      size: 421494223
+      size: 421487561
       nfiles: 18508
     - path: data/interim/data_featured.parquet
       hash: md5
@@ -342,12 +342,12 @@ stages:
       size: 5
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: 6ecf081afc8ca3513f1f6b3f8606c0c5
+      md5: f508abc6a720c94f159db3c2139edc8d
       size: 5210972
     - path: models/autogluon/model.py
       hash: md5
-      md5: 75246488f36b798e18b7e26a4d02fc57
-      size: 16473
+      md5: 222dbeb84f00eba39873445817747ed5
+      size: 16466
     - path: requirements-autogluon.txt
       hash: md5
       md5: 2a3814eba1bc90e700e781a357c06ede
@@ -359,8 +359,8 @@ stages:
       size: 5
     - path: .venv-autogluon
       hash: md5
-      md5: d921204f63aee2d613eda75df8eaf0ca.dir
-      size: 3861437351
+      md5: 2915eff68d524cad9276ebfdd895e87d.dir
+      size: 3861441842
       nfiles: 68274
     - path: models/autogluon/artifacts/metrics/metrics.json
       hash: md5
@@ -368,8 +368,8 @@ stages:
       size: 191
     - path: models/autogluon/artifacts/model
       hash: md5
-      md5: 6eb1bdf23dbc904bd77708978ee9b882.dir
-      size: 51173
+      md5: b512e5475db259f0631817537b668cf9.dir
+      size: 51183
       nfiles: 10
     - path: models/autogluon/artifacts/plots/confusion_matrix.png
       hash: md5
@@ -385,7 +385,7 @@ stages:
       size: 176597
     - path: requirements-autogluon-frozen.txt
       hash: md5
-      md5: f91c9a1e47bdc6c772b776a08c4ba889
+      md5: e25a2283fa294501c4fdf876ff374386
       size: 6053
   train_neural_network:
     cmd: .venv/bin/python models/neural_network/model.py
@@ -420,8 +420,8 @@ stages:
       size: 5210972
     - path: models/logistic_regression/model.py
       hash: md5
-      md5: e58b505ea8ed56b3beb02fcdf46e698b
-      size: 17917
+      md5: 5eea513d8e6f3d9259eaf5b6165b64d5
+      size: 17931
     - path: requirements-logisticregression.txt
       hash: md5
       md5: 51f39049342d2ccec98f0f9868bbc68b
@@ -434,7 +434,7 @@ stages:
     - path: .venv-logisticregression
       hash: md5
       md5: 39f0ed7ad079450a8f9811f7bec12dbc.dir
-      size: 421958901
+      size: 421952179
       nfiles: 18184
     - path: models/logistic_regression/artifacts/metrics/metrics.json
       hash: md5
@@ -475,8 +475,8 @@ stages:
       size: 5210972
     - path: models/neural_network/model.py
       hash: md5
-      md5: 1ebc159f381c5e620a0bb3cec8705a9d
-      size: 20371
+      md5: ac075ff4de3e3a3a71e7fb50a2511b3c
+      size: 20373
     - path: requirements-neuralnetwork.txt
       hash: md5
       md5: 4df5a9fd8258b79c4c9af987eafd5007
@@ -489,29 +489,29 @@ stages:
     - path: .venv-neuralnetwork
       hash: md5
       md5: 0266dda7a6777fc216cc5f1c2f512565.dir
-      size: 1979327099
+      size: 1979320370
       nfiles: 35636
     - path: models/neural_network/artifacts/metrics/metrics.json
       hash: md5
-      md5: 7753d0c2a530654b5d450a426f0a11d0
-      size: 756
+      md5: 40dad20f90baf9bd08d36d0945b205ca
+      size: 761
     - path: models/neural_network/artifacts/model
       hash: md5
-      md5: 775350f2f4f94594919bd908a36b8e5e.dir
+      md5: 80757a65bc74659932cf26e1370dd786.dir
       size: 131997
       nfiles: 4
     - path: models/neural_network/artifacts/plots/confusion_matrix.png
       hash: md5
-      md5: 0c7d7c280b3097186e2b82bd6524cd42
-      size: 111756
+      md5: 82a855facdda171297a6c82367b30b43
+      size: 112544
     - path: models/neural_network/artifacts/plots/model_architecture.png
       hash: md5
       md5: 03cd8da41577c10e36416a2a9c4c9dec
       size: 220369
     - path: models/neural_network/artifacts/plots/roc_curve.png
       hash: md5
-      md5: fa92d86cd63fbf5b35f482327889c34b
-      size: 197264
+      md5: 7dcb46bdc4fee4e4954a443a684feb0b
+      size: 197395
     - path: requirements-neuralnetwork-frozen.txt
       hash: md5
       md5: b16d8ab17bb28065eee0b78277a1cc97
@@ -558,11 +558,11 @@ stages:
       size: 1631
     - path: models/neural_network/artifacts/metrics/metrics.json
       hash: md5
-      md5: 72f11cb12909f56495f4219db43d3359
-      size: 758
+      md5: 40dad20f90baf9bd08d36d0945b205ca
+      size: 761
     - path: models/neural_network/artifacts/model/model.keras
       hash: md5
-      md5: 3d50dbbe57b8d76a5504d900c6e29b08
+      md5: adf2ab881771e3e245cb3f19b8eb94af
       size: 122759
     - path: src/deploy.py
       hash: md5

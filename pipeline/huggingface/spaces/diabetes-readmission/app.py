@@ -34,7 +34,7 @@ def predict(
         "num_medications": num_medications,
         "number_diagnoses": number_diagnoses,
         "metformin": int(metformin),
-        "repaglinide": int(repaginide),
+        "repaglinide": int(repaglinide),
         "nateglinide": int(nateglinide),
         "chlorpropamide": int(chlorpropamide),
         "glimepiride": int(glimepiride),
