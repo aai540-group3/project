@@ -226,10 +226,6 @@ stages:
     - . .venv-ingest/bin/activate && uv pip freeze > requirements-ingest-frozen.txt
     - . .venv-ingest/bin/activate && python src/ingest.py
     deps:
-    - path: requirements-infrastruct-frozen.txt
-      hash: md5
-      md5: 7a6a7eeb309a45fd9b797ba5f283ef4e
-      size: 145
     - path: requirements-ingest.txt
       hash: md5
       md5: b6ace7c12bf4b84c615e2b4e80cd6b96
