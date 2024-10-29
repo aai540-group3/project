@@ -84,6 +84,7 @@ exclude_paths:
   - ".gitea/**"
   - ".ipynb_checkpoints/**"
   - ".temp/**"
+  - ".venv-*/**"
   - ".venv/**"
   - ".vscode/**"
   - "*.egg-info"
