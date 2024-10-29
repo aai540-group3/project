@@ -12,10 +12,6 @@ stages:
       hash: md5
       md5: 678e5e019a79526d0fcca5e29f6e5f78
       size: 5
-    - path: dag.md
-      hash: md5
-      md5: ddc3ed8ef54e37ac563e90de020aaf70
-      size: 5071
   infrastruct:
     cmd:
     - uv venv .venv-infrastruct --python 3.10
@@ -572,8 +568,8 @@ stages:
       size: 122759
     - path: src/deploy.py
       hash: md5
-      md5: ec852ed8208f01d2d8536b8bb988a5e5
-      size: 24777
+      md5: 6c63a3fe9d32237a68c7270cf4113f48
+      size: 23333
     outs:
     - path: .markers/deploy.done
       hash: md5
@@ -581,9 +577,9 @@ stages:
       size: 5
     - path: huggingface/models/diabetes-readmission
       hash: md5
-      md5: f5e0c39d049ef64dbcc432012e4ede22.dir
-      size: 1509333
-      nfiles: 37
+      md5: 09a16df4db0f80ba38325ed897f91e66.dir
+      size: 1632092
+      nfiles: 38
     - path: requirements-deploy-frozen.txt
       hash: md5
       md5: 67e6872012e8def4945da48dfe1198f8
