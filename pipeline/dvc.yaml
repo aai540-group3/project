@@ -1,330 +1,160 @@
 stages:
   setup:
     cmd:
-      - pip install uv virtualenv
-      - dvc dag --md >> dag.md
-      - rm -rf .markers
-      - mkdir .markers
-      - echo "done" > .markers/setup.done
-    outs:
-      - .markers/setup.done:
-          cache: false
-          persist: false
-
-  infrastruct:
-    cmd:
+      # CREATE VIRTUAL ENVIRONMENTS FOR EACH STAGE
       - uv venv .venv-infrastruct --python 3.10
       - . .venv-infrastruct/bin/activate && uv pip install -r requirements-infrastruct.txt
-      - . .venv-infrastruct/bin/activate && uv pip freeze > requirements-infrastruct-frozen.txt
+      - uv venv .venv-ingest --python 3.10
+      - . .venv-ingest/bin/activate && uv pip install -r requirements-ingest.txt
+      - uv venv .venv-preprocess --python 3.10
+      - . .venv-preprocess/bin/activate && uv pip install -r requirements-preprocess.txt
+      - uv venv .venv-explore --python 3.10
+      - . .venv-explore/bin/activate && uv pip install -r requirements-explore.txt
+      - uv venv .venv-featurize --python 3.11
+      - . .venv-featurize/bin/activate && uv pip install -r requirements-featurize.txt
+      - uv venv .venv-autogluon --python 3.10
+      - . .venv-autogluon/bin/activate && uv pip install -r requirements-autogluon.txt
+      - uv venv .venv-logisticregression --python 3.10
+      - . .venv-logisticregression/bin/activate && uv pip install -r requirements-logisticregression.txt
+      - uv venv .venv-neuralnetwork --python 3.10
+      - . .venv-neuralnetwork/bin/activate && uv pip install -r requirements-neuralnetwork.txt
+      - uv venv .venv-deploy --python 3.10
+      - . .venv-deploy/bin/activate && uv pip install -r requirements-deploy.txt
+      # INFRASTRUCT
       - . .venv-infrastruct/bin/activate && python src/infrastruct.py
-      - echo "done" > .markers/infrastruct.done
-    deps:
-      - .markers/setup.done
-      - src/infrastruct.py
-      - requirements-infrastruct.txt
     outs:
-      - requirements-infrastruct-frozen.txt:
-          persist: false
-      - .venv-infrastruct:
-          cache: true
-          persist: false
-      - .markers/infrastruct.done:
-          cache: false
-          persist: false
+      - .venv-infrastruct
+      - .venv-ingest
+      - .venv-preprocess
+      - .venv-explore
+      - .venv-featurize
+      - .venv-autogluon
+      - .venv-logisticregression
+      - .venv-neuralnetwork
+      - .venv-deploy
 
   ingest:
     cmd:
-      - uv venv .venv-ingest --python 3.10
-      - . .venv-ingest/bin/activate && uv pip install -r requirements-ingest.txt
-      - . .venv-ingest/bin/activate && uv pip freeze > requirements-ingest-frozen.txt
       - . .venv-ingest/bin/activate && python src/ingest.py
-      - echo "done" > .markers/ingest.done
     deps:
-      - .markers/setup.done
-      - .markers/infrastruct.done
+      - .venv-ingest
       - src/ingest.py
-      - requirements-ingest.txt
     outs:
-      - requirements-ingest-frozen.txt:
-          persist: false
-      - data/raw/data.csv:
-          cache: true
-          persist: true
-      - data/raw/metadata.json:
-          cache: true
-          persist: true
-      - data/raw/variables.json:
-          cache: true
-          persist: true
-      - data/raw/data.parquet:
-          cache: true
-          persist: true
-      - .venv-ingest:
-          cache: true
-          persist: false
-      - .markers/ingest.done:
-          cache: false
-          persist: false
+      - data/raw/data.csv
+      - data/raw/metadata.json
+      - data/raw/variables.json
+      - data/raw/data.parquet
 
   preprocess:
     cmd:
-      - uv venv .venv-preprocess --python 3.10
-      - . .venv-preprocess/bin/activate && uv pip install -r requirements-preprocess.txt
-      - . .venv-preprocess/bin/activate && uv pip freeze > requirements-preprocess-frozen.txt
       - . .venv-preprocess/bin/activate && python src/preprocess.py
-      - echo "done" > .markers/preprocess.done
     deps:
-      - .markers/setup.done
-      - .markers/ingest.done
+      - .venv-preprocess
       - src/preprocess.py
-      - requirements-preprocess.txt
       - data/raw/data.csv
     outs:
-      - requirements-preprocess-frozen.txt:
-          persist: false
-      - data/interim/data_cleaned.parquet:
-          cache: true
-          persist: true
-      - data/interim/feature_names.joblib:
-          cache: true
-          persist: true
-      - .venv-preprocess:
-          cache: true
-          persist: false
-      - .markers/preprocess.done:
-          cache: false
-          persist: false
+      - data/interim/data_cleaned.parquet
+      - data/interim/feature_names.joblib
 
   explore:
     cmd:
-      - uv venv .venv-explore --python 3.10
-      - . .venv-explore/bin/activate && uv pip install -r requirements-explore.txt
-      - . .venv-explore/bin/activate && uv pip freeze > requirements-explore-frozen.txt
       - . .venv-explore/bin/activate && python src/explore.py
-      - echo "done" > .markers/explore.done
+      - . .venv-explore/bin/activate && dvc dag --md > reports/figures/dag.md
     deps:
-      - .markers/setup.done
-      - .markers/preprocess.done
+      - .venv-explore
       - src/explore.py
-      - requirements-explore.txt
       - data/raw/data.csv
       - data/interim/data_cleaned.parquet
     outs:
-      - requirements-explore-frozen.txt:
-          persist: false
-      - reports/plots/readmitted_distribution.png:
-          cache: true
-          persist: true
-      - reports/plots/time_in_hospital_vs_readmission.png:
-          cache: true
-          persist: true
-      - reports/plots/age_vs_readmission.png:
-          cache: true
-          persist: true
-      - reports/plots/service_utilization_vs_readmission.png:
-          cache: true
-          persist: true
-      - reports/plots/correlation_matrix.png:
-          cache: true
-          persist: true
-      - reports/cleanlab/cleanlab_confusion_matrix.png:
-          cache: true
-          persist: true
-      - reports/cleanlab/cleanlab_confidence_distribution.png:
-          cache: true
-          persist: true
-      - reports/cleanlab/detailed_analysis.txt:
-          cache: true
-          persist: true
-      - reports/cleanlab/problematic_cases.csv:
-          cache: true
-          persist: true
-      - reports/cleanlab/feature_importance.csv:
-          cache: true
-          persist: true
-      - .venv-explore:
-          cache: true
-          persist: false
-      - .markers/explore.done:
-          cache: false
-          persist: false
+      - reports/figures/dag.md
+      - reports/cleanlab/detailed_analysis.txt
+      - reports/cleanlab/problematic_cases.csv
+      - reports/cleanlab/feature_importance.csv
+    plots:
+      - reports/plots/readmitted_distribution.png
+      - reports/plots/time_in_hospital_vs_readmission.png
+      - reports/plots/age_vs_readmission.png
+      - reports/plots/service_utilization_vs_readmission.png
+      - reports/plots/correlation_matrix.png
+      - reports/cleanlab/cleanlab_confusion_matrix.png
+      - reports/cleanlab/cleanlab_confidence_distribution.png
 
   featurize:
     cmd:
-      - uv venv .venv-featurize --python 3.11
-      - . .venv-featurize/bin/activate && uv pip install -r requirements-featurize.txt
-      - . .venv-featurize/bin/activate && uv pip freeze > requirements-featurize-frozen.txt
       - . .venv-featurize/bin/activate && python src/featurize.py
-      - echo "done" > .markers/featurize.done
     deps:
-      - .markers/setup.done
-      - .markers/explore.done
+      - .venv-featurize
       - src/featurize.py
-      - requirements-featurize.txt
       - data/interim/data_cleaned.parquet
       - feature_store.yaml
     outs:
-      - requirements-featurize-frozen.txt:
-          persist: false
-      - data/interim/data_featured.parquet:
-          cache: true
-          persist: true
-      - .venv-featurize:
-          cache: true
-          persist: false
-      - .markers/featurize.done:
-          cache: false
-          persist: false
-
-  train_logisticregression:
-    cmd:
-      - uv venv .venv-logisticregression --python 3.10
-      - . .venv-logisticregression/bin/activate && uv pip install -r requirements-logisticregression.txt
-      - . .venv-logisticregression/bin/activate && uv pip freeze > requirements-logisticregression-frozen.txt
-      - . .venv-logisticregression/bin/activate && python models/logistic_regression/model.py
-      - echo "done" > .markers/train_logisticregression.done
-    deps:
-      - .markers/setup.done
-      - .markers/featurize.done
-      - models/logistic_regression/model.py
-      - requirements-logisticregression.txt
+      - requirements-featurize-frozen.txt
       - data/interim/data_featured.parquet
-    outs:
-      - requirements-logisticregression-frozen.txt:
-          persist: false
-      - models/logistic_regression/artifacts/model:
-          cache: true
-          persist: true
-      - .venv-logisticregression:
-          cache: true
-          persist: false
-      - .markers/train_logisticregression.done:
-          cache: false
-          persist: false
-    metrics:
-      - models/logistic_regression/artifacts/metrics/metrics.json:
-          cache: true
-          persist: true
-    plots:
-      - models/logistic_regression/artifacts/plots/confusion_matrix.png:
-          cache: true
-          persist: true
-      - models/logistic_regression/artifacts/plots/roc_curve.png:
-          cache: true
-          persist: true
-
-  train_neuralnetwork:
-    cmd:
-      - uv venv .venv-neuralnetwork --python 3.10
-      - . .venv-neuralnetwork/bin/activate && uv pip install -r requirements-neuralnetwork.txt
-      - . .venv-neuralnetwork/bin/activate && uv pip freeze > requirements-neuralnetwork-frozen.txt
-      - . .venv-neuralnetwork/bin/activate && python models/neural_network/model.py
-      - echo "done" > .markers/train_neuralnetwork.done
-    deps:
-      - .markers/featurize.done
-      - .markers/train_logisticregression.done
-      - data/interim/data_featured.parquet
-      - models/neural_network/model.py
-      - requirements-neuralnetwork.txt
-    outs:
-      - requirements-neuralnetwork-frozen.txt:
-          persist: false
-      - models/neural_network/artifacts/model:
-          cache: true
-          persist: true
-      - .venv-neuralnetwork:
-          cache: true
-          persist: false
-      - .markers/train_neuralnetwork.done:
-          cache: false
-          persist: false
-    metrics:
-      - models/neural_network/artifacts/metrics/metrics.json:
-          cache: true
-          persist: true
-    plots:
-      - models/neural_network/artifacts/plots/confusion_matrix.png:
-          cache: true
-          persist: true
-      - models/neural_network/artifacts/plots/model_architecture.png:
-          cache: true
-          persist: true
-      - models/neural_network/artifacts/plots/roc_curve.png:
-          cache: true
-          persist: true
 
   train_autogluon:
     cmd:
-      - uv venv .venv-autogluon --python 3.10
-      - . .venv-autogluon/bin/activate && uv pip install -r requirements-autogluon.txt
-      - . .venv-autogluon/bin/activate && uv pip freeze > requirements-autogluon-frozen.txt
       - . .venv-autogluon/bin/activate && python src/utils.py patch_nvidia_gpu
       - . .venv-autogluon/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python models/autogluon/model.py
-      - echo "done" > .markers/train_autogluon.done
     deps:
-      - .markers/featurize.done
-      - .markers/setup.done
-      - .markers/train_neuralnetwork.done
-      - data/interim/data_featured.parquet
+      - src/utils.py
       - models/autogluon/model.py
-      - requirements-autogluon.txt
+      - .venv-train_autogluon
+      - data/interim/data_featured.parquet
     outs:
-      - requirements-autogluon-frozen.txt:
-          persist: false
-      - models/autogluon/artifacts/model:
-          cache: true
-          persist: true
-      - .venv-autogluon:
-          cache: true
-          persist: false
-      - .markers/train_autogluon.done:
-          cache: false
-          persist: false
+      - models/autogluon/artifacts/model
     metrics:
-      - models/autogluon/artifacts/metrics/metrics.json:
-          cache: true
-          persist: true
+      - models/autogluon/artifacts/metrics/metrics.json
     plots:
-      - models/autogluon/artifacts/plots/confusion_matrix.png:
-          cache: true
-          persist: true
-      - models/autogluon/artifacts/plots/feature_importance.png:
-          cache: true
-          persist: true
-      - models/autogluon/artifacts/plots/roc_curve.png:
-          cache: true
-          persist: true
+      - models/autogluon/artifacts/plots/confusion_matrix.png
+      - models/autogluon/artifacts/plots/feature_importance.png
+      - models/autogluon/artifacts/plots/roc_curve.png
+
+  train_logisticregression:
+    cmd:
+      - . .venv-logisticregression/bin/activate && python models/logistic_regression/model.py
+    deps:
+      - .venv-logisticregression
+      - models/logistic_regression/model.py
+      - data/interim/data_featured.parquet
+    outs:
+      - models/logistic_regression/artifacts/model
+    metrics:
+      - models/logistic_regression/artifacts/metrics/metrics.json
+    plots:
+      - models/logistic_regression/artifacts/plots/confusion_matrix.png
+      - models/logistic_regression/artifacts/plots/roc_curve.png
+
+  train_neuralnetwork:
+    cmd:
+      - . .venv-neuralnetwork/bin/activate && python models/neural_network/model.py
+    deps:
+      - .venv-neuralnetwork
+      - models/neural_network/model.py
+      - data/interim/data_featured.parquet
+    outs:
+      - models/neural_network/artifacts/model
+    metrics:
+      - models/neural_network/artifacts/metrics/metrics.json
+    plots:
+      - models/neural_network/artifacts/plots/confusion_matrix.png
+      - models/neural_network/artifacts/plots/model_architecture.png
+      - models/neural_network/artifacts/plots/roc_curve.png
 
   deploy:
     cmd:
-      - uv venv .venv-deploy --python 3.10
-      - . .venv-deploy/bin/activate && uv pip install -r requirements-deploy.txt
-      - . .venv-deploy/bin/activate && uv pip freeze > requirements-deploy-frozen.txt
       - . .venv-deploy/bin/activate && python src/deploy.py
-      - echo "done" > .markers/deploy.done
     deps:
-      - .markers/setup.done
-      - .markers/featurize.done
-      - .markers/train_autogluon.done
-      - .markers/train_logisticregression.done
-      - .markers/train_neuralnetwork.done
-      - models/autogluon/artifacts/metrics/metrics.json
+      - .venv-deploy
+      # PLOTS
       - models/autogluon/artifacts/model/feature_importance.csv
+      # MODELS
       - models/autogluon/artifacts/model/predictor.pkl
-      - models/logistic_regression/artifacts/metrics/metrics.json
       - models/logistic_regression/artifacts/model/model.joblib
-      - models/neural_network/artifacts/metrics/metrics.json
       - models/neural_network/artifacts/model/model.keras
-      - src/deploy.py
-    outs:
-      - huggingface/models/diabetes-readmission:
-          cache: true
-          persist: true
-      - requirements-deploy-frozen.txt:
-          persist: false
-      - .markers/deploy.done:
-          cache: false
-          persist: false
+      # METRICS
+      - models/autogluon/artifacts/metrics/metrics.json
+      - models/logistic_regression/artifacts/metrics/metrics.json
+      - models/neural_network/artifacts/metrics/metrics.json
 
 artifacts:
   diabetes-dataset:
