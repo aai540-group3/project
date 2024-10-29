@@ -216,7 +216,7 @@ stages:
       - . .venv-neuralnetwork/bin/activate && python models/neural_network/model.py
       - echo "done" > .markers/train_neuralnetwork.done
     deps:
-      - .markers/train_logisticregression.done
+      - .markers/featurize.done
       - models/neural_network/model.py
       - requirements-neuralnetwork.txt
       - data/interim/data_featured.parquet
@@ -256,7 +256,7 @@ stages:
       - . .venv-autogluon/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python models/autogluon/model.py
       - echo "done" > .markers/train_autogluon.done
     deps:
-      - .markers/train_neuralnetwork.done
+      - .markers/featurize.done
       - models/autogluon/model.py
       - requirements-autogluon.txt
       - data/interim/data_featured.parquet
