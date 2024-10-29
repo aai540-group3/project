@@ -2,20 +2,14 @@ schema: '2.0'
 stages:
   setup:
     cmd:
-    - uv venv .venv-setup --python 3.10
-    - . .venv-setup/bin/activate && uv pip install -r requirements.txt
-    - . .venv-setup/bin/activate && uv pip freeze > requirements-frozen.txt
+    - pip install -r requirements.txt
+    - pip freeze > requirements-frozen.txt
     deps:
     - path: requirements.txt
       hash: md5
       md5: 2fa59e3161e5d835f2147f8fa931df01
       size: 33
     outs:
-    - path: .venv-setup
-      hash: md5
-      md5: 58d976c7a27b8dae53d00601726abbad.dir
-      size: 264582419
-      nfiles: 14329
     - path: requirements-frozen.txt
       hash: md5
       md5: b51886e727c451ab91ae237309dc53a1

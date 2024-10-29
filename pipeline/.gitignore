@@ -5,3 +5,4 @@
 /.venv-neuralnetwork
 /requirements-logisticregression-frozen.txt
 /.venv-logisticregression
+/requirements-frozen.txt

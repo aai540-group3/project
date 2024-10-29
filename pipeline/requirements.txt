@@ -1,0 +1,5 @@
+dvc
+feast[aws]
+pipx
+uv
+virtualenv
