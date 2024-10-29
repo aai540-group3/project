@@ -8,7 +8,7 @@ from typing import Dict, Optional, Tuple
 
 import pandas as pd
 import tf2onnx
-import transformers as tf
+import tensorflow as tf
 from dotenv import load_dotenv
 from huggingface_hub import ModelCard, ModelCardData
 
