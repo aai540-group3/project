@@ -2,18 +2,7 @@ schema: '2.0'
 stages:
   setup:
     cmd:
-    - pip install -r requirements.txt
-    - pip freeze > requirements-frozen.txt
-    deps:
-    - path: requirements.txt
-      hash: md5
-      md5: 2fa59e3161e5d835f2147f8fa931df01
-      size: 33
-    outs:
-    - path: requirements-frozen.txt
-      hash: md5
-      md5: b51886e727c451ab91ae237309dc53a1
-      size: 2702
+    - pip install uv virtualenv
   infrastruct:
     cmd:
     - uv venv .venv-infrastruct --python 3.10
@@ -286,7 +275,7 @@ stages:
       size: 8410
   train_autogluon:
     cmd:
-    - sudo apt install --yes --no-install-recommends $(cat packages-autogluon.txt)
+    - sudo apt-get install --yes --no-install-recommends $(cat packages-autogluon.txt)
     - uv venv .venv-autogluon --python 3.10
     - . .venv-autogluon/bin/activate && uv pip install -r requirements-autogluon.txt
     - . .venv-autogluon/bin/activate && uv pip freeze > requirements-autogluon-frozen.txt
@@ -318,8 +307,8 @@ stages:
       size: 191
     - path: models/autogluon/artifacts/model
       hash: md5
-      md5: f09883bad52061310a38580e89f5705a.dir
-      size: 64134
+      md5: 7c569181f1c6c5d1b29f807865afcbb0.dir
+      size: 64141
       nfiles: 11
     - path: models/autogluon/artifacts/plots/confusion_matrix.png
       hash: md5

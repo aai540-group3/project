@@ -5,9 +5,9 @@ on:
     paths:
       - ".github/workflows/generate-video.yml"
       - "Final_Project_Team_3_Deliverable_2.pptx"
-      - "packages-pptx2video.txt"
-      - "requirements-pptx2video.txt"
-      - "scripts/pptx2video.py"
+      - "pptx2video/packages.txt"
+      - "pptx2video/requirements.txt"
+      - "pptx2video/pptx2video.py"
   workflow_dispatch:
     inputs:
       force_generate:
@@ -28,7 +28,7 @@ permissions:
   id-token: write
 
 env:
-  PACKAGES: packages-pptx2video.txt
+  PACKAGES: pptx2video/packages.txt
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
 jobs:
@@ -60,7 +60,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-pptx2video.txt
+          pip install -r pptx2video/requirements.txt
 
       - name: Check if Conversion is Needed
         id: check
@@ -106,7 +106,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-pptx2video.txt
+          pip install -r pptx2video/requirements.txt
 
       - name: Run Video Generation Script
         run: |
@@ -114,7 +114,7 @@ jobs:
           if [ "${{ needs.check-pptx.outputs.force_generate }}" == 'true' ]; then
             FORCE_FLAG="--force"
           fi
-          python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx $FORCE_FLAG
+          python pptx2video/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx $FORCE_FLAG
 
       - name: Get Video Duration
         run: |
@@ -134,8 +134,8 @@ jobs:
         run: |
           git add \
             Final_Project_Team_3_Deliverable_2.mp4 \
-            video-assets/Final_Project_Team_3_Deliverable_2.pdf \
-            video-assets/conversion_state.json
+            pptx2video/video-assets/Final_Project_Team_3_Deliverable_2.pdf \
+            pptx2video/video-assets/conversion_state.json
           if git diff --staged --quiet; then
             echo "No changes detected. Skipping commit and push."
             echo "CHANGED=false" >> $GITHUB_ENV
@@ -145,8 +145,8 @@ jobs:
             git stash pop
             git add \
               Final_Project_Team_3_Deliverable_2.mp4 \
-              video-assets/Final_Project_Team_3_Deliverable_2.pdf \
-              video-assets/conversion_state.json
+              pptx2video/video-assets/Final_Project_Team_3_Deliverable_2.pdf \
+              pptx2video/video-assets/conversion_state.json
             git commit -m "$DURATION out of 15 minutes"
             git push origin main || {
               echo "Push failed. Creating a pull request..."
