@@ -65,7 +65,7 @@ jobs:
       - name: Check if Conversion is Needed
         id: check
         run: |
-          python scripts/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx --changed > changes.json
+          python pptx2video/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx --changed > changes.json
           cat changes.json
           if grep -q '"conversion_needed": false' changes.json; then
             echo "Conversion is not needed."
