@@ -1,6 +1,0 @@
-dvc[all]
-dvclive
-pandas
-numpy
-scikit-learn
-joblib
