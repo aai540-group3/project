@@ -6,19 +6,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![release](https://img.shields.io/github/release/aai540-group3/project.svg)](https://github.com/aai540-group3/project/releases)
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/66d984def1ee4ae481e78b91ffd159f0)](https://app.codacy.com/gh/aai540-group3/project/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![CodeQL Advanced](https://github.com/aai540-group3/project/actions/workflows/codeql.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/codeql.yml) [![Codacy Security Scan](https://github.com/aai540-group3/project/actions/workflows/codacy-analysis.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/codacy-analysis.yml) [![Dependabot Updates](https://github.com/aai540-group3/project/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/dependabot/dependabot-updates)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/66d984def1ee4ae481e78b91ffd159f0)](https://app.codacy.com/gh/aai540-group3/project/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![CodeQL Advanced](https://github.com/aai540-group3/project/actions/workflows/codeql.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/codeql.yml) [![Codacy Security Scan](https://github.com/aai540-group3/project/actions/workflows/codacy-analysis.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/codacy-analysis.yml) [![Dependabot Updates](https://github.com/aai540-group3/project/actions/workflows/dependabot/dependabot-updates.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/dependabot/dependabot-updates.yml)
 
 [![MLOps Pipeline](https://github.com/aai540-group3/project/actions/workflows/mlops-pipeline.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/mlops-pipeline.yml) [![Generate Video](https://github.com/aai540-group3/project/actions/workflows/generate-video.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/generate-video.yml) [![Generate PDFs](https://github.com/aai540-group3/project/actions/workflows/generate-pdfs.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/generate-pdfs.yml) [![Package Deliverables](https://github.com/aai540-group3/project/actions/workflows/package-deliverables.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/package-deliverables.yml) [![Create Release](https://github.com/aai540-group3/project/actions/workflows/create-release.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/create-release.yml) [![Deploy HF Space: OpenAI TTS](https://github.com/aai540-group3/project/actions/workflows/deploy-tts-space.yml/badge.svg)](https://github.com/aai540-group3/project/actions/workflows/deploy-tts-space.yml)
-
----
-
-## ML System Design Document
-
----
-
-Hospital readmissions are a critical issue affecting healthcare systems globally. Frequent readmissions, particularly within 30 days of discharge, not only escalate healthcare costs but also negatively impact patient satisfaction and clinical outcomes. Among chronic diseases, diabetes mellitus is prevalent and poses significant management challenges, leading to higher readmission rates. Effective strategies to predict and reduce readmissions among diabetic patients are essential for enhancing patient care and optimizing healthcare resources.
-
-Machine learning offers robust tools to analyze large datasets and uncover patterns that may not be apparent through traditional statistical methods. By developing an ML system specifically designed to predict 30-day readmissions among diabetic patients, we aim to reduce unnecessary hospitalizations, lower healthcare costs, and improve patient outcomes. This document outlines the design and implementation of such a system, covering data sourcing, engineering, modeling, deployment, and monitoring, ensuring that each component aligns with industry best practices and ethical considerations.
 
 ---
 
@@ -26,62 +16,43 @@ Machine learning offers robust tools to analyze large datasets and uncover patte
 
 - [Diabetic Readmission Risk Prediction](#diabetic-readmission-risk-prediction)
   - [Status](#status)
-  - [ML System Design Document](#ml-system-design-document)
   - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
   - [Problem Statement](#problem-statement)
   - [Impact Measurement](#impact-measurement)
     - [Model Performance Metrics](#model-performance-metrics)
     - [Reduction in Readmission Rates](#reduction-in-readmission-rates)
     - [Cost Savings Analysis](#cost-savings-analysis)
     - [Resource Optimization](#resource-optimization)
-  - [Security, Bias, and Ethical Considerations](#security-bias-and-ethical-considerations)
-    - [Security Checklist](#security-checklist)
-    - [Bias and Ethical Concerns](#bias-and-ethical-concerns)
   - [Solution Overview](#solution-overview)
     - [System Architecture](#system-architecture)
-      - [System Architecture Diagram](#system-architecture-diagram)
     - [Data Sources](#data-sources)
-      - [Dataset Characteristics](#dataset-characteristics)
-      - [Versioning](#versioning)
     - [Data Engineering](#data-engineering)
-      - [Ingestion](#ingestion)
-      - [Cleaning](#cleaning)
-      - [Splitting](#splitting)
     - [Feature Engineering](#feature-engineering)
-      - [New Feature Creation](#new-feature-creation)
-      - [Polynomial Features](#polynomial-features)
     - [Model Training and Evaluation](#model-training-and-evaluation)
-      - [Models Implemented](#models-implemented)
-      - [Evaluation Metrics and Results](#evaluation-metrics-and-results)
-      - [Visualizations](#visualizations)
     - [Model Deployment](#model-deployment)
-      - [Serialization and Versioning](#serialization-and-versioning)
-      - [Infrastructure as Code](#infrastructure-as-code)
-      - [Deployment Strategy](#deployment-strategy)
     - [Model Monitoring](#model-monitoring)
-      - [DVCLive Integration](#dvclive-integration)
-      - [DVC Studio Usage](#dvc-studio-usage)
-      - [Automated Alerts and Retraining](#automated-alerts-and-retraining)
     - [Continuous Integration and Continuous Deployment (CI/CD)](#continuous-integration-and-continuous-deployment-cicd)
-      - [GitHub Actions Workflow](#github-actions-workflow)
-      - [CI/CD Pipeline Diagram](#cicd-pipeline-diagram)
-      - [Benefits](#benefits)
   - [Repository Structure](#repository-structure)
-  - [Architecture Diagrams](#architecture-diagrams)
-    - [System Overview Diagram](#system-overview-diagram)
-    - [Data Processing Pipeline](#data-processing-pipeline)
-    - [CI/CD Pipeline](#cicd-pipeline)
-    - [Model Deployment Architecture](#model-deployment-architecture)
   - [Conclusion](#conclusion)
   - [References](#references)
+  - [License](#license)
+
+---
+
+## Overview
+
+Hospital readmissions are a critical issue affecting healthcare systems globally. Frequent readmissions, particularly within 30 days of discharge, not only escalate healthcare costs but also negatively impact patient satisfaction and clinical outcomes. Among chronic diseases, diabetes mellitus is prevalent and poses significant management challenges, leading to higher readmission rates. Effective strategies to predict and reduce readmissions among diabetic patients are essential for enhancing patient care and optimizing healthcare resources.
+
+This project aims to develop a robust machine learning (ML) system that predicts 30-day hospital readmissions among diabetic patients. By leveraging historical patient data and advanced analytical techniques, the system seeks to identify high-risk individuals, enabling proactive interventions and contributing to improved healthcare efficiency and patient well-being.
 
 ---
 
 ## Problem Statement
 
-The increasing rate of hospital readmissions poses a significant challenge to healthcare systems, leading to escalated costs and strained resources. For diabetic patients, the risk of readmission within 30 days of discharge is heightened due to factors such as the complexity of disease management, potential complications, and the necessity for strict adherence to treatment regimens.
+The rising rate of hospital readmissions among diabetic patients presents a multifaceted problem for healthcare providers. It strains resources, increases healthcare expenditures, and can negatively impact patient health and quality of life. The complexity of diabetes management, potential complications, and the need for strict adherence to treatment regimens contribute to the elevated readmission risk for this population.
 
-The primary objective of this project is to develop a robust, scalable machine learning system capable of accurately predicting the likelihood of 30-day readmissions among diabetic patients. By analyzing a myriad of patient attributes—including demographics, medical history, treatment patterns, and hospital procedures—the system will generate predictions to inform clinical decision-making. Integrating this predictive capability into existing healthcare workflows aims to enable clinicians to proactively identify high-risk patients and tailor interventions to mitigate the risk of readmission.
+This project addresses the challenge of accurately predicting 30-day hospital readmissions among diabetic patients. By developing a robust and scalable machine learning system, we aim to analyze a wide range of patient attributes—including demographics, medical history, treatment patterns, and hospital procedures—to identify individuals at high risk of readmission. This predictive capability will empower clinicians to implement targeted interventions, potentially reducing readmission rates and improving overall patient care.
 
 ---
 
@@ -133,490 +104,117 @@ By monitoring these indicators, we can validate the system's contribution to ove
 
 ---
 
-## Security, Bias, and Ethical Considerations
-
-In developing an ML system for healthcare, it is imperative to address security, bias, and ethical concerns comprehensively. Patient data is sensitive and subject to strict regulations, and the ML models must be fair and transparent in their predictions.
-
-### Security Checklist
-
-- **Data Privacy Compliance**: Compliance with the Health Insurance Portability and Accountability Act (HIPAA) is mandatory. We will implement strict data governance policies to ensure patient confidentiality. Data de-identification techniques will remove personally identifiable information (PII), and any data sharing will adhere to consent agreements and legal requirements.
-
-- **Secure Data Storage**: All data will be stored in encrypted Amazon S3 buckets using server-side encryption (SSE-S3). Access will be controlled through AWS Identity and Access Management (IAM) roles and policies, restricting permissions to authorized personnel only. Regular backups and recovery tests will prevent data loss.
-
-- **Data Transmission Security**: We will enforce HTTPS protocols for all data transmission between services, utilizing SSL/TLS encryption to protect data in transit against interception and unauthorized access.
-
-- **Access Control**: Role-Based Access Control (RBAC) will define user permissions based on specific roles and responsibilities. Regular audits of access logs will be conducted to detect and respond to any unauthorized activities.
-
-- **Incident Response Plan**: A comprehensive incident response strategy will be developed, outlining procedures for incident detection, containment, eradication, recovery, and follow-up. Roles and responsibilities will be clearly defined to ensure an effective response to any security incidents.
-
-### Bias and Ethical Concerns
-
-- **Bias Identification and Mitigation**: We recognize the potential for biases related to age, gender, race, or socioeconomic status. Regular audits will be performed to detect such biases using techniques like Disparate Impact Analysis. If biases are identified, we will adjust training data and model parameters to ensure equitable treatment across all patient groups.
-
-- **Model Explainability and Transparency**: To foster trust and facilitate clinical adoption, we will employ interpretable models or integrate explainability tools such as SHAP (SHapley Additive exPlanations). This approach provides clinicians with clear insights into the factors influencing each prediction.
-
-- **Informed Consent and Data Usage**: Patient consent forms will include authorization for data usage in predictive modeling. Transparency about data collection methods, storage practices, and purposes will be maintained to build trust with patients and stakeholders.
-
-- **Compliance with Ethical Guidelines**: The project will align with ethical standards set by professional bodies like the American Medical Association (AMA). Training will be provided to staff on data ethics, privacy, and responsible AI practices to cultivate an ethical culture.
-
-By proactively addressing these considerations, we aim to build a system that is not only effective but also trustworthy and respectful of patient rights.
-
----
-
 ## Solution Overview
 
 Our proposed solution integrates robust data handling, advanced modeling techniques, seamless deployment strategies, and continuous monitoring processes. Each component is designed to contribute to an effective and reliable ML system for predicting hospital readmissions.
 
 ### System Architecture
 
-The overall architecture of the proposed ML system is designed to facilitate seamless data flow, robust model training, and efficient deployment. The system comprises multiple components, each responsible for specific tasks, integrated to function cohesively.
+The system comprises multiple components, each responsible for specific tasks, integrated to function cohesively:
 
-#### System Architecture Diagram
-
-```mermaid
-flowchart TB
-    subgraph DataLayer[Data Layer]
-        A[Data Sources] --> B[Data Ingestion]
-        B --> C[Data Storage]
-    end
-    subgraph ProcessingLayer[Processing Layer]
-        C --> D[Data Engineering]
-        D --> E[Feature Engineering]
-        E --> F[Model Training]
-    end
-    subgraph DeploymentLayer[Deployment Layer]
-        F --> G[Model Deployment]
-        G --> H[API Endpoint]
-    end
-    subgraph ApplicationLayer[Application Layer]
-        H --> I[Clinical Application]
-        I --> J[Healthcare Providers]
-    end
-    J --> K[Patient Care]
-    J --> L[Feedback Loop] --> F
-```
-
-*Figure 1: System Overview Diagram illustrating the flow from data sources through model deployment to clinical application and feedback integration.*
+1. **Data Ingestion**: Fetching and storing raw data from reliable sources.
+2. **Data Engineering**: Cleaning, preprocessing, and transforming data to prepare for modeling.
+3. **Feature Engineering**: Creating new features to capture underlying patterns and relationships.
+4. **Model Training and Evaluation**: Developing predictive models and assessing their performance.
+5. **Model Deployment**: Containerizing and deploying models as RESTful APIs.
+6. **Model Monitoring**: Tracking model performance over time and detecting data drift.
+7. **CI/CD Pipeline**: Automating the development workflow using DVC and GitHub Actions.
 
 ### Data Sources
 
-We utilize the **Diabetes 130-US hospitals for years 1999-2008 Data Set** from the UCI Machine Learning Repository, accessed via the Hugging Face Datasets library under the identifier `aai540-group3/diabetes-readmission`.
+We use the **Diabetes 130-US hospitals for years 1999-2008 Data Set** from the UCI Machine Learning Repository.
 
-#### Dataset Characteristics
-
-- **Size**: The dataset contains 101,766 patient records, providing a substantial sample for model training and evaluation.
-- **Features**: It includes 55 attributes encompassing demographics (age, gender, ethnicity), medical history (diagnoses, comorbidities), laboratory results, medications, and hospitalization details (length of stay, number of procedures).
-- **Target Variable**: The `readmitted` indicator (0 or 1) signifies whether a patient was readmitted within 30 days of discharge.
-
-#### Versioning
-
-- **Consistency**: The dataset is versioned (`v1.0`) to ensure consistency and reproducibility across different experiments and development stages.
-- **Storage**: Raw data is stored in a structured format within the repository (`data/raw/data.csv`), enabling version control through tools like Git and DVC (Data Version Control).
+- **Size**: 101,766 patient records.
+- **Features**: 55 attributes including demographics, medical history, lab results, medications, and hospitalization details.
+- **Target Variable**: `readmitted` indicator (0 or 1) for 30-day readmission.
 
 ### Data Engineering
 
-Effective data engineering is crucial for preparing the dataset for modeling. Our process entails data ingestion, cleaning, and splitting.
-
-#### Ingestion
-
-Using the custom script `ingestion.py`, we perform the following steps:
-
-- **Data Loading**: Employ the Hugging Face Datasets API to reliably fetch the dataset.
-- **Data Export**: Save the dataset as a CSV file in the `data/raw` directory, facilitating version control and transparency.
-- **Logging**: Implement logging mechanisms to document the ingestion process, ensuring traceability and facilitating debugging if anomalies arise.
-
-#### Cleaning
-
-The `cleaning.py` script addresses data quality issues to enhance model performance:
-
-- **Duplicate Removal**: Identified and removed 1,437 duplicate entries to prevent data redundancy and bias.
-- **Missing Values Handling**:
-  - **Numerical Variables**: Imputed missing values using the median, reducing the impact of outliers and skewed distributions.
-  - **Categorical Variables**: Filled missing values with the mode (most frequent value), maintaining category integrity.
-- **Data Type Consistency**:
-  - Converted numerical features to `float32` for computational efficiency.
-  - Transformed binary categorical features into boolean types for clarity and proper handling in modeling.
-- **Feature Reduction**:
-  - Removed features with more than 50% missing data, such as 'weight' and 'payer_code', to avoid introducing bias or noise.
-  - Eliminated irrelevant identifiers (e.g., patient IDs) to prevent data leakage and protect privacy.
-- **Normalization and Standardization**: Applied where appropriate to ensure that features are on comparable scales, which is beneficial for certain algorithms.
-
-#### Splitting
-
-The `splitting.py` script divides the dataset into training and testing sets:
-
-- **Training Set**: Consists of 40% of the data, used for model training.
-- **Validation Set**: Consists of 10% of the data, used to fine-tune the model.
-- **Testing Set**: Comprises 10% of the data, reserved for evaluating model performance.
-- **Production Set**: Comprises 40% of the data, reserved as input data for the complete model.
-- **Stratification**: Ensured that the distribution of the target variable (`readmitted`) is consistent across both sets, maintaining the representativeness of the sample.
-- **Reproducibility**: Used a fixed `random_state=42` to enable consistent results in subsequent runs, facilitating collaboration and comparison.
+- **Ingestion**: Using `ingest.py` to fetch and store the dataset in CSV and Parquet formats.
+- **Cleaning**: Applying `preprocess.py` to handle duplicates, missing values, inconsistent data types, and irrelevant features.
+- **Feature Store Integration**: Utilizing Feast to manage feature definitions and data consistency.
 
 ### Feature Engineering
 
-Effective feature engineering can significantly enhance model performance by creating new variables that capture underlying relationships in the data.
-
-#### New Feature Creation
-
-Using `build_features.py`, we engineered several new features:
-
-1. **Total Procedures (`total_procedures`)**:
-   - **Definition**: Sum of `num_lab_procedures` and `num_procedures`.
-   - **Rationale**: Represents the overall procedural burden during hospitalization, potentially correlating with readmission risk due to increased complexity or severity.
-
-2. **Total Visits (`total_visits`)**:
-   - **Definition**: Sum of `number_outpatient`, `number_emergency`, and `number_inpatient`.
-   - **Rationale**: Reflects the frequency of healthcare interactions, which may indicate chronic conditions or issues with disease management.
-
-3. **Average Procedures per Visit (`avg_procedures_per_visit`)**:
-   - **Definition**: `total_procedures` divided by `total_visits`, carefully handling divisions by zero.
-   - **Rationale**: Provides insight into procedural intensity per visit, highlighting patients who may be undergoing extensive interventions.
-
-4. **Lab Procedure Ratio (`lab_procedure_ratio`)**:
-   - **Definition**: `num_lab_procedures` divided by `total_procedures`, adjusting for zero totals.
-   - **Rationale**: Indicates the focus on diagnostic procedures versus therapeutic interventions.
-
-5. **Medication Intensity (`medication_intensity`)**:
-   - **Definition**: `num_medications` divided by `time_in_hospital`.
-   - **Rationale**: Captures the rate at which medications are administered, possibly correlating with treatment aggressiveness or complexity.
-
-#### Polynomial Features
-
-To capture non-linear relationships, we introduced polynomial features:
-
-- **Implementation**: Used Scikit-learn's `PolynomialFeatures` with a degree of 2.
-- **Application**: Applied to selected numerical features based on their correlation with the target variable.
-- **Advantages**: Allows the model to learn complex patterns that linear features might not capture.
-- **Considerations**: Monitored for potential issues such as multicollinearity and overfitting; performed feature selection post-generation to retain only those features contributing positively to model performance.
+- **New Features**: Engineered features like `total_medications`, `total_encounters`, `procedures_per_day`, and others to enhance model performance.
+- **Log Transformations**: Applied to skewed features to reduce skewness.
+- **One-Hot Encoding**: Converted categorical variables into numerical format.
 
 ### Model Training and Evaluation
 
-The modeling phase involved training two distinct models: Logistic Regression and AutoGluon's TabularPredictor. Both models were evaluated to determine their effectiveness.
-
-#### Models Implemented
-
-1. **Logistic Regression**
-
-   - **Algorithm**: Utilized Scikit-learn's `LogisticRegression`, known for its simplicity and interpretability.
-   - **Hyperparameters**:
-     - **Penalty**: L2 regularization to prevent overfitting.
-     - **Solver**: 'lbfgs', suitable for smaller datasets and supports L2 regularization.
-     - **Max Iterations**: Set to 1000 to ensure convergence, especially important given the complex feature set.
-     - **Random State**: Set to 42 for reproducibility.
-   - **Preprocessing Steps**:
-     - **Scaling**: Applied `StandardScaler` to standardize numerical features.
-     - **Imputation**: Used `SimpleImputer` to handle missing values.
-     - **Encoding**: Employed one-hot encoding for categorical variables.
-   - **Training Process**:
-     - Loaded preprocessed training data from `data/processed/logistic_regression/train_preprocessed.csv`.
-     - Trained the model and saved it as `models/logistic_regression/model.pkl`.
-
-2. **AutoGluon TabularPredictor**
-
-   - **Algorithm**: Leveraged AutoGluon's automated machine learning capabilities to systematically explore various models and hyperparameters.
-   - **Configuration**:
-     - **Presets**: Set to 'best_quality' to prioritize predictive performance.
-     - **Time Limit**: Restricted to 3600 seconds to balance computational resources and exploration depth.
-     - **Hyperparameters**: Customized settings for Gradient Boosting Machines (GBM) with `num_boost_round` set to 100.
-     - **Verbosity**: Level 2 to provide detailed logs during training.
-   - **Automated Processing**:
-     - AutoGluon handles missing values, categorical encoding, and feature scaling internally.
-   - **Training Process**:
-     - Used the raw training data (`data/processed/train.csv`).
-     - Trained models are stored under `models/autogluon/`.
-
-3. **Artificial Neural Network**
-
-- **Algorithm**: Simple Artificial Neural network built with TensorFlow's Keras library optimized for binary classification.
-- **Configuration**:
-  - **Layers**:
-    - Dense layers for input and hidden layers with ReLu activation
-    - Dropout layers with 0.5 dropout rate
-    - Fully-connected output layer with sigmoid activation
-  - **Hyperparameters**:
-    - **Optimizer**: Adam W
-    - **# of Epochs**: 100
-    - **Learning rate**: 0.0001
-    - **Batch size**: 32
-    - **Regularization**: Dropout layers; Early stopping with patience 15
-- **Training Process**:
-  - Used the raw training data (`data/processed/train.csv`).
-  - Trained models are stored under `models/ann/`.
-
-#### Evaluation Metrics and Results
-
-Both models were evaluated on the test set, yielding the following results:
-
-| **Metric** | **Logistic Regression** | **AutoGluon** | **Artificial Neural Network** |
-| ---------- | ----------------------- | ------------- | ----------------------------- |
-| Accuracy   | 46.01%                  | 63.30%        | 63.00%
-| Precision  | 69.49%                  | 63.18%        | 63.00%
-| Recall     | 46.01%                  | 63.30%        | 49.00%
-| F1-Score   | 46.01%                  | 63.30%        | 55.00%
-| ROC-AUC    | 64.65%                  | 68.09%        |
-
-**Analysis**:
-
-- **AutoGluon Performance**: Demonstrated superior performance across most metrics compared to Logistic Regression. The higher accuracy and ROC-AUC indicate better overall predictive ability.
-- **Logistic Regression**: Achieved higher precision, suggesting it was better at predicting positive cases when it predicted them but had lower recall and overall accuracy.
-- **Artificial Neural Network**: ...
-- **ROC-AUC Improvement**: AutoGluon's ROC-AUC of 68.09% shows better discrimination between classes compared to Logistic Regression's 64.65%.
-
-The results indicate that while both models have room for improvement, AutoGluon provides a better foundation for further development due to its higher accuracy and balanced performance across metrics.
-
-#### Visualizations
-
-To gain deeper insights into model behavior, we generated several visualizations:
-
-- **Confusion Matrix**: Showed the model's performance in terms of true positives, true negatives, false positives, and false negatives.
-- **ROC Curve**: Illustrated the trade-off between true positive rate and false positive rate at various thresholds.
-- **Feature Importances**:
-  - **Logistic Regression**: Analyzed coefficients to understand the impact of each feature.
-  - **AutoGluon**: Used built-in methods to extract and plot feature importance rankings.
-  - **Artificial Neural Network**: Used Principal Component Analysis (PCA) to extract significant features.
+- **Logistic Regression**: A baseline model trained with standardized features and addressing class imbalance using SMOTE.
+- **AutoGluon TabularPredictor**: Automated machine learning tool that explores various models and hyperparameters.
+- **Evaluation Metrics**: Models evaluated on accuracy, precision, recall, F1-score, and ROC-AUC.
 
 ### Model Deployment
 
-#### Serialization and Versioning
-
-- **Model Saving**:
-  - **Logistic Regression**: Serialized using `joblib` for efficient storage and loading.
-  - **AutoGluon**: Utilized AutoGluon's `.save()` and `.load()` methods.
-- **Version Control with DVC**:
-  - Managed datasets and models using DVC to track changes and maintain consistency.
-  - Configured remote storage on AWS S3 to handle large files and facilitate collaboration.
-
-#### Infrastructure as Code
-
-- **Terraform Configuration**:
-  - Defined infrastructure resources (e.g., AWS S3 buckets, IAM policies) using Terraform scripts in the `terraform/` directory.
-  - Enabled reproducible, version-controlled infrastructure provisioning.
-
-#### Deployment Strategy
-
-- **Deployment Architecture Diagram**
-
-  ```mermaid
-    flowchart TD
-        subgraph "Deployment Pipeline"
-            A["Model Artifacts"] --> B["Containerization"]
-            B --> C["Docker Image"]
-            C --> D["Deployment Service"]
-            D --> E["API Endpoint"]
-        end
-        subgraph "Integration"
-            E --> F["Clinical Applications"]
-            F --> G["End Users (Clinicians)"]
-        end
-        G --> H["Patient Care"]
-        G --> I["Feedback Loop"] --> A
-  ```
-
-  *Figure 2: Deployment Architecture Diagram showing the transition from model artifacts to deployment and integration with clinical applications.*
-
-- **Endpoint Exposure**:
-  - Plan to deploy the model as a RESTful API, making it accessible for integration with hospital systems.
-  - Utilize AWS services like SageMaker or containerization technologies (Docker, Kubernetes) for scalability and ease of management.
-
-- **Integration with Clinical Workflows**:
-  - Collaborate with IT departments to incorporate the model's predictions into Electronic Health Record (EHR) systems.
-  - Ensure outputs are presented in a user-friendly manner, facilitating clinicians' ability to act on the predictions.
+- **Serialization and Versioning**: Models saved and versioned using DVC.
+- **Deployment Strategy**: Containerizing models with Docker and orchestrating deployment using Kubernetes or similar tools.
+- **Endpoint Exposure**: Models deployed as RESTful APIs using frameworks like FastAPI.
 
 ### Model Monitoring
 
-#### DVCLive Integration
-
-- **Real-Time Tracking**:
-  - Incorporated DVCLive to log metrics, parameters, and artifacts during training and evaluation.
-  - Stored logs in the `dvclive/` directory for easy access and visualization.
-
-#### DVC Studio Usage
-
-- **Experiment Management**:
-  - Connected the repository to DVC Studio for interactive dashboards.
-  - Enabled comparison of experiments, tracking of model performance over time, and identification of trends.
-
-#### Automated Alerts and Retraining
-
-- **Performance Monitoring**:
-  - Established thresholds for key metrics to detect when model performance degrades.
-  - Configured alerts using AWS CloudWatch and SNS to notify the team promptly.
-- **Data Drift Detection**:
-  - Implemented mechanisms to identify changes in data distributions that could impact model validity.
-  - Scheduled periodic retraining and evaluation to ensure the model remains accurate and relevant.
+- **DVCLive Integration**: Real-time tracking of metrics and parameters during training.
+- **DVC Studio**: Interactive dashboards for experiment management.
+- **Performance Monitoring**: Alerts and notifications set up to detect performance degradation.
 
 ### Continuous Integration and Continuous Deployment (CI/CD)
 
-#### GitHub Actions Workflow
+- **DVC Pipeline Integration**: Entire ML workflow orchestrated using DVC and defined in `dvc.yaml`.
+- **GitHub Actions Workflow**: Automates the development process, integrating with DVC for data and model versioning.
+- **Pipeline Stages**:
 
-The CI/CD pipeline, defined in `.github/workflows/mlops-pipeline.yml`, automates the development process.
-
-**Pipeline Stages**:
-
-1. **Trigger Conditions**:
-   - Initiated on code pushes to the `main` branch or upon pull request merges involving relevant files.
-2. **Environment Setup**:
-   - Checks out the repository using `actions/checkout`.
-   - Sets up Python 3.11 environment with `actions/setup-python`.
-   - Installs project dependencies specified in `requirements.txt`.
-3. **DVC Configuration**:
-   - Configures DVC remotes to connect to AWS S3 storage.
-   - Pulls data and models using `dvc pull`.
-4. **Pipeline Execution**:
-   - Runs DVC pipeline stages defined in `dvc.yaml` using `dvc exp run --run-all`.
-   - Captures outputs, metrics, and artifacts.
-5. **Artifacts Management**:
-   - Pushes updated data and models to remote storage using `dvc push`.
-   - Commits changes to relevant files back to the repository.
-6. **Automated Commits**:
-   - Utilizes `git-auto-commit-action` to automate the commit process.
-
-#### CI/CD Pipeline Diagram
-
-```mermaid
-flowchart TD
-    subgraph "Trigger"
-        A[Code Push / PR Merge]
-    end
-
-    A --> B(GitHub Actions Pipeline)
-
-    subgraph "Build & Test"
-        B --> C{Checkout Code}
-        C --> D[Set Up Environment]
-        D --> E(Install Dependencies)
-    end
-
-    E --> F{Configure DVC Remotes}
-    F --> G(Pull Data & Models)
-    G --> H[Execute DVC Pipeline]
-    H --> I{Push Artifacts}
-    I --> J((Commit & Push))
-    J --> K[(Pipeline Complete)]
-```
-
-*Figure 3: CI/CD Pipeline Diagram illustrating the automated steps from code changes to updated models and data in the repository.*
-
-#### Benefits
-
-- **Automation**: Streamlines repetitive tasks, allowing the team to focus on development and improvement.
-- **Reproducibility**: Ensures every run is documented and can be replicated, enhancing reliability and trust.
-- **Collaboration**: Facilitates teamwork by maintaining a consistent codebase and artifact versions.
+  1. **Setup**: Environment preparation.
+  2. **Ingestion**: Data fetching.
+  3. **Preprocessing**: Data cleaning and preparation.
+  4. **Exploration**: Exploratory data analysis.
+  5. **Feature Engineering**: Creating and registering features.
+  6. **Model Training**: Training multiple models.
 
 ---
 
 ## Repository Structure
 
-The repository is organized to promote clarity and ease of navigation, adhering to standard practices for ML projects.
-
 ```plaintext
 project/
-├── .github/                          # GitHub repository configurations
-│   └── workflows/                    # GitHub Actions workflows
-│       └── mlops-pipeline.yml        # CI/CD workflow configuration (GitHub Actions)
-├── configs/                          # Configuration files for the project
-│   ├── config.yaml                   # Main configuration file (project-wide settings)
-│   ├── data/                         # Data-related configurations
-│   │   └── diabetes.yaml             # Dataset-specific configurations (e.g., diabetes dataset)
-│   ├── feature_engineering/          # Feature engineering configurations
-│   │   └── base.yaml                 # Base feature engineering configuration
-│   ├── model/                        # Model-specific configurations
-│   │   ├── logistic_regression.yaml  # Configuration for logistic regression model
-│   │   └── autogluon.yaml            # Configuration for AutoGluon model
-│   └── training/                     # Training configurations
-│       └── base.yaml                 # Base training hyperparameters
-├── data/                             # Data storage
-│   ├── raw/                          # Original, unprocessed data
-│   ├── interim/                      # Intermediate data after cleaning/preprocessing
-│   └── processed/                    # Data processed and ready for model training
-├── models/                           # Trained model artifacts
-│   ├── logistic_regression/          # Logistic Regression model
-│   │   └── model.pkl                 # Saved Logistic Regression model
-│   └── autogluon/                    # AutoGluon model
-│       └── model.pkl                 # Saved AutoGluon model
-├── reports/                          # Reports and analysis outputs
-│   ├── figures/                      # Generated figures and visualizations
-│   └── metrics/                      # Model evaluation metrics
-├── src/                              # Source code for the project
-│   ├── data/                         # Data processing modules
-│   │   ├── __init__.py               # Makes data a Python package
-│   │   ├── ingestion.py              # Data ingestion logic
-│   │   ├── cleaning.py               # Data cleaning and preprocessing
-│   │   ├── build_features.py         # Feature engineering logic
-│   │   └── splitting.py              # Data splitting (train/test/validation)
-│   ├── models/                       # Model training and evaluation modules
-│   │   ├── __init__.py               # Makes models a Python package
-│   │   ├── logistic_regression/      # Logistic Regression model
-│   │   │   ├── train.py              # Training script for Logistic Regression
-│   │   │   ├── evaluate.py           # Evaluation script for Logistic Regression
-│   │   │   └── preprocessing.py      # Preprocessing specific to Logistic Regression
-│   │   └── autogluon/                # AutoGluon model
-│   │       ├── train.py              # Training script for AutoGluon
-│   │       ├── evaluate.py           # Evaluation script for AutoGluon
-│   │       └── preprocessing.py      # Preprocessing specific to AutoGluon
-│   └── visualization/                # Visualization modules
-│       ├── __init__.py               # Makes visualization a Python package
-│       └── visualize.py              # Script for creating visualizations
-├── dvc.yaml                          # DVC pipeline configuration file
-├── dvc.lock                          # DVC lock file (tracks data and pipeline state)
-├── requirements.txt                  # Python project dependencies
-├── README.md                         # Project documentation and instructions
-├── Makefile                          # Makefile for automation tasks (e.g., build, test)
-└── terraform/                        # Infrastructure as Code (IaC) using Terraform
-    ├── main.tf                       # Main Terraform configuration file
-    └── variables.tf                  # Terraform variables
+├── .github/
+│   └── workflows/
+│       └── mlops-pipeline.yml      # CI/CD workflow configuration
+├── configs/                        # Configuration files for the project
+├── data/                           # Data storage
+│   ├── raw/                        # Original, unprocessed data
+│   ├── interim/                    # Intermediate data after preprocessing
+│   └── processed/                  # Data ready for model training
+├── models/                         # Trained model artifacts
+│   ├── logistic_regression/
+│   ├── neural_network/
+│   └── autogluon/
+├── reports/                        # Reports and analysis outputs
+│   ├── plots/
+│   └── metrics/
+├── src/                            # Source code for the project
+│   ├── ingest.py                   # Data ingestion script
+│   ├── preprocess.py               # Data preprocessing script
+│   ├── explore.py                  # Exploratory data analysis
+│   ├── featurize.py                # Feature engineering script
+│   ├── utils.py                    # Utility functions
+│   └── models/                     # Model training scripts
+│       ├── logistic_regression/
+│       ├── neural_network/
+│       └── autogluon/
+├── dvc.yaml                        # DVC pipeline configuration
+├── requirements.txt                # Python dependencies
+├── README.md                       # Project documentation
+└── LICENSE                         # License file
 ```
-
-This structure ensures:
-
-- **Separation of Concerns**: Code, configurations, data, models, and documentation are organized into distinct directories.
-- **Version Control**: Git tracks code changes, while DVC handles large data files and models.
-- **Reproducibility**: Scripts are parameterized and configurable via YAML files, promoting consistent execution across environments.
-
----
-
-## Architecture Diagrams
-
-Visual representations of the system components and workflows help in understanding the overall architecture.
-
-### System Overview Diagram
-
-*Refer to Figure 1 in the Solution Overview section.*
-
-### Data Processing Pipeline
-
-```mermaid
-flowchart TD
-    subgraph "Data Preparation"
-      A[Data Ingestion] -->
-      B[Data Cleaning] -->
-      C[Feature Engineering] -->
-      D[Data Splitting]
-    end
-
-    D --> E[Model Preprocessing]
-    E --> F[Model Training]
-    F --> G[Model Evaluation]
-    G --> H[Model Deployment]
-```
-
-*Figure 4: Data Processing Pipeline showing the progression from raw data ingestion to model deployment.*
-
-### CI/CD Pipeline
-
-*Refer to Figure 3 in the Continuous Integration and Continuous Deployment section.*
-
-### Model Deployment Architecture
-
-*Refer to Figure 2 in the Model Deployment section.*
 
 ---
 
 ## Conclusion
 
-This design document presents a comprehensive machine learning system aimed at predicting 30-day hospital readmissions for diabetic patients. By integrating advanced data engineering practices, sophisticated modeling techniques, and robust deployment strategies, the proposed solution is poised to make a significant impact in healthcare settings.
+This project presents a comprehensive machine learning system aimed at predicting 30-day hospital readmissions for diabetic patients. By integrating advanced data engineering practices, sophisticated modeling techniques, and robust deployment strategies, the proposed solution is poised to make a significant impact in healthcare settings.
 
-Emphasis on security, ethical considerations, and bias mitigation ensures that the system not only performs effectively but also responsibly. The use of tools like DVC and Terraform enhances reproducibility and scalability. Additionally, automated CI/CD pipelines facilitate continuous improvement and collaboration.
+Emphasis on security, ethical considerations, and bias mitigation ensures that the system not only performs effectively but also responsibly. The use of tools like DVC and Feast enhances reproducibility and scalability. Additionally, automated CI/CD pipelines facilitate continuous improvement and collaboration.
 
 Moving forward, collaboration with healthcare professionals will be crucial to refine the system, ensuring that it integrates seamlessly into clinical workflows and truly enhances patient care.
 
@@ -624,14 +222,15 @@ Moving forward, collaboration with healthcare professionals will be crucial to r
 
 ## References
 
-- **[1] UCI Machine Learning Repository**: "Diabetes 130-US hospitals for years 1999-2008 Data Set." [Online]. Available: [https://archive.ics.uci.edu/ml/datasets/diabetes+130-us+hospitals+for+years+1999-2008](https://archive.ics.uci.edu/ml/datasets/diabetes+130-us+hospitals+for+years+1999-2008)
+1. **UCI Machine Learning Repository**: ["Diabetes 130-US hospitals for years 1999-2008 Data Set"](https://archive.ics.uci.edu/ml/datasets/diabetes+130-us+hospitals+for+years+1999-2008)
+2. **Health Insurance Portability and Accountability Act (HIPAA)**: [U.S. Department of Health & Human Services](https://www.hhs.gov/hipaa/index.html)
+3. **American Medical Association (AMA) Code of Medical Ethics**: [AMA Ethical Guidelines](https://www.ama-assn.org/delivering-care/ethics/code-medical-ethics-overview)
+4. **AutoGluon Documentation**: [AutoGluon TabularPredictor](https://auto.gluon.ai/stable/tutorials/tabular_prediction/index.html)
+5. **DVC (Data Version Control)**: [DVC Documentation](https://dvc.org/doc)
+6. **Feast**: [Feast Feature Store](https://feast.dev/)
 
-- **[2] Health Insurance Portability and Accountability Act (HIPAA)**: U.S. Department of Health & Human Services. [Online]. Available: [https://www.hhs.gov/hipaa/index.html](https://www.hhs.gov/hipaa/index.html)
+---
 
-- **[3] American Medical Association (AMA) Code of Medical Ethics**: AMA Ethical Guidelines. [Online]. Available: [https://www.ama-assn.org/delivering-care/ethics/code-medical-ethics-overview](https://www.ama-assn.org/delivering-care/ethics/code-medical-ethics-overview)
+## License
 
-- **[4] AutoGluon Documentation**: AutoGluon TabularPredictor. [Online]. Available: [https://auto.gluon.ai/stable/tutorials/tabular_prediction/index.html](https://auto.gluon.ai/stable/tutorials/tabular_prediction/index.html)
-
-- **[5] DVC (Data Version Control)**: DVC Documentation. [Online]. Available: [https://dvc.org/doc](https://dvc.org/doc)
-
-- **[6] Terraform**: Terraform by HashiCorp. [Online]. Available: [https://www.terraform.io/](https://www.terraform.io/)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

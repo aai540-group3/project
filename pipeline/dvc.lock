@@ -40,6 +40,10 @@ stages:
       hash: md5
       md5: 33411fa1536aaaadb24c0c1f2a8598b9
       size: 16246860
+    - path: requirements-ingest-frozen.txt
+      hash: md5
+      md5: bbf7e249541619d0455edee9bfac1e04
+      size: 3220
     - path: requirements-preprocess.txt
       hash: md5
       md5: 2e6b6474c7d7de529a7e5dc2b1761a27
@@ -52,7 +56,7 @@ stages:
     - path: .venv-preprocess
       hash: md5
       md5: 9d8b7ff24ce1fd16f1f271af471c3e51.dir
-      size: 374723645
+      size: 374730349
       nfiles: 16192
     - path: data/interim/data_cleaned.parquet
       hash: md5
@@ -123,6 +127,10 @@ stages:
       hash: md5
       md5: 85a632c1e6e277324146aeefa4c606e2
       size: 87
+    - path: requirements-preprocess-frozen.txt
+      hash: md5
+      md5: c1c9e5fcaba196be4c96911ddc597dda
+      size: 3182
     - path: src/explore.py
       hash: md5
       md5: 1c641b4a5bbfcf6bb2f28c0c766542c8
@@ -131,28 +139,28 @@ stages:
     - path: .venv-explore
       hash: md5
       md5: e343220ed6080a7fe0ee09a87d2088d3.dir
-      size: 410743707
+      size: 410750415
       nfiles: 17395
     - path: reports/cleanlab/cleanlab_confidence_distribution.png
       hash: md5
-      md5: cdb2651a7888e98708b451ac37225466
-      size: 159698
+      md5: 84b4bd746ffaf6873fd064950bc43404
+      size: 157111
     - path: reports/cleanlab/cleanlab_confusion_matrix.png
       hash: md5
-      md5: 150b9856b0cf807be0426cb4bc75308f
-      size: 103612
+      md5: a4874423877e68be93c3db6c8afb4b38
+      size: 101630
     - path: reports/cleanlab/detailed_analysis.txt
       hash: md5
-      md5: 34cf1b16c7db08231b9c93fd8a0f229e
+      md5: 537113b4c1c4ebe90dccfa0a15bb8e3e
       size: 675
     - path: reports/cleanlab/feature_importance.csv
       hash: md5
-      md5: c9e2b12714d27959df8e3830ab3d820e
-      size: 52475
+      md5: 40c166f89461d8c8dc76be9ff9e0a0aa
+      size: 52773
     - path: reports/cleanlab/problematic_cases.csv
       hash: md5
-      md5: f26050c54b97619ed7f69e7a50653648
-      size: 217891
+      md5: 5f157e1e5229a7be26586eaff2ac8831
+      size: 211002
     - path: reports/plots/age_vs_readmission.png
       hash: md5
       md5: 480cd634ff6177de5d3c70da9540db60
@@ -224,6 +232,10 @@ stages:
     - . .venv-ingest/bin/activate && uv pip freeze > requirements-ingest-frozen.txt
     - . .venv-ingest/bin/activate && python src/ingest.py
     deps:
+    - path: requirements-infrastruct-frozen.txt
+      hash: md5
+      md5: 7a6a7eeb309a45fd9b797ba5f283ef4e
+      size: 145
     - path: requirements-ingest.txt
       hash: md5
       md5: b6ace7c12bf4b84c615e2b4e80cd6b96
@@ -236,7 +248,7 @@ stages:
     - path: .venv-ingest
       hash: md5
       md5: d8ccf5a525b42ac0882a372eae231c49.dir
-      size: 374796304
+      size: 374803008
       nfiles: 16220
     - path: data/raw/data.csv
       hash: md5
