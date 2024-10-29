@@ -12,7 +12,7 @@ on:
       - "Final_Project_Team_3_Deliverable_1.pdf"
       - "Final_Project_Team_3_Deliverable_2.mp4"
       - "Final_Project_Team_3_Deliverable_2.pptx"
-      - "manifest.json"
+      - "packaging/manifest.json"
   repository_dispatch:
     types:
       - package-deliverables
@@ -26,8 +26,8 @@ permissions:
   contents: write
 
 env:
-  PACKAGES: packages-packging.txt
-  MANIFEST_FILE: manifest.json
+  PACKAGES: packaging/packages.txt
+  MANIFEST_FILE: packaging/manifest.json
 
 jobs:
   check-manifest:
