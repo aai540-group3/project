@@ -13,5 +13,5 @@ tags:
   - machine learning
   - diabetes
   - prediction
-license: "MIT"
+license: "mit"
 ---

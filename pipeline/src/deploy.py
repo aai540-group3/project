@@ -596,32 +596,33 @@ def upload_to_huggingface() -> bool:
 
 
 def upload_ui_to_huggingface() -> bool:
-    """Upload the UI files to Hugging Face Spaces."""
+    token = get_hf_token()
+    os.environ["HF_TRANSFER"] = "1"  # Enable faster uploads
+
     try:
-        # Ensure the Spaces directory exists
-        if not SPACES_DIR.exists():
-            logger.error(f"UI directory does not exist: {SPACES_DIR}")
-            return False
+        # Login to Hugging Face
+        logger.info("Logging into Hugging Face...")
+        login_cmd = ["huggingface-cli", "login", "--token", token]
+        subprocess.run(login_cmd, check=True, capture_output=True, text=True)
 
         # Upload command
-        logger.info(f"Starting upload of UI to {REPO_ID}...")
+        logger.info(f"Starting upload to {REPO_ID}...")
         upload_cmd = [
             "huggingface-cli",
             "upload",
-            str(SPACES_DIR),
-            "--repo-id",
             REPO_ID,
+            str(SPACES_DIR),
             "--repo-type",
             "space",
         ]
         subprocess.run(upload_cmd, check=True, text=True)
-        logger.info(f"Successfully uploaded UI to {REPO_ID}")
+        logger.info(f"Successfully uploaded space to {REPO_ID}")
         return True
     except subprocess.CalledProcessError as e:
-        logger.error(f"Error uploading UI to Hugging Face: {str(e)}")
+        logger.error(f"Error uploading to Hugging Face: {str(e)}")
         return False
     except Exception as e:
-        logger.error(f"Unexpected error during UI upload: {e}")
+        logger.error(f"Unexpected error during upload: {e}")
         return False
 
 
