@@ -65,6 +65,7 @@ jobs:
           MODE: full
           TABLE_NAME: ${{ secrets.TABLE_NAME }}
         run: |
+          git rm --cached *requirements*
           dvc repro -f
 
       - name: Push to DVC Remotes
