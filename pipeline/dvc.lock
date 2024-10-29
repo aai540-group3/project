@@ -86,6 +86,10 @@ stages:
       hash: md5
       md5: f690725d429449b466c260205d8da47a
       size: 202
+    - path: requirements-explore-frozen.txt
+      hash: md5
+      md5: c592ec5f8ef563b4e72893d627a445fc
+      size: 3333
     - path: requirements-featurize.txt
       hash: md5
       md5: 4f9f52b9fe2d29796d3f210c33ed92d0
@@ -98,11 +102,11 @@ stages:
     - path: .venv-featurize
       hash: md5
       md5: 82fd22e86227c93f1106d4d5936f0018.dir
-      size: 421483022
+      size: 421489684
       nfiles: 18508
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: '2780051e714710100282977488932568'
+      md5: f6a67e2d2bfcbb6d3ce0026abf45034c
       size: 5210972
     - path: requirements-featurize-frozen.txt
       hash: md5
@@ -297,7 +301,7 @@ stages:
     deps:
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: '2780051e714710100282977488932568'
+      md5: f6a67e2d2bfcbb6d3ce0026abf45034c
       size: 5210972
     - path: models/autogluon/model.py
       hash: md5
@@ -311,7 +315,7 @@ stages:
     - path: .venv-autogluon
       hash: md5
       md5: 57e5169f62232085cc1a6a5c26046cd7.dir
-      size: 3861437351
+      size: 3861437303
       nfiles: 68274
     - path: models/autogluon/artifacts/metrics/metrics.json
       hash: md5
@@ -319,8 +323,8 @@ stages:
       size: 191
     - path: models/autogluon/artifacts/model
       hash: md5
-      md5: 7c569181f1c6c5d1b29f807865afcbb0.dir
-      size: 64141
+      md5: 49c98faf32147104eb082f2eb9a2375d.dir
+      size: 64240
       nfiles: 11
     - path: models/autogluon/artifacts/plots/confusion_matrix.png
       hash: md5
@@ -409,7 +413,7 @@ stages:
     deps:
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: '2780051e714710100282977488932568'
+      md5: f6a67e2d2bfcbb6d3ce0026abf45034c
       size: 5210972
     - path: models/neural_network/model.py
       hash: md5
@@ -423,29 +427,29 @@ stages:
     - path: .venv-neuralnetwork
       hash: md5
       md5: 67407a0760dadb315c4bc4bbecc7d866.dir
-      size: 1979315831
+      size: 1979322560
       nfiles: 35636
     - path: models/neural_network/artifacts/metrics/metrics.json
       hash: md5
-      md5: 58ff5a4f87aff29bde900f3ed72a854d
-      size: 754
+      md5: d7b0331bcecf462d4f00f3de5e8c2b27
+      size: 759
     - path: models/neural_network/artifacts/model
       hash: md5
-      md5: 10d42fdf442ee5f3b7c4bef73bf5e2cd.dir
+      md5: 397017cf62e43d6e410668722ce26e1a.dir
       size: 131997
       nfiles: 4
     - path: models/neural_network/artifacts/plots/confusion_matrix.png
       hash: md5
-      md5: 87af8739b4eaf23baa9c7ff37d09a438
-      size: 109901
+      md5: 8a027f9f664543e5b2115ca7ed44aab9
+      size: 111281
     - path: models/neural_network/artifacts/plots/model_architecture.png
       hash: md5
       md5: 03cd8da41577c10e36416a2a9c4c9dec
       size: 220369
     - path: models/neural_network/artifacts/plots/roc_curve.png
       hash: md5
-      md5: 74e4afaebe790b5652f7e818b92c9dd0
-      size: 198507
+      md5: afd829089ef98a1d9ea49b2340891396
+      size: 197121
     - path: requirements-neuralnetwork-frozen.txt
       hash: md5
       md5: 08399549fd69fa2a67a451723d673320

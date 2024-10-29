@@ -150,6 +150,7 @@ stages:
       - . .venv-logisticregression/bin/activate && uv pip freeze > requirements-logisticregression-frozen.txt
       - . .venv-logisticregression/bin/activate && python models/logistic_regression/model.py
     deps:
+      - requirements-explore-frozen.txt
       - models/logistic_regression/model.py
       - requirements-logisticregression.txt
       - data/interim/data_featured.parquet
@@ -182,6 +183,7 @@ stages:
       - . .venv-neuralnetwork/bin/activate && uv pip freeze > requirements-neuralnetwork-frozen.txt
       - . .venv-neuralnetwork/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python models/neural_network/model.py
     deps:
+      - requirements-logisticregression-frozen.txt
       - models/neural_network/model.py
       - requirements-neuralnetwork.txt
       - data/interim/data_featured.parquet
@@ -218,6 +220,7 @@ stages:
       - . .venv-autogluon/bin/activate && python src/utils.py patch_nvidia_gpu
       - . .venv-autogluon/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python models/autogluon/model.py
     deps:
+      - requirements-neuralnetwork-frozen.txt
       - models/autogluon/model.py
       - requirements-autogluon.txt
       - data/interim/data_featured.parquet
