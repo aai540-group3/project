@@ -1,0 +1,4 @@
+dvc[all]
+huggingface_hub[cli,hf_transfer]
+python-dotenv
+pandas

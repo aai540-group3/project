@@ -1,0 +1,7 @@
+{
+  "feature_extractor_type": "tabular",
+  "framework": "pt",
+  "num_features": null,
+  "requires_preprocessing": true,
+  "preprocessing_config": "preprocessing_config.json"
+}

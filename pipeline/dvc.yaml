@@ -23,7 +23,6 @@ stages:
       - echo "done" > .markers/infrastruct.done
     deps:
       - .markers/setup.done
-      - dag.md
       - src/infrastruct.py
       - requirements-infrastruct.txt
     outs:
@@ -290,6 +289,35 @@ stages:
       - models/autogluon/artifacts/plots/roc_curve.png:
           cache: true
           persist: true
+
+  deploy:
+    cmd:
+      - uv venv .venv-deploy --python 3.10
+      - . .venv-deploy/bin/activate && uv pip install -r requirements-deploy.txt
+      - . .venv-deploy/bin/activate && uv pip freeze > requirements-deploy-frozen.txt
+      - . .venv-deploy/bin/activate && python src/deploy.py
+      - echo "done" > .markers/deploy.done
+    deps:
+      - .markers/train_logisticregression.done
+      - .markers/train_neuralnetwork.done
+      - .markers/train_autogluon.done
+      - models/logistic_regression/artifacts/metrics/metrics.json
+      - models/neural_network/artifacts/metrics/metrics.json
+      - models/autogluon/artifacts/metrics/metrics.json
+      - models/logistic_regression/artifacts/model/model.joblib
+      - models/neural_network/artifacts/model/model.keras
+      - models/autogluon/artifacts/model/predictor.pkl
+      - models/autogluon/artifacts/model/feature_importance.csv
+      - src/deploy.py
+    outs:
+      - huggingface/models/diabetes-readmission:
+          cache: true
+          persist: true
+      - requirements-deploy-frozen.txt:
+          persist: false
+      - .markers/deploy.done:
+          cache: false
+          persist: false
 
 artifacts:
   diabetes-dataset:

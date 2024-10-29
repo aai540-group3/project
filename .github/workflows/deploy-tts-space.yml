@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "huggingface/spaces/openai-tts/**"
+      - "pipeline/huggingface/spaces/openai-tts/**"
   workflow_dispatch:
 
 jobs:

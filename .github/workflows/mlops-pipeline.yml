@@ -61,6 +61,7 @@ jobs:
           BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
           EMAILS: ${{ secrets.EMAILS }}
           GROUP_NAME: ${{ secrets.GROUP_NAME }}
+          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
           INITIAL_PASSWORD: ${{ secrets.INITIAL_PASSWORD }}
           MODE: full
           TABLE_NAME: ${{ secrets.TABLE_NAME }}

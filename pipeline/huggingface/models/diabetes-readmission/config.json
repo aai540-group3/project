@@ -1,0 +1,23 @@
+{
+  "architectures": [
+    "TabularBinaryClassification"
+  ],
+  "model_type": "autogluon",
+  "num_classes": 2,
+  "id2label": {
+    "0": "NO_READMISSION",
+    "1": "READMISSION"
+  },
+  "label2id": {
+    "NO_READMISSION": 0,
+    "READMISSION": 1
+  },
+  "task_specific_params": {
+    "classification": {
+      "problem_type": "binary_classification"
+    }
+  },
+  "preprocessing": {
+    "featurization_config": "preprocessing_config.json"
+  }
+}
