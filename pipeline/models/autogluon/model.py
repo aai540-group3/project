@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from autogluon.tabular import TabularPredictor
+from dvclive import Live
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -21,8 +22,6 @@ from sklearn.metrics import (
     roc_curve,
 )
 from sklearn.model_selection import train_test_split
-
-from dvclive import Live
 
 logging.basicConfig(
     level=logging.INFO,
@@ -164,9 +163,7 @@ def train_autogluon(CONFIG):
             "max_stack_level": str(model_info.get("max_stack_level", "")),
         }
 
-        with open(
-            os.path.join(artifacts_path, "model", "model_info.txt"), "w"
-        ) as f:
+        with open(os.path.join(artifacts_path, "model", "model_info.txt"), "w") as f:
             json.dump(serializable_info, f, indent=4)
 
         # Generate Ensemble Model Visualization
@@ -207,9 +204,7 @@ def train_autogluon(CONFIG):
             logger.info(f"{metric_name}: {value:.4f}")
 
         # Save metrics
-        with open(
-            os.path.join(artifacts_path, "metrics", "metrics.json"), "w"
-        ) as f:
+        with open(os.path.join(artifacts_path, "metrics", "metrics.json"), "w") as f:
             json.dump(metrics, f, indent=4)
 
         # Feature importance
@@ -324,9 +319,7 @@ def quick_run():
             "splits": {"train_test": 0.2, "val_test": 0.5, "random_state": 42},
             "extra_params": {
                 "dynamic_stacking": False,
-                "ds_args": {
-                    "enable_ray_logging": False
-                },
+                "ds_args": {"enable_ray_logging": False},
                 "num_gpus": 0,
                 "feature_generator": None,
                 "auto_stack": False,
@@ -407,24 +400,15 @@ def full_run():
             "presets": "best_quality",
         },
         "hyperparameters": {
-            "GBM": [
-                {
-                    "extra_trees": True,
-                    "ag_args": {"name_suffix": "ExtraTrees"},
-                    "learning_rate": 0.05,
-                    "num_boost_round": 500,
-                    "num_leaves": 128,
-                    "feature_fraction": 0.8,
-                    "min_data_in_leaf": 20,
-                },
-                {
-                    "learning_rate": 0.01,
-                    "num_boost_round": 1000,
-                    "num_leaves": 64,
-                    "feature_fraction": 0.9,
-                    "min_data_in_leaf": 10,
-                },
-            ],
+            "GBM": {
+                "extra_trees": True,
+                "ag_args": {"name_suffix": "ExtraTrees"},
+                "learning_rate": 0.05,
+                "num_boost_round": 500,
+                "num_leaves": 128,
+                "feature_fraction": 0.8,
+                "min_data_in_leaf": 20,
+            },
             "CAT": {
                 "iterations": 1000,
                 "learning_rate": 0.05,
@@ -441,20 +425,12 @@ def full_run():
                 "colsample_bytree": 0.8,
                 "min_child_weight": 3,
             },
-            "RF": [
-                {
-                    "criterion": "gini",
-                    "max_depth": 15,
-                    "min_samples_split": 10,
-                    "min_samples_leaf": 5,
-                },
-                {
-                    "criterion": "entropy",
-                    "max_depth": 15,
-                    "min_samples_split": 15,
-                    "min_samples_leaf": 8,
-                },
-            ],
+            "RF": {
+                "criterion": "gini",
+                "max_depth": 15,
+                "min_samples_split": 10,
+                "min_samples_leaf": 5,
+            },
             "XT": {
                 "n_estimators": 500,
                 "max_depth": 15,
