@@ -303,15 +303,21 @@ def copy_model_artifacts(output_dir: Path) -> bool:
                 # Now perform the conversion for the neural network model
                 if model_type == "neural_network":
                     # Convert Keras model to ONNX in the destination directory
-                    onnx_model_path = convert_keras_to_onnx(model_dest / "model.keras", model_dest)
+                    onnx_model_path = convert_keras_to_onnx(
+                        model_dest / "model.keras", model_dest
+                    )
                     if onnx_model_path:
                         # Delete the original Keras model file in the destination
                         keras_model_path = model_dest / "model.keras"
                         if keras_model_path.exists():
                             os.remove(keras_model_path)
-                            logger.info(f"Deleted original Keras model file: {keras_model_path}")
+                            logger.info(
+                                f"Deleted original Keras model file: {keras_model_path}"
+                            )
                         else:
-                            logger.warning(f"Keras model file not found for deletion: {keras_model_path}")
+                            logger.warning(
+                                f"Keras model file not found for deletion: {keras_model_path}"
+                            )
 
         return True
     except Exception as e:
@@ -359,7 +365,11 @@ def create_model_card(best_model: str, metrics: Dict, output_dir: Path) -> None:
     ]
 
     card_data = ModelCardData(
-        language="en", license="mit", model_name=REPO_ID, eval_results=eval_results
+        language="en",
+        license="mit",
+        model_name=REPO_ID,
+        eval_results=eval_results,
+        library_name="transformers",
     )
 
     # Load feature importance if available

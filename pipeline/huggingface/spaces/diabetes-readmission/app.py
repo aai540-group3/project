@@ -1,13 +1,15 @@
 import logging
-import requests
 import gradio as gr
+import pandas as pd
+from autogluon.tabular import TabularPredictor
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Configuration for the model
-API_URL = "https://api-inference.huggingface.co/models/aai540-group3/diabetes-readmission"
+# Load the AutoGluon model from the Hugging Face Hub
+MODEL_ID = "aai540-group3/diabetes-readmission"
+predictor = TabularPredictor.load(MODEL_ID)
 
 # Define constants for the Gradio interface
 AGE_RANGE = (0, 100)
@@ -24,15 +26,15 @@ def predict(
     glipizide, glyburide, pioglitazone, rosiglitazone, acarbose, insulin,
     readmitted
 ):
-    # Create a dictionary from the input features
-    input_data = {
+    # Create a DataFrame from the input features
+    input_data = pd.DataFrame([{
         "age": age,
         "time_in_hospital": time_in_hospital,
         "num_procedures": num_procedures,
         "num_medications": num_medications,
         "number_diagnoses": number_diagnoses,
         "metformin": int(metformin),
-        "repaglinide": int(repaglinide),
+        "repaglinide": int(repaginide),
         "nateglinide": int(nateglinide),
         "chlorpropamide": int(chlorpropamide),
         "glimepiride": int(glimepiride),
@@ -42,20 +44,18 @@ def predict(
         "rosiglitazone": int(rosiglitazone),
         "acarbose": int(acarbose),
         "insulin": int(insulin),
-        "readmitted": readmitted  # Ensure this is correctly mapped
-    }
+        "readmitted": readmitted
+    }])
 
     try:
-        # Make a request to the Hugging Face inference API
-        response = requests.post(API_URL, json={"inputs": input_data})
-        response.raise_for_status()  # Raise an error for bad responses
-
-        prediction = response.json()
+        # Make a prediction using the AutoGluon predictor
+        prediction = predictor.predict(input_data)
         logger.info(f"Prediction received: {prediction}")
-        return f"<h1 style='font-size: 48px; color: green;'>Prediction: {prediction}</h1>"
 
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Error in API request: {e}")
+        return f"<h1 style='font-size: 48px; color: green;'>Prediction: {prediction.iloc[0]}</h1>"
+
+    except Exception as e:
+        logger.error(f"Error in prediction: {e}")
         return "<h1 style='font-size: 48px; color: red;'>Error in prediction</h1>"
 
 # Create Gradio interface
