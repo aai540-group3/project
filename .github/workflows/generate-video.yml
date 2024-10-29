@@ -147,7 +147,7 @@ jobs:
               Final_Project_Team_3_Deliverable_2.mp4 \
               pptx2video/video-assets/Final_Project_Team_3_Deliverable_2.pdf \
               pptx2video/video-assets/conversion_state.json
-            git commit -m "$DURATION out of 15 minutes"
+            git commit -m "$DURATION out of 10 minutes"
             git push origin main || {
               echo "Push failed. Creating a pull request..."
               gh pr create --title "Automated Video Update" --body "Push to main failed. Updated video included."
