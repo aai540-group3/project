@@ -552,28 +552,6 @@ def upload_to_huggingface() -> bool:
         login_cmd = ["huggingface-cli", "login", "--token", token]
         subprocess.run(login_cmd, check=True, capture_output=True, text=True)
 
-        # Try to create repo
-        logger.info(f"Creating repo {REPO_ID} if it doesn't exist...")
-        repo_create_cmd = [
-            "huggingface-cli",
-            "repo",
-            "create",
-            "diabetes-readmission",
-            "--type",
-            "model",
-            "--organization",
-            "aai540-group3",
-            "--yes",
-        ]
-        result = subprocess.run(repo_create_cmd, capture_output=True, text=True)
-        if (
-            result.returncode != 0
-            and "already created this model repo" not in result.stderr
-        ):
-            logger.error(f"Failed to create repo: {result.stderr}")
-            return False
-        logger.info("Repository ready for upload")
-
         # Upload command
         logger.info(f"Starting upload to {REPO_ID}...")
         upload_cmd = [
