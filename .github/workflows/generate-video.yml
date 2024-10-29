@@ -134,8 +134,7 @@ jobs:
         run: |
           git add \
             Final_Project_Team_3_Deliverable_2.mp4 \
-            pptx2video/video-assets/Final_Project_Team_3_Deliverable_2.pdf \
-            pptx2video/video-assets/conversion_state.json
+            pptx2video/video-assets
           if git diff --staged --quiet; then
             echo "No changes detected. Skipping commit and push."
             echo "CHANGED=false" >> $GITHUB_ENV
