@@ -25,9 +25,7 @@ MODEL_DIRS = {
         "root": Path("models/logistic_regression/artifacts"),
         "model": Path("models/logistic_regression/artifacts/model/model.joblib"),
         "metrics": Path("models/logistic_regression/artifacts/metrics/metrics.json"),
-        "feature_importance": Path(
-            "models/logistic_regression/artifacts/metrics/feature_importance.csv"
-        ),
+        "feature_importance": Path("models/logistic_regression/artifacts/metrics/feature_importance.csv"),
         "plots": Path("models/logistic_regression/artifacts/plots"),
         "scaler": Path("models/logistic_regression/artifacts/model/scaler.joblib"),
     },
@@ -42,21 +40,18 @@ MODEL_DIRS = {
         "root": Path("models/autogluon/artifacts"),
         "model": Path("models/autogluon/artifacts/model/predictor.pkl"),
         "metrics": Path("models/autogluon/artifacts/metrics/metrics.json"),
-        "feature_importance": Path(
-            "models/autogluon/artifacts/model/feature_importance.csv"
-        ),
+        "feature_importance": Path("models/autogluon/artifacts/model/feature_importance.csv"),
         "plots": Path("models/autogluon/artifacts/plots"),
     },
 }
-
 
 def get_hf_token() -> str:
     """Get Hugging Face token from environment."""
     token = os.getenv("HF_TOKEN")
     if not token:
+        logger.error("HF_TOKEN environment variable must be set")
         raise EnvironmentError("HF_TOKEN environment variable must be set")
     return token
-
 
 def load_metrics(metrics_path: Path) -> Optional[Dict]:
     """Load metrics from a JSON file."""
@@ -81,134 +76,48 @@ def load_metrics(metrics_path: Path) -> Optional[Dict]:
         logger.error(f"Error loading metrics from {metrics_path}: {e}")
         return None
 
-
 def create_preprocessing_config(output_dir: Path, model_type: str) -> None:
     """Create preprocessing configuration for feature handling."""
     config = {
         "preprocessor": {
             "numeric_features": [
-                "age",
-                "time_in_hospital",
-                "num_lab_procedures",
-                "num_procedures",
-                "num_medications",
-                "number_diagnoses",
-                "total_medications",
-                "medication_density",
-                "numchange",
-                "nummed",
-                "total_encounters",
-                "encounter_per_time",
-                "procedures_per_day",
-                "lab_procedures_per_day",
-                "procedures_to_medications",
-                "diagnoses_per_encounter",
-                "number_outpatient_log1p",
-                "number_emergency_log1p",
+                "age", "time_in_hospital", "num_lab_procedures", "num_procedures",
+                "num_medications", "number_diagnoses", "total_medications",
+                "medication_density", "numchange", "nummed", "total_encounters",
+                "encounter_per_time", "procedures_per_day", "lab_procedures_per_day",
+                "procedures_to_medications", "diagnoses_per_encounter",
+                "number_outpatient_log1p", "number_emergency_log1p",
                 "number_inpatient_log1p",
             ],
             "binary_features": ["gender", "diabetesmed", "change", "insulin_with_oral"],
             "medication_features": [
-                "metformin",
-                "repaglinide",
-                "nateglinide",
-                "chlorpropamide",
-                "glimepiride",
-                "glipizide",
-                "glyburide",
-                "pioglitazone",
-                "rosiglitazone",
-                "acarbose",
-                "miglitol",
-                "insulin",
-                "glyburide-metformin",
-                "tolazamide",
-                "metformin-pioglitazone",
-                "metformin-rosiglitazone",
-                "glimepiride-pioglitazone",
-                "glipizide-metformin",
-                "troglitazone",
-                "tolbutamide",
-                "acetohexamide",
+                "metformin", "repaglinide", "nateglinide", "chlorpropamide",
+                "glimepiride", "glipizide", "glyburide", "pioglitazone",
+                "rosiglitazone", "acarbose", "miglitol", "insulin",
+                "glyburide-metformin", "tolazamide", "metformin-pioglitazone",
+                "metformin-rosiglitazone", "glimepiride-pioglitazone",
+                "glipizide-metformin", "troglitazone", "tolbutamide", "acetohexamide",
             ],
             "interaction_features": [
-                "num_medications_x_time_in_hospital",
-                "num_procedures_x_time_in_hospital",
-                "num_lab_procedures_x_time_in_hospital",
-                "number_diagnoses_x_time_in_hospital",
-                "age_x_number_diagnoses",
-                "age_x_num_medications",
-                "total_medications_x_number_diagnoses",
-                "num_medications_x_num_procedures",
-                "time_in_hospital_x_num_lab_procedures",
-                "num_medications_x_num_lab_procedures",
-                "change_x_num_medications",
-                "num_medications_x_numchange",
+                "num_medications_x_time_in_hospital", "num_procedures_x_time_in_hospital",
+                "num_lab_procedures_x_time_in_hospital", "number_diagnoses_x_time_in_hospital",
+                "age_x_number_diagnoses", "age_x_num_medications",
+                "total_medications_x_number_diagnoses", "num_medications_x_num_procedures",
+                "time_in_hospital_x_num_lab_procedures", "num_medications_x_num_lab_procedures",
+                "change_x_num_medications", "num_medications_x_numchange",
             ],
             "ratio_features": [
-                "procedure_medication_ratio",
-                "lab_procedure_ratio",
-                "diagnosis_procedure_ratio",
+                "procedure_medication_ratio", "lab_procedure_ratio", "diagnosis_procedure_ratio",
             ],
             "categorical_features": {
-                "admission_type_id": [1, 2, 3, 4, 5, 6, 7, 8],
-                "discharge_disposition_id": [
-                    1,
-                    2,
-                    3,
-                    4,
-                    5,
-                    6,
-                    7,
-                    8,
-                    9,
-                    10,
-                    11,
-                    12,
-                    13,
-                    14,
-                    15,
-                    16,
-                    17,
-                    18,
-                    19,
-                    20,
-                    21,
-                    22,
-                    23,
-                    24,
-                    25,
-                    26,
-                ],
-                "admission_source_id": [
-                    1,
-                    2,
-                    3,
-                    4,
-                    5,
-                    6,
-                    7,
-                    8,
-                    9,
-                    10,
-                    11,
-                    12,
-                    13,
-                    14,
-                    15,
-                    17,
-                    20,
-                    21,
-                    22,
-                    25,
-                ],
-                "level1_diag1": [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                "admission_type_id": list(range(1, 9)),
+                "discharge_disposition_id": list(range(1, 27)),
+                "admission_source_id": list(range(1, 26)),
+                "level1_diag1": list(range(0, 9)),
             },
             "lab_features": {
                 "a1cresult": {"mapping": {">7": 1, ">8": 1, "Norm": 0, "None": -99}},
-                "max_glu_serum": {
-                    "mapping": {">200": 1, ">300": 1, "Norm": 0, "None": -99}
-                },
+                "max_glu_serum": {"mapping": {">200": 1, ">300": 1, "Norm": 0, "None": -99}},
             },
         },
         "transformations": {
@@ -227,7 +136,6 @@ def create_preprocessing_config(output_dir: Path, model_type: str) -> None:
     with config_path.open("w") as f:
         json.dump(config, f, indent=2)
     logger.info(f"Created preprocessing config at {config_path}")
-
 
 def create_model_config(output_dir: Path, model_type: str) -> None:
     """Create config.json for the Hugging Face Inference API."""
@@ -248,7 +156,6 @@ def create_model_config(output_dir: Path, model_type: str) -> None:
         json.dump(config, f, indent=2)
     logger.info(f"Created model config at {config_path}")
 
-
 def create_tokenizer_config(output_dir: Path) -> None:
     """Create tokenizer configuration for tabular data processing."""
     config = {
@@ -263,7 +170,6 @@ def create_tokenizer_config(output_dir: Path) -> None:
     with config_path.open("w") as f:
         json.dump(config, f, indent=2)
     logger.info(f"Created tokenizer config at {config_path}")
-
 
 def copy_model_artifacts(output_dir: Path) -> bool:
     """Copy all model artifacts to the output directory."""
@@ -285,13 +191,8 @@ def copy_model_artifacts(output_dir: Path) -> bool:
                     if model_source.exists():
                         # Recursive copy for AutoGluon model directory
                         for root, dirs, files in os.walk(model_source):
-                            # Get relative path from the model source directory
                             relative_path = Path(root).relative_to(model_source)
-                            # Create corresponding directory in destination
-                            (model_dest / relative_path).mkdir(
-                                parents=True, exist_ok=True
-                            )
-                            # Copy all files in current directory
+                            (model_dest / relative_path).mkdir(parents=True, exist_ok=True)
                             for file in files:
                                 src_file = Path(root) / file
                                 dst_file = model_dest / relative_path / file
@@ -300,7 +201,6 @@ def copy_model_artifacts(output_dir: Path) -> bool:
                     # Regular model file copying
                     if paths["model"].exists():
                         shutil.copy2(paths["model"], model_dest)
-                        # Copy associated files in model directory
                         model_dir = paths["model"].parent
                         for file in model_dir.glob("*"):
                             if file.is_file():
@@ -313,14 +213,8 @@ def copy_model_artifacts(output_dir: Path) -> bool:
                     shutil.copy2(paths["metrics"], metrics_dest)
 
                 # Copy feature importance if it exists
-                if (
-                    "feature_importance" in paths
-                    and paths["feature_importance"].exists()
-                ):
-                    shutil.copy2(
-                        paths["feature_importance"],
-                        metrics_dest / "feature_importance.csv",
-                    )
+                if "feature_importance" in paths and paths["feature_importance"].exists():
+                    shutil.copy2(paths["feature_importance"], metrics_dest / "feature_importance.csv")
 
                 # Copy plots
                 if paths["plots"].exists():
@@ -336,7 +230,6 @@ def copy_model_artifacts(output_dir: Path) -> bool:
         logger.error(f"Error copying model artifacts: {e}")
         return False
 
-
 def find_best_model() -> Tuple[Optional[str], Optional[Dict]]:
     """Find the model with the highest test AUC score."""
     best_model = None
@@ -344,27 +237,21 @@ def find_best_model() -> Tuple[Optional[str], Optional[Dict]]:
 
     for model_type, paths in MODEL_DIRS.items():
         metrics = load_metrics(paths["metrics"])
-        if metrics and (
-            not best_metrics or metrics["test_auc"] > best_metrics["test_auc"]
-        ):
+        if metrics and (not best_metrics or metrics["test_auc"] > best_metrics["test_auc"]):
             best_metrics = metrics
             best_model = model_type
 
     if best_model:
-        logger.info(
-            f"Best model is {best_model} with AUC: {best_metrics['test_auc']:.4f}"
-        )
+        logger.info(f"Best model is {best_model} with AUC: {best_metrics['test_auc']:.4f}")
     else:
         logger.error("No valid model metrics found")
 
     return best_model, best_metrics
 
-
 def create_model_card(best_model: str, metrics: Dict, output_dir: Path) -> None:
     """Create and save the model card."""
     from huggingface_hub.repocard_data import EvalResult
 
-    # Create proper EvalResult objects
     eval_results = [
         EvalResult(
             task_type="binary-classification",
@@ -387,15 +274,10 @@ def create_model_card(best_model: str, metrics: Dict, output_dir: Path) -> None:
         try:
             fi_path = MODEL_DIRS[best_model]["feature_importance"]
             if fi_path.exists():
-                # Read the CSV and maintain DataFrame structure
                 feature_importance_df = pd.read_csv(fi_path)
-                # Filter out zero importance features and sort by importance
-                feature_importance_df = feature_importance_df[
-                    feature_importance_df["importance"] > 0
-                ].sort_values("importance", ascending=False)
+                feature_importance_df = feature_importance_df[feature_importance_df["importance"] > 0].sort_values("importance", ascending=False)
         except Exception as e:
             logger.warning(f"Could not load feature importance: {e}")
-            feature_importance_df = None
 
     content = f"""
 ---
@@ -425,30 +307,19 @@ interventions and improved healthcare resource allocation.
 """
 
     # Add feature importance section if available
-    if feature_importance_df is not None and len(feature_importance_df) > 0:
+    if feature_importance_df is not None and not feature_importance_df.empty:
         content += "\n## Feature Importance\n\n"
         content += "Significant features and their importance scores:\n\n"
         content += "| Feature | Importance | p-value | 99% CI |\n"
         content += "|---------|------------|----------|----------|\n"
 
         for idx, row in feature_importance_df.iterrows():
-            # Format p-value using scientific notation for small values
-            p_value = (
-                f"{row['p_value']:.2e}"
-                if row['p_value'] < 0.001
-                else f"{row['p_value']:.4f}"
-            )
-            content += (
-                f"| {idx} | {row['importance']:.4f} | "
-                f"{p_value} | [{row['p99_low']:.4f}, {row['p99_high']:.4f}] |\n"
-            )
+            p_value = f"{row['p_value']:.2e}" if row['p_value'] < 0.001 else f"{row['p_value']:.4f}"
+            content += f"| {idx} | {row['importance']:.4f} | {p_value} | [{row['p99_low']:.4f}, {row['p99_high']:.4f}] |\n"
 
-        content += "\n*Note: Only features with non-zero importance are shown. "
-        content += "The confidence intervals (CI) are calculated at the 99% level. "
-        content += "Features with p-value < 0.05 are considered statistically significant.*\n"
+        content += "\n*Note: Only features with non-zero importance are shown. The confidence intervals (CI) are calculated at the 99% level. Features with p-value < 0.05 are considered statistically significant.*\n"
 
     content += """
-
 ## Features
 
 ### Numeric Features
@@ -602,7 +473,6 @@ Last updated: {pd.Timestamp.now().strftime('%Y-%m-%d')}
     card.save(output_dir / "README.md")
     logger.info(f"Created model card at {output_dir / 'README.md'}")
 
-
 def upload_to_huggingface() -> bool:
     """Upload the model directory to Hugging Face."""
     token = get_hf_token()
@@ -628,17 +498,21 @@ def upload_to_huggingface() -> bool:
             str(OUTPUT_DIR),  # local path to upload
             "--repo-type", "model",
         ]
+
         logger.info(f"Starting upload to {REPO_ID}...")
-        result = subprocess.run(upload_cmd, check=True, text=True)
+        result = subprocess.run(upload_cmd, check=True, text=True, capture_output=True)
+
+        # Log the output of the upload command
+        logger.info(f"Upload output: {result.stdout}")
         logger.info(f"Successfully uploaded model to {REPO_ID}")
         return True
     except subprocess.CalledProcessError as e:
         logger.error(f"Error uploading to Hugging Face: {str(e)}")
+        logger.error(f"Upload command output: {e.output}")
         return False
     except Exception as e:
         logger.error(f"Unexpected error during upload: {e}")
         return False
-
 
 def main():
     """Main deployment function."""
@@ -673,7 +547,6 @@ def main():
     except Exception as e:
         logger.exception(f"Deployment failed: {e}")
         return False
-
 
 if __name__ == "__main__":
     success = main()
