@@ -572,8 +572,8 @@ stages:
       size: 122759
     - path: src/deploy.py
       hash: md5
-      md5: 031321b9ad2afac1818bd3c5faed71c5
-      size: 24998
+      md5: c5fa640003bda36c56de57a9ca3c40ef
+      size: 24108
     outs:
     - path: .markers/deploy.done
       hash: md5

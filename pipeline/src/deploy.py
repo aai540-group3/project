@@ -68,6 +68,9 @@ def convert_keras_to_onnx(keras_model_path: Path, output_dir: Path) -> Optional[
         # Load the Keras model
         keras_model = tf.keras.models.load_model(keras_model_path)
 
+        # Set output names to avoid the error
+        keras_model.output_names = ['output']
+
         # Define the input signature for the model
         input_shape = keras_model.input_shape[1:]  # Exclude batch size
         input_signature = (tf.TensorSpec((None, *input_shape), tf.float32, name="input"),)
@@ -267,7 +270,9 @@ def copy_model_artifacts(output_dir: Path) -> bool:
                         # Delete the original Keras model file
                         if paths["model"].exists():
                             os.remove(paths["model"])
-                            logger.info(f"Deleted original Keras model: {paths['model']}")
+                            logger.info(
+                                f"Deleted original Keras model: {paths['model']}"
+                            )
                 else:
                     # Regular model file copying
                     if paths["model"].exists():

@@ -305,7 +305,7 @@ stages:
       - models/neural_network/artifacts/metrics/metrics.json
       - models/autogluon/artifacts/metrics/metrics.json
       - models/logistic_regression/artifacts/model/model.joblib
-      - models/neural_network/artifacts/model/model.keras
+      - models/neural_network/artifacts/model/model.onnx
       - models/autogluon/artifacts/model/predictor.pkl
       - models/autogluon/artifacts/model/feature_importance.csv
       - src/deploy.py
