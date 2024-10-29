@@ -12,6 +12,7 @@ stages:
     deps:
       - src/infrastruct.py
       - requirements-infrastruct.txt
+      - :setup
 
   ingest:
     cmd:
@@ -22,6 +23,7 @@ stages:
     deps:
       - src/ingest.py
       - requirements-ingest.txt
+      - :infrastruct
 
   preprocess:
     cmd:
@@ -33,6 +35,7 @@ stages:
       - src/preprocess.py
       - requirements-preprocess.txt
       - data/raw/data.csv
+      - :ingest
 
   explore:
     cmd:
@@ -45,6 +48,7 @@ stages:
       - requirements-explore.txt
       - data/raw/data.csv
       - data/interim/data_cleaned.parquet
+      - :preprocess
 
   featurize:
     cmd:
@@ -57,6 +61,7 @@ stages:
       - requirements-featurize.txt
       - data/interim/data_cleaned.parquet
       - feature_store.yaml
+      - :explore
 
   train_logisticregression:
     cmd:
@@ -68,6 +73,7 @@ stages:
       - models/logistic_regression/model.py
       - requirements-logisticregression.txt
       - data/interim/data_featured.parquet
+      - :featurize
 
   train_neuralnetwork:
     cmd:
@@ -79,6 +85,7 @@ stages:
       - models/neural_network/model.py
       - requirements-neuralnetwork.txt
       - data/interim/data_featured.parquet
+      - :featurize
 
   train_autogluon:
     cmd:
@@ -92,6 +99,7 @@ stages:
       - models/autogluon/model.py
       - requirements-autogluon.txt
       - data/interim/data_featured.parquet
+      - :featurize
 
 artifacts:
   diabetes-dataset:
