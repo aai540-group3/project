@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+pipeline.src.ingest
+
+This script fetches the diabetes dataset from the UCI Machine Learning Repository, processes it,
+saves it locally in multiple formats, and uploads it to an S3 bucket.
+
+Attributes:
+    logger (Logger): Configured logger for logging messages.
+
+Example:
+    To run the ingestion, use:
+
+        $ python ingest.py
+"""
+
 import json
 import logging
 import os
@@ -13,7 +29,19 @@ logger = logging.getLogger(__name__)
 
 
 def main():
+    """Main function to fetch, process, save, and upload the diabetes dataset.
+
+    This function performs the following steps:
+    1. Fetches the diabetes dataset from UCI.
+    2. Saves the dataset locally in Parquet, CSV, and JSON formats.
+    3. Uploads the files to an S3 bucket.
+
+    Raises:
+        Exception: If an error occurs during any of the steps, it logs the error
+            and re-raises the exception.
+    """
     try:
+        # Fetch the dataset from UCI Machine Learning Repository
         logger.info("FETCHING: dataset")
         diabetes_data = fetch_ucirepo(id=296)
         X = diabetes_data.data.features
@@ -22,6 +50,7 @@ def main():
         variables = diabetes_data.variables
         df = pd.concat([X, y], axis=1)
 
+        # Log dataset metadata and schema for debugging
         logger.debug("PRINTING: metadata")
         logger.debug(json.dumps(metadata, indent=4))
         logger.debug("PRINTING: variables")
@@ -32,23 +61,29 @@ def main():
         logger.debug("PRINTING: columns and data types")
         logger.debug(df.dtypes)
 
+        # Create the raw data directory if it doesn't exist
         os.makedirs("data/raw", exist_ok=True)
 
+        # Save dataset in Parquet format
         logger.info("SAVING: data/raw/data.parquet")
         table = pa.Table.from_pandas(df)
         pq.write_table(table, "data/raw/data.parquet")
 
+        # Save dataset in CSV format
         logger.info("SAVING: data/raw/data.csv")
         df.to_csv("data/raw/data.csv", index=False)
 
+        # Save metadata in JSON format
         logger.info("SAVING: data/raw/metadata.json")
         with open("data/raw/metadata.json", "w") as f:
             json.dump(metadata, f, indent=4)
 
+        # Save variable descriptions in JSON format
         logger.info("SAVING: data/raw/variables.json")
         with open("data/raw/variables.json", "w") as f:
             json.dump(variables_list, f, indent=4)
 
+        # Upload files to S3
         s3 = boto3.resource("s3", region_name="us-east-1")
         bucket = s3.Bucket("aai540-group3")
 
