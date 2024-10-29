@@ -3,50 +3,87 @@ stages:
   setup:
     cmd:
     - pip install uv virtualenv
+    - dvc dag --md >> dag.md
+    - rm -rf .markers
+    - mkdir .markers
+    - echo "done" > .markers/setup.done
+    outs:
+    - path: .markers/setup.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
+    - path: dag.md
+      hash: md5
+      md5: ddc3ed8ef54e37ac563e90de020aaf70
+      size: 5071
   infrastruct:
     cmd:
     - uv venv .venv-infrastruct --python 3.10
     - . .venv-infrastruct/bin/activate && uv pip install -r requirements-infrastruct.txt
     - . .venv-infrastruct/bin/activate && uv pip freeze > requirements-infrastruct-frozen.txt
     - . .venv-infrastruct/bin/activate && python src/infrastruct.py
+    - echo "done" > .markers/infrastruct.done
     deps:
+    - path: .markers/setup.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: requirements-infrastruct.txt
       hash: md5
       md5: 60b865dddcfe1ba5e216406717be77a4
       size: 19
     - path: src/infrastruct.py
       hash: md5
-      md5: 86b25d1c810e9c582bf48b43218052b3
-      size: 13750
+      md5: 007ddab3349fca1540e75fc7add9923b
+      size: 17745
       isexec: true
+    outs:
+    - path: .markers/infrastruct.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
+    - path: .venv-infrastruct
+      hash: md5
+      md5: ef140a34660064bd776dc27b42f2826d.dir
+      size: 18727288
+      nfiles: 1985
+    - path: requirements-infrastruct-frozen.txt
+      hash: md5
+      md5: 7a6a7eeb309a45fd9b797ba5f283ef4e
+      size: 145
   preprocess:
     cmd:
     - uv venv .venv-preprocess --python 3.10
     - . .venv-preprocess/bin/activate && uv pip install -r requirements-preprocess.txt
     - . .venv-preprocess/bin/activate && uv pip freeze > requirements-preprocess-frozen.txt
     - . .venv-preprocess/bin/activate && python src/preprocess.py
+    - echo "done" > .markers/preprocess.done
     deps:
+    - path: .markers/ingest.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: data/raw/data.csv
       hash: md5
       md5: 33411fa1536aaaadb24c0c1f2a8598b9
       size: 16246860
-    - path: requirements-ingest-frozen.txt
-      hash: md5
-      md5: bbf7e249541619d0455edee9bfac1e04
-      size: 3220
     - path: requirements-preprocess.txt
       hash: md5
       md5: 2e6b6474c7d7de529a7e5dc2b1761a27
       size: 50
     - path: src/preprocess.py
       hash: md5
-      md5: d93caf1c42094b579d6a27257021371b
+      md5: 84834c66b8782f7e27bd3b3d1a949342
       size: 11574
     outs:
+    - path: .markers/preprocess.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: .venv-preprocess
       hash: md5
       md5: 9d8b7ff24ce1fd16f1f271af471c3e51.dir
-      size: 374723645
+      size: 374730349
       nfiles: 16192
     - path: data/interim/data_cleaned.parquet
       hash: md5
@@ -67,7 +104,12 @@ stages:
     - . .venv-featurize/bin/activate && uv pip freeze > requirements-featurize-frozen.txt
     - . .venv-featurize/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
       python src/featurize.py
+    - echo "done" > .markers/featurize.done
     deps:
+    - path: .markers/explore.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: data/interim/data_cleaned.parquet
       hash: md5
       md5: cf03903ad3c1c4e1237e61e069738635
@@ -76,10 +118,6 @@ stages:
       hash: md5
       md5: f690725d429449b466c260205d8da47a
       size: 202
-    - path: requirements-explore-frozen.txt
-      hash: md5
-      md5: c592ec5f8ef563b4e72893d627a445fc
-      size: 3333
     - path: requirements-featurize.txt
       hash: md5
       md5: 4f9f52b9fe2d29796d3f210c33ed92d0
@@ -89,18 +127,22 @@ stages:
       md5: 4ccca48843ebfc7015b379ad1b4c2b17
       size: 15282
     outs:
+    - path: .markers/featurize.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: .venv-featurize
       hash: md5
-      md5: 82fd22e86227c93f1106d4d5936f0018.dir
-      size: 421483022
+      md5: 5bbb019a4233e9aa936d1b24f785304f.dir
+      size: 421489684
       nfiles: 18508
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: f6a67e2d2bfcbb6d3ce0026abf45034c
+      md5: 6ecf081afc8ca3513f1f6b3f8606c0c5
       size: 5210972
     - path: requirements-featurize-frozen.txt
       hash: md5
-      md5: 77d7410e040682fbe49ed6b7a28cc621
+      md5: 00749f8c17ee669e93004380e655d14e
       size: 3792
   explore:
     cmd:
@@ -108,7 +150,12 @@ stages:
     - . .venv-explore/bin/activate && uv pip install -r requirements-explore.txt
     - . .venv-explore/bin/activate && uv pip freeze > requirements-explore-frozen.txt
     - . .venv-explore/bin/activate && python src/explore.py
+    - echo "done" > .markers/explore.done
     deps:
+    - path: .markers/preprocess.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: data/interim/data_cleaned.parquet
       hash: md5
       md5: cf03903ad3c1c4e1237e61e069738635
@@ -121,40 +168,40 @@ stages:
       hash: md5
       md5: 85a632c1e6e277324146aeefa4c606e2
       size: 87
-    - path: requirements-preprocess-frozen.txt
-      hash: md5
-      md5: c1c9e5fcaba196be4c96911ddc597dda
-      size: 3182
     - path: src/explore.py
       hash: md5
       md5: 1c641b4a5bbfcf6bb2f28c0c766542c8
       size: 12365
     outs:
+    - path: .markers/explore.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: .venv-explore
       hash: md5
       md5: e343220ed6080a7fe0ee09a87d2088d3.dir
-      size: 410743707
+      size: 410750415
       nfiles: 17395
     - path: reports/cleanlab/cleanlab_confidence_distribution.png
       hash: md5
-      md5: 84b4bd746ffaf6873fd064950bc43404
-      size: 157111
+      md5: 4af27aaab54bfbb412cf9bf28cacc53f
+      size: 158436
     - path: reports/cleanlab/cleanlab_confusion_matrix.png
       hash: md5
-      md5: a4874423877e68be93c3db6c8afb4b38
-      size: 101630
+      md5: 51e1c38f809af3f9d37b846c1dba4f04
+      size: 103366
     - path: reports/cleanlab/detailed_analysis.txt
       hash: md5
-      md5: 537113b4c1c4ebe90dccfa0a15bb8e3e
+      md5: b8d4efc9b1b128683232e05fc85fcf6e
       size: 675
     - path: reports/cleanlab/feature_importance.csv
       hash: md5
-      md5: 40c166f89461d8c8dc76be9ff9e0a0aa
-      size: 52773
+      md5: 43b6a849a1ff727ec9f0cb70ba970971
+      size: 52171
     - path: reports/cleanlab/problematic_cases.csv
       hash: md5
-      md5: 5f157e1e5229a7be26586eaff2ac8831
-      size: 211002
+      md5: de3c2f23e32f5ca5debc8628cd685492
+      size: 222212
     - path: reports/plots/age_vs_readmission.png
       hash: md5
       md5: 480cd634ff6177de5d3c70da9540db60
@@ -225,15 +272,50 @@ stages:
     - . .venv-ingest/bin/activate && uv pip install -r requirements-ingest.txt
     - . .venv-ingest/bin/activate && uv pip freeze > requirements-ingest-frozen.txt
     - . .venv-ingest/bin/activate && python src/ingest.py
+    - echo "done" > .markers/ingest.done
     deps:
+    - path: .markers/infrastruct.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: requirements-ingest.txt
       hash: md5
       md5: b6ace7c12bf4b84c615e2b4e80cd6b96
       size: 81
     - path: src/ingest.py
       hash: md5
-      md5: b42f8ed096ed4bb97e8f2c17328dbc8c
-      size: 3860
+      md5: 4834dee50d39bc8738573b1d25632ce3
+      size: 2691
+    outs:
+    - path: .markers/ingest.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
+    - path: .venv-ingest
+      hash: md5
+      md5: d8ccf5a525b42ac0882a372eae231c49.dir
+      size: 374803008
+      nfiles: 16220
+    - path: data/raw/data.csv
+      hash: md5
+      md5: 33411fa1536aaaadb24c0c1f2a8598b9
+      size: 16246860
+    - path: data/raw/data.parquet
+      hash: md5
+      md5: 80180ca21b2e0a18573675cdb3f741de
+      size: 1415409
+    - path: data/raw/metadata.json
+      hash: md5
+      md5: eb8bd36c2cc7a6284a657c63561e0225
+      size: 5125
+    - path: data/raw/variables.json
+      hash: md5
+      md5: c03764d3560b025c3f1291d585517221
+      size: 19001
+    - path: requirements-ingest-frozen.txt
+      hash: md5
+      md5: bbf7e249541619d0455edee9bfac1e04
+      size: 3220
   train_logistic_regression:
     cmd: .venv/bin/python models/logistic_regression/model.py
     deps:
@@ -251,35 +333,39 @@ stages:
       size: 8410
   train_autogluon:
     cmd:
-    - sudo apt-get install --yes --no-install-recommends $(cat packages-autogluon.txt)
     - uv venv .venv-autogluon --python 3.10
     - . .venv-autogluon/bin/activate && uv pip install -r requirements-autogluon.txt
     - . .venv-autogluon/bin/activate && uv pip freeze > requirements-autogluon-frozen.txt
     - . .venv-autogluon/bin/activate && python src/utils.py patch_nvidia_gpu
     - . .venv-autogluon/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
       python models/autogluon/model.py
+    - echo "done" > .markers/train_autogluon.done
     deps:
+    - path: .markers/train_neuralnetwork.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: f6a67e2d2bfcbb6d3ce0026abf45034c
+      md5: 6ecf081afc8ca3513f1f6b3f8606c0c5
       size: 5210972
     - path: models/autogluon/model.py
       hash: md5
-      md5: 32cf392d3a463f2e918e9e0c0c869cfe
-      size: 17478
+      md5: 75246488f36b798e18b7e26a4d02fc57
+      size: 16473
     - path: requirements-autogluon.txt
       hash: md5
       md5: 2a3814eba1bc90e700e781a357c06ede
       size: 106
-    - path: requirements-neuralnetwork-frozen.txt
-      hash: md5
-      md5: 08399549fd69fa2a67a451723d673320
-      size: 3825
     outs:
+    - path: .markers/train_autogluon.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: .venv-autogluon
       hash: md5
-      md5: 57e5169f62232085cc1a6a5c26046cd7.dir
-      size: 3861437351
+      md5: d921204f63aee2d613eda75df8eaf0ca.dir
+      size: 3861437303
       nfiles: 68274
     - path: models/autogluon/artifacts/metrics/metrics.json
       hash: md5
@@ -287,9 +373,9 @@ stages:
       size: 191
     - path: models/autogluon/artifacts/model
       hash: md5
-      md5: 49c98faf32147104eb082f2eb9a2375d.dir
-      size: 64240
-      nfiles: 11
+      md5: 6eb1bdf23dbc904bd77708978ee9b882.dir
+      size: 51173
+      nfiles: 10
     - path: models/autogluon/artifacts/plots/confusion_matrix.png
       hash: md5
       md5: 42c10c96deee8111d7bc4085a7a688e0
@@ -304,7 +390,7 @@ stages:
       size: 176597
     - path: requirements-autogluon-frozen.txt
       hash: md5
-      md5: cd37e41b07624a3caee34734bf3ff67c
+      md5: f91c9a1e47bdc6c772b776a08c4ba889
       size: 6053
   train_neural_network:
     cmd: .venv/bin/python models/neural_network/model.py
@@ -327,28 +413,33 @@ stages:
     - . .venv-logisticregression/bin/activate && uv pip install -r requirements-logisticregression.txt
     - . .venv-logisticregression/bin/activate && uv pip freeze > requirements-logisticregression-frozen.txt
     - . .venv-logisticregression/bin/activate && python models/logistic_regression/model.py
+    - echo "done" > .markers/train_logisticregression.done
     deps:
+    - path: .markers/featurize.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: f6a67e2d2bfcbb6d3ce0026abf45034c
+      md5: 6ecf081afc8ca3513f1f6b3f8606c0c5
       size: 5210972
     - path: models/logistic_regression/model.py
       hash: md5
-      md5: 25f4bf8ed8f958c77dff25ccf23c6569
-      size: 17918
-    - path: requirements-explore-frozen.txt
-      hash: md5
-      md5: c592ec5f8ef563b4e72893d627a445fc
-      size: 3333
+      md5: e58b505ea8ed56b3beb02fcdf46e698b
+      size: 17917
     - path: requirements-logisticregression.txt
       hash: md5
       md5: 51f39049342d2ccec98f0f9868bbc68b
       size: 84
     outs:
+    - path: .markers/train_logisticregression.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: .venv-logisticregression
       hash: md5
       md5: 227d5ab4be46fbf2e442a769519967be.dir
-      size: 421947640
+      size: 421954362
       nfiles: 18184
     - path: models/logistic_regression/artifacts/metrics/metrics.json
       hash: md5
@@ -378,51 +469,56 @@ stages:
     - . .venv-neuralnetwork/bin/activate && uv pip freeze > requirements-neuralnetwork-frozen.txt
     - . .venv-neuralnetwork/bin/activate && PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
       python models/neural_network/model.py
+    - echo "done" > .markers/train_neuralnetwork.done
     deps:
+    - path: .markers/train_logisticregression.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: data/interim/data_featured.parquet
       hash: md5
-      md5: f6a67e2d2bfcbb6d3ce0026abf45034c
+      md5: 6ecf081afc8ca3513f1f6b3f8606c0c5
       size: 5210972
     - path: models/neural_network/model.py
       hash: md5
-      md5: 148bab357a14f0a2e94d181e9f7f79f1
-      size: 20295
-    - path: requirements-logisticregression-frozen.txt
-      hash: md5
-      md5: 74ceb32d42ea550034047da3864a9df4
-      size: 3449
+      md5: 92c40c0c3ded8d6c1b3c5a5b7774117c
+      size: 20294
     - path: requirements-neuralnetwork.txt
       hash: md5
       md5: 4df5a9fd8258b79c4c9af987eafd5007
       size: 99
     outs:
+    - path: .markers/train_neuralnetwork.done
+      hash: md5
+      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      size: 5
     - path: .venv-neuralnetwork
       hash: md5
-      md5: 67407a0760dadb315c4bc4bbecc7d866.dir
-      size: 1979315831
+      md5: b35339219c590a31bc782de892a16ba2.dir
+      size: 1979322560
       nfiles: 35636
     - path: models/neural_network/artifacts/metrics/metrics.json
       hash: md5
-      md5: d7b0331bcecf462d4f00f3de5e8c2b27
+      md5: d12b2c3e41c8ce56706ddfd646ba658f
       size: 759
     - path: models/neural_network/artifacts/model
       hash: md5
-      md5: 397017cf62e43d6e410668722ce26e1a.dir
+      md5: f6cca4deac370142c13600b97ada6dfd.dir
       size: 131997
       nfiles: 4
     - path: models/neural_network/artifacts/plots/confusion_matrix.png
       hash: md5
-      md5: 8a027f9f664543e5b2115ca7ed44aab9
-      size: 111281
+      md5: 4841de4962336f8c27c165f914e17c4c
+      size: 109710
     - path: models/neural_network/artifacts/plots/model_architecture.png
       hash: md5
       md5: 03cd8da41577c10e36416a2a9c4c9dec
       size: 220369
     - path: models/neural_network/artifacts/plots/roc_curve.png
       hash: md5
-      md5: afd829089ef98a1d9ea49b2340891396
-      size: 197121
+      md5: e3ce6a54e5abb2153d8211d758c6a30e
+      size: 197738
     - path: requirements-neuralnetwork-frozen.txt
       hash: md5
-      md5: 08399549fd69fa2a67a451723d673320
+      md5: a37f96c5eb364380e7308f3b023ea367
       size: 3825

@@ -13,11 +13,6 @@ train_size: 60072
 val_size: 20024
 test_size: 20025
 train_size_after_smote: 106514
-best_n_layers: '2'
-best_units_first: '48'
-best_units_factor: '0.7950714306409916'
-best_dropout: '0.2731993941811405'
-best_learning_rate: '0.003968793330444372'
-best_batch_size: '32'
-best_activation: relu
-best_optimizer: adam
+best_C: '1.0'
+best_penalty: l2
+best_solver: saga

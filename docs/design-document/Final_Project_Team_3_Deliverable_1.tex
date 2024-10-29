@@ -561,7 +561,7 @@ To gain deeper insights into model behavior, we generated several visualizations
     \begin{tikzpicture}[node distance=2.5cm, auto, scale=0.8, transform shape]
         \node [draw, rectangle, text centered] (ModelArtifacts) {Model Artifacts};
         \node [draw, rectangle, text centered, right of=ModelArtifacts, node distance=3cm] (DockerImage) {Docker Image};
-        \node [draw, rectangle, text centered, right of=DockerImage, node distance=3cm] (ContainerRegistry) {Container Registry};
+        \node [draw, rectangle, text centered, right of=DockerImage, node distance=3cm] (ContainerRegistry) {Registry};
         \node [draw, rectangle, text centered, right of=ContainerRegistry, node distance=3cm] (KubernetesCluster) {Kubernetes Cluster};
         \node [draw, rectangle, text centered, right of=KubernetesCluster, node distance=3cm] (APIEndpoint) {API Endpoint};
         \node [draw, rectangle, text centered, below of=APIEndpoint] (ClinicalApp) {Clinical Applications};

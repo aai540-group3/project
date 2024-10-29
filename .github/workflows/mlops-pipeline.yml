@@ -65,7 +65,8 @@ jobs:
           MODE: full
           TABLE_NAME: ${{ secrets.TABLE_NAME }}
         run: |
-          dvc repro --verbose --force
+          dvc pull --verbose
+          dvc repro
 
       - name: Push to DVC Remotes
         if: always()
