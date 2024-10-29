@@ -83,7 +83,7 @@ stages:
     - path: .venv-preprocess
       hash: md5
       md5: 9d8b7ff24ce1fd16f1f271af471c3e51.dir
-      size: 374730349
+      size: 374723645
       nfiles: 16192
     - path: data/interim/data_cleaned.parquet
       hash: md5
@@ -294,7 +294,7 @@ stages:
     - path: .venv-ingest
       hash: md5
       md5: d8ccf5a525b42ac0882a372eae231c49.dir
-      size: 374803008
+      size: 374796304
       nfiles: 16220
     - path: data/raw/data.csv
       hash: md5
