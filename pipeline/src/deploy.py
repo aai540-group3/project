@@ -265,14 +265,7 @@ def copy_model_artifacts(output_dir: Path) -> bool:
 
                 if model_type == "neural_network":
                     # Convert Keras model to ONNX
-                    onnx_model_path = convert_keras_to_onnx(paths["model"], output_dir)
-                    if onnx_model_path:
-                        # Delete the original Keras model file
-                        if paths["model"].exists():
-                            os.remove(paths["model"])
-                            logger.info(
-                                f"Deleted original Keras model: {paths['model']}"
-                            )
+                    convert_keras_to_onnx(paths["model"], output_dir)
                 else:
                     # Regular model file copying
                     if paths["model"].exists():
