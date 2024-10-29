@@ -7,9 +7,6 @@ stages:
       - mkdir .markers
       - echo "done" > .markers/setup.done
     outs:
-      - dag.md:
-          cache: true
-          persist: true
       - .markers/setup.done:
           cache: false
           persist: false
