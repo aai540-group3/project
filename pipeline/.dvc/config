@@ -2,8 +2,6 @@
     remote = dvcstore
     autostage = true
     analytics = false
-[hydra]
-    enabled = True
 [studio]
     url = https://studio.iterative.ai
 ['remote "dvcstore"']
