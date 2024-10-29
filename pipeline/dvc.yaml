@@ -291,7 +291,6 @@ stages:
           cache: true
           persist: true
 
-
 artifacts:
   diabetes-dataset:
     path: data/raw/data.csv
