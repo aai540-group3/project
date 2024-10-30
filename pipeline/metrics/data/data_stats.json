@@ -1,0 +1,13 @@
+{
+    "n_samples": 101766,
+    "n_features": 55,
+    "missing_values": {
+        "total": 1234,
+        "percentage": 0.02
+    },
+    "target_distribution": {
+        "0": 0.65,
+        "1": 0.35
+    },
+    "memory_usage_mb": 45.6
+}

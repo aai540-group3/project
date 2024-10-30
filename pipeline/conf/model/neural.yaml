@@ -1,0 +1,49 @@
+name: neural
+type: neural_network
+framework: tensorflow
+
+architecture:
+  input_dim: null  # Set dynamically
+  hidden_layers: [128, 64, 32]
+  dropout: 0.3
+  activation: relu
+
+optimization:
+  n_trials: 50
+  timeout: 7200
+  metric: roc_auc
+  direction: maximize
+
+  param_space:
+    n_layers:
+      type: int
+      low: 1
+      high: 5
+    units:
+      type: int
+      low: 32
+      high: 512
+      log: true
+    dropout:
+      type: float
+      low: 0.1
+      high: 0.5
+    learning_rate:
+      type: float
+      low: 1e-4
+      high: 1e-2
+      log: true
+    activation:
+      type: categorical
+      choices: [relu, tanh, selu]
+
+training:
+  batch_size: 256
+  epochs: 100
+  learning_rate: 0.001
+  optimizer: adam
+  early_stopping:
+    monitor: val_loss
+    patience: 10
+    min_delta: 0.001
+    restore_best_weights: true

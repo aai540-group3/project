@@ -1,0 +1,20 @@
+prepare:
+  enabled: true
+  cache: true
+
+  data:
+    raw_path: ${paths.raw}/data.csv
+    interim_path: ${paths.interim}/data_cleaned.parquet
+
+  splits:
+    test_size: 0.2
+    val_size: 0.2
+    random_state: ${seed}
+    stratify: true
+
+  preprocessing:
+    drop_columns: ${data.preprocessing.drop_columns}
+    missing_values: ${data.preprocessing.missing_values}
+    binary_mappings: ${data.preprocessing.binary_mappings}
+    ordinal_mappings: ${data.preprocessing.ordinal_mappings}
+    target_mapping: ${data.preprocessing.target_mapping}

@@ -1,0 +1,101 @@
+# conf/pipeline/default.yaml
+stages:
+  prepare:
+    enabled: true
+    cache: true
+    params:
+      - prepare.seed
+      - prepare.test_size
+    deps:
+      - src/stages/prepare.py
+      - data/raw/data.csv
+    outs:
+      - data/interim/data_clean.parquet
+      - data/interim/data_stats.json
+    metrics:
+      - data/interim/data_quality.json
+    plots:
+      - data/interim/data_dist.png
+
+  explore:
+    enabled: true
+    cache: true
+    params:
+      - explore
+    deps:
+      - src/stages/explore.py
+      - data/interim/data_clean.parquet
+    metrics:
+      - data/explore/analysis.json
+    plots:
+      - data/explore/distributions.png
+      - data/explore/correlations.png
+
+  featurize:
+    enabled: true
+    cache: true
+    params:
+      - features
+    deps:
+      - src/stages/featurize.py
+      - data/interim/data_clean.parquet
+    outs:
+      - data/processed/features.parquet
+      - data/processed/scaler.joblib
+    metrics:
+      - data/processed/feature_stats.json
+    plots:
+      - data/processed/feature_dist.png
+      - data/processed/correlation_matrix.png
+
+  train:
+    enabled: true
+    cache: true
+    params:
+      - train.${model.name}
+      - train.common
+    deps:
+      - src/stages/train.py
+      - src/models/${model.name}.py
+      - data/processed/features.parquet
+    outs:
+      - models/${model.name}/model.pkl
+    metrics:
+      - models/${model.name}/metrics.json
+    plots:
+      - models/${model.name}/plots/confusion_matrix.png
+      - models/${model.name}/plots/roc_curve.png
+      - models/${model.name}/plots/feature_importance.png
+
+  evaluate:
+    enabled: true
+    cache: false
+    deps:
+      - src/stages/evaluate.py
+      - models/${model.name}/model.pkl
+      - data/processed/features.parquet
+    metrics:
+      - evaluation/metrics.json
+    plots:
+      - evaluation/model_comparison.png
+
+  register:
+    enabled: true
+    cache: false
+    deps:
+      - src/stages/register.py
+      - models/${model.name}/model.pkl
+      - evaluation/metrics.json
+    outs:
+      - registry/metadata.json
+
+  deploy:
+    enabled: true
+    cache: false
+    deps:
+      - src/stages/deploy.py
+      - models/${model.name}/model.pkl
+      - evaluation/metrics.json
+    outs:
+      - deploy/${model.name}:
+          persist: true

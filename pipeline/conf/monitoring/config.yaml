@@ -1,0 +1,64 @@
+# conf/monitoring/config.yaml
+monitoring:
+  enabled: true
+  interval: 60  # seconds
+
+  metrics:
+    enabled: true
+    window_size: 3600  # seconds
+    thresholds:
+      accuracy: 0.75
+      roc_auc: 0.80
+      drift: 0.1
+
+  data_quality:
+    enabled: true
+    checks:
+      - missing_values
+      - duplicates
+      - outliers
+      - drift
+    thresholds:
+      missing_values: 0.05
+      duplicates: 0.01
+      outliers: 0.1
+      drift: 0.1
+
+  performance:
+    enabled: true
+    thresholds:
+      latency:
+        p95: 100  # ms
+        p99: 200  # ms
+      error_rate: 0.01
+      min_throughput: 10  # requests per second
+
+  resources:
+    enabled: true
+    thresholds:
+      cpu: 0.8
+      memory: 0.8
+      disk: 0.8
+
+  alerts:
+    slack:
+      enabled: true
+      webhook_url: ${oc.env:SLACK_WEBHOOK_URL}
+      channels:
+        - monitoring
+        - ml-team
+
+    email:
+      enabled: true
+      recipients: ${oc.env:ALERT_EMAIL}
+
+    pagerduty:
+      enabled: false
+      service_key: ${oc.env:PAGERDUTY_KEY}
+
+  logging:
+    level: INFO
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    handlers:
+      - console
+      - file

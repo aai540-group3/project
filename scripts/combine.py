@@ -203,6 +203,7 @@ EXCLUDE_FOLDERS = {
     ".temp",
     ".uv_cache",
     ".venv-autogluon",
+    ".venv-deploy",
     ".venv-explore",
     ".venv-featurize",
     ".venv-infrastruct",

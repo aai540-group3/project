@@ -4,6 +4,10 @@
     analytics = false
 [studio]
     url = https://studio.iterative.ai
+[exp]
+    auto_push = true
+[hydra]
+    enabled = true
 ['remote "dvcstore"']
     url = s3://aai540-group3/dvcstore
     region = us-east-1

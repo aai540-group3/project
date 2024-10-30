@@ -1,0 +1,22 @@
+defaults:
+  - base
+  - _self_
+
+name: full
+description: Full training with hyperparameter optimization
+tags: ["prod", "full"]
+
+dvc:
+  auto_push: true
+  experiments:
+    save_code: true
+
+train:
+  optimization:
+    n_trials: 100
+    max_time: 3600
+
+  common:
+    early_stopping:
+      patience: 10
+      min_delta: 0.001

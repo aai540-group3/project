@@ -1,9 +1,0 @@
-dvc[all]
-dvclive
-pandas
-numpy
-scikit-learn
-ucimlrepo
-pyarrow
-boto3
-python-dotenv

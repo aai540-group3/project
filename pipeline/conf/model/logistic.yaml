@@ -1,0 +1,39 @@
+name: logistic
+type: logistic_regression
+framework: sklearn
+
+hyperparameters:
+  C: 1.0
+  penalty: l2
+  solver: lbfgs
+  max_iter: 1000
+  random_state: ${seed}
+
+optimization:
+  n_trials: 100
+  timeout: 3600
+  metric: roc_auc
+  direction: maximize
+
+  param_space:
+    C:
+      type: float
+      low: 1e-4
+      high: 1e4
+      log: true
+    penalty:
+      type: categorical
+      choices: [l1, l2, elasticnet]
+    solver:
+      type: categorical
+      choices: [saga, liblinear]
+    l1_ratio:
+      type: float
+      low: 0.0
+      high: 1.0
+
+training:
+  batch_size: 32
+  early_stopping:
+    patience: 5
+    min_delta: 0.001

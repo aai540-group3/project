@@ -1,0 +1,18 @@
+{
+    "feature_counts": {
+        "numerical": 25,
+        "categorical": 15,
+        "binary": 10,
+        "derived": 5
+    },
+    "correlations": {
+        "max": 0.85,
+        "mean": 0.23,
+        "threshold_violations": 3
+    },
+    "importance_scores": {
+        "time_in_hospital": 0.156,
+        "num_procedures": 0.134,
+        "num_medications": 0.123
+    }
+}

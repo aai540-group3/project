@@ -1,0 +1,77 @@
+huggingface:
+  enabled: true
+  repo_id: ${oc.env:HF_REPO_ID}
+  token: ${oc.env:HF_TOKEN}
+  create_pr: true
+
+  # Model packaging
+  include_files:
+    - README.md
+    - config.json
+    - preprocessor.pkl
+    - model.pkl
+
+  # Model card configuration
+  model_card:
+    tags:
+      - tabular-classification
+      - healthcare
+      - diabetes
+    metrics:
+      - accuracy
+      - roc_auc
+      - precision
+      - recall
+    use_case: healthcare
+    limitations:
+      - Historical data (1999-2008)
+      - US hospitals only
+      - Binary classification
+    ethical_considerations:
+      - Patient privacy
+      - Healthcare professional oversight
+      - Regular bias auditing
+
+feast:
+  enabled: true
+  project: diabetes_readmission
+  registry_path: s3://${oc.env:BUCKET_NAME}/registry.db
+
+  # Feature store configuration
+  feature_store:
+    type: file
+    path: ${paths.features}/feast_repo
+
+  online_store:
+    type: dynamodb
+    region: ${aws.region}
+    table_name: ${oc.env:TABLE_NAME}
+
+  # Entity configuration
+  entities:
+    - name: patient_id
+      value_type: INT64
+      description: Patient identifier
+
+  # Feature views
+  feature_views:
+    - name: patient_demographics
+      features:
+        - age
+        - gender
+        - race
+      ttl: 365d
+
+    - name: hospital_metrics
+      features:
+        - time_in_hospital
+        - num_procedures
+        - num_lab_procedures
+      ttl: 365d
+
+    - name: medications
+      features:
+        - num_medications
+        - diabetesmed
+        - insulin
+      ttl: 365d

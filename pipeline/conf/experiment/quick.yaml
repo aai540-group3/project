@@ -1,0 +1,22 @@
+defaults:
+  - base
+  - _self_
+
+name: quick
+description: Quick training run for development
+tags: ["dev", "quick"]
+
+dvc:
+  auto_push: false
+  experiments:
+    save_code: false
+
+train:
+  optimization:
+    n_trials: 10
+    max_time: 600
+
+  common:
+    early_stopping:
+      patience: 5
+      min_delta: 0.01

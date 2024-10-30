@@ -1,45 +1,100 @@
-################################################################################
-# GLOBALS                                                                      #
-################################################################################
+# Makefile
+.PHONY: all setup clean venv test lint
 
-PROJECT      := pipeline
-VENV_DIR     := .venv
-VENV_PYTHON  := $(VENV_DIR)/bin/python
+# Load environment variables
+include .env
+export
 
-################################################################################
-# PHONY TARGETS                                                                #
-################################################################################
+# Variables
+PYTHON := python3
+VENV_DIR := .venv
+UV := uv
 
-.PHONY: all run help
+all: setup
 
-################################################################################
-# DEFAULT TARGET                                                               #
-################################################################################
+setup: venv
+	$(UV) pip install -e .
 
-.DEFAULT_GOAL := run
+venv:
+	$(UV) venv $(VENV_DIR)
+	$(UV) pip install --upgrade --requirement requirements/base.txt --python $(VENV_DIR)/bin/python
 
-################################################################################
-# COMMANDS                                                                     #
-################################################################################
+setup-autogluon:
+	$(UV) venv .venv-autogluon
+	$(UV) pip install --requirement requirements/autogluon.txt --python .venv-autogluon/bin/python
 
-all: run
+setup-explore:
+	$(UV) venv .venv-explore
+	$(UV) pip install --requirement requirements/explore.txt --python .venv-explore/bin/python
 
-## run: Setup virtual environment and run the pipeline
-run:
-	@echo "Setting up virtual environment..."
-	python3 -m venv $(VENV_DIR)
-	$(VENV_PYTHON) -m pip install --upgrade pip
-	$(VENV_PYTHON) -m pip install dvc
-	@echo "Running pipeline..."
-	@cd $(PROJECT) && $(VENV_PYTHON) -m dvc repro -f
-	@echo "Pipeline complete."
+setup-featurize:
+	$(UV) venv .venv-featurize
+	$(UV) pip install --requirement requirements/featurize.txt --python .venv-featurize/bin/python
 
-################################################################################
-# Help                                                                         #
-################################################################################
+setup-infrastruct:
+	$(UV) venv .venv-infrastruct
+	$(UV) pip install --requirement requirements/infrastruct.txt --python .venv-infrastruct/bin/python
 
-## help: Display available Make commands
-help:
-	@echo "Available targets:"
-	@echo "  run         - Setup virtual environment and run the DVC pipeline (default)."
-	@echo "  help        - Displays this help message."
+setup-logistic:
+	$(UV) venv .venv-logistic
+	$(UV) pip install --requirement requirements/logistic.txt --python .venv-logistic/bin/python
+
+setup-neural:
+	$(UV) venv .venv-neural
+	$(UV) pip install --requirement requirements/neural.txt --python .venv-neural/bin/python
+
+setup-preprocess:
+	$(UV) venv .venv-preprocess
+	$(UV) pip install --requirement requirements/preprocess.txt --python .venv-preprocess/bin/python
+
+setup-ingest:
+	$(UV) venv .venv-ingest
+	$(UV) pip install --requirement requirements/ingest.txt --python .venv-ingest/bin/python
+
+setup-deploy:
+	$(UV) venv .venv-deploy
+	$(UV) pip install --requirement requirements/deploy.txt --python .venv-deploy/bin/python
+
+setup-optimize:
+	$(UV) venv .venv-optimize
+	$(UV) pip install --requirement requirements/optimize.txt --python .venv-optimize/bin/python
+
+setup-evaluate:
+	$(UV) venv .venv-evaluate
+	$(UV) pip install --requirement requirements/evaluate.txt --python .venv-evaluate/bin/python
+
+setup-register:
+	$(UV) venv .venv-register
+	$(UV) pip install --requirement requirements/register.txt --python .venv-register/bin/python
+
+setup-monitoring:
+	$(UV) venv .venv-monitoring
+	$(UV) pip install --requirement requirements/monitoring.txt --python .venv-monitoring/bin/python
+
+setup-serve:
+	$(UV) venv .venv-serve
+	$(UV) pip install --requirement requirements/serve.txt --python .venv-serve/bin/python
+
+setup-all: setup-autogluon setup-explore setup-featurize setup-infrastruct \
+          setup-logistic setup-neural setup-preprocess \
+          setup-ingest setup-deploy setup-optimize setup-evaluate \
+          setup-register setup-monitoring setup-serve
+
+clean:
+	rm -rf $(VENV_DIR)
+	rm -rf .venv-*
+	find . -type d -name "__pycache__" -exec rm -r {} +
+	find . -type d -name "*.egg-info" -exec rm -r {} +
+	find . -type f -name "*.pyc" -delete
+
+test:
+	$(VENV_DIR)/bin/pytest tests/
+
+lint:
+	$(VENV_DIR)/bin/black .
+	$(VENV_DIR)/bin/flake8 .
+	$(VENV_DIR)/bin/isort .
+	$(VENV_DIR)/bin/mypy src/
+
+dev-setup: venv
+	$(UV) pip install -e ".[dev]" --python $(VENV_DIR)/bin/python

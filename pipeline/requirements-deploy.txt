@@ -1,7 +1,0 @@
-dvc[all]
-huggingface_hub[cli,hf_transfer]
-onnx
-pandas
-python-dotenv
-tensorflow
-tf2onnx

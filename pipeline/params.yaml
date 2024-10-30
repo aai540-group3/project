@@ -1,0 +1,89 @@
+paths:
+  root: ${hydra:runtime.cwd}
+
+prepare:
+  seed: 42
+  test_size: 0.2
+  val_size: 0.2
+  random_state: ${prepare.seed}
+
+featurize:
+  categorical_features:
+    - race
+    - gender
+    - admission_type_id
+  numeric_features:
+    - age
+    - time_in_hospital
+    - num_lab_procedures
+  binary_features:
+    - diabetesmed
+    - change
+  interactions:
+    - [num_medications, time_in_hospital]
+    - [num_procedures, time_in_hospital]
+  log_transform:
+    - number_outpatient
+    - number_emergency
+    - number_inpatient
+  scaling: standard
+  feature_store:
+    type: feast
+    path: features/feast_repo
+
+train:
+  common:
+    seed: ${prepare.seed}
+    metrics:
+      - accuracy
+      - precision
+      - recall
+      - f1
+      - roc_auc
+    early_stopping:
+      patience: 10
+      min_delta: 0.001
+
+  logistic:
+    optimization:
+      n_trials: 100
+      metric: roc_auc
+      direction: maximize
+      param_space:
+        C:
+          type: loguniform
+          low: 1e-4
+          high: 1e4
+        penalty:
+          type: categorical
+          choices: [l1, l2, elasticnet]
+        solver:
+          type: categorical
+          choices: [saga, liblinear]
+
+  neural:
+    architecture:
+      hidden_layers: [128, 64, 32]
+      dropout: 0.3
+      activation: relu
+    training:
+      batch_size: 256
+      epochs: 100
+      learning_rate: 0.001
+
+  autogluon:
+    time_limit: 3600
+    presets: best_quality
+    hyperparameters:
+      GBM:
+        num_boost_round: 1000
+      NN:
+        num_epochs: 100
+
+metrics:
+  - accuracy
+  - precision
+  - recall
+  - f1
+  - roc_auc
+  - average_precision

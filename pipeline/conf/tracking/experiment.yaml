@@ -1,0 +1,36 @@
+experiment:
+  name: diabetes_readmission
+  description: Predicting hospital readmissions for diabetic patients
+  tags:
+    - healthcare
+    - classification
+    - diabetes
+
+  # MLflow configuration
+  mlflow:
+    tracking_uri: ${oc.env:MLFLOW_TRACKING_URI}
+    registry_uri: ${oc.env:MLFLOW_REGISTRY_URI}
+    experiment_name: ${.name}
+    run_name: ${model.name}_${now:%Y%m%d_%H%M%S}
+
+    artifacts:
+      log_code: true
+      log_model: true
+      code_paths:
+        - src
+        - conf
+
+    tags:
+      framework: ${model.framework}
+      model_type: ${model.type}
+      dataset: diabetes
+      target: readmission
+
+  # DVC configuration
+  dvc:
+    remote: s3
+    metrics_format: json
+    plots_format: png
+    auto_push: true
+    experiments:
+      save_code: true

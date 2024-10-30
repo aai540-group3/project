@@ -1,3 +1,4 @@
+# .github/workflows/mlops-pipeline.yml
 name: MLOps Pipeline
 
 on:
@@ -5,109 +6,123 @@ on:
     branches:
       - main
     paths:
-      - ".github/workflows/mlops-pipeline.yml"
       - "pipeline/**"
+      - ".github/workflows/mlops-pipeline.yml"
   pull_request:
     branches:
       - main
     paths:
-      - ".github/workflows/mlops-pipeline.yml"
       - "pipeline/**"
+      - ".github/workflows/mlops-pipeline.yml"
   workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
-  run-mlops-pipeline:
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          fetch-depth: 1
+      - uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+          cache: pip
 
-      - name: Cache Python Virtualenv
-        id: cache-venv
-        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r pipeline/requirements.txt
+
+      - name: Validate configurations
+        run: |
+          python pipeline/src/utils/validate_configs.py
+
+  test:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          path: pipeline/.venv*
-          key: ${{ runner.os }}-venv-${{ hashFiles('pipeline/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-venv-
+          python-version: "3.10"
+          cache: pip
 
-      - name: Install Python Dependencies
-        working-directory: pipeline
+      - name: Install dependencies
         run: |
-          pip install virtualenv uv dvc[all]
+          python -m pip install --upgrade pip
+          pip install -r pipeline/requirements.txt
+          pip install -r pipeline/requirements-dev.txt
 
-      - name: Run DVC Pipeline
-        working-directory: pipeline
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          BUCKET_KEYS: ${{ secrets.BUCKET_KEYS }}
-          BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
-          EMAILS: ${{ secrets.EMAILS }}
-          GROUP_NAME: ${{ secrets.GROUP_NAME }}
-          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
-          INITIAL_PASSWORD: ${{ secrets.INITIAL_PASSWORD }}
-          MODE: full
-          TABLE_NAME: ${{ secrets.TABLE_NAME }}
+      - name: Run tests
         run: |
-          dvc exp run --force
+          pytest pipeline/tests/
 
-      - name: Push to DVC Remotes
-        if: always()
-        working-directory: pipeline
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: |
-          dvc commit --verbose --force
-          dvc push --verbose
-
-      - name: Configure Git
-        if: always()
-        run: |
-          git config pull.rebase false
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-
-      - name: Push to Git Remote
-        if: always()
-        id: commit_and_push
-        continue-on-error: true
-        run: |
-          git add pipeline
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-            echo "CHANGED=false" >> $GITHUB_ENV
-          else
-            git commit -m "Update DVC artifacts and metrics"
-            git push origin main || {
-              echo "Push failed. Creating a pull request..."
-              gh pr create --title "Update DVC artifacts and metrics" --body "Push to main failed. Updated DVC artifacts included." --label "automated-pr"
-            }
-            echo "CHANGED=true" >> $GITHUB_ENV
-          fi
-
-      - name: Repository Dispatch
-        if: env.CHANGED == 'true'
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
         with:
-          token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
-          repository: aai540-group3/project
-          event-type: package-deliverables
+          name: test-results
+          path: pipeline/tests/results/
+
+  train:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r pipeline/requirements.txt
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Run training pipeline
+        run: |
+          cd pipeline
+          dvc repro
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+
+      - name: Upload metrics
+        uses: actions/upload-artifact@v3
+        with:
+          name: metrics
+          path: pipeline/metrics/
+
+  deploy:
+    needs: train
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r pipeline/requirements.txt
+
+      - name: Deploy to HuggingFace
+        run: |
+          cd pipeline
+          python src/stages/deploy.py
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}

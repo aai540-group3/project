@@ -1,0 +1,96 @@
+# conf/config.yaml
+defaults:
+  - _self_
+  - data: preprocessing
+  - deploy: default
+  - experiment: quick
+  - explore: analysis
+  - features: engineering
+  - infrastructure: aws
+  - pipeline: default
+  - tracking: mlflow
+  - override hydra/job_logging: colorlog
+  - override hydra/hydra_logging: colorlog
+
+# General settings
+version: 0.1.0
+seed: 42
+debug: false
+
+# Paths configuration
+paths:
+  root: ${hydra:runtime.cwd}
+  data: ${paths.root}/data
+  raw: ${paths.data}/raw
+  interim: ${paths.data}/interim
+  processed: ${paths.data}/processed
+  features: ${paths.data}/features
+  models: ${paths.root}/models
+  metrics: ${paths.root}/metrics
+  plots: ${paths.root}/plots
+  infrastructure: ${paths.root}/infrastructure
+  registry: ${paths.root}/registry
+  deploy: ${paths.root}/deploy
+  serve: ${paths.root}/serve
+
+# Environment configuration
+environment:
+  package_manager: uv
+  python_version: "3.10"
+  venv_prefix: .venv-
+
+# Model types and configurations
+model_types:
+  - logistic
+  - neural
+  - autogluon
+
+# AWS configuration
+aws:
+  region: ${oc.env:AWS_REGION,us-east-1}
+  profile: ${oc.env:AWS_PROFILE,default}
+  bucket: ${oc.env:BUCKET_NAME}
+  prefix: ${oc.env:BUCKET_PREFIX,models}
+
+# MLflow configuration
+mlflow:
+  tracking_uri: ${oc.env:MLFLOW_TRACKING_URI}
+  registry_uri: ${oc.env:MLFLOW_REGISTRY_URI}
+  experiment_name: diabetes_readmission
+
+# Feature store configuration
+feature_store:
+  type: feast
+  registry: s3://${aws.bucket}/registry.db
+  online_store:
+    type: dynamodb
+    region: ${aws.region}
+    table: ${oc.env:TABLE_NAME}
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  interval: 60
+  metrics:
+    - accuracy
+    - latency
+    - drift
+  alerts:
+    slack_webhook: ${oc.env:SLACK_WEBHOOK_URL}
+    email: ${oc.env:ALERT_EMAIL}
+
+# Hydra configuration
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${experiment.name}/${model.name}
+  sweep:
+    dir: multirun/${now:%Y-%m-%d}/${experiment.name}
+    subdir: ${hydra.job.num}_${model.name}
+  job:
+    chdir: true
+    config:
+      override_dirname:
+        exclude_keys:
+          - seed
+          - version
+          - debug

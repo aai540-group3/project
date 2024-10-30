@@ -1,0 +1,30 @@
+name: autogluon
+type: autogluon
+framework: autogluon
+
+hyperparameters:
+  time_limit: 3600
+  presets: best_quality
+  eval_metric: roc_auc
+  problem_type: binary
+  label: readmitted
+
+  model_specific:
+    GBM:
+      num_boost_round: 1000
+      learning_rate: 0.05
+    NN:
+      num_epochs: 100
+      learning_rate: 0.001
+    RF:
+      n_estimators: 300
+      max_depth: 10
+
+optimization:
+  enabled: false  # AutoGluon handles its own optimization
+
+training:
+  holdout_frac: 0.2
+  num_bag_folds: 5
+  num_stack_levels: 2
+  refit_full: true
