@@ -1,0 +1,30 @@
+monitoring:
+  enabled: true
+  interval: 60
+  metrics:
+    - type: model
+      name: accuracy
+      threshold: 0.75
+    - type: model
+      name: roc_auc
+      threshold: 0.80
+    - type: drift
+      name: feature_drift
+      threshold: 0.1
+    - type: performance
+      name: latency_p95
+      threshold: 200
+    - type: performance
+      name: error_rate
+      threshold: 0.01
+  alerting:
+    slack:
+      enabled: true
+      webhook_url: ${oc.env:SLACK_WEBHOOK_URL}
+    email:
+      enabled: true
+      recipients: ${oc.env:ALERT_EMAIL}
+  storage:
+    type: s3
+    bucket: ${aws.bucket}
+    prefix: monitoring

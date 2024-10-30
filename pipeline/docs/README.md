@@ -50,7 +50,7 @@ pipeline/
 ├── conf/          # Configuration files
 ├── data/          # Data files
 ├── models/        # Model implementations
-├── src/           # Source code
+├── pipeline/           # Source code
 ├── tests/         # Test files
 └── docs/          # Documentation
 ```
@@ -105,7 +105,7 @@ See `CONTRIBUTING.md` for development guidelines.
   ```bash
   black .
   flake8 .
-  mypy src/
+  mypy pipeline/
   ```
 
 - Create PR against develop branch

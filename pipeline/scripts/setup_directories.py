@@ -45,6 +45,7 @@ DIRECTORIES = [
     "serve/logs",
 ]
 
+
 def setup_directories():
     """Create project directory structure."""
     root = Path(__file__).parent.parent
@@ -55,6 +56,7 @@ def setup_directories():
         (dir_path / ".gitkeep").touch()
 
     print("Directory structure created successfully!")
+
 
 if __name__ == "__main__":
     setup_directories()

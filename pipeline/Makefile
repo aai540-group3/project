@@ -94,7 +94,7 @@ lint:
 	$(VENV_DIR)/bin/black .
 	$(VENV_DIR)/bin/flake8 .
 	$(VENV_DIR)/bin/isort .
-	$(VENV_DIR)/bin/mypy src/
+	$(VENV_DIR)/bin/mypy pipeline/
 
 dev-setup: venv
 	$(UV) pip install -e ".[dev]" --python $(VENV_DIR)/bin/python

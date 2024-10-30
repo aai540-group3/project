@@ -1,22 +1,21 @@
-# tests/test_models.py
 import pytest
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from src.models import (
-    LogisticRegressionModel,
-    NeuralNetworkModel,
-    AutoGluonModel
-)
+from pipeline.models import LogisticRegressionModel, NeuralNetworkModel, AutoGluonModel
+
 
 class TestModels:
     """Test suite for all model implementations."""
 
-    @pytest.mark.parametrize("model_class,config_key", [
-        (LogisticRegressionModel, "logistic"),
-        (NeuralNetworkModel, "neural"),
-        (AutoGluonModel, "autogluon")
-    ])
+    @pytest.mark.parametrize(
+        "model_class,config_key",
+        [
+            (LogisticRegressionModel, "logistic"),
+            (NeuralNetworkModel, "neural"),
+            (AutoGluonModel, "autogluon"),
+        ],
+    )
     def test_model_training(self, model_class, config_key, test_data, test_config):
         """Test model training and basic functionality."""
         model = model_class(test_config.model[config_key])
@@ -37,12 +36,17 @@ class TestModels:
         assert probas.shape == (len(y), 2)
         assert np.all((probas >= 0) & (probas <= 1))
 
-    @pytest.mark.parametrize("model_class,config_key", [
-        (LogisticRegressionModel, "logistic"),
-        (NeuralNetworkModel, "neural"),
-        (AutoGluonModel, "autogluon")
-    ])
-    def test_model_save_load(self, model_class, config_key, test_data, test_config, temp_dir):
+    @pytest.mark.parametrize(
+        "model_class,config_key",
+        [
+            (LogisticRegressionModel, "logistic"),
+            (NeuralNetworkModel, "neural"),
+            (AutoGluonModel, "autogluon"),
+        ],
+    )
+    def test_model_save_load(
+        self, model_class, config_key, test_data, test_config, temp_dir
+    ):
         """Test model saving and loading."""
         model = model_class(test_config.model[config_key])
         X = test_data.drop("readmitted", axis=1)
@@ -64,12 +68,17 @@ class TestModels:
         loaded_predictions = loaded_model.predict(X)
         np.testing.assert_array_equal(original_predictions, loaded_predictions)
 
-    @pytest.mark.parametrize("model_class,config_key", [
-        (LogisticRegressionModel, "logistic"),
-        (NeuralNetworkModel, "neural"),
-        (AutoGluonModel, "autogluon")
-    ])
-    def test_model_feature_importance(self, model_class, config_key, test_data, test_config):
+    @pytest.mark.parametrize(
+        "model_class,config_key",
+        [
+            (LogisticRegressionModel, "logistic"),
+            (NeuralNetworkModel, "neural"),
+            (AutoGluonModel, "autogluon"),
+        ],
+    )
+    def test_model_feature_importance(
+        self, model_class, config_key, test_data, test_config
+    ):
         """Test feature importance calculation."""
         model = model_class(test_config.model[config_key])
         X = test_data.drop("readmitted", axis=1)
@@ -87,11 +96,14 @@ class TestModels:
         assert all(isinstance(v, float) for v in importance.values())
         assert all(v >= 0 for v in importance.values())
 
-    @pytest.mark.parametrize("model_class,config_key", [
-        (LogisticRegressionModel, "logistic"),
-        (NeuralNetworkModel, "neural"),
-        (AutoGluonModel, "autogluon")
-    ])
+    @pytest.mark.parametrize(
+        "model_class,config_key",
+        [
+            (LogisticRegressionModel, "logistic"),
+            (NeuralNetworkModel, "neural"),
+            (AutoGluonModel, "autogluon"),
+        ],
+    )
     def test_model_validation(self, model_class, config_key, test_data, test_config):
         """Test model validation functionality."""
         model = model_class(test_config.model[config_key])
@@ -112,12 +124,17 @@ class TestModels:
         assert "roc_auc" in model.metrics
         assert all(0 <= v <= 1 for v in model.metrics.values())
 
-    @pytest.mark.parametrize("model_class,config_key", [
-        (LogisticRegressionModel, "logistic"),
-        (NeuralNetworkModel, "neural"),
-        (AutoGluonModel, "autogluon")
-    ])
-    def test_model_error_handling(self, model_class, config_key, test_data, test_config):
+    @pytest.mark.parametrize(
+        "model_class,config_key",
+        [
+            (LogisticRegressionModel, "logistic"),
+            (NeuralNetworkModel, "neural"),
+            (AutoGluonModel, "autogluon"),
+        ],
+    )
+    def test_model_error_handling(
+        self, model_class, config_key, test_data, test_config
+    ):
         """Test model error handling."""
         model = model_class(test_config.model[config_key])
         X = test_data.drop("readmitted", axis=1)
@@ -136,12 +153,17 @@ class TestModels:
         with pytest.raises(TypeError):
             model.predict([1, 2, 3])
 
-    @pytest.mark.parametrize("model_class,config_key", [
-        (LogisticRegressionModel, "logistic"),
-        (NeuralNetworkModel, "neural"),
-        (AutoGluonModel, "autogluon")
-    ])
-    def test_model_reproducibility(self, model_class, config_key, test_data, test_config):
+    @pytest.mark.parametrize(
+        "model_class,config_key",
+        [
+            (LogisticRegressionModel, "logistic"),
+            (NeuralNetworkModel, "neural"),
+            (AutoGluonModel, "autogluon"),
+        ],
+    )
+    def test_model_reproducibility(
+        self, model_class, config_key, test_data, test_config
+    ):
         """Test model reproducibility with same seed."""
         X = test_data.drop("readmitted", axis=1)
         y = test_data["readmitted"]

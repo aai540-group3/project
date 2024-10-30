@@ -7,11 +7,12 @@ from hydra.core.hydra_config import HydraConfig
 from hydra.utils import get_original_cwd, instantiate, to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 
-from src.utils.experiment import ExperimentTracker
-from src.utils.registry import ModelRegistry
-from src.utils.versioning import DataVersioning
+from pipeline.utils.experiment import ExperimentTracker
+from pipeline.utils.registry import ModelRegistry
+from pipeline.utils.versioning import DataVersioning
 
 logger = logging.getLogger(__name__)
+
 
 def setup_tracking(cfg: DictConfig) -> ExperimentTracker:
     """Setup experiment tracking."""
@@ -19,8 +20,9 @@ def setup_tracking(cfg: DictConfig) -> ExperimentTracker:
         cfg=cfg,
         experiment_name=cfg.experiment.name,
         tracking_uri=cfg.tracking.uri,
-        registry_uri=cfg.registry.uri
+        registry_uri=cfg.registry.uri,
     )
+
 
 @hydra.main(config_path="conf", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> Optional[float]:
@@ -37,15 +39,15 @@ def main(cfg: DictConfig) -> Optional[float]:
         tags={
             "model_type": cfg.model.name,
             "experiment": cfg.experiment.name,
-            "data_version": versioning.get_data_hash(cfg.data.path)
-        }
+            "data_version": versioning.get_data_hash(cfg.data.path),
+        },
     )
 
     try:
         # Convert relative paths to absolute
-        cfg.paths = OmegaConf.create({
-            k: to_absolute_path(v) for k, v in cfg.paths.items()
-        })
+        cfg.paths = OmegaConf.create(
+            {k: to_absolute_path(v) for k, v in cfg.paths.items()}
+        )
 
         # Log configuration
         logger.info("\n" + OmegaConf.to_yaml(cfg))
@@ -53,13 +55,12 @@ def main(cfg: DictConfig) -> Optional[float]:
 
         # Verify data versions
         if not versioning.check_data_version(
-            cfg.data.path,
-            Path(cfg.paths.metadata) / "data_version.yaml"
+            cfg.data.path, Path(cfg.paths.metadata) / "data_version.yaml"
         ):
             versioning.log_data_version(
                 cfg.data.path,
                 Path(cfg.paths.metadata) / "data_version.yaml",
-                {"experiment": cfg.experiment.name}
+                {"experiment": cfg.experiment.name},
             )
 
         # Run DVC pipeline stages
@@ -83,6 +84,7 @@ def main(cfg: DictConfig) -> Optional[float]:
 
     finally:
         tracker.end_run()
+
 
 if __name__ == "__main__":
     main()

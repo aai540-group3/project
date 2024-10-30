@@ -1,0 +1,7 @@
+environment:
+  type: production
+  debug: false
+  log_level: INFO
+  monitoring:
+    enabled: true
+    interval: 60

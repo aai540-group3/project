@@ -12,11 +12,11 @@ COPY requirements.txt requirements-monitoring.txt ./
 RUN pip install --no-cache-dir -r requirements.txt -r requirements-monitoring.txt
 
 # Copy application code
-COPY src/ src/
+COPY pipeline/ pipeline/
 COPY conf/ conf/
 
 # Set environment variables
 ENV PYTHONPATH=/app
 
 # Run monitoring application
-CMD ["python", "-m", "src.monitoring.app"]
+CMD ["python", "-m", "pipeline.monitoring.app"]

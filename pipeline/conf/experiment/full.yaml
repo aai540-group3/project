@@ -3,20 +3,78 @@ defaults:
   - _self_
 
 name: full
-description: Full training with hyperparameter optimization
+description: "Full training with comprehensive optimization"
 tags: ["prod", "full"]
 
-dvc:
-  auto_push: true
-  experiments:
-    save_code: true
+# Complete data settings
+data:
+  sample_size: null  # Use full dataset
+  test_size: 0.2
+  val_size: 0.2
 
+# Comprehensive training settings
 train:
   optimization:
     n_trials: 100
-    max_time: 3600
-
-  common:
+    max_time: 3600  # 1 hour
     early_stopping:
       patience: 10
       min_delta: 0.001
+
+  common:
+    max_epochs: 100
+    batch_size: 256
+    early_stopping:
+      patience: 10
+      min_delta: 0.001
+
+# Model-specific full settings
+models:
+  autogluon:
+    time_limit: 3600
+    presets: "best_quality"
+    hyperparameters:
+      GBM:
+        num_boost_round: 1000
+      NN:
+        num_epochs: 100
+      RF:
+        n_estimators: 300
+
+  neural:
+    architecture:
+      hidden_layers: [128, 64, 32]
+      dropout: 0.3
+    training:
+      epochs: 100
+      batch_size: 256
+
+  logistic:
+    optimization:
+      n_trials: 100
+      timeout: 3600
+
+# Full feature engineering
+features:
+  engineering:
+    interactions: true
+    polynomial: true
+  selection:
+    enabled: true
+    method: "recursive"
+
+# Complete monitoring
+monitoring:
+  enabled: true
+  metrics:
+    enabled: true
+    window_size: 3600
+
+# Enable all services
+services:
+  feast:
+    enabled: true
+  mlflow:
+    log_artifacts: true
+  wandb:
+    enabled: true

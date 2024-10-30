@@ -17,7 +17,7 @@ experiment:
       log_code: true
       log_model: true
       code_paths:
-        - src
+        - pipeline
         - conf
 
     tags:

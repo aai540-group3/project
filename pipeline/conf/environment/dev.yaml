@@ -1,0 +1,6 @@
+environment:
+  type: development
+  debug: true
+  log_level: DEBUG
+  monitoring:
+    enabled: false

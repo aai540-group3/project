@@ -8,6 +8,8 @@
     auto_push = true
 [hydra]
     enabled = true
+    config_dir = conf
+    config_name = config.yaml
 ['remote "dvcstore"']
     url = s3://aai540-group3/dvcstore
     region = us-east-1

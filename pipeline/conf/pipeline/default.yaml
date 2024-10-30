@@ -7,7 +7,7 @@ stages:
       - prepare.seed
       - prepare.test_size
     deps:
-      - src/stages/prepare.py
+      - pipeline/stages/prepare.py
       - data/raw/data.csv
     outs:
       - data/interim/data_clean.parquet
@@ -23,7 +23,7 @@ stages:
     params:
       - explore
     deps:
-      - src/stages/explore.py
+      - pipeline/stages/explore.py
       - data/interim/data_clean.parquet
     metrics:
       - data/explore/analysis.json
@@ -37,7 +37,7 @@ stages:
     params:
       - features
     deps:
-      - src/stages/featurize.py
+      - pipeline/stages/featurize.py
       - data/interim/data_clean.parquet
     outs:
       - data/processed/features.parquet
@@ -55,8 +55,8 @@ stages:
       - train.${model.name}
       - train.common
     deps:
-      - src/stages/train.py
-      - src/models/${model.name}.py
+      - pipeline/stages/train.py
+      - pipeline/models/${model.name}.py
       - data/processed/features.parquet
     outs:
       - models/${model.name}/model.pkl
@@ -71,7 +71,7 @@ stages:
     enabled: true
     cache: false
     deps:
-      - src/stages/evaluate.py
+      - pipeline/stages/evaluate.py
       - models/${model.name}/model.pkl
       - data/processed/features.parquet
     metrics:
@@ -83,7 +83,7 @@ stages:
     enabled: true
     cache: false
     deps:
-      - src/stages/register.py
+      - pipeline/stages/register.py
       - models/${model.name}/model.pkl
       - evaluation/metrics.json
     outs:
@@ -93,7 +93,7 @@ stages:
     enabled: true
     cache: false
     deps:
-      - src/stages/deploy.py
+      - pipeline/stages/deploy.py
       - models/${model.name}/model.pkl
       - evaluation/metrics.json
     outs:

@@ -24,6 +24,7 @@ VENV_CONFIGS = {
     "serve": PROJECT_ROOT / "requirements" / "serve.txt",
 }
 
+
 def create_venv(name: str, requirements_file: Path) -> None:
     """Create virtual environment and install requirements using uv.
 
@@ -40,11 +41,18 @@ def create_venv(name: str, requirements_file: Path) -> None:
     subprocess.run(["uv", "venv", str(venv_path)], check=True)
 
     # Install requirements using uv
-    subprocess.run([
-        "uv", "pip", "install",
-        "--requirement", str(requirements_file),
-        "--python", str(venv_path / "bin" / "python")
-    ], check=True)
+    subprocess.run(
+        [
+            "uv",
+            "pip",
+            "install",
+            "--requirement",
+            str(requirements_file),
+            "--python",
+            str(venv_path / "bin" / "python"),
+        ],
+        check=True,
+    )
 
     # Verify the installation
     python_path = venv_path / "bin" / "python"
@@ -53,6 +61,7 @@ def create_venv(name: str, requirements_file: Path) -> None:
 
     print(f"Created virtual environment for {name}")
     print(f"Python interpreter: {python_path}")
+
 
 def delete_venv(name: str) -> None:
     """Delete virtual environment.
@@ -65,6 +74,7 @@ def delete_venv(name: str) -> None:
         subprocess.run(["rm", "-rf", str(venv_path)], check=True)
         print(f"Deleted virtual environment: {venv_path}")
 
+
 def list_venvs() -> List[str]:
     """List existing virtual environments.
 
@@ -76,6 +86,7 @@ def list_venvs() -> List[str]:
         for path in PROJECT_ROOT.glob(".venv-*")
         if path.is_dir()
     ]
+
 
 def check_venv(name: str) -> bool:
     """Check if virtual environment exists and has all requirements installed.
@@ -100,24 +111,22 @@ def check_venv(name: str) -> bool:
             ["uv", "pip", "freeze", "--python", str(python_path)],
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
         installed = set(result.stdout.splitlines())
 
         # Read requirements
         with open(VENV_CONFIGS[name]) as f:
             required = set(
-                line.strip()
-                for line in f
-                if line.strip() and not line.startswith("#")
+                line.strip() for line in f if line.strip() and not line.startswith("#")
             )
 
         return all(
-            any(req.startswith(r.split("==")[0]) for r in installed)
-            for req in required
+            any(req.startswith(r.split("==")[0]) for r in installed) for req in required
         )
     except subprocess.CalledProcessError:
         return False
+
 
 def verify_environment() -> None:
     """Verify the execution environment."""
@@ -137,6 +146,7 @@ def verify_environment() -> None:
 
     print("Environment verification completed successfully")
 
+
 def main():
     # Verify environment
     verify_environment()
@@ -152,13 +162,13 @@ def main():
     parser.add_argument(
         "action",
         choices=["create", "delete", "list", "check"],
-        help="Action to perform"
+        help="Action to perform",
     )
     parser.add_argument(
         "name",
         nargs="?",
         choices=list(VENV_CONFIGS.keys()) + ["all"],
-        help="Virtual environment name"
+        help="Virtual environment name",
     )
 
     args = parser.parse_args()
@@ -198,6 +208,7 @@ def main():
             print(f"Error processing {name}: {e}")
             if args.name != "all":
                 raise
+
 
 if __name__ == "__main__":
     main()

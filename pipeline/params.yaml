@@ -1,5 +1,45 @@
 paths:
   root: ${hydra:runtime.cwd}
+  infrastructure: ${hydra:runtime.cwd}/infrastructure
+
+aws:
+  region: ${oc.env:AWS_REGION,us-east-1}
+  profile: ${oc.env:AWS_PROFILE,default}
+  bucket: ${oc.env:BUCKET_NAME}
+  prefix: ${oc.env:BUCKET_PREFIX,models}
+
+  iam:
+    group:
+      name: ${oc.env:GROUP_NAME}
+      policies:
+        - AWSLambdaFullAccess
+        - AmazonS3FullAccess
+        - AmazonDynamoDBFullAccess
+        - CloudWatchFullAccess
+
+  s3:
+    bucket:
+      name: ${oc.env:BUCKET_NAME}
+      versioning: enabled
+      encryption: AES256
+      public_access_block: true
+
+  dynamodb:
+    table:
+      name: ${oc.env:TABLE_NAME}
+      hash_key: id
+      billing_mode: PAY_PER_REQUEST
+
+  monitoring:
+    enabled: true
+    namespace: aai540-group3
+    metrics:
+      - name: ModelLatency
+        unit: Milliseconds
+      - name: PredictionCount
+        unit: Count
+      - name: ErrorRate
+        unit: Percent
 
 prepare:
   seed: 42

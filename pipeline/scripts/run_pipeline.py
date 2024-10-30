@@ -2,6 +2,7 @@ import subprocess
 from pathlib import Path
 from omegaconf import OmegaConf
 
+
 def run_pipeline():
     # Load config to get paths
     config = OmegaConf.load("conf/config.yaml")
@@ -12,6 +13,7 @@ def run_pipeline():
 
     # Run DVC pipeline
     subprocess.run(["dvc", "repro"], check=True)
+
 
 if __name__ == "__main__":
     run_pipeline()

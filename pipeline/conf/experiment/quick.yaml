@@ -3,20 +3,125 @@ defaults:
   - _self_
 
 name: quick
-description: Quick training run for development
-tags: ["dev", "quick"]
+description: "Minimal training run for rapid pipeline validation (all stages)"
+tags: ["dev", "quick", "validation"]
 
+# DVC configuration
 dvc:
   auto_push: false
   experiments:
-    save_code: false
+    save_code: true
+    name: "quick_validation"
 
+# Hydra configuration
+hydra:
+  job:
+    chdir: true
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${experiment.name}
+
+# Training settings - minimal but complete
 train:
   optimization:
-    n_trials: 10
-    max_time: 600
+    n_trials: 1 # Single trial
+    max_time: 60 # 1 minute max
+    early_stopping:
+      patience: 1
+      min_delta: 1.0
+    param_space: ${model.optimization.param_space} # Inherit from base
 
   common:
+    max_epochs: 1
+    batch_size: 128
+    metrics: ${model.metrics} # Inherit all metrics
     early_stopping:
-      patience: 5
-      min_delta: 0.01
+      patience: 1
+      min_delta: 1.0
+
+# Model configurations - minimal but complete
+models:
+  autogluon:
+    time_limit: 60
+    presets: "medium_quality_faster_train"
+    hyperparameters:
+      GBM:
+        num_boost_round: 10
+        learning_rate: 0.1
+      NN:
+        num_epochs: 1
+        learning_rate: 0.1
+      RF:
+        n_estimators: 10
+    _target_: pipeline.models.autogluon.AutoGluonModel
+
+  neural:
+    architecture:
+      hidden_layers: [16]
+      dropout: 0.0
+    training:
+      epochs: 1
+      batch_size: 128
+      learning_rate: 0.1
+    _target_: pipeline.models.neural.NeuralNetworkModel
+
+  logistic:
+    optimization:
+      n_trials: 1
+      timeout: 30
+    hyperparameters:
+      C: 1.0
+      max_iter: 100
+    _target_: pipeline.models.logistic.LogisticRegressionModel
+
+# Data settings - small but representative
+data:
+  sample_size: 100
+  test_size: 0.2
+  val_size: 0.2
+  preprocessing: ${preprocessing} # Inherit all preprocessing steps
+  features: ${features} # Inherit all feature definitions
+
+# Keep all stages enabled but minimal
+stages:
+  prepare:
+    enabled: true
+    cache: true
+  explore:
+    enabled: true
+    cache: true
+  featurize:
+    enabled: true
+    cache: true
+  optimize:
+    enabled: true
+    cache: true
+  train:
+    enabled: true
+    cache: true
+  evaluate:
+    enabled: true
+    cache: true
+  register:
+    enabled: true
+    cache: true
+  deploy:
+    enabled: true
+    cache: true
+
+# Keep monitoring but minimal
+monitoring:
+  enabled: true
+  interval: 10
+  metrics:
+    enabled: true
+    window_size: 60
+
+# Keep all services enabled
+services:
+  feast:
+    enabled: true
+  mlflow:
+    enabled: true
+    log_artifacts: true
+  wandb:
+    enabled: true

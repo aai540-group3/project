@@ -4,9 +4,11 @@ import subprocess
 from pathlib import Path
 from typing import Dict, List, Set
 
+
 def get_installed_packages() -> Set[str]:
     """Get set of installed packages."""
     return {pkg.key for pkg in pkg_resources.working_set}
+
 
 def parse_requirements(file_path: Path) -> Set[str]:
     """Parse requirements file and return set of package names."""
@@ -14,11 +16,18 @@ def parse_requirements(file_path: Path) -> Set[str]:
     with open(file_path) as f:
         for line in f:
             line = line.strip()
-            if line and not line.startswith('#'):
+            if line and not line.startswith("#"):
                 # Remove version specifiers
-                package = line.split('>=')[0].split('<=')[0].split('==')[0].split('<')[0].split('>')[0]
+                package = (
+                    line.split(">=")[0]
+                    .split("<=")[0]
+                    .split("==")[0]
+                    .split("<")[0]
+                    .split(">")[0]
+                )
                 packages.add(package)
     return packages
+
 
 def check_conflicts(requirements_files: List[Path]) -> Dict[str, List[str]]:
     """Check for conflicting dependencies between requirement files."""
@@ -37,10 +46,11 @@ def check_conflicts(requirements_files: List[Path]) -> Dict[str, List[str]]:
 
     return conflicts
 
+
 def main():
     # Get all requirements files
-    requirements_files = list(Path().glob('requirements-*.txt'))
-    requirements_files.append(Path('requirements.txt'))
+    requirements_files = list(Path().glob("requirements-*.txt"))
+    requirements_files.append(Path("requirements.txt"))
 
     # Check installed packages
     installed = get_installed_packages()
@@ -73,5 +83,6 @@ def main():
     print("\nChecking for outdated packages...")
     subprocess.run(["pip", "list", "--outdated"])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -177,6 +177,7 @@ COMMENT_SYNTAX: Dict[str, Dict[str, Union[str, Set[str]]]] = {
 # Configuration Variables
 EXCLUDE_FILES = {
     "__init__.py",
+    ".codacy.yml ",
     ".DS_Store",
     ".dvcignore",
     ".gitattributes",
@@ -198,6 +199,7 @@ EXCLUDE_FILES = {
 
 EXCLUDE_FOLDERS = {
     "__pycache__",
+    ".archive",
     ".dvc",
     ".ruff_cache",
     ".temp",
@@ -216,6 +218,7 @@ EXCLUDE_FOLDERS = {
     ".vscode",
     "artifacts",
     "debug",
+    "docs",
     "dvclive",
     "external",
     "huggingface",
@@ -224,6 +227,8 @@ EXCLUDE_FOLDERS = {
     "node_modules",
     "notebooks",
     "outputs",
+    "packaging",
+    "pipeline.egg-info",
     "pptx2video",
     "processed",
     "raw",

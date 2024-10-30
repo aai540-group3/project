@@ -2,6 +2,7 @@ from pathlib import Path
 from omegaconf import OmegaConf
 import os
 
+
 def verify_paths():
     # Load config
     config = OmegaConf.load("conf/config.yaml")
@@ -24,6 +25,7 @@ def verify_paths():
         if not exists and key not in ["venv"]:  # Skip venv as it's created by uv
             path.mkdir(parents=True, exist_ok=True)
             print(f"Created directory: {path}")
+
 
 if __name__ == "__main__":
     verify_paths()

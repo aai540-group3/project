@@ -1,0 +1,22 @@
+feature_store:
+  type: feast
+  registry:
+    type: s3
+    path: s3://${aws.bucket}/registry.db
+  online_store:
+    type: dynamodb
+    table: ${oc.env:TABLE_NAME}
+  offline_store:
+    type: file
+    path: ${paths.features}/offline_store
+  feature_services:
+    - name: readmission_prediction
+      features:
+        - patient_demographics:all
+        - medical_history:all
+        - current_visit:all
+  entities:
+    - name: patient_id
+      type: int64
+    - name: visit_id
+      type: int64

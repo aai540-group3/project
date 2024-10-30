@@ -72,4 +72,5 @@ sdist/
 target/
 terraform/.terraform/providers/
 tree.txt
+update.sh
 var/

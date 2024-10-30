@@ -1,13 +1,14 @@
 stages:
   infrastruct:
-    cmd: >
-      uv venv .venv-infrastruct &&
-      uv pip install -r requirements/requirements-infrastruct.txt --python .venv-infrastruct/bin/python &&
-      .venv-infrastruct/bin/python src/stages/infrastruct.py
+    cmd:
+      - uv venv .venv-infrastruct --python 3.11
+      - uv pip install -r requirements/requirements-infrastruct.txt --python .venv-infrastruct/bin/python
+      - uv pip install -e . --python .venv-infrastruct/bin/python
+      - . .venv-infrastruct/bin/activate && python pipeline/stages/infrastruct.py
     deps:
-      - src/stages/infrastruct.py
+      - pipeline/stages/infrastruct.py
       - conf/infrastructure/aws.yaml
-      - requirements/infrastruct.txt
+      - requirements/requirements-infrastruct.txt
     params:
       - aws
       - paths
@@ -22,9 +23,10 @@ stages:
     cmd: >
       uv venv .venv-ingest && \
       uv pip install -r requirements/requirements-ingest.txt --python .venv-ingest/bin/python && \
-      .venv-ingest/bin/python src/stages/ingest.py
+      uv pip install -e . --python .venv-ingest/bin/python && \
+      .venv-ingest/bin/python pipeline/stages/ingest.py
     deps:
-      - src/stages/ingest.py
+      - pipeline/stages/ingest.py
       - conf/data/sources.yaml
       - requirements/ingest.txt
     params:
@@ -40,9 +42,10 @@ stages:
     cmd: >
       uv venv .venv-preprocess && \
       uv pip install -r requirements/requirements-preprocess.txt --python .venv-preprocess/bin/python && \
-      .venv-preprocess/bin/python src/stages/prepare.py
+      uv pip install -e . --python .venv-preprocess/bin/python && \
+      .venv-preprocess/bin/python pipeline/stages/prepare.py
     deps:
-      - src/stages/prepare.py
+      - pipeline/stages/prepare.py
       - data/raw/data.csv
       - conf/data/preprocessing.yaml
       - requirements/preprocess.txt
@@ -64,9 +67,10 @@ stages:
     cmd: >
       uv venv .venv-explore && \
       uv pip install -r requirements/requirements-explore.txt --python .venv-explore/bin/python && \
-      .venv-explore/bin/python src/stages/explore.py
+      uv pip install -e . --python .venv-explore/bin/python && \
+      .venv-explore/bin/python pipeline/stages/explore.py
     deps:
-      - src/stages/explore.py
+      - pipeline/stages/explore.py
       - data/raw/data.csv
       - data/interim/data_cleaned.parquet
       - conf/explore/analysis.yaml
@@ -86,9 +90,10 @@ stages:
     cmd: >
       uv venv .venv-featurize && \
       uv pip install -r requirements/requirements-featurize.txt --python .venv-featurize/bin/python && \
-      .venv-featurize/bin/python src/stages/featurize.py
+      uv pip install -e . --python .venv-featurize/bin/python && \
+      .venv-featurize/bin/python pipeline/stages/featurize.py
     deps:
-      - src/stages/featurize.py
+      - pipeline/stages/featurize.py
       - data/interim/train.parquet
       - data/interim/val.parquet
       - data/interim/test.parquet
@@ -115,10 +120,11 @@ stages:
       cmd: >
         uv venv .venv-optimize && \
         uv pip install -r requirements/requirements-optimize.txt --python .venv-optimize/bin/python && \
-        .venv-optimize/bin/python src/stages/optimize.py model=${item}
+        uv pip install -e . --python .venv-optimize/bin/python && \
+        .venv-optimize/bin/python pipeline/stages/optimize.py model=${item}
       deps:
-        - src/stages/optimize.py
-        - src/models/${item}.py
+        - pipeline/stages/optimize.py
+        - pipeline/models/${item}.py
         - data/processed/train_features.parquet
         - data/processed/val_features.parquet
         - requirements/optimize.txt
@@ -139,10 +145,11 @@ stages:
       cmd: >
         uv venv .venv-${item} && \
         uv pip install -r requirements/requirements-${item}.txt --python .venv-${item}/bin/python && \
-        .venv-${item}/bin/python src/stages/train.py model=${item}
+        uv pip install -e . --python .venv-${item}/bin/python && \
+        .venv-${item}/bin/python pipeline/stages/train.py model=${item}
       deps:
-        - src/stages/train.py
-        - src/models/${item}.py
+        - pipeline/stages/train.py
+        - pipeline/models/${item}.py
         - data/processed/train_features.parquet
         - data/processed/val_features.parquet
         - metrics/optimization/${item}/trials.json
@@ -165,9 +172,10 @@ stages:
     cmd: >
       uv venv .venv-evaluate && \
       uv pip install -r requirements/requirements-evaluate.txt --python .venv-evaluate/bin/python && \
-      .venv-evaluate/bin/python src/stages/evaluate.py
+      uv pip install -e . --python .venv-evaluate/bin/python && \
+      .venv-evaluate/bin/python pipeline/stages/evaluate.py
     deps:
-      - src/stages/evaluate.py
+      - pipeline/stages/evaluate.py
       - data/processed/test_features.parquet
       - models/*/model.pkl
       - requirements/evaluate.txt
@@ -185,9 +193,10 @@ stages:
     cmd: >
       uv venv .venv-register && \
       uv pip install -r requirements/requirements-register.txt --python .venv-register/bin/python && \
-      .venv-register/bin/python src/stages/register.py
+      uv pip install -e . --python .venv-register/bin/python && \
+      .venv-register/bin/python pipeline/stages/register.py
     deps:
-      - src/stages/register.py
+      - pipeline/stages/register.py
       - metrics/evaluation/model_comparison.json
       - models/*/model.pkl
       - requirements/register.txt
@@ -201,9 +210,10 @@ stages:
     cmd: >
       uv venv .venv-deploy && \
       uv pip install -r requirements/requirements-deploy.txt --python .venv-deploy/bin/python && \
-      .venv-deploy/bin/python src/stages/deploy.py
+      uv pip install -e . --python .venv-deploy/bin/python && \
+      .venv-deploy/bin/python pipeline/stages/deploy.py
     deps:
-      - src/stages/deploy.py
+      - pipeline/stages/deploy.py
       - models/*/model.pkl
       - metrics/evaluation/model_comparison.json
       - requirements/deploy.txt
@@ -218,9 +228,10 @@ stages:
     cmd: >
       uv venv .venv-serve && \
       uv pip install -r requirements/requirements-serve.txt --python .venv-serve/bin/python && \
-      .venv-serve/bin/uvicorn src.serve.app:app --host 0.0.0.0 --port 8000
+      uv pip install -e . --python .venv-serve/bin/python && \
+      .venv-serve/bin/uvicorn pipeline.serve.app:app --host 0.0.0.0 --port 8000
     deps:
-      - src/serve/app.py
+      - pipeline/serve/app.py
       - models/*/model.pkl
       - conf/serve/api.yaml
       - requirements/serve.txt
@@ -235,9 +246,10 @@ stages:
     cmd: >
       uv venv .venv-monitoring && \
       uv pip install -r requirements/requirements-monitoring.txt --python .venv-monitoring/bin/python && \
-      .venv-monitoring/bin/python src/stages/monitoring.py
+      uv pip install -e . --python .venv-monitoring/bin/python && \
+      .venv-monitoring/bin/python pipeline/stages/monitoring.py
     deps:
-      - src/monitoring/app.py
+      - pipeline/monitoring/app.py
       - conf/monitoring/config.yaml
       - requirements/monitoring.txt
     params:

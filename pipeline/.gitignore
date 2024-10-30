@@ -18,3 +18,4 @@
 /.venv-featurize
 /dag.md
 /requirements-deploy-frozen.txt
+update.sh
