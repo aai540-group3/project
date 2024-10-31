@@ -1,5 +1,5 @@
 """
-Data Exploration Stage
+Explore Stage
 ===================
 
 .. module:: pipeline.stages.explore
@@ -17,18 +17,16 @@ import numpy as np
 import pandas as pd
 from cleanlab.classification import CleanLearning
 from cleanlab.filter import find_label_issues
+from loguru import logger
 from sklearn.ensemble import RandomForestClassifier
 
 from ..stages.base import PipelineStage
-from ..utils.logging import get_logger
 from ..utils.visualization import (
     plot_correlation_matrix,
     plot_distribution,
     plot_feature_importance,
     plot_target_distribution,
 )
-
-logger = get_logger(__name__)
 
 
 class ExploreStage(PipelineStage):
@@ -99,9 +97,7 @@ class ExploreStage(PipelineStage):
         for subdir in ["figures", "cleanlab", "analysis"]:
             (output_dir / subdir).mkdir(parents=True, exist_ok=True)
 
-    def _analyze_data_quality(
-        self, raw_df: pd.DataFrame, processed_df: pd.DataFrame
-    ) -> None:
+    def _analyze_data_quality(self, raw_df: pd.DataFrame, processed_df: pd.DataFrame) -> None:
         """Analyze data quality metrics.
 
         :param raw_df: Raw DataFrame
@@ -120,13 +116,7 @@ class ExploreStage(PipelineStage):
             json.dump(quality_metrics, f, indent=2)
 
         # Log to tracking system
-        self.tracker.log_metrics(
-            {
-                f"quality_{k}_{mk}": mv
-                for k, m in quality_metrics.items()
-                for mk, mv in m.items()
-            }
-        )
+        self.tracker.log_metrics({f"quality_{k}_{mk}": mv for k, m in quality_metrics.items() for mk, mv in m.items()})
 
         # Generate visualizations
         self._plot_quality_metrics(quality_metrics)
@@ -149,9 +139,7 @@ class ExploreStage(PipelineStage):
             "categorical_columns": len(df.select_dtypes(exclude=[np.number]).columns),
         }
 
-    def _analyze_distributions(
-        self, raw_df: pd.DataFrame, processed_df: pd.DataFrame
-    ) -> None:
+    def _analyze_distributions(self, raw_df: pd.DataFrame, processed_df: pd.DataFrame) -> None:
         """Analyze feature distributions.
 
         :param raw_df: Raw DataFrame
@@ -207,9 +195,7 @@ class ExploreStage(PipelineStage):
         )
 
         # Log high correlations
-        high_corr = self._get_high_correlations(
-            corr_matrix, threshold=self.cfg.explore.correlation_threshold
-        )
+        high_corr = self._get_high_correlations(corr_matrix, threshold=self.cfg.explore.correlation_threshold)
         if high_corr:
             logger.warning(f"Found {len(high_corr)} high correlations")
             self.tracker.log_metrics({"high_correlations_count": len(high_corr)})
@@ -233,9 +219,9 @@ class ExploreStage(PipelineStage):
         rf.fit(X, y)
 
         # Calculate feature importance
-        importance = pd.DataFrame(
-            {"feature": X.columns, "importance": rf.feature_importances_}
-        ).sort_values("importance", ascending=False)
+        importance = pd.DataFrame({"feature": X.columns, "importance": rf.feature_importances_}).sort_values(
+            "importance", ascending=False
+        )
 
         # Save feature importance
         importance.to_csv(
@@ -264,9 +250,7 @@ class ExploreStage(PipelineStage):
         y = df[target_col]
 
         # Initialize and train model
-        clf = RandomForestClassifier(
-            n_estimators=100, max_depth=10, random_state=self.cfg.seed
-        )
+        clf = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=self.cfg.seed)
 
         # Initialize Cleanlab
         cl = CleanLearning(clf=clf)
@@ -291,9 +275,7 @@ class ExploreStage(PipelineStage):
         )
 
         # Save results
-        label_issues_df.to_csv(
-            Path(self.cfg.paths.reports) / "cleanlab/label_issues.csv", index=False
-        )
+        label_issues_df.to_csv(Path(self.cfg.paths.reports) / "cleanlab/label_issues.csv", index=False)
 
         # Log metrics
         self.tracker.log_metrics(
@@ -303,9 +285,7 @@ class ExploreStage(PipelineStage):
             }
         )
 
-    def _get_high_correlations(
-        self, corr_matrix: pd.DataFrame, threshold: float = 0.8
-    ) -> List[Tuple[str, str, float]]:
+    def _get_high_correlations(self, corr_matrix: pd.DataFrame, threshold: float = 0.8) -> List[Tuple[str, str, float]]:
         """Get highly correlated feature pairs.
 
         :param corr_matrix: Correlation matrix

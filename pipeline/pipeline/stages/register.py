@@ -9,7 +9,7 @@ from .base import PipelineStage
 logger = logging.getLogger(__name__)
 
 
-class ModelRegistrationStage(PipelineStage):
+class RegisterStage(PipelineStage):
     """Model registration stage."""
 
     def run(self) -> None:
@@ -18,9 +18,7 @@ class ModelRegistrationStage(PipelineStage):
 
         try:
             # Load comparison metrics
-            comparison_path = (
-                Path(self.cfg.paths.metrics) / "evaluation" / "model_comparison.json"
-            )
+            comparison_path = Path(self.cfg.paths.metrics) / "evaluation" / "model_comparison.json"
             comparison_metrics = pd.read_json(comparison_path)
 
             # Register best model

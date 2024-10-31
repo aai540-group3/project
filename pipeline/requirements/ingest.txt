@@ -1,8 +1,9 @@
-pandas
-numpy
-pyarrow
-ucimlrepo
 boto3
-requests
+numpy<2
+pandas
+pyarrow
 python-dotenv
-uv
+requests
+tensorflow
+tensorflow-cpu
+ucimlrepo

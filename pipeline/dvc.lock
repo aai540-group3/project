@@ -1,52 +1,28 @@
 schema: '2.0'
 stages:
   setup:
-    cmd:
-    - pip install uv virtualenv
-    - dvc dag --md >> dag.md
-    - rm -rf .markers
-    - mkdir .markers
-    - echo "done" > .markers/setup.done
-    outs:
-    - path: .markers/setup.done
-      hash: md5
-      md5: 678e5e019a79526d0fcca5e29f6e5f78
-      size: 5
+    cmd: pip install uv virtualenv
   infrastruct:
     cmd:
-    - uv venv .venv-infrastruct --python 3.10
-    - . .venv-infrastruct/bin/activate && uv pip install -r requirements-infrastruct.txt
-    - . .venv-infrastruct/bin/activate && uv pip freeze > requirements-infrastruct-frozen.txt
-    - . .venv-infrastruct/bin/activate && python src/infrastruct.py
-    - echo "done" > .markers/infrastruct.done
+    - uv venv .venv-infrastruct --python 3.11
+    - . .venv-infrastruct/bin/activate && uv pip install -r requirements/base.txt
+    - . .venv-infrastruct/bin/activate && uv pip install -r requirements/infrastruct.txt
+    - . .venv-infrastruct/bin/activate && python pipeline/stages/infrastruct.py
     deps:
-    - path: .markers/setup.done
+    - path: pipeline/stages/base.py
       hash: md5
-      md5: 678e5e019a79526d0fcca5e29f6e5f78
-      size: 5
-    - path: requirements-infrastruct.txt
-      hash: md5
-      md5: 60b865dddcfe1ba5e216406717be77a4
-      size: 19
-    - path: src/infrastruct.py
-      hash: md5
-      md5: 007ddab3349fca1540e75fc7add9923b
-      size: 17745
+      md5: 58bc2d8bf20028beadbfd1ba82d62009
+      size: 7604
       isexec: true
-    outs:
-    - path: .markers/infrastruct.done
+    - path: pipeline/stages/infrastruct.py
       hash: md5
-      md5: 678e5e019a79526d0fcca5e29f6e5f78
+      md5: 43ee859e02f1a8c2cd8428c022db492d
+      size: 17003
+      isexec: true
+    - path: requirements/infrastruct.txt
+      hash: md5
+      md5: 6686853da3491a56c98917cc5c4ddea2
       size: 5
-    - path: .venv-infrastruct
-      hash: md5
-      md5: ef140a34660064bd776dc27b42f2826d.dir
-      size: 18727288
-      nfiles: 1985
-    - path: requirements-infrastruct-frozen.txt
-      hash: md5
-      md5: 7a6a7eeb309a45fd9b797ba5f283ef4e
-      size: 145
   preprocess:
     cmd:
     - uv venv .venv-preprocess --python 3.10
@@ -263,54 +239,42 @@ stages:
       size: 19001
   ingest:
     cmd:
-    - uv venv .venv-ingest --python 3.10
-    - . .venv-ingest/bin/activate && uv pip install -r requirements-ingest.txt
-    - . .venv-ingest/bin/activate && uv pip freeze > requirements-ingest-frozen.txt
-    - . .venv-ingest/bin/activate && python src/ingest.py
-    - echo "done" > .markers/ingest.done
+    - uv venv .venv-ingest --python 3.11
+    - . .venv-ingest/bin/activate && uv pip install -r requirements/base.txt
+    - . .venv-ingest/bin/activate && uv pip install -r requirements/ingest.txt
+    - . .venv-ingest/bin/activate && python pipeline/stages/ingest.py
     deps:
-    - path: .markers/infrastruct.done
+    - path: pipeline/stages/base.py
       hash: md5
-      md5: 678e5e019a79526d0fcca5e29f6e5f78
-      size: 5
-    - path: requirements-ingest.txt
+      md5: 58bc2d8bf20028beadbfd1ba82d62009
+      size: 7604
+      isexec: true
+    - path: pipeline/stages/ingest.py
       hash: md5
-      md5: b6ace7c12bf4b84c615e2b4e80cd6b96
-      size: 81
-    - path: src/ingest.py
+      md5: 44ee96d8cf0b1766fbf826c22453961c
+      size: 14620
+      isexec: true
+    - path: requirements/ingest.txt
       hash: md5
-      md5: 4834dee50d39bc8738573b1d25632ce3
-      size: 2691
+      md5: 910eb7c3ae1b69bd49c676e000caff28
+      size: 87
     outs:
-    - path: .markers/ingest.done
-      hash: md5
-      md5: 678e5e019a79526d0fcca5e29f6e5f78
-      size: 5
-    - path: .venv-ingest
-      hash: md5
-      md5: d8ccf5a525b42ac0882a372eae231c49.dir
-      size: 374796304
-      nfiles: 16220
     - path: data/raw/data.csv
       hash: md5
       md5: 33411fa1536aaaadb24c0c1f2a8598b9
       size: 16246860
     - path: data/raw/data.parquet
       hash: md5
-      md5: 80180ca21b2e0a18573675cdb3f741de
-      size: 1415409
+      md5: 715fc5c0f345a1e7efc9136c4c5da15a
+      size: 1419892
     - path: data/raw/metadata.json
       hash: md5
-      md5: eb8bd36c2cc7a6284a657c63561e0225
-      size: 5125
+      md5: c8df8414d7743e8e95d42b91ef1402d3
+      size: 4903
     - path: data/raw/variables.json
       hash: md5
-      md5: c03764d3560b025c3f1291d585517221
-      size: 19001
-    - path: requirements-ingest-frozen.txt
-      hash: md5
-      md5: bbf7e249541619d0455edee9bfac1e04
-      size: 3220
+      md5: 5444ec5b4ff518e75bc33412ace096ab
+      size: 17054
   train_logistic_regression:
     cmd: .venv/bin/python models/logistic_regression/model.py
     deps:

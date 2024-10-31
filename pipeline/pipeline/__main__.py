@@ -22,9 +22,7 @@ def main(cfg: DictConfig) -> None:
 
     try:
         # Run DVC pipeline
-        result = subprocess.run(
-            ["dvc", "repro", "--force", "--verbose"], check=True, capture_output=True, text=True
-        )
+        result = subprocess.run(["dvc", "repro", "--force", "--verbose"], check=True, capture_output=True, text=True)
         logger.info(f"DVC output:\n{result.stdout}")
 
     except subprocess.CalledProcessError as e:

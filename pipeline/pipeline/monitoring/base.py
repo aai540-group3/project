@@ -12,11 +12,8 @@ from abc import ABC
 from datetime import datetime
 from typing import Dict, List, Optional
 
+from loguru import logger
 from omegaconf import DictConfig
-
-from ..utils.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 class BaseMonitor(ABC):
@@ -120,9 +117,7 @@ class BaseMonitor(ABC):
         except Exception as e:
             logger.error(f"Failed to send email alert: {e}")
 
-    def get_alerts(
-        self, severity: Optional[str] = None, limit: Optional[int] = None
-    ) -> List[Dict]:
+    def get_alerts(self, severity: Optional[str] = None, limit: Optional[int] = None) -> List[Dict]:
         """Get monitoring alerts.
 
         :param severity: Filter by severity level
@@ -134,9 +129,7 @@ class BaseMonitor(ABC):
         """
         filtered_alerts = self.alerts
         if severity:
-            filtered_alerts = [
-                alert for alert in filtered_alerts if alert["severity"] == severity
-            ]
+            filtered_alerts = [alert for alert in filtered_alerts if alert["severity"] == severity]
 
         if limit:
             filtered_alerts = filtered_alerts[-limit:]

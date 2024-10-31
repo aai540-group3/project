@@ -3,12 +3,10 @@ from pathlib import Path
 from typing import Optional
 
 import hydra
-from hydra.core.hydra_config import HydraConfig
 from hydra.utils import get_original_cwd, instantiate, to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 
 from pipeline.utils.experiment import ExperimentTracker
-from pipeline.utils.registry import ModelRegistry
 from pipeline.utils.versioning import DataVersioning
 
 logger = logging.getLogger(__name__)

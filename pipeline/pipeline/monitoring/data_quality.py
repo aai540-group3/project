@@ -107,21 +107,12 @@ class DataQualityMonitor:
             Q3 = data[column].quantile(0.75)
             IQR = Q3 - Q1
             outliers[column] = {
-                "total": (
-                    (data[column] < (Q1 - 1.5 * IQR))
-                    | (data[column] > (Q3 + 1.5 * IQR))
-                ).sum(),
-                "percentage": (
-                    (data[column] < (Q1 - 1.5 * IQR))
-                    | (data[column] > (Q3 + 1.5 * IQR))
-                ).mean()
-                * 100,
+                "total": ((data[column] < (Q1 - 1.5 * IQR)) | (data[column] > (Q3 + 1.5 * IQR))).sum(),
+                "percentage": ((data[column] < (Q1 - 1.5 * IQR)) | (data[column] > (Q3 + 1.5 * IQR))).mean() * 100,
             }
         return outliers
 
-    def _check_distribution_drift(
-        self, reference_stats: Dict, current_stats: Dict
-    ) -> Dict:
+    def _check_distribution_drift(self, reference_stats: Dict, current_stats: Dict) -> Dict:
         """Check distribution drift using KS test.
 
         Args:
@@ -139,9 +130,7 @@ class DataQualityMonitor:
             curr_std = current_stats[column]["std"]
 
             # Calculate standardized difference
-            effect_size = abs(ref_mean - curr_mean) / np.sqrt(
-                (ref_std**2 + curr_std**2) / 2
-            )
+            effect_size = abs(ref_mean - curr_mean) / np.sqrt((ref_std**2 + curr_std**2) / 2)
 
             drift[column] = {
                 "effect_size": effect_size,

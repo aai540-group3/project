@@ -1,11 +1,10 @@
+boto3
 fastapi
-uvicorn
 gunicorn
-pydantic
-prometheus-client
-python-jose[cryptography]
 passlib[bcrypt]
+prometheus-client
+pydantic
+python-jose[cryptography]
 python-multipart
 redis
-boto3
-mlflow
+uvicorn

@@ -18,19 +18,14 @@ class HuggingFaceDeployer:
         self.api = HfApi(token=cfg.huggingface.token)
         self.repo_id = cfg.huggingface.repo_id
 
-    def prepare_model_card(
-        self, metrics: Dict[str, float], feature_info: Dict[str, List[str]]
-    ) -> ModelCard:
+    def prepare_model_card(self, metrics: Dict[str, float], feature_info: Dict[str, List[str]]) -> ModelCard:
         """Create model card with metadata."""
         card_data = {
             "language": "en",
             "license": "mit",
             "library_name": "scikit-learn",
             "tags": ["tabular-classification", "diabetes", "healthcare"],
-            "metrics": [
-                {"type": metric, "value": value, "name": metric}
-                for metric, value in metrics.items()
-            ],
+            "metrics": [{"type": metric, "value": value, "name": metric} for metric, value in metrics.items()],
         }
 
         # Create detailed model card content
@@ -102,9 +97,7 @@ The model was trained on the Diabetes 130-US hospitals dataset.
 
     def _format_metrics(self, metrics: Dict[str, float]) -> str:
         """Format metrics for model card."""
-        return "\n".join(
-            [f"- {metric}: {value:.4f}" for metric, value in metrics.items()]
-        )
+        return "\n".join([f"- {metric}: {value:.4f}" for metric, value in metrics.items()])
 
     def _format_features(self, feature_info: Dict[str, List[str]]) -> str:
         """Format feature information for model card."""
@@ -114,9 +107,7 @@ The model was trained on the Diabetes 130-US hospitals dataset.
             sections.append(f"### {group}\n{features_str}")
         return "\n\n".join(sections)
 
-    def _create_config_files(
-        self, output_dir: Path, feature_info: Dict[str, List[str]]
-    ) -> None:
+    def _create_config_files(self, output_dir: Path, feature_info: Dict[str, List[str]]) -> None:
         """Create necessary configuration files."""
         # Create config.json
         config = {

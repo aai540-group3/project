@@ -20,8 +20,6 @@ from sklearn.preprocessing import StandardScaler
 
 from .logging import get_logger
 
-logger = get_logger(__name__)
-
 
 def plot_roc_curves(
     y_true: np.ndarray,
@@ -118,11 +116,7 @@ def plot_feature_importance(
     for model_name, scores in feature_importance.items():
         if scores is None:
             continue
-        normalized_scores = (
-            StandardScaler()
-            .fit_transform(np.array(list(scores.values())).reshape(-1, 1))
-            .ravel()
-        )
+        normalized_scores = StandardScaler().fit_transform(np.array(list(scores.values())).reshape(-1, 1)).ravel()
         combined_scores[model_name] = dict(zip(scores.keys(), normalized_scores))
 
     if not combined_scores:

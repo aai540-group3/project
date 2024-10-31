@@ -1,5 +1,5 @@
 """
-Model Evaluation Stage
+Evaluate Stage
 ===================
 
 .. module:: pipeline.stages.evaluate
@@ -13,21 +13,15 @@ from typing import Dict
 
 import mlflow
 import pandas as pd
+from loguru import logger
 
 from pipeline.stages.base import PipelineStage
-from pipeline.utils.logging import get_logger
 
 from ..utils.metrics import calculate_metrics, get_confusion_matrix
-from ..utils.visualization import (
-    plot_confusion_matrices,
-    plot_feature_importance,
-    plot_roc_curves,
-)
-
-logger = get_logger(__name__)
+from ..utils.visualization import plot_confusion_matrices, plot_feature_importance, plot_roc_curves
 
 
-class EvaluationStage(PipelineStage):
+class EvaluateStage(PipelineStage):
     """Model evaluation and comparison stage.
 
     :param cfg: Stage configuration
@@ -71,9 +65,7 @@ class EvaluationStage(PipelineStage):
             logger.error(f"Evaluation failed: {str(e)}")
             raise RuntimeError(f"Evaluation failed: {str(e)}")
 
-    def _evaluate_model(
-        self, model_name: str, X_test: pd.DataFrame, y_test: pd.Series
-    ) -> Dict:
+    def _evaluate_model(self, model_name: str, X_test: pd.DataFrame, y_test: pd.Series) -> Dict:
         """Evaluate single model.
 
         :param model_name: Name of the model
@@ -95,20 +87,14 @@ class EvaluationStage(PipelineStage):
         y_pred_proba = model.predict_proba(X_test)[:, 1]
 
         # Calculate metrics
-        metrics = calculate_metrics(
-            y_test, y_pred, y_pred_proba, self.cfg.evaluation.metrics
-        )
+        metrics = calculate_metrics(y_test, y_pred, y_pred_proba, self.cfg.evaluation.metrics)
 
         # Calculate confusion matrix
         cm, cm_metrics = get_confusion_matrix(y_test, y_pred)
         metrics.update(cm_metrics)
 
         # Get feature importance if available
-        feature_importance = (
-            model.feature_importance(X_test)
-            if hasattr(model, "feature_importance")
-            else None
-        )
+        feature_importance = model.feature_importance(X_test) if hasattr(model, "feature_importance") else None
 
         return {
             "metrics": metrics,
@@ -116,9 +102,7 @@ class EvaluationStage(PipelineStage):
             "predictions": {"y_pred": y_pred, "y_pred_proba": y_pred_proba},
         }
 
-    def _generate_comparison_plots(
-        self, y_test: pd.Series, predictions: Dict, feature_importance: Dict
-    ) -> None:
+    def _generate_comparison_plots(self, y_test: pd.Series, predictions: Dict, feature_importance: Dict) -> None:
         """Generate comparison plots.
 
         :param y_test: True labels
@@ -183,6 +167,4 @@ class EvaluationStage(PipelineStage):
         logger.info(f"Best model: {best_model} ({metric}={best_score:.4f})")
 
         # Log to tracking systems
-        self.log_metrics(
-            {"best_model_score": best_score, "best_model_name": best_model}
-        )
+        self.log_metrics({"best_model_score": best_score, "best_model_name": best_model})

@@ -4,15 +4,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import pandas as pd
-from feast import (
-    Entity,
-    Feature,
-    FeatureService,
-    FeatureStore,
-    FeatureView,
-    FileSource,
-    ValueType,
-)
+from feast import Entity, Feature, FeatureService, FeatureStore, FeatureView, FileSource, ValueType
 from feast.repo_config import RepoConfig
 
 logger = logging.getLogger(__name__)
@@ -70,10 +62,7 @@ class DiabetesFeatureStore:
                 created_timestamp_column="created_timestamp",
             )
 
-            features = [
-                Feature(name=feat_name, dtype=ValueType.FLOAT)
-                for feat_name in group.features
-            ]
+            features = [Feature(name=feat_name, dtype=ValueType.FLOAT) for feat_name in group.features]
 
             view = FeatureView(
                 name=f"{group.name}_view",
@@ -93,9 +82,7 @@ class DiabetesFeatureStore:
 
         self.store.apply([*self.feature_views.values()])
 
-    def get_historical_features(
-        self, entity_df: pd.DataFrame, feature_refs: List[str]
-    ) -> pd.DataFrame:
+    def get_historical_features(self, entity_df: pd.DataFrame, feature_refs: List[str]) -> pd.DataFrame:
         """Get historical features.
 
         Args:
@@ -108,9 +95,7 @@ class DiabetesFeatureStore:
         if not self.store:
             raise RuntimeError("Feature store not initialized")
 
-        return self.store.get_historical_features(
-            entity_df=entity_df, features=feature_refs
-        ).to_df()
+        return self.store.get_historical_features(entity_df=entity_df, features=feature_refs).to_df()
 
     def materialize_incremental(self, end_date: datetime) -> None:
         """Materialize features incrementally.
@@ -135,9 +120,7 @@ class DiabetesFeatureStore:
         if not self.store:
             raise RuntimeError("Feature store not initialized")
 
-        return self.store.get_online_features(
-            entity_rows=entity_rows, features=self._get_all_feature_refs()
-        ).to_dict()
+        return self.store.get_online_features(entity_rows=entity_rows, features=self._get_all_feature_refs()).to_dict()
 
     def _get_all_feature_refs(self) -> List[str]:
         """Get all feature references.

@@ -13,9 +13,7 @@ import json
 from pathlib import Path
 from typing import Dict, Optional
 
-from ..utils.logging import get_logger
-
-logger = get_logger(__name__)
+from loguru import logger
 
 
 class VersionControl:
@@ -61,9 +59,7 @@ class VersionControl:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
 
-    def register_version(
-        self, name: str, path: Path, metadata: Optional[Dict] = None
-    ) -> str:
+    def register_version(self, name: str, path: Path, metadata: Optional[Dict] = None) -> str:
         """Register new version.
 
         :param name: Version name
@@ -80,9 +76,7 @@ class VersionControl:
         if name not in self.versions:
             self.versions[name] = []
 
-        self.versions[name].append(
-            {"hash": version_hash, "path": str(path), "metadata": metadata or {}}
-        )
+        self.versions[name].append({"hash": version_hash, "path": str(path), "metadata": metadata or {}})
 
         self._save_versions()
         return version_hash

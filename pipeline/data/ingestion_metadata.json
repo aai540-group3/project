@@ -1,0 +1,28 @@
+{
+  "ingestion": {
+    "sources_processed": [
+      "Diabetes 130-US hospitals"
+    ],
+    "status": {
+      "successful": [
+        "Diabetes 130-US hospitals"
+      ],
+      "failed": []
+    },
+    "execution_time": 14.207011699676514
+  },
+  "config": {
+    "enabled": true,
+    "deps": [
+      "pipeline/stages/ingest.py",
+      "conf/data/sources.yaml"
+    ],
+    "params": [
+      "data.sources",
+      "paths"
+    ],
+    "tracking": {
+      "enabled": false
+    }
+  }
+}

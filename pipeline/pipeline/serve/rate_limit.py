@@ -22,15 +22,11 @@ class RateLimiter:
             rate_limit: Maximum requests per time window
             time_window: Time window in seconds
         """
-        self.redis_client = redis.Redis(
-            host=redis_host, port=redis_port, decode_responses=True
-        )
+        self.redis_client = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
         self.rate_limit = rate_limit
         self.time_window = time_window
 
-    async def check_rate_limit(
-        self, request: Request, key: Optional[str] = None
-    ) -> None:
+    async def check_rate_limit(self, request: Request, key: Optional[str] = None) -> None:
         """Check rate limit for request.
 
         Args:

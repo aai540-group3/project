@@ -17,9 +17,7 @@ class SecurityHandler:
         self.algorithm = "HS256"
         self.security = HTTPBearer()
 
-    def create_access_token(
-        self, data: Dict, expires_delta: Optional[timedelta] = None
-    ) -> str:
+    def create_access_token(self, data: Dict, expires_delta: Optional[timedelta] = None) -> str:
         """Create JWT access token.
 
         Args:
@@ -39,9 +37,7 @@ class SecurityHandler:
         encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return encoded_jwt
 
-    def verify_token(
-        self, credentials: HTTPAuthorizationCredentials = Security(HTTPBearer())
-    ) -> Dict:
+    def verify_token(self, credentials: HTTPAuthorizationCredentials = Security(HTTPBearer())) -> Dict:
         """Verify JWT token.
 
         Args:
@@ -54,16 +50,12 @@ class SecurityHandler:
             HTTPException: If token is invalid
         """
         try:
-            payload = jwt.decode(
-                credentials.credentials, self.secret_key, algorithms=[self.algorithm]
-            )
+            payload = jwt.decode(credentials.credentials, self.secret_key, algorithms=[self.algorithm])
             return payload
         except jwt.ExpiredSignatureError:
             raise HTTPException(status_code=401, detail="Token has expired")
         except jwt.JWTError:
-            raise HTTPException(
-                status_code=401, detail="Could not validate credentials"
-            )
+            raise HTTPException(status_code=401, detail="Could not validate credentials")
 
     def verify_api_key(self, api_key: str) -> bool:
         """Verify API key.

@@ -14,14 +14,12 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from loguru import logger
 from omegaconf import DictConfig
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.class_weight import compute_class_weight
 
-from ..utils.logging import get_logger
 from .base import BaseModel
-
-logger = get_logger(__name__)
 
 
 class NeuralNetworkModel(BaseModel):
@@ -52,11 +50,7 @@ class NeuralNetworkModel(BaseModel):
         :rtype: tf.keras.Model
         """
         # Get architecture config based on mode
-        arch_cfg = (
-            self.cfg.quick_mode.architecture
-            if self.cfg.experiment.name == "quick"
-            else self.cfg.architecture
-        )
+        arch_cfg = self.cfg.quick_mode.architecture if self.cfg.experiment.name == "quick" else self.cfg.architecture
 
         # Build layers
         layers = []
@@ -72,9 +66,7 @@ class NeuralNetworkModel(BaseModel):
 
         # Hidden layers
         for layer_cfg in arch_cfg.hidden_layers:
-            x = tf.keras.layers.Dense(
-                units=layer_cfg.units, activation=layer_cfg.activation
-            )(x)
+            x = tf.keras.layers.Dense(units=layer_cfg.units, activation=layer_cfg.activation)(x)
 
             if layer_cfg.get("batch_norm", False):
                 x = tf.keras.layers.BatchNormalization()(x)
@@ -126,11 +118,7 @@ class NeuralNetworkModel(BaseModel):
         :return: Loss function
         :rtype: Any
         """
-        train_cfg = (
-            self.cfg.quick_mode.training
-            if self.cfg.experiment.name == "quick"
-            else self.cfg.training
-        )
+        train_cfg = self.cfg.quick_mode.training if self.cfg.experiment.name == "quick" else self.cfg.training
         return train_cfg.loss
 
     def _get_metrics(self) -> List[str]:
@@ -139,15 +127,8 @@ class NeuralNetworkModel(BaseModel):
         :return: List of metrics
         :rtype: List[str]
         """
-        train_cfg = (
-            self.cfg.quick_mode.training
-            if self.cfg.experiment.name == "quick"
-            else self.cfg.training
-        )
-        return [
-            tf.keras.metrics.get(metric) if isinstance(metric, str) else metric
-            for metric in train_cfg.metrics
-        ]
+        train_cfg = self.cfg.quick_mode.training if self.cfg.experiment.name == "quick" else self.cfg.training
+        return [tf.keras.metrics.get(metric) if isinstance(metric, str) else metric for metric in train_cfg.metrics]
 
     def _get_callbacks(self) -> List[tf.keras.callbacks.Callback]:
         """Get callbacks from configuration.
@@ -155,19 +136,13 @@ class NeuralNetworkModel(BaseModel):
         :return: List of callbacks
         :rtype: List[tf.keras.callbacks.Callback]
         """
-        train_cfg = (
-            self.cfg.quick_mode.training
-            if self.cfg.experiment.name == "quick"
-            else self.cfg.training
-        )
+        train_cfg = self.cfg.quick_mode.training if self.cfg.experiment.name == "quick" else self.cfg.training
 
         callbacks = []
 
         # Early stopping
         if train_cfg.get("early_stopping"):
-            callbacks.append(
-                tf.keras.callbacks.EarlyStopping(**train_cfg.early_stopping)
-            )
+            callbacks.append(tf.keras.callbacks.EarlyStopping(**train_cfg.early_stopping))
 
         # Model checkpoint
         if train_cfg.get("model_checkpoint"):
@@ -188,11 +163,7 @@ class NeuralNetworkModel(BaseModel):
         :return: Class weights dictionary or None
         :rtype: Optional[Dict[int, float]]
         """
-        train_cfg = (
-            self.cfg.quick_mode.training
-            if self.cfg.experiment.name == "quick"
-            else self.cfg.training
-        )
+        train_cfg = self.cfg.quick_mode.training if self.cfg.experiment.name == "quick" else self.cfg.training
 
         if train_cfg.get("class_weight") == "balanced":
             classes = np.unique(y)
@@ -231,11 +202,7 @@ class NeuralNetworkModel(BaseModel):
             self.model = self._build_model(X_train.shape[1])
 
             # Get training configuration
-            train_cfg = (
-                self.cfg.quick_mode.training
-                if self.cfg.experiment.name == "quick"
-                else self.cfg.training
-            )
+            train_cfg = self.cfg.quick_mode.training if self.cfg.experiment.name == "quick" else self.cfg.training
 
             # Calculate class weights if enabled
             class_weights = self._get_class_weights(y_train)

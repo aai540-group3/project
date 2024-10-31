@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 from typing import Dict
@@ -11,7 +12,7 @@ from .base import PipelineStage
 logger = logging.getLogger(__name__)
 
 
-class OptimizationStage(PipelineStage):
+class OptimizeStage(PipelineStage):
     """Hyperparameter optimization stage."""
 
     def run(self) -> None:
@@ -45,30 +46,20 @@ class OptimizationStage(PipelineStage):
                 metric_value = model.metrics[self.cfg.optimize.metric]
 
                 # Log to MLflow
-                self.tracker.log_metrics(
-                    {
-                        f"trial_{trial.number}_{self.cfg.optimize.metric}": metric_value
-                    }
-                )
+                self.tracker.log_metrics({f"trial_{trial.number}_{self.cfg.optimize.metric}": metric_value})
 
                 return metric_value
 
             # Run optimization
-            best_params = optimizer.optimize(
-                objective, direction=self.cfg.optimize.direction
-            )
+            best_params = optimizer.optimize(objective, direction=self.cfg.optimize.direction)
 
             # Log best parameters
-            self.tracker.log_params(
-                {"best_params": best_params, "best_value": optimizer.best_value}
-            )
+            self.tracker.log_params({"best_params": best_params, "best_value": optimizer.best_value})
 
             # Save results
             self._save_results(optimizer)
 
-            logger.info(
-                f"Best {self.cfg.optimize.metric}: " f"{optimizer.best_value:.4f}"
-            )
+            logger.info(f"Best {self.cfg.optimize.metric}: " f"{optimizer.best_value:.4f}")
 
         finally:
             self.tracker.end_run()
@@ -86,13 +77,9 @@ class OptimizationStage(PipelineStage):
 
         for name, space in self.cfg.optimize.param_space.items():
             if space.type == "float":
-                params[name] = trial.suggest_float(
-                    name, space.low, space.high, log=space.get("log", False)
-                )
+                params[name] = trial.suggest_float(name, space.low, space.high, log=space.get("log", False))
             elif space.type == "int":
-                params[name] = trial.suggest_int(
-                    name, space.low, space.high, log=space.get("log", False)
-                )
+                params[name] = trial.suggest_int(name, space.low, space.high, log=space.get("log", False))
             elif space.type == "categorical":
                 params[name] = trial.suggest_categorical(name, space.choices)
             else:
@@ -143,9 +130,7 @@ class OptimizationStage(PipelineStage):
 
             # Parameter importance plot
             importances = optuna.importance.get_param_importances(optimizer.study)
-            fig = go.Figure(
-                [go.Bar(x=list(importances.keys()), y=list(importances.values()))]
-            )
+            fig = go.Figure([go.Bar(x=list(importances.keys()), y=list(importances.values()))])
             fig.update_layout(
                 title="Parameter Importance",
                 xaxis_title="Parameter",

@@ -13,12 +13,9 @@ from typing import Dict
 
 import numpy as np
 import pandas as pd
+from loguru import logger
 from omegaconf import DictConfig
 from scipy import stats
-
-from ..utils.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 class DriftDetector:
@@ -70,9 +67,7 @@ class DriftDetector:
         :rtype: Dict[str, float]
         """
         if len(current_data) < self.cfg.min_samples:
-            logger.warning(
-                f"Insufficient samples for drift detection: {len(current_data)}"
-            )
+            logger.warning(f"Insufficient samples for drift detection: {len(current_data)}")
             return {}
 
         self.current_stats = self._calculate_statistics(current_data)
@@ -164,27 +159,13 @@ class DriftDetector:
         """
         return {
             "timestamp": datetime.now().isoformat(),
-            "reference_update": self.last_update.isoformat()
-            if self.last_update
-            else None,
+            "reference_update": self.last_update.isoformat() if self.last_update else None,
             "drift_scores": self.drift_scores,
-            "drifted_features": [
-                feature
-                for feature, score in self.drift_scores.items()
-                if score > self.cfg.threshold
-            ],
+            "drifted_features": [feature for feature, score in self.drift_scores.items() if score > self.cfg.threshold],
             "summary": {
-                "max_drift": max(self.drift_scores.values())
-                if self.drift_scores
-                else 0,
-                "mean_drift": np.mean(list(self.drift_scores.values()))
-                if self.drift_scores
-                else 0,
-                "drifted_feature_count": sum(
-                    1
-                    for score in self.drift_scores.values()
-                    if score > self.cfg.threshold
-                ),
+                "max_drift": max(self.drift_scores.values()) if self.drift_scores else 0,
+                "mean_drift": np.mean(list(self.drift_scores.values())) if self.drift_scores else 0,
+                "drifted_feature_count": sum(1 for score in self.drift_scores.values() if score > self.cfg.threshold),
             },
         }
 

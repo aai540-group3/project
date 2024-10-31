@@ -8,15 +8,16 @@ Logging Configuration
 .. moduleauthor:: aai540-group3
 """
 
-from loguru import logger, Logger
 import sys
 from pathlib import Path
-from omegaconf import DictConfig
 from typing import Optional
+
+import loguru
+from omegaconf import DictConfig
 from rich.logging import RichHandler
 
 
-def setup_logging(cfg: Optional[DictConfig] = None) -> Logger:
+def setup_logging(cfg: Optional[DictConfig] = None) -> loguru._Logger:
     """
     Set up logging configuration using Loguru and Rich based on the provided configuration.
 
@@ -27,18 +28,18 @@ def setup_logging(cfg: Optional[DictConfig] = None) -> Logger:
     :raises OSError: If log file cannot be created
     """
     if not cfg or not cfg.get("enabled", True):
-        logger.disable("pipeline")
-        return logger
+        loguru.logger.disable("pipeline")
+        return loguru.logger
 
     # Remove the default Loguru handler to prevent duplicate logs
-    logger.remove()
+    loguru.logger.remove()
 
     # Set global log levels with colors
-    logger.level("DEBUG", color="<cyan>{level}</cyan>")
-    logger.level("INFO", color="<green>{level}</green>")
-    logger.level("WARNING", color="<yellow>{level}</yellow>")
-    logger.level("ERROR", color="<red>{level}</red>")
-    logger.level("CRITICAL", color="<magenta>{level}</magenta>")
+    loguru.logger.level("DEBUG", color="<cyan>{level}</cyan>")
+    loguru.logger.level("INFO", color="<green>{level}</green>")
+    loguru.logger.level("WARNING", color="<yellow>{level}</yellow>")
+    loguru.logger.level("ERROR", color="<red>{level}</red>")
+    loguru.logger.level("CRITICAL", color="<magenta>{level}</magenta>")
 
     # Console handler setup with Rich
     console_cfg = cfg.get("console", {})
@@ -54,13 +55,10 @@ def setup_logging(cfg: Optional[DictConfig] = None) -> Logger:
                 rich_tracebacks=True,  # Enables Rich's enhanced tracebacks
                 markup=console_cfg.get("colored", True),
             )
-            logger.add(
-                rich_handler,
-                enqueue=True
-            )
+            loguru.logger.add(rich_handler, enqueue=True)
         else:
             # Traditional Loguru console handler
-            logger.add(
+            loguru.logger.add(
                 sys.stdout,
                 level=console_cfg.get("level", "DEBUG"),
                 format=console_cfg.get(
@@ -68,7 +66,7 @@ def setup_logging(cfg: Optional[DictConfig] = None) -> Logger:
                     "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} - {message}",
                 ),
                 colorize=console_cfg.get("colored", True),
-                enqueue=True
+                enqueue=True,
             )
 
     # File handler setup
@@ -77,7 +75,7 @@ def setup_logging(cfg: Optional[DictConfig] = None) -> Logger:
         log_file = Path(file_cfg.get("path", "pipeline.log"))
         try:
             log_file.parent.mkdir(parents=True, exist_ok=True)
-            logger.add(
+            loguru.logger.add(
                 str(log_file),
                 level=file_cfg.get("level", "INFO"),
                 format=file_cfg.get(
@@ -87,8 +85,8 @@ def setup_logging(cfg: Optional[DictConfig] = None) -> Logger:
                 rotation=file_cfg.get("rotation", "1 day"),
                 retention=file_cfg.get("retention", "7 days"),
                 compression=file_cfg.get("compression", "zip"),
-                encoding='utf-8',
-                enqueue=True
+                encoding="utf-8",
+                enqueue=True,
             )
         except OSError as e:
             raise OSError(f"Failed to create log file: {e}")
@@ -98,14 +96,14 @@ def setup_logging(cfg: Optional[DictConfig] = None) -> Logger:
     for logger_name, logger_settings in loggers_cfg.items():
         # Loguru does not support named loggers like the standard logging module.
         # However, you can bind context to log messages to simulate named loggers.
-        # Here, we'll add a sink with a filter based on the logger name.
-        logger.add(
+        # Here, we'll add a sink with a filter based on the loguru.logger name.
+        loguru.logger.add(
             sys.stdout,
             level=logger_settings.get("level", "INFO"),
             format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} - {message}",
             filter=lambda record, name=logger_name: name in record["name"],
             colorize=logger_settings.get("colored", True),
-            enqueue=True
+            enqueue=True,
         )
 
     # Exception handling to log uncaught exceptions
@@ -113,14 +111,14 @@ def setup_logging(cfg: Optional[DictConfig] = None) -> Logger:
         if issubclass(exc_type, KeyboardInterrupt):
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
-        logger.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+        loguru.logger.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
 
     sys.excepthook = handle_exception
 
-    return logger
+    return loguru.logger
 
 
-def get_logger(name: Optional[str] = None, cfg: Optional[DictConfig] = None) -> Logger:
+def get_logger(name: Optional[str] = None, cfg: Optional[DictConfig] = None) -> loguru._Logger:
     """
     Get or create a logger with the specified name based on the config.
 
@@ -129,9 +127,9 @@ def get_logger(name: Optional[str] = None, cfg: Optional[DictConfig] = None) -> 
     :param cfg: Configuration object containing logging settings
     :type cfg: Optional[DictConfig]
     :return: Logger instance
-    :rtype: Logger
+    :rtype: loguru.Logger
     """
     setup_logging(cfg)
     if name:
-        return logger.bind(name=name)
-    return logger
+        return loguru.logger.bind(name=name)
+    return loguru.logger

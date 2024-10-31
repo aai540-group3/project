@@ -14,12 +14,10 @@ from typing import Dict, Optional
 import numpy as np
 import pandas as pd
 from autogluon.tabular import TabularPredictor
+from loguru import logger
 from omegaconf import DictConfig
 
-from ..utils.logging import get_logger
 from .base import BaseModel
-
-logger = get_logger(__name__)
 
 
 class AutoGluonModel(BaseModel):
@@ -49,9 +47,7 @@ class AutoGluonModel(BaseModel):
             "label": model_cfg.label,
             "problem_type": model_cfg.problem_type,
             "eval_metric": model_cfg.eval_metric,
-            "path": str(
-                Path(self.cfg.model_path) / f"autogluon_{self.cfg.experiment.name}"
-            ),
+            "path": str(Path(self.cfg.model_path) / f"autogluon_{self.cfg.experiment.name}"),
             "verbosity": model_cfg.verbosity,
         }
 
@@ -61,11 +57,7 @@ class AutoGluonModel(BaseModel):
         :return: Training arguments
         :rtype: Dict
         """
-        train_cfg = (
-            self.cfg.quick_mode.training
-            if self.cfg.experiment.name == "quick"
-            else self.cfg.training
-        )
+        train_cfg = self.cfg.quick_mode.training if self.cfg.experiment.name == "quick" else self.cfg.training
 
         return {
             "time_limit": train_cfg.time_limit,
@@ -110,9 +102,7 @@ class AutoGluonModel(BaseModel):
 
             # Train model
             train_args = self._get_training_args()
-            self.predictor.fit(
-                train_data=train_data, tuning_data=val_data, **train_args, **kwargs
-            )
+            self.predictor.fit(train_data=train_data, tuning_data=val_data, **train_args, **kwargs)
 
             # Calculate validation metrics
             if val_data is not None:

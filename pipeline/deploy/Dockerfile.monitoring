@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt requirements-monitoring.txt ./
-RUN pip install --no-cache-dir -r requirements.txt -r requirements-monitoring.txt
+COPY requirements.txt monitoring.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -r monitoring.txt
 
 # Copy application code
 COPY pipeline/ pipeline/

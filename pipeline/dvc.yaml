@@ -2,278 +2,221 @@ stages:
   infrastruct:
     cmd:
       - uv venv .venv-infrastruct --python 3.11
-      - uv pip install -r requirements/requirements-infrastruct.txt --python .venv-infrastruct/bin/python
-      - uv pip install -e . --python .venv-infrastruct/bin/python
+      - . .venv-infrastruct/bin/activate && uv pip install -q -r requirements/base.txt
+      - . .venv-infrastruct/bin/activate && uv pip install -q -r requirements/infrastruct.txt
       - . .venv-infrastruct/bin/activate && python pipeline/stages/infrastruct.py
     deps:
+      - pipeline/stages/base.py
       - pipeline/stages/infrastruct.py
-      - conf/infrastructure/aws.yaml
-      - requirements/requirements-infrastruct.txt
-    params:
-      - aws
-      - paths
-    outs:
-      - infrastructure/metadata.json:
-          cache: false
-    metrics:
-      - metrics/infrastructure/resources.json:
-          cache: false
+      - requirements/infrastruct.txt
 
   ingest:
-    cmd: >
-      uv venv .venv-ingest && \
-      uv pip install -r requirements/requirements-ingest.txt --python .venv-ingest/bin/python && \
-      uv pip install -e . --python .venv-ingest/bin/python && \
-      .venv-ingest/bin/python pipeline/stages/ingest.py
+    cmd:
+      - uv venv .venv-ingest --python 3.11
+      - . .venv-ingest/bin/activate && uv pip install -q -r requirements/base.txt
+      - . .venv-ingest/bin/activate && uv pip install -q -r requirements/ingest.txt
+      - . .venv-ingest/bin/activate && python pipeline/stages/ingest.py
     deps:
+      - pipeline/stages/base.py
       - pipeline/stages/ingest.py
-      - conf/data/sources.yaml
       - requirements/ingest.txt
-    params:
-      - data.sources
-      - paths
     outs:
       - data/raw/data.parquet
       - data/raw/data.csv
       - data/raw/metadata.json
       - data/raw/variables.json
 
-  prepare:
-    cmd: >
-      uv venv .venv-preprocess && \
-      uv pip install -r requirements/requirements-preprocess.txt --python .venv-preprocess/bin/python && \
-      uv pip install -e . --python .venv-preprocess/bin/python && \
-      .venv-preprocess/bin/python pipeline/stages/prepare.py
+  preprocess:
+    cmd:
+      - uv venv .venv-preprocess --python 3.11
+      - . .venv-preprocess/bin/activate && uv pip install -r requirements/base.txt
+      - . .venv-preprocess/bin/activate && uv pip install -r requirements/preprocess.txt
+      - . .venv-preprocess/bin/activate && python pipeline/stages/preprocess.py
     deps:
-      - pipeline/stages/prepare.py
+      - pipeline/stages/base.py
+      - pipeline/stages/preprocess.py
       - data/raw/data.csv
-      - conf/data/preprocessing.yaml
       - requirements/preprocess.txt
-    params:
-      - data.preprocessing
-      - data.splits
-      - paths
     outs:
-      - data/interim/train.parquet
-      - data/interim/val.parquet
-      - data/interim/test.parquet
+      - data/interim/data_cleaned.parquet
+      - data/interim/feature_names.csv
+      - data/interim/preprocessing_metadata.json
     metrics:
-      - metrics/data/data_stats.json:
-          cache: false
+      - metrics/data/preprocess/data_stats.json
+      - metrics/preprocess/feature_stats.json
+      - metrics/preprocess/data_quality.json
     plots:
       - metrics/plots/data_distribution.png
+      - metrics/plots/feature_distributions.png
+      - metrics/plots/correlation_matrix.png
+      - metrics/plots/target_distribution.png
 
   explore:
-    cmd: >
-      uv venv .venv-explore && \
-      uv pip install -r requirements/requirements-explore.txt --python .venv-explore/bin/python && \
-      uv pip install -e . --python .venv-explore/bin/python && \
-      .venv-explore/bin/python pipeline/stages/explore.py
+    cmd:
+      - uv venv .venv-explore --python 3.11
+      - . .venv-explore/bin/activate && uv pip install -r requirements/base.txt
+      - . .venv-explore/bin/activate && uv pip install -r requirements/explore.txt
+      - . .venv-explore/bin/activate && python pipeline/stages/explore.py
     deps:
+      - pipeline/stages/base.py
       - pipeline/stages/explore.py
       - data/raw/data.csv
       - data/interim/data_cleaned.parquet
-      - conf/explore/analysis.yaml
       - requirements/explore.txt
-    params:
-      - explore
-      - paths
     metrics:
-      - metrics/explore/data_quality.json:
-          cache: false
+      - metrics/explore/data_quality.json
     plots:
       - metrics/plots/explore/feature_distributions.png
       - metrics/plots/explore/correlation_matrix.png
       - metrics/plots/explore/target_distribution.png
 
   featurize:
-    cmd: >
-      uv venv .venv-featurize && \
-      uv pip install -r requirements/requirements-featurize.txt --python .venv-featurize/bin/python && \
-      uv pip install -e . --python .venv-featurize/bin/python && \
-      .venv-featurize/bin/python pipeline/stages/featurize.py
+    cmd:
+      - uv venv .venv-featurize --python 3.11
+      - . .venv-featurize/bin/activate && uv pip install -r requirements/base.txt
+      - . .venv-featurize/bin/activate && uv pip install -r requirements/featurize.txt
+      - . .venv-featurize/bin/activate && python pipeline/stages/featurize.py
     deps:
+      - pipeline/stages/base.py
       - pipeline/stages/featurize.py
       - data/interim/train.parquet
       - data/interim/val.parquet
       - data/interim/test.parquet
-      - conf/features/engineering.yaml
       - requirements/featurize.txt
-    params:
-      - features
-      - paths
     outs:
       - data/processed/train_features.parquet
       - data/processed/val_features.parquet
       - data/processed/test_features.parquet
       - models/preprocessor.joblib
     metrics:
-      - metrics/features/feature_stats.json:
-          cache: false
+      - metrics/features/featurize/feature_stats.json
     plots:
-      - metrics/plots/feature_distributions.png
-      - metrics/plots/correlation_matrix.png
+      - metrics/plots/featurize/feature_distributions.png
+      - metrics/plots/featurize/correlation_matrix.png
 
   optimize:
     foreach: ${model_types}
     do:
-      cmd: >
-        uv venv .venv-optimize && \
-        uv pip install -r requirements/requirements-optimize.txt --python .venv-optimize/bin/python && \
-        uv pip install -e . --python .venv-optimize/bin/python && \
-        .venv-optimize/bin/python pipeline/stages/optimize.py model=${item}
+      cmd:
+        - uv venv .venv-optimize --python 3.11
+        - . .venv-optimize/bin/activate && uv pip install -r requirements/base.txt
+        - . .venv-optimize/bin/activate && uv pip install -r requirements/optimize.txt
+        - . .venv-optimize/bin/activate && python pipeline/stages/optimize.py model=${item}
       deps:
         - pipeline/stages/optimize.py
         - pipeline/models/${item}.py
         - data/processed/train_features.parquet
         - data/processed/val_features.parquet
         - requirements/optimize.txt
-      params:
-        - model.${item}
-        - optimization
-        - paths
       metrics:
-        - metrics/optimization/${item}/trials.json:
-            cache: false
+        - metrics/optimize/${item}/trials.json
       plots:
-        - metrics/plots/optimization/${item}/parameter_importance.png
-        - metrics/plots/optimization/${item}/optimization_history.png
+        - metrics/plots/optimize/${item}/parameter_importance.png
+        - metrics/plots/optimize/${item}/optimization_history.png
 
   train:
     foreach: ${model_types}
     do:
-      cmd: >
-        uv venv .venv-${item} && \
-        uv pip install -r requirements/requirements-${item}.txt --python .venv-${item}/bin/python && \
-        uv pip install -e . --python .venv-${item}/bin/python && \
-        .venv-${item}/bin/python pipeline/stages/train.py model=${item}
+      cmd:
+        - uv venv .venv-train --python 3.11
+        - . .venv-train/bin/activate && uv pip install -r requirements/base.txt
+        - . .venv-train/bin/activate && uv pip install -r requirements/train.txt
+        - . .venv-train/bin/activate && python pipeline/stages/train.py model=${item}
       deps:
         - pipeline/stages/train.py
         - pipeline/models/${item}.py
         - data/processed/train_features.parquet
         - data/processed/val_features.parquet
-        - metrics/optimization/${item}/trials.json
         - requirements/${item}.txt
-      params:
-        - model.${item}
-        - training
-        - paths
       outs:
         - models/${item}/model.pkl
       metrics:
-        - metrics/training/${item}/metrics.json:
-            cache: false
+        - metrics/training/${item}/metrics.json
       plots:
         - metrics/plots/training/${item}/loss.png
         - metrics/plots/training/${item}/confusion_matrix.png
         - metrics/plots/training/${item}/roc_curve.png
 
   evaluate:
-    cmd: >
-      uv venv .venv-evaluate && \
-      uv pip install -r requirements/requirements-evaluate.txt --python .venv-evaluate/bin/python && \
-      uv pip install -e . --python .venv-evaluate/bin/python && \
-      .venv-evaluate/bin/python pipeline/stages/evaluate.py
+    cmd:
+      - uv venv .venv-evaluate --python 3.11
+      - . .venv-evaluate/bin/activate && uv pip install -r requirements/base.txt
+      - . .venv-evaluate/bin/activate && uv pip install -r requirements/evaluate.txt
+      - . .venv-evaluate/bin/activate && python pipeline/stages/evaluate.py
     deps:
       - pipeline/stages/evaluate.py
       - data/processed/test_features.parquet
       - models/*/model.pkl
       - requirements/evaluate.txt
-    params:
-      - evaluation
-      - paths
     metrics:
-      - metrics/evaluation/model_comparison.json:
-          cache: false
+      - metrics/evaluation/model_comparison.json
     plots:
       - metrics/plots/evaluation/model_comparison.png
       - metrics/plots/evaluation/feature_importance.png
 
   register:
-    cmd: >
-      uv venv .venv-register && \
-      uv pip install -r requirements/requirements-register.txt --python .venv-register/bin/python && \
-      uv pip install -e . --python .venv-register/bin/python && \
-      .venv-register/bin/python pipeline/stages/register.py
+    cmd:
+      - uv venv .venv-register --python 3.11
+      - . .venv-register/bin/activate && uv pip install -r requirements/base.txt
+      - . .venv-register/bin/activate && uv pip install -r requirements/register.txt
+      - . .venv-register/bin/activate && python pipeline/stages/register.py
     deps:
       - pipeline/stages/register.py
       - metrics/evaluation/model_comparison.json
       - models/*/model.pkl
       - requirements/register.txt
-    params:
-      - registry
-      - paths
     outs:
       - registry/metadata.json
 
   deploy:
-    cmd: >
-      uv venv .venv-deploy && \
-      uv pip install -r requirements/requirements-deploy.txt --python .venv-deploy/bin/python && \
-      uv pip install -e . --python .venv-deploy/bin/python && \
-      .venv-deploy/bin/python pipeline/stages/deploy.py
+    cmd:
+      - uv venv .venv-deploy --python 3.11
+      - . .venv-deploy/bin/activate && uv pip install -r requirements/base.txt
+      - . .venv-deploy/bin/activate && uv pip install -r requirements/deploy.txt
+      - . .venv-deploy/bin/activate && python pipeline/stages/deploy.py
     deps:
       - pipeline/stages/deploy.py
       - models/*/model.pkl
       - metrics/evaluation/model_comparison.json
       - requirements/deploy.txt
-    params:
-      - huggingface
-      - paths
     outs:
       - deploy/huggingface:
           persist: true
 
   serve:
     cmd: >
-      uv venv .venv-serve && \
-      uv pip install -r requirements/requirements-serve.txt --python .venv-serve/bin/python && \
+      uv venv .venv-serve --python 3.11 && \
+      uv pip install -r requirements/serve.txt --python .venv-serve/bin/python && \
       uv pip install -e . --python .venv-serve/bin/python && \
       .venv-serve/bin/uvicorn pipeline.serve.app:app --host 0.0.0.0 --port 8000
     deps:
       - pipeline/serve/app.py
       - models/*/model.pkl
-      - conf/serve/api.yaml
+      - conf/config.yaml
       - requirements/serve.txt
-    params:
-      - serve
-      - paths
     outs:
       - serve/logs:
           persist: true
 
   monitor:
     cmd: >
-      uv venv .venv-monitoring && \
-      uv pip install -r requirements/requirements-monitoring.txt --python .venv-monitoring/bin/python && \
+      uv venv .venv-monitoring --python 3.11 && \
+      uv pip install -r requirements/monitoring.txt --python .venv-monitoring/bin/python && \
       uv pip install -e . --python .venv-monitoring/bin/python && \
       .venv-monitoring/bin/python pipeline/stages/monitoring.py
     deps:
       - pipeline/monitoring/app.py
-      - conf/monitoring/config.yaml
+      - conf/config.yaml
       - requirements/monitoring.txt
-    params:
-      - monitoring
-      - paths
     metrics:
-      - metrics/monitoring/system_metrics.json:
-          cache: false
+      - metrics/monitoring/system_metrics.json
     plots:
       - metrics/plots/monitoring/resource_usage.png
       - metrics/plots/monitoring/prediction_latency.png
       - metrics/plots/monitoring/error_rate.png
 
-metrics:
-  - metrics/evaluation/model_comparison.json
-
-plots:
-  - metrics/plots/evaluation/model_comparison.png
-
 vars:
   - model_types:
-    - logistic
-    - neural
-    - autogluon
-
-params:
-  - params.yaml
+      - logistic
+      - neural
+      - autogluon

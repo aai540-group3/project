@@ -1,6 +1,6 @@
 """
 Ingest Stage
-====================
+============
 
 .. module:: pipeline.stages.ingest
    :synopsis: Data ingestion and source management with detailed logging
@@ -17,13 +17,11 @@ import boto3
 import hydra
 import pandas as pd
 import requests
+from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 from ucimlrepo import fetch_ucirepo
 
 from pipeline.stages.base import PipelineStage
-from pipeline.utils.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 class IngestStage(PipelineStage):
@@ -112,12 +110,8 @@ class IngestStage(PipelineStage):
                 data = self.sources[source_type](source_config)
                 if data is not None:
                     datasets.append(data)
-                    self.metadata["ingestion"]["sources_processed"].append(
-                        source_config.get("name", source_type)
-                    )
-                    self.metadata["ingestion"]["status"]["successful"].append(
-                        source_config.get("name", source_type)
-                    )
+                    self.metadata["ingestion"]["sources_processed"].append(source_config.get("name", source_type))
+                    self.metadata["ingestion"]["status"]["successful"].append(source_config.get("name", source_type))
             except Exception as e:
                 logger.error(f"Failed to fetch data from {source_type}: {e}")
                 self.ingestion_errors.append({"source": source_type, "error": str(e)})
@@ -172,9 +166,7 @@ class IngestStage(PipelineStage):
             logger.error(f"Failed to fetch UCI data: {e}")
             raise RuntimeError(f"UCI data fetch failed: {e}")
 
-    def _save_ucirepo_metadata(
-        self, metadata: Dict[str, Any], variables: pd.DataFrame
-    ) -> None:
+    def _save_ucirepo_metadata(self, metadata: Dict[str, Any], variables: pd.DataFrame) -> None:
         """Save UCI repository metadata."""
         output_dir = self.get_path("raw")
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -254,9 +246,7 @@ class IngestStage(PipelineStage):
             headers = config.get("headers", {})
             params = config.get("params", {})
 
-            response = requests.get(
-                url, headers=headers, params=params, timeout=config.get("timeout", 30)
-            )
+            response = requests.get(url, headers=headers, params=params, timeout=config.get("timeout", 30))
             response.raise_for_status()
 
             data = response.json()
@@ -335,16 +325,12 @@ class IngestStage(PipelineStage):
             # Create metadata dictionary
             metadata_dict = {
                 "ingestion": self.metadata["ingestion"],
-                "config": self.metadata[
-                    "config"
-                ],  # Don't use OmegaConf.to_container() here
+                "config": self.metadata["config"],  # Don't use OmegaConf.to_container() here
             }
 
             # If config is an OmegaConf object, convert it
             if OmegaConf.is_config(metadata_dict["config"]):
-                metadata_dict["config"] = OmegaConf.to_container(
-                    metadata_dict["config"], resolve=True
-                )
+                metadata_dict["config"] = OmegaConf.to_container(metadata_dict["config"], resolve=True)
 
             with open(output_path, "w") as f:
                 json.dump(metadata_dict, f, indent=2)
@@ -391,9 +377,7 @@ class IngestStage(PipelineStage):
         self.log_metrics(
             {
                 "data_ingestion_success": int(success),
-                "sources_processed": len(
-                    self.metadata["ingestion"]["sources_processed"]
-                ),
+                "sources_processed": len(self.metadata["ingestion"]["sources_processed"]),
                 "ingestion_duration_seconds": time.time() - self.start_time,
             }
         )
@@ -411,14 +395,12 @@ class IngestStage(PipelineStage):
             self.log_metrics(
                 {
                     "ingestion_errors": error_count,
-                    "failure_rate": error_count / total_sources
-                    if total_sources > 0
-                    else 0,
+                    "failure_rate": error_count / total_sources if total_sources > 0 else 0,
                 }
             )
 
 
-@hydra.main(version_base=None, config_path="../../conf", config_name="config")
+@hydra.main(version_base="1.3", config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
     """Main entry point for the InfrastructStage.
 

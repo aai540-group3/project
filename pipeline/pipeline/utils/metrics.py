@@ -58,9 +58,7 @@ def calculate_metrics(
     return metrics
 
 
-def get_confusion_matrix(
-    y_true: np.ndarray, y_pred: np.ndarray
-) -> Tuple[np.ndarray, Dict[str, float]]:
+def get_confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray) -> Tuple[np.ndarray, Dict[str, float]]:
     """Calculate confusion matrix and derived metrics.
 
     :param y_true: True labels

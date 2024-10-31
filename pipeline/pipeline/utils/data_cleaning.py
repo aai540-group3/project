@@ -19,8 +19,6 @@ from sklearn.preprocessing import StandardScaler
 
 from .logging import get_logger
 
-logger = get_logger(__name__)
-
 
 class DataCleaner:
     """Data cleaning and preprocessing utility."""
@@ -40,12 +38,8 @@ class DataCleaner:
         """Initialize cleaning components."""
         # Initialize imputers
         if self.cfg.missing_values.strategy == "impute":
-            self.imputers["numeric"] = SimpleImputer(
-                strategy=self.cfg.missing_values.numeric.method
-            )
-            self.imputers["categorical"] = SimpleImputer(
-                strategy=self.cfg.missing_values.categorical.method
-            )
+            self.imputers["numeric"] = SimpleImputer(strategy=self.cfg.missing_values.numeric.method)
+            self.imputers["categorical"] = SimpleImputer(strategy=self.cfg.missing_values.categorical.method)
 
     def clean_data(self, data: pd.DataFrame, fit: bool = True) -> pd.DataFrame:
         """Clean and preprocess data.
@@ -79,9 +73,7 @@ class DataCleaner:
 
         return df
 
-    def _handle_missing_values(
-        self, data: pd.DataFrame, fit: bool = True
-    ) -> pd.DataFrame:
+    def _handle_missing_values(self, data: pd.DataFrame, fit: bool = True) -> pd.DataFrame:
         """Handle missing values.
 
         :param data: Input data
@@ -100,9 +92,7 @@ class DataCleaner:
         numeric_cols = df.select_dtypes(include=[np.number]).columns
         if numeric_cols.any():
             if fit:
-                df[numeric_cols] = self.imputers["numeric"].fit_transform(
-                    df[numeric_cols]
-                )
+                df[numeric_cols] = self.imputers["numeric"].fit_transform(df[numeric_cols])
             else:
                 df[numeric_cols] = self.imputers["numeric"].transform(df[numeric_cols])
 
@@ -265,22 +255,13 @@ class DataCleaner:
 
         for rule in self.cfg.validation.rules:
             if rule.type == "range":
-                if (
-                    data[rule.column].min() < rule.min
-                    or data[rule.column].max() > rule.max
-                ):
-                    errors.append(
-                        f"Column {rule.column} contains values outside "
-                        f"range [{rule.min}, {rule.max}]"
-                    )
+                if data[rule.column].min() < rule.min or data[rule.column].max() > rule.max:
+                    errors.append(f"Column {rule.column} contains values outside " f"range [{rule.min}, {rule.max}]")
 
             elif rule.type == "categorical":
                 invalid = set(data[rule.column].unique()) - set(rule.categories)
                 if invalid:
-                    errors.append(
-                        f"Column {rule.column} contains invalid "
-                        f"categories: {invalid}"
-                    )
+                    errors.append(f"Column {rule.column} contains invalid " f"categories: {invalid}")
 
             elif rule.type == "unique":
                 if data[rule.column].duplicated().any():

@@ -18,13 +18,7 @@ def parse_requirements(file_path: Path) -> Set[str]:
             line = line.strip()
             if line and not line.startswith("#"):
                 # Remove version specifiers
-                package = (
-                    line.split(">=")[0]
-                    .split("<=")[0]
-                    .split("==")[0]
-                    .split("<")[0]
-                    .split(">")[0]
-                )
+                package = line.split(">=")[0].split("<=")[0].split("==")[0].split("<")[0].split(">")[0]
                 packages.add(package)
     return packages
 
@@ -49,7 +43,7 @@ def check_conflicts(requirements_files: List[Path]) -> Dict[str, List[str]]:
 
 def main():
     # Get all requirements files
-    requirements_files = list(Path().glob("requirements-*.txt"))
+    requirements_files = list(Path().glob("*.txt"))
     requirements_files.append(Path("requirements.txt"))
 
     # Check installed packages

@@ -37,9 +37,7 @@ class ExperimentTracker:
         if self.cfg.registry.uri:
             mlflow.set_registry_uri(self.cfg.registry.uri)
 
-    def start_run(
-        self, run_name: Optional[str] = None, tags: Optional[Dict[str, str]] = None
-    ) -> None:
+    def start_run(self, run_name: Optional[str] = None, tags: Optional[Dict[str, str]] = None) -> None:
         """Start a new MLflow run.
 
         :param run_name: Name for the run, defaults to None
@@ -71,9 +69,7 @@ class ExperimentTracker:
         if self._active_run:
             mlflow.log_params(params)
 
-    def log_metrics(
-        self, metrics: Dict[str, float], step: Optional[int] = None
-    ) -> None:
+    def log_metrics(self, metrics: Dict[str, float], step: Optional[int] = None) -> None:
         """Log metrics to MLflow.
 
         :param metrics: Metrics to log
@@ -112,6 +108,4 @@ class ExperimentTracker:
         :type code_paths: list, optional
         """
         if self._active_run:
-            mlflow.sklearn.log_model(
-                model, artifact_path, conda_env=conda_env, code_paths=code_paths
-            )
+            mlflow.sklearn.log_model(model, artifact_path, conda_env=conda_env, code_paths=code_paths)

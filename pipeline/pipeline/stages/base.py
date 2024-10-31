@@ -3,22 +3,24 @@ Base Pipeline Stage
 ===================
 
 .. module:: pipeline.stages.base
-   :synopsis: Base class for pipeline stages with robust tracking handling
+   :synopsis: Base class for pipeline stages with robust tracking handling, including DVC Live.
 
 .. moduleauthor:: aai540-group3
 """
 
+import os
+import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List, Optional
 
 import mlflow
 import wandb
+from dvclive import Live
+from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 
-from ..utils.logging import get_logger
-
-logger = get_logger(__name__)
+from pipeline.conf import Config
 
 
 class StageConfigNotFoundError(Exception):
@@ -35,80 +37,117 @@ class StageConfigNotFoundError(Exception):
         self.available_stages = available_stages
         self.message = (
             f"Stage configuration for '{self.stage_name}' not found in 'pipeline.stages'. "
-            f"Available stages: {self.available_stages}"
+            f"Available stages: {available_stages}"
         )
         super().__init__(self.message)
 
 
 class PipelineStage(ABC):
-    """Base class for all pipeline stages."""
+    """Base class for all pipeline stages, handling configuration, tracking, error handling, and logging."""
 
-    def __init__(self, cfg: DictConfig):
-        """Initialize pipeline stage.
+    def __init__(self):
+        """Initialize base stage with configuration and setup tracking."""
+        # Start time tracking
+        self.start_time = time.time()
+        logger.debug("Starting PipelineStage initialization.")
 
-        :param cfg: Stage configuration
-        :type cfg: DictConfig
-        """
-        self.cfg = cfg
-        logger.debug("Initialized logger for PipelineStage.")
+        # Explicit log to check return
+        loaded_config = self.load_config()
+        logger.debug(f"Config.load() returned: {loaded_config}")
+        self.cfg = loaded_config
+        logger.debug(f"Assigned self.cfg: {self.cfg}")
+
+        if self.cfg is None:
+            logger.error("Configuration failed to load. 'self.cfg' is None.")
+            raise ValueError("Configuration is missing or failed to load.")
+        if self.cfg is None:
+            logger.error("Configuration failed to load. 'self.cfg' is None.")
+            raise ValueError("Configuration is missing or failed to load.")
 
         self.stage_name = self.__class__.__name__.lower().replace("stage", "")
-        logger.debug(f"Stage name set to: {self.stage_name}")
+        logger.info(f"Initializing '{self.stage_name}' stage with configuration.")
 
-        self.tracking_initialized = False
-        logger.debug("Tracking initialized set to False.")
+        # Check `self.cfg.pipeline` and `self.cfg.pipeline.stages`
+        if not hasattr(self.cfg, "pipeline") or not hasattr(self.cfg.pipeline, "stages"):
+            logger.error("Configuration 'pipeline' or 'pipeline.stages' is missing.")
+            raise ValueError(
+                "Configuration 'pipeline' or 'pipeline.stages' section is missing or improperly formatted."
+            )
 
-        # Get stage-specific config
+        # Retrieve stage-specific config and initialize tracking
         self.stage_config = self._get_stage_config()
+        self.tracking_initialized = False  # Tracking setup flag
+        self.live = None  # Placeholder for DVC Live tracking if enabled
 
-        # Log the entire configuration for debugging
-        logger.debug(f"Full configuration (cfg):\n{OmegaConf.to_yaml(self.cfg)}")
-
-        # Setup tracking if enabled
-        if self._should_enable_tracking():
-            logger.debug("Tracking is enabled. Proceeding to setup tracking.")
-            self._setup_tracking()
-        else:
-            logger.debug("Tracking is disabled. Skipping setup.")
+    @staticmethod
+    def load_config() -> Optional[DictConfig]:
+        """Load configuration using Config class."""
+        try:
+            config = Config.load()
+            logger.debug(f"Config.load() returned: {type(config)}")
+            if config:
+                logger.info("Configuration loaded successfully.")
+            return config
+        except Exception as e:
+            logger.error(f"Failed to load configuration: {e}")
+            return None
 
     def _get_stage_config(self) -> DictConfig:
-        """Get stage-specific configuration.
-
-        :return: Stage configuration as an OmegaConf object
-        :rtype: DictConfig
-        :raises StageConfigNotFoundError: If the stage-specific configuration is not found.
-        """
+        """Retrieve stage-specific configuration."""
+        logger.debug(f"Attempting to retrieve configuration for stage '{self.stage_name}' from pipeline.stages.")
         try:
-            # Attempt to retrieve the stage-specific configuration
+            # Log available stages for clarity
+            available_stages = self.cfg.pipeline.stages.keys()
+            logger.debug(f"Available stages in configuration: {available_stages}")
+
             stage_config_node = self.cfg.pipeline.stages[self.stage_name]
-            logger.debug(f"Retrieved configuration for stage '{self.stage_name}':\n{OmegaConf.to_yaml(stage_config_node)}")
+            logger.debug(
+                f"Stage configuration for '{self.stage_name}': {OmegaConf.to_container(stage_config_node, resolve=True)}"
+            )
             return stage_config_node
         except KeyError as e:
-            # Retrieve available stages for better error messaging
-            available_stages = list(self.cfg.pipeline.stages.keys()) if hasattr(self.cfg.pipeline, 'stages') else []
-            error_message = (
-                f"Stage configuration for '{self.stage_name}' not found in 'pipeline.stages'. "
-                f"Available stages: {available_stages}"
-            )
-            logger.error(error_message)
+            available_stages = list(self.cfg.pipeline.stages.keys())
+            logger.error(f"Configuration for stage '{self.stage_name}' not found. Available stages: {available_stages}")
             raise StageConfigNotFoundError(self.stage_name, available_stages) from e
 
+    def execute(self) -> None:
+        """Run the pipeline stage with centralized error handling and status logging."""
+        logger.debug(f"Starting execution of '{self.stage_name}'")
+        success = False
+
+        try:
+            self.run()
+            success = True
+        except Exception as e:
+            logger.error(f"{self.stage_name.capitalize()} failed: {str(e)}")
+            self.log_metrics({f"{self.stage_name}_error": str(e)})  # Log error for tracking
+            raise RuntimeError(f"{self.stage_name.capitalize()} setup failed: {str(e)}") from e
+        finally:
+            self._log_final_status(success)
+            logger.debug(
+                f"Completed execution of '{self.stage_name}' with status: {'success' if success else 'failure'}"
+            )
+
+    @abstractmethod
+    def run(self) -> None:
+        """Abstract method to execute the specific logic of each stage."""
+        pass
+
     def _should_enable_tracking(self) -> bool:
-        """Check if tracking should be enabled.
+        """Determine if tracking is enabled for this stage.
 
         :return: Whether tracking should be enabled
         :rtype: bool
         """
-        # Check stage-specific tracking config
-        stage_tracking = self.stage_config.get("tracking", {})
-        return stage_tracking.get("enabled", False)
+        return self.stage_config.get("tracking", {}).get("enabled", False)
 
     def _setup_tracking(self) -> None:
-        """Setup tracking systems."""
+        """Initialize tracking systems (MLflow, WandB, DVC Live) if configured."""
         try:
             run_name = f"{self.stage_name}_{self.cfg.experiment.name}"
             stage_tracking = self.stage_config.get("tracking", {})
 
+            # Initialize WandB if enabled
             if stage_tracking.get("wandb", {}).get("enabled", False):
                 wandb.init(
                     project=self.cfg.wandb.project,
@@ -122,10 +161,17 @@ class PipelineStage(ABC):
                     reinit=True,
                 )
 
+            # Initialize MLflow if enabled
             if stage_tracking.get("mlflow", {}).get("enabled", False):
                 mlflow.set_tracking_uri(self.cfg.mlflow.tracking_uri)
                 mlflow.set_experiment(self.cfg.mlflow.experiment_name)
                 mlflow.start_run(run_name=run_name)
+
+            # Initialize DVC Live if enabled
+            if stage_tracking.get("dvclive", {}).get("enabled", False):
+                metrics_dir = os.path.join(self.cfg.paths.artifacts, "metrics")
+                self.live = Live(dir=metrics_dir, dvcyaml=False)
+                logger.info("DVC Live initialized for real-time metric tracking.")
 
             self.tracking_initialized = True
             logger.debug(f"Tracking initialized for {self.stage_name}")
@@ -135,7 +181,7 @@ class PipelineStage(ABC):
             self.tracking_initialized = False
 
     def _cleanup_tracking(self) -> None:
-        """Cleanup tracking systems."""
+        """Cleanup tracking systems (MLflow, WandB, DVC Live)."""
         if not self.tracking_initialized:
             return
 
@@ -146,11 +192,30 @@ class PipelineStage(ABC):
             if mlflow.active_run():
                 mlflow.end_run()
 
+            if self.live:
+                self.live.end()
+
         except Exception as e:
             logger.warning(f"Error during tracking cleanup: {e}")
 
+    def _log_final_status(self, success: bool) -> None:
+        """Log the final status of the pipeline stage and track success/failure.
+
+        :param success: Indicates if the stage completed successfully
+        :type success: bool
+        """
+        duration = time.time() - self.start_time
+        logger.info(f"{self.stage_name.capitalize()} completed in {duration:.2f} seconds with success: {success}")
+
+        # Log final status metrics
+        metrics = {
+            f"{self.stage_name}_setup_success": int(success),
+            f"{self.stage_name}_duration_seconds": duration,
+        }
+        self.log_metrics(metrics)
+
     def log_metrics(self, metrics: Dict[str, Any]) -> None:
-        """Log metrics if tracking is initialized.
+        """Log metrics to tracking systems (MLflow, WandB, DVC Live) if initialized.
 
         :param metrics: Metrics to log
         :type metrics: Dict[str, Any]
@@ -159,33 +224,33 @@ class PipelineStage(ABC):
             return
 
         stage_tracking = self.stage_config.get("tracking", {})
-
         try:
+            # Log metrics to WandB, MLflow, and DVC Live if enabled
             if stage_tracking.get("wandb", {}).get("enabled", False):
                 wandb.log(metrics)
-
             if stage_tracking.get("mlflow", {}).get("enabled", False):
                 mlflow.log_metrics(metrics)
+            if stage_tracking.get("dvclive", {}).get("enabled", False) and self.live:
+                for key, value in metrics.items():
+                    self.live.log(key, value)
 
         except Exception as e:
             logger.warning(f"Failed to log metrics: {e}")
 
-    def log_artifact(
-        self, local_path: str, artifact_path: Optional[str] = None
-    ) -> None:
-        """Log artifact if tracking is initialized.
+    def log_artifact(self, local_path: str, artifact_path: Optional[str] = None) -> None:
+        """Log artifact to tracking systems (MLflow, WandB, DVC Live) if initialized.
 
-        :param local_path: Path to artifact
+        :param local_path: Path to the local artifact file
         :type local_path: str
-        :param artifact_path: Optional path within artifact storage
+        :param artifact_path: Optional path within the artifact storage
         :type artifact_path: Optional[str]
         """
         if not self.tracking_initialized:
             return
 
         stage_tracking = self.stage_config.get("tracking", {})
-
         try:
+            # Log artifacts to WandB and MLflow
             if stage_tracking.get("wandb", {}).get("enabled", False):
                 artifact = wandb.Artifact(
                     name=Path(local_path).name,
@@ -198,6 +263,10 @@ class PipelineStage(ABC):
             if stage_tracking.get("mlflow", {}).get("enabled", False):
                 mlflow.log_artifact(local_path, artifact_path)
 
+            # Save artifact with DVC Live
+            if stage_tracking.get("dvclive", {}).get("enabled", False) and self.live:
+                self.live.log_artifact(local_path)
+
         except Exception as e:
             logger.warning(f"Failed to log artifact: {e}")
 
@@ -208,13 +277,12 @@ class PipelineStage(ABC):
         :type key: str
         :return: Resolved path
         :rtype: Path
+        :raises KeyError: If the specified key does not exist in paths configuration.
         """
-        path = Path(self.cfg.paths[key])
-        if not path.exists():
-            logger.warning(f"Path does not exist: {path}")
-        return path
-
-    @abstractmethod
-    def run(self) -> None:
-        """Execute pipeline stage."""
-        raise NotImplementedError("Pipeline stages must implement run()")
+        try:
+            path = Path(self.cfg.paths[key])
+            if not path.exists():
+                logger.warning(f"Path does not exist: {path}")
+            return path
+        except KeyError as e:
+            raise KeyError(f"Key '{key}' not found in paths configuration.") from e

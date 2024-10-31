@@ -19,8 +19,6 @@ from tensorflow.keras.callbacks import Callback
 
 from .logging import get_logger
 
-logger = get_logger(__name__)
-
 
 class MetricsCallback(Callback):
     """Custom callback for metrics logging."""
@@ -107,9 +105,7 @@ class PerformanceMonitorCallback(Callback):
             try:
                 gpus = GPUtil.getGPUs()
                 for i, gpu in enumerate(gpus):
-                    performance.update(
-                        {f"gpu_{i}_load": gpu.load, f"gpu_{i}_memory": gpu.memoryUtil}
-                    )
+                    performance.update({f"gpu_{i}_load": gpu.load, f"gpu_{i}_memory": gpu.memoryUtil})
             except Exception:
                 pass
 
@@ -165,9 +161,7 @@ class ModelCheckpointCallback(Callback):
             return
 
         if self.save_best_only:
-            if (self.mode == "min" and current < self.best_value) or (
-                self.mode == "max" and current > self.best_value
-            ):
+            if (self.mode == "min" and current < self.best_value) or (self.mode == "max" and current > self.best_value):
                 self.best_value = current
                 self._save_model(epoch, logs)
         else:

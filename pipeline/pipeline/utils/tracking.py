@@ -37,13 +37,9 @@ class ExperimentManager:
                     name=self.cfg.experiment.name, tags=self.cfg.experiment.tags
                 )
             except Exception:
-                self.experiment = self.client.get_experiment_by_name(
-                    self.cfg.experiment.name
-                )
+                self.experiment = self.client.get_experiment_by_name(self.cfg.experiment.name)
 
-    def start_run(
-        self, run_name: Optional[str] = None, tags: Optional[Dict] = None
-    ) -> None:
+    def start_run(self, run_name: Optional[str] = None, tags: Optional[Dict] = None) -> None:
         """Start a new MLflow run.
 
         Args:
@@ -86,9 +82,7 @@ class ExperimentManager:
         if self.cfg.experiment.mlflow.enabled:
             mlflow.log_params(params)
 
-    def log_metrics(
-        self, metrics: Dict[str, float], step: Optional[int] = None
-    ) -> None:
+    def log_metrics(self, metrics: Dict[str, float], step: Optional[int] = None) -> None:
         """Log metrics to MLflow.
 
         Args:
@@ -124,9 +118,7 @@ class ExperimentManager:
         """
         if self.cfg.experiment.mlflow.enabled:
             if self.cfg.experiment.mlflow.artifacts.log_model:
-                mlflow.sklearn.log_model(
-                    model, artifact_path, conda_env=conda_env, code_paths=code_paths
-                )
+                mlflow.sklearn.log_model(model, artifact_path, conda_env=conda_env, code_paths=code_paths)
 
     def set_tags(self, tags: Dict[str, str]) -> None:
         """Set tags for the current run.

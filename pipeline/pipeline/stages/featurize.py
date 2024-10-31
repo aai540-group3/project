@@ -1,6 +1,6 @@
 """
 Featurize Stage
-=====================
+===============
 
 .. module:: pipeline.stages.featurize
    :synopsis: Feature engineering and preprocessing stage
@@ -13,12 +13,10 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+from loguru import logger
 from sklearn.preprocessing import StandardScaler
 
 from pipeline.stages.base import PipelineStage
-from pipeline.utils.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 class FeaturizeStage(PipelineStage):
@@ -52,9 +50,7 @@ class FeaturizeStage(PipelineStage):
             test_features = self._create_features(test_data)
 
             # Scale features
-            train_scaled, val_scaled, test_scaled = self._scale_features(
-                train_features, val_features, test_features
-            )
+            train_scaled, val_scaled, test_scaled = self._scale_features(train_features, val_features, test_features)
 
             # Save processed features
             self._save_features(train_scaled, val_scaled, test_scaled)
@@ -119,9 +115,7 @@ class FeaturizeStage(PipelineStage):
 
         return train_scaled, val_scaled, test_scaled
 
-    def _save_features(
-        self, train: pd.DataFrame, val: pd.DataFrame, test: pd.DataFrame
-    ) -> None:
+    def _save_features(self, train: pd.DataFrame, val: pd.DataFrame, test: pd.DataFrame) -> None:
         """Save processed features.
 
         :param train: Training features

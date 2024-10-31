@@ -14,11 +14,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import mlflow
+from loguru import logger
 from omegaconf import DictConfig
-
-from ..utils.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 class ModelRegistry:
@@ -110,9 +107,7 @@ class ModelRegistry:
             # Update MLflow if enabled
             if self.cfg.registry.type == "mlflow":
                 client = mlflow.tracking.MlflowClient()
-                client.transition_model_version_stage(
-                    name=name, version=version, stage=stage
-                )
+                client.transition_model_version_stage(name=name, version=version, stage=stage)
 
             # Update local metadata
             for model in self.metadata["models"]:
@@ -132,9 +127,7 @@ class ModelRegistry:
             logger.error(f"Failed to transition model: {e}")
             raise
 
-    def get_model_info(
-        self, name: str, version: Optional[str] = None
-    ) -> Optional[Dict]:
+    def get_model_info(self, name: str, version: Optional[str] = None) -> Optional[Dict]:
         """Get model information.
 
         :param name: Model name
@@ -166,11 +159,7 @@ class ModelRegistry:
         :return: Next version
         :rtype: str
         """
-        versions = [
-            int(model["version"])
-            for model in self.metadata["models"]
-            if model["name"] == name
-        ]
+        versions = [int(model["version"]) for model in self.metadata["models"] if model["name"] == name]
         return str(max(versions + [0]) + 1)
 
     def _save_metadata(self) -> None:
@@ -179,9 +168,7 @@ class ModelRegistry:
         with self.metadata_path.open("w") as f:
             json.dump(self.metadata, f, indent=2)
 
-    def list_models(
-        self, name: Optional[str] = None, stage: Optional[str] = None
-    ) -> List[Dict]:
+    def list_models(self, name: Optional[str] = None, stage: Optional[str] = None) -> List[Dict]:
         """List registered models.
 
         :param name: Filter by name
@@ -220,14 +207,10 @@ class ModelRegistry:
             # Update local metadata
             if version:
                 self.metadata["models"] = [
-                    m
-                    for m in self.metadata["models"]
-                    if not (m["name"] == name and m["version"] == version)
+                    m for m in self.metadata["models"] if not (m["name"] == name and m["version"] == version)
                 ]
             else:
-                self.metadata["models"] = [
-                    m for m in self.metadata["models"] if m["name"] != name
-                ]
+                self.metadata["models"] = [m for m in self.metadata["models"] if m["name"] != name]
 
             # Update production model if needed
             prod_model = self.metadata.get("production_model")
@@ -236,9 +219,7 @@ class ModelRegistry:
                     self.metadata["production_model"] = None
 
             self._save_metadata()
-            logger.info(
-                f"Deleted model {name}" + (f" version {version}" if version else "")
-            )
+            logger.info(f"Deleted model {name}" + (f" version {version}" if version else ""))
 
         except Exception as e:
             logger.error(f"Failed to delete model: {e}")

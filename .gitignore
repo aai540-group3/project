@@ -63,6 +63,7 @@ env/
 htmlcov/
 lib/
 lib64/
+mlruns/
 nosetests.xml
 outputs/
 parts/

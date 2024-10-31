@@ -12,16 +12,14 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 from fastapi import Body, FastAPI, HTTPException, Path, Query
+from loguru import logger
 from pydantic import BaseModel, Field
 
-from ..utils.logging import get_logger
 from .alerts import AlertManager
 from .data_quality import DataQualityMonitor
 from .drift import DriftDetector
 from .performance import PerformanceMonitor
 from .resources import ResourceMonitor
-
-logger = get_logger(__name__)
 
 app = FastAPI(
     title="MLOps Monitoring API",
@@ -117,9 +115,7 @@ async def record_metric(
     :rtype: Dict
     """
     try:
-        PerformanceMonitor.record_metric(
-            metric_name, value.value, value.timestamp, value.metadata
-        )
+        PerformanceMonitor.record_metric(metric_name, value.value, value.timestamp, value.metadata)
         return {"status": "success"}
     except Exception as e:
         logger.error(f"Failed to record metric: {e}")

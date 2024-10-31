@@ -31,9 +31,7 @@ class PredictionCache:
         cached = self.client.get(key)
         return json.loads(cached) if cached else None
 
-    def set_prediction(
-        self, features: Dict[str, float], prediction: Dict[str, Any]
-    ) -> None:
+    def set_prediction(self, features: Dict[str, float], prediction: Dict[str, Any]) -> None:
         """Cache prediction.
 
         Args:

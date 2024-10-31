@@ -1,2 +1,7 @@
-dvc[all]
-virtualenv
+-e .
+dvclive
+hydra_colorlog
+hydra-core
+loguru
+mlflow
+wandb

@@ -87,10 +87,7 @@ async def predict(request: PredictionRequest):
         performance_monitor.record_prediction(latency=latency)
 
         # Log prediction
-        logger.info(
-            f"Prediction made: ID={prediction_id}, "
-            f"prediction={prediction}, probability={probability:.3f}"
-        )
+        logger.info(f"Prediction made: ID={prediction_id}, " f"prediction={prediction}, probability={probability:.3f}")
 
         return PredictionResponse(
             prediction=int(prediction),
@@ -106,9 +103,7 @@ async def predict(request: PredictionRequest):
 
 
 @app.post("/feedback")
-async def record_feedback(
-    prediction_id: str, actual_outcome: int, feedback_type: str = "ground_truth"
-):
+async def record_feedback(prediction_id: str, actual_outcome: int, feedback_type: str = "ground_truth"):
     """Record prediction feedback."""
     try:
         metrics_monitor.record_feedback(

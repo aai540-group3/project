@@ -1,5 +1,5 @@
 """
-Model Training Stage
+Train Stage
 =================
 
 .. module:: pipeline.stages.train
@@ -12,15 +12,13 @@ from typing import Optional
 
 import pandas as pd
 from hydra.utils import instantiate
+from loguru import logger
 
 from ..models.base import BaseModel
-from ..utils.logging import get_logger
 from .base import PipelineStage
 
-logger = get_logger(__name__)
 
-
-class TrainingStage(PipelineStage):
+class TrainStage(PipelineStage):
     """Model training stage implementation.
 
     Handles model training, validation, and artifact logging.

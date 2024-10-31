@@ -16,7 +16,7 @@ Machine Learning System for Predicting Hospital Readmissions
 
 ## Table of Contents
 
-- [Software Requirements Specification (SRS)](#software-requirements-specification-srs)
+- [Software Requirements Specification (SRS)](#software-specification-srs)
   - [Document Version](#document-version)
   - [Date](#date)
   - [Project Name](#project-name)

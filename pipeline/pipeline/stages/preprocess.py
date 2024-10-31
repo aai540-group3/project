@@ -1,5 +1,5 @@
 """
-Data Preprocessing Stage
+Preprocess Stage
 ========================
 
 .. module:: pipeline.stages.preprocess
@@ -16,12 +16,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from loguru import logger
 from omegaconf import DictConfig, OmegaConf
 
 from pipeline.stages.base import PipelineStage
-from pipeline.utils.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 class PreprocessStage(PipelineStage):
@@ -65,33 +63,23 @@ class PreprocessStage(PipelineStage):
 
             # Handle missing values
             df = self._handle_missing_values(df)
-            self.metadata["preprocessing"]["steps_completed"].append(
-                "handle_missing_values"
-            )
+            self.metadata["preprocessing"]["steps_completed"].append("handle_missing_values")
 
             # Remove invalid entries
             df = self._remove_invalid_entries(df)
-            self.metadata["preprocessing"]["steps_completed"].append(
-                "remove_invalid_entries"
-            )
+            self.metadata["preprocessing"]["steps_completed"].append("remove_invalid_entries")
 
             # Handle categorical variables
             df = self._handle_categorical(df)
-            self.metadata["preprocessing"]["steps_completed"].append(
-                "handle_categorical"
-            )
+            self.metadata["preprocessing"]["steps_completed"].append("handle_categorical")
 
             # Create diagnosis level features
             df = self._create_diagnosis_features(df)
-            self.metadata["preprocessing"]["steps_completed"].append(
-                "create_diagnosis_features"
-            )
+            self.metadata["preprocessing"]["steps_completed"].append("create_diagnosis_features")
 
             # Handle duplicates
             df = self._handle_duplicates(df)
-            self.metadata["preprocessing"]["steps_completed"].append(
-                "handle_duplicates"
-            )
+            self.metadata["preprocessing"]["steps_completed"].append("handle_duplicates")
 
             # Handle outliers
             df = self._handle_outliers(df)
@@ -112,9 +100,7 @@ class PreprocessStage(PipelineStage):
             self._save_data(df)
 
             # Record execution time
-            self.metadata["preprocessing"]["execution_time"] = (
-                time.time() - self.start_time
-            )
+            self.metadata["preprocessing"]["execution_time"] = time.time() - self.start_time
 
             # Save metadata
             self._save_metadata()
@@ -206,9 +192,7 @@ class PreprocessStage(PipelineStage):
             feature_distributions_path = plots_dir / "feature_distributions.png"
             plt.savefig(feature_distributions_path)
             plt.close()
-            logger.debug(
-                f"Saved feature distributions plot to {feature_distributions_path}"
-            )
+            logger.debug(f"Saved feature distributions plot to {feature_distributions_path}")
 
             # Correlation Matrix Plot
             plt.figure(figsize=(12, 10))
@@ -221,9 +205,7 @@ class PreprocessStage(PipelineStage):
             logger.debug(f"Saved correlation matrix plot to {correlation_matrix_path}")
 
             # Target Distribution Plot
-            target_col = self.stage_config.get(
-                "target_column", self.data_config.get("target_column")
-            )
+            target_col = self.stage_config.get("target_column", self.data_config.get("target_column"))
             if target_col in df.columns:
                 plt.figure(figsize=(8, 6))
                 sns.countplot(x=target_col, data=df)
@@ -231,9 +213,7 @@ class PreprocessStage(PipelineStage):
                 target_distribution_path = plots_dir / "target_distribution.png"
                 plt.savefig(target_distribution_path)
                 plt.close()
-                logger.debug(
-                    f"Saved target distribution plot to {target_distribution_path}"
-                )
+                logger.debug(f"Saved target distribution plot to {target_distribution_path}")
 
             logger.info("Plots generated and saved successfully")
 
@@ -269,9 +249,7 @@ class PreprocessStage(PipelineStage):
 
             # Save feature names
             feature_names = df.columns.tolist()
-            pd.DataFrame(feature_names, columns=["features"]).to_csv(
-                feature_names_path, index=False
-            )
+            pd.DataFrame(feature_names, columns=["features"]).to_csv(feature_names_path, index=False)
             logger.info(f"Saved feature names to {feature_names_path}")
 
             # Log artifacts if tracking is enabled
@@ -292,9 +270,7 @@ class PreprocessStage(PipelineStage):
 
             # Add summary statistics
             self.metadata["preprocessing"]["errors"] = self.preprocessing_errors
-            self.metadata["preprocessing"]["timestamp"] = time.strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
+            self.metadata["preprocessing"]["timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S")
 
             with open(output_path, "w") as f:
                 json.dump(self.metadata, f, indent=2)
@@ -316,9 +292,7 @@ class PreprocessStage(PipelineStage):
         # Log overall metrics
         overall_metrics = {
             "data_preprocessing_success": int(success),
-            "preprocessing_steps_completed": len(
-                self.metadata["preprocessing"]["steps_completed"]
-            ),
+            "preprocessing_steps_completed": len(self.metadata["preprocessing"]["steps_completed"]),
             "preprocessing_duration_seconds": time.time() - self.start_time,
         }
 

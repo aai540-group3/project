@@ -13,12 +13,10 @@ from typing import Dict, List, Optional, Set
 
 import numpy as np
 import pandas as pd
+from loguru import logger
 from scipy import stats
 
-from ..utils.logging import get_logger
 from .base import BaseMonitor
-
-logger = get_logger(__name__)
 
 
 class DataQualityMonitor(BaseMonitor):
@@ -101,9 +99,7 @@ class DataQualityMonitor(BaseMonitor):
         return {
             "details": missing_stats,
             "total_rate": data.isnull().mean().mean(),
-            "violated_columns": [
-                col for col, stats in missing_stats.items() if stats["violated"]
-            ],
+            "violated_columns": [col for col, stats in missing_stats.items() if stats["violated"]],
         }
 
     def _check_outliers(self, data: pd.DataFrame) -> Dict:
@@ -124,15 +120,12 @@ class DataQualityMonitor(BaseMonitor):
             outlier_stats[column] = {
                 "count": outlier_mask.sum(),
                 "rate": outlier_mask.mean(),
-                "violated": outlier_mask.mean()
-                > self.cfg.constraints.outlier_threshold,
+                "violated": outlier_mask.mean() > self.cfg.constraints.outlier_threshold,
             }
 
         return {
             "details": outlier_stats,
-            "violated_columns": [
-                col for col, stats in outlier_stats.items() if stats["violated"]
-            ],
+            "violated_columns": [col for col, stats in outlier_stats.items() if stats["violated"]],
         }
 
     def _check_categorical_validity(self, data: pd.DataFrame) -> Dict:
@@ -157,9 +150,7 @@ class DataQualityMonitor(BaseMonitor):
 
         return {
             "details": categorical_stats,
-            "violated_columns": [
-                col for col, stats in categorical_stats.items() if stats["violated"]
-            ],
+            "violated_columns": [col for col, stats in categorical_stats.items() if stats["violated"]],
         }
 
     def _check_value_ranges(self, data: pd.DataFrame) -> Dict:
@@ -175,10 +166,7 @@ class DataQualityMonitor(BaseMonitor):
 
         for column, range_def in value_ranges.items():
             if column in data.columns:
-                violations = (
-                    (data[column] < range_def["min"])
-                    | (data[column] > range_def["max"])
-                ).sum()
+                violations = ((data[column] < range_def["min"]) | (data[column] > range_def["max"])).sum()
 
                 range_stats[column] = {
                     "violation_count": violations,
@@ -188,9 +176,7 @@ class DataQualityMonitor(BaseMonitor):
 
         return {
             "details": range_stats,
-            "violated_columns": [
-                col for col, stats in range_stats.items() if stats["violated"]
-            ],
+            "violated_columns": [col for col, stats in range_stats.items() if stats["violated"]],
         }
 
     def _check_correlations(self, data: pd.DataFrame) -> Dict:
@@ -238,16 +224,13 @@ class DataQualityMonitor(BaseMonitor):
         :return: Summary statistics
         :rtype: Dict
         """
-        total_violations = sum(
-            len(check.get("violated_columns", [])) for check in checks.values()
-        )
+        total_violations = sum(len(check.get("violated_columns", [])) for check in checks.values())
 
         return {
             "total_violations": total_violations,
             "checks_passed": total_violations == 0,
             "violation_types": {
-                check_type: len(check.get("violated_columns", []))
-                for check_type, check in checks.items()
+                check_type: len(check.get("violated_columns", [])) for check_type, check in checks.items()
             },
         }
 
@@ -281,11 +264,7 @@ class DataQualityMonitor(BaseMonitor):
             return self.violations
 
         cutoff = datetime.now() - timedelta(days=days)
-        return [
-            v
-            for v in self.violations
-            if datetime.fromisoformat(v["timestamp"]) > cutoff
-        ]
+        return [v for v in self.violations if datetime.fromisoformat(v["timestamp"]) > cutoff]
 
     def update_reference_statistics(self, data: pd.DataFrame) -> None:
         """Update reference statistics for monitoring.

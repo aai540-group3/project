@@ -13,14 +13,12 @@ from typing import Dict, Optional
 import numpy as np
 import optuna
 import pandas as pd
+from loguru import logger
 from omegaconf import DictConfig
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-from ..utils.logging import get_logger
 from .base import BaseModel
-
-logger = get_logger(__name__)
 
 
 class LogisticRegressionModel(BaseModel):
@@ -48,11 +46,7 @@ class LogisticRegressionModel(BaseModel):
         :return: Configured model instance
         :rtype: LogisticRegression
         """
-        model_cfg = (
-            self.cfg.quick_mode.model
-            if self.cfg.experiment.name == "quick"
-            else self.cfg.model
-        )
+        model_cfg = self.cfg.quick_mode.model if self.cfg.experiment.name == "quick" else self.cfg.model
 
         # Merge configuration with optional parameter overrides
         model_params = dict(model_cfg)
@@ -81,11 +75,7 @@ class LogisticRegressionModel(BaseModel):
         :return: Best parameters
         :rtype: Dict
         """
-        opt_cfg = (
-            self.cfg.quick_mode.optimize
-            if self.cfg.experiment.name == "quick"
-            else self.cfg.optimize
-        )
+        opt_cfg = self.cfg.quick_mode.optimize if self.cfg.experiment.name == "quick" else self.cfg.optimize
 
         def objective(trial: optuna.Trial) -> float:
             params = {}
@@ -96,9 +86,7 @@ class LogisticRegressionModel(BaseModel):
                         continue
 
                 if space.type == "float":
-                    params[name] = trial.suggest_float(
-                        name, space.low, space.high, log=space.get("log", False)
-                    )
+                    params[name] = trial.suggest_float(name, space.low, space.high, log=space.get("log", False))
                 elif space.type == "categorical":
                     params[name] = trial.suggest_categorical(name, space.choices)
 
@@ -143,14 +131,8 @@ class LogisticRegressionModel(BaseModel):
             X_val_scaled = self.scaler.transform(X_val) if X_val is not None else None
 
             # Optimize hyperparameters if validation data is provided
-            if (
-                X_val is not None
-                and y_val is not None
-                and not self.cfg.experiment.name == "quick"
-            ):
-                best_params = self._optimize_hyperparameters(
-                    X_train_scaled, y_train, X_val_scaled, y_val
-                )
+            if X_val is not None and y_val is not None and not self.cfg.experiment.name == "quick":
+                best_params = self._optimize_hyperparameters(X_train_scaled, y_train, X_val_scaled, y_val)
                 self._model = self._create_model(best_params)
             else:
                 self._model = self._create_model()

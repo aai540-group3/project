@@ -20,8 +20,6 @@ from omegaconf import DictConfig
 
 from .logging import get_logger
 
-logger = get_logger(__name__)
-
 
 class MetricsTracker:
     """Unified metrics tracking across multiple platforms.
@@ -53,9 +51,7 @@ class MetricsTracker:
                 config=self.cfg.to_container(),
                 tags=[self.__class__.__name__],
                 mode=os.getenv("WANDB_MODE", "online"),
-                settings=wandb.Settings(
-                    silent=True, disable_git=True, disable_code=True
-                ),
+                settings=wandb.Settings(silent=True, disable_git=True, disable_code=True),
             )
 
         if self.cfg.mlflow.enabled:
@@ -64,9 +60,7 @@ class MetricsTracker:
             mlflow.set_tracking_uri(self.cfg.mlflow.tracking_uri)
             mlflow.set_experiment(self.cfg.experiment.name)
 
-    def log_metrics(
-        self, metrics: Dict[str, float], step: Optional[int] = None, commit: bool = True
-    ) -> None:
+    def log_metrics(self, metrics: Dict[str, float], step: Optional[int] = None, commit: bool = True) -> None:
         """Log metrics to all configured platforms.
 
         :param metrics: Metrics to log
@@ -79,9 +73,7 @@ class MetricsTracker:
         timestamp = datetime.now()
 
         # Add to history
-        self.metrics_history.append(
-            {"timestamp": timestamp.isoformat(), "step": step, "metrics": metrics}
-        )
+        self.metrics_history.append({"timestamp": timestamp.isoformat(), "step": step, "metrics": metrics})
 
         # Log to MLflow
         if self.cfg.mlflow.enabled:
@@ -125,9 +117,7 @@ class MetricsTracker:
         :type code_paths: Optional[List[str]]
         """
         if self.cfg.mlflow.enabled:
-            mlflow.sklearn.log_model(
-                model, artifact_path, conda_env=conda_env, code_paths=code_paths
-            )
+            mlflow.sklearn.log_model(model, artifact_path, conda_env=conda_env, code_paths=code_paths)
 
         if self.cfg.wandb.enabled:
             artifact = wandb.Artifact(name=f"model-{wandb.run.id}", type="model")
@@ -148,9 +138,7 @@ class MetricsTracker:
         if self.cfg.wandb.enabled:
             wandb.log({path: figure})
 
-    def _save_metrics_locally(
-        self, metrics: Dict[str, float], timestamp: datetime
-    ) -> None:
+    def _save_metrics_locally(self, metrics: Dict[str, float], timestamp: datetime) -> None:
         """Save metrics to local file.
 
         :param metrics: Metrics to save
@@ -192,9 +180,7 @@ class MetricsTracker:
             return None
 
         values = [
-            entry["metrics"].get(metric_name)
-            for entry in self.metrics_history
-            if metric_name in entry["metrics"]
+            entry["metrics"].get(metric_name) for entry in self.metrics_history if metric_name in entry["metrics"]
         ]
 
         if not values:
@@ -202,9 +188,7 @@ class MetricsTracker:
 
         return max(values) if mode == "max" else min(values)
 
-    def get_metric_history(
-        self, metric_name: str
-    ) -> List[Dict[str, Union[str, float]]]:
+    def get_metric_history(self, metric_name: str) -> List[Dict[str, Union[str, float]]]:
         """Get history for specific metric.
 
         :param metric_name: Name of metric

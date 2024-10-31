@@ -1,13 +1,13 @@
 [core]
     remote = dvcstore
-    autostage = true
+    autostage = True
     analytics = false
 [studio]
     url = https://studio.iterative.ai
 [exp]
-    auto_push = true
+    auto_push = True
 [hydra]
-    enabled = true
+    enabled = True
     config_dir = conf
     config_name = config.yaml
 ['remote "dvcstore"']

@@ -12,18 +12,9 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import (
-    accuracy_score,
-    f1_score,
-    precision_score,
-    recall_score,
-    roc_auc_score,
-)
+from loguru import logger
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import cross_val_score
-
-from ..utils.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 class ModelValidator:
@@ -80,9 +71,7 @@ class ModelValidator:
 
         # Bias validation
         if self.cfg.bias.enabled:
-            bias_results = self._validate_bias(
-                model, X, y, protected_attributes=self.cfg.bias.protected_attributes
-            )
+            bias_results = self._validate_bias(model, X, y, protected_attributes=self.cfg.bias.protected_attributes)
             results["bias_validation"] = bias_results
 
         # Stability validation
@@ -110,20 +99,14 @@ class ModelValidator:
                     if col not in X.columns:
                         errors.append(f"Missing column: {col}")
                     elif str(X[col].dtype) != dtype:
-                        errors.append(
-                            f"Invalid dtype for {col}: "
-                            f"expected {dtype}, got {X[col].dtype}"
-                        )
+                        errors.append(f"Invalid dtype for {col}: " f"expected {dtype}, got {X[col].dtype}")
 
             # Check ranges
             if self.cfg.input.check_range:
                 for col, (min_val, max_val) in self.cfg.input.ranges.items():
                     if col in X.columns:
                         if X[col].min() < min_val or X[col].max() > max_val:
-                            errors.append(
-                                f"Values out of range for {col}: "
-                                f"[{min_val}, {max_val}]"
-                            )
+                            errors.append(f"Values out of range for {col}: " f"[{min_val}, {max_val}]")
 
         # Check missing values
         if self.cfg.input.check_missing:
@@ -202,9 +185,7 @@ class ModelValidator:
 
         return results
 
-    def _validate_resources(
-        self, model: Any, X: Union[np.ndarray, pd.DataFrame]
-    ) -> Dict:
+    def _validate_resources(self, model: Any, X: Union[np.ndarray, pd.DataFrame]) -> Dict:
         """Validate resource usage.
 
         :param model: Model to validate
@@ -236,8 +217,7 @@ class ModelValidator:
             inference_time = (time.time() - start_time) * 1000  # ms
             results["inference_time"] = {
                 "time_ms": inference_time,
-                "passed": inference_time
-                <= self.cfg.resources.limits.max_inference_time_ms,
+                "passed": inference_time <= self.cfg.resources.limits.max_inference_time_ms,
             }
 
         return results
@@ -277,9 +257,7 @@ class ModelValidator:
             groups = X[attr].unique()
 
             # Demographic parity
-            group_predictions = {
-                group: y_pred[X[attr] == group].mean() for group in groups
-            }
+            group_predictions = {group: y_pred[X[attr] == group].mean() for group in groups}
             max_diff = max(group_predictions.values()) - min(group_predictions.values())
             attr_results["demographic_parity"] = {
                 "value": max_diff,
@@ -342,14 +320,11 @@ class ModelValidator:
             feature_drift = {}
             for column in X.columns:
                 if X[column].dtype in [np.number]:
-                    ks_statistic, p_value = stats.ks_2samp(
-                        X[column][:mid], X[column][mid:]
-                    )
+                    ks_statistic, p_value = stats.ks_2samp(X[column][:mid], X[column][mid:])
                     feature_drift[column] = {
                         "ks_statistic": ks_statistic,
                         "p_value": p_value,
-                        "passed": p_value
-                        >= self.cfg.stability.drift_detection.threshold,
+                        "passed": p_value >= self.cfg.stability.drift_detection.threshold,
                     }
             results["feature_drift"] = feature_drift
 
@@ -393,10 +368,7 @@ class ModelValidator:
         if "validation" in perf_results:
             report.append("Validation Set Results:")
             for metric, results in perf_results["validation"].items():
-                report.append(
-                    f"  {metric}: {results['value']:.4f} "
-                    f"({'PASSED' if results['passed'] else 'FAILED'})"
-                )
+                report.append(f"  {metric}: {results['value']:.4f} " f"({'PASSED' if results['passed'] else 'FAILED'})")
         report.append("")
 
         # Resource validation
@@ -419,8 +391,7 @@ class ModelValidator:
                 report.append(f"  {attr}:")
                 for metric, values in results.items():
                     report.append(
-                        f"    {metric}: {values['value']:.4f} "
-                        f"({'PASSED' if values['passed'] else 'FAILED'})"
+                        f"    {metric}: {values['value']:.4f} " f"({'PASSED' if values['passed'] else 'FAILED'})"
                     )
             report.append("")
 

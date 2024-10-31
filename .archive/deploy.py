@@ -1,259 +1,378 @@
-"""
-Model Deployment Stage
-===================
-
-.. module:: pipeline.stages.deploy
-   :synopsis: Model deployment to HuggingFace Hub
-
-.. moduleauthor:: Your Name <your.email@example.com>
-"""
-
 import json
+import logging
 import os
+import shutil
+import subprocess
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 import pandas as pd
 import tensorflow as tf
 import tf2onnx
-from huggingface_hub import HfApi, ModelCard, ModelCardData, upload_folder
-from omegaconf import DictConfig
+from dotenv import load_dotenv
+from huggingface_hub import ModelCard, ModelCardData, upload_folder
 
-from .base import PipelineStage
-from ..utils.logging import get_logger
+# Setup logging and environment
+load_dotenv()
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
-logger = get_logger(__name__)
-
-class DeploymentStage(PipelineStage):
-    """Deployment stage for model artifacts.
-
-    Handles model deployment to HuggingFace Hub, including:
-    - Model artifact organization
-    - Model card generation
-    - Configuration creation
-    - HuggingFace upload
-
-    :param cfg: Deployment configuration
-    :type cfg: DictConfig
-    :raises ValueError: If configuration is invalid
-    """
-
-    def __init__(self, cfg: DictConfig):
-        """Initialize deployment stage.
-
-        :param cfg: Deployment configuration
-        :type cfg: DictConfig
-        """
-        super().__init__(cfg)
-        self.model_dirs = self._get_model_directories()
-        self.output_dir = Path(self.cfg.paths.deploy) / "huggingface"
-        self.repo_id = self.cfg.huggingface.repo_id
-
-    def _get_model_directories(self) -> Dict:
-        """Get model directory configurations.
-
-        :return: Dictionary of model paths
-        :rtype: Dict
-        """
-        return {
-            "logistic_regression": {
-                "root": Path(self.cfg.paths.models) / "logistic_regression/artifacts",
-                "model": Path(self.cfg.paths.models) / "logistic_regression/artifacts/model/model.joblib",
-                "metrics": Path(self.cfg.paths.models) / "logistic_regression/artifacts/metrics/metrics.json",
-                "feature_importance": Path(self.cfg.paths.models) / "logistic_regression/artifacts/metrics/feature_importance.csv",
-                "plots": Path(self.cfg.paths.models) / "logistic_regression/artifacts/plots",
-                "scaler": Path(self.cfg.paths.models) / "logistic_regression/artifacts/model/scaler.joblib",
-            },
-            # Add other model configurations similarly
-        }
-
-    def run(self) -> None:
-        """Execute deployment pipeline.
-
-        :raises RuntimeError: If deployment fails
-        """
-        logger.info("Starting model deployment")
-
-        try:
-            # Copy model artifacts
-            if not self._copy_model_artifacts():
-                raise RuntimeError("Failed to copy model artifacts")
-
-            # Find best model
-            best_model, best_metrics = self._find_best_model()
-            if not best_model or not best_metrics:
-                raise RuntimeError("Could not determine best model")
-
-            # Create necessary files
-            self._create_model_card(best_model, best_metrics)
-            self._create_preprocessing_config(best_model)
-            self._create_model_config(best_model)
-            self._create_tokenizer_config()
-
-            # Upload to HuggingFace
-            self._upload_to_huggingface()
-
-            logger.info("Deployment completed successfully")
-
-        except Exception as e:
-            logger.error(f"Deployment failed: {str(e)}")
-            raise RuntimeError(f"Deployment failed: {str(e)}")
-
-    def _copy_model_artifacts(self) -> bool:
-        """Copy model artifacts to deployment directory.
-
-        :return: Success status
-        :rtype: bool
-        :raises IOError: If copying fails
-        """
-        try:
-            self.output_dir.mkdir(parents=True, exist_ok=True)
-
-            for model_type, paths in self.model_dirs.items():
-                if paths["root"].exists():
-                    dest_dir = self.output_dir / model_type
-                    dest_dir.mkdir(parents=True, exist_ok=True)
-
-                    # Copy model files
-                    self._copy_model_files(paths, dest_dir)
-                    # Copy metrics and plots
-                    self._copy_metrics_and_plots(paths, dest_dir)
-
-                    logger.info(f"Copied {model_type} artifacts to {dest_dir}")
-
-            return True
-
-        except Exception as e:
-            logger.error(f"Error copying model artifacts: {e}")
-            return False
-
-    def _find_best_model(self) -> Tuple[Optional[str], Optional[Dict]]:
-        """Find the best performing model.
-
-        :return: Best model name and metrics
-        :rtype: Tuple[Optional[str], Optional[Dict]]
-        """
-        best_model = None
-        best_metrics = None
-
-        for model_type, paths in self.model_dirs.items():
-            metrics = self._load_metrics(paths["metrics"])
-            if metrics and (not best_metrics or
-                          metrics["test_auc"] > best_metrics["test_auc"]):
-                best_metrics = metrics
-                best_model = model_type
-
-        if best_model:
-            logger.info(
-                f"Best model is {best_model} with AUC: {best_metrics['test_auc']:.4f}"
-            )
-        else:
-            logger.error("No valid model metrics found")
-
-        return best_model, best_metrics
+# Constants
+OUTPUT_DIR = Path("huggingface/models/diabetes-readmission")
+REPO_ID = "aai540-group3/diabetes-readmission"
+SPACES_DIR = Path("huggingface/spaces/diabetes-readmission")
+MODEL_DIRS = {
+    "logistic_regression": {
+        "root": Path("models/logistic_regression/artifacts"),
+        "model": Path("models/logistic_regression/artifacts/model/model.joblib"),
+        "metrics": Path("models/logistic_regression/artifacts/metrics/metrics.json"),
+        "feature_importance": Path(
+            "models/logistic_regression/artifacts/metrics/feature_importance.csv"
+        ),
+        "plots": Path("models/logistic_regression/artifacts/plots"),
+        "scaler": Path("models/logistic_regression/artifacts/model/scaler.joblib"),
+    },
+    "neural_network": {
+        "root": Path("models/neural_network/artifacts"),
+        "model": Path("models/neural_network/artifacts/model/model.keras"),
+        "metrics": Path("models/neural_network/artifacts/metrics/metrics.json"),
+        "plots": Path("models/neural_network/artifacts/plots"),
+        "scaler": Path("models/neural_network/artifacts/model/scaler.joblib"),
+    },
+    "autogluon": {
+        "root": Path("models/autogluon/artifacts"),
+        "model": Path("models/autogluon/artifacts/model/predictor.pkl"),
+        "metrics": Path("models/autogluon/artifacts/metrics/metrics.json"),
+        "feature_importance": Path(
+            "models/autogluon/artifacts/model/feature_importance.csv"
+        ),
+        "plots": Path("models/autogluon/artifacts/plots"),
+    },
+}
 
 
+def get_hf_token() -> str:
+    """Get Hugging Face token from environment."""
+    token = os.getenv("HF_TOKEN")
+    if not token:
+        logger.error("HF_TOKEN environment variable must be set")
+        raise EnvironmentError("HF_TOKEN environment variable must be set")
+    return token
 
-# pipeline/pipeline/stages/deploy.py (continued)
 
-    def _create_model_card(self, best_model: str, metrics: Dict) -> None:
-        """Create model card with metrics and documentation.
+def convert_keras_to_onnx(keras_model_path: Path, output_dir: Path) -> Optional[Path]:
+    """Convert a Keras model to ONNX format."""
+    try:
+        # Load the Keras model
+        keras_model = tf.keras.models.load_model(keras_model_path)
 
-        :param best_model: Name of best model
-        :type best_model: str
-        :param metrics: Model metrics
-        :type metrics: Dict
-        :raises IOError: If model card creation fails
-        """
-        try:
-            # Create evaluation results
-            eval_results = [
-                {
-                    "task_type": "binary-classification",
-                    "dataset_type": "hospital-readmission",
-                    "dataset_name": "Diabetes 130-US Hospitals",
-                    "metric_type": metric_type,
-                    "metric_value": metrics.get(f"test_{metric_type}", "N/A"),
-                    "metric_name": metric_type
-                }
-                for metric_type in ["accuracy", "auc"]
-            ]
+        # Set output names to avoid the error
+        keras_model.output_names = ["output"]
 
-            # Load feature importance if available
-            feature_importance_df = self._load_feature_importance(best_model)
+        # Define the input signature for the model
+        input_shape = keras_model.input_shape[1:]  # Exclude batch size
+        input_signature = (
+            tf.TensorSpec((None, *input_shape), tf.float32, name="input"),
+        )
 
-            # Create card data
-            card_data = ModelCardData(
-                language="en",
-                license="mit",
-                model_name=self.repo_id,
-                eval_results=eval_results,
-                library_name="transformers"
-            )
+        # Convert the model to ONNX
+        model_proto, _ = tf2onnx.convert.from_keras(
+            keras_model, input_signature=input_signature
+        )
 
-            # Generate card content
-            content = self._generate_model_card_content(
-                best_model, metrics, card_data, feature_importance_df
-            )
+        # Save the ONNX model
+        onnx_model_path = output_dir / "model.onnx"
+        with open(onnx_model_path, "wb") as f:
+            f.write(model_proto.SerializeToString())
 
-            # Save model card
-            card = ModelCard(content)
-            card.save(self.output_dir / "README.md")
-            logger.info(f"Created model card at {self.output_dir / 'README.md'}")
-
-        except Exception as e:
-            logger.error(f"Failed to create model card: {e}")
-            raise IOError(f"Model card creation failed: {e}")
-
-    def _load_feature_importance(self, model_type: str) -> Optional[pd.DataFrame]:
-        """Load feature importance data.
-
-        :param model_type: Type of model
-        :type model_type: str
-        :return: Feature importance DataFrame
-        :rtype: Optional[pd.DataFrame]
-        """
-        if "feature_importance" not in self.model_dirs[model_type]:
-            return None
-
-        try:
-            fi_path = self.model_dirs[model_type]["feature_importance"]
-            if fi_path.exists():
-                df = pd.read_csv(fi_path)
-                return df[df["importance"] > 0].sort_values(
-                    "importance", ascending=False
-                )
-        except Exception as e:
-            logger.warning(f"Could not load feature importance: {e}")
+        logger.info(f"Converted Keras model to ONNX and saved at {onnx_model_path}")
+        return onnx_model_path
+    except Exception as e:
+        logger.error(f"Error converting Keras model to ONNX: {e}")
         return None
 
-    def _generate_model_card_content(
-        self,
-        model_type: str,
-        metrics: Dict,
-        card_data: ModelCardData,
-        feature_importance_df: Optional[pd.DataFrame]
-    ) -> str:
-        """Generate model card content.
 
-        :param model_type: Type of model
-        :type model_type: str
-        :param metrics: Model metrics
-        :type metrics: Dict
-        :param card_data: Model card metadata
-        :type card_data: ModelCardData
-        :param feature_importance_df: Feature importance data
-        :type feature_importance_df: Optional[pd.DataFrame]
-        :return: Model card content
-        :rtype: str
-        """
-        content = f"""
+def load_metrics(metrics_path: Path) -> Optional[Dict]:
+    """Load metrics from a JSON file."""
+    try:
+        if not metrics_path.exists():
+            logger.error(f"Metrics file not found: {metrics_path}")
+            return None
+
+        with metrics_path.open() as f:
+            metrics = json.load(f)
+
+        required_metrics = {"test_accuracy", "test_auc"}
+        if not all(metric in metrics for metric in required_metrics):
+            logger.error(f"Missing required metrics in {metrics_path}")
+            return None
+
+        return metrics
+    except json.JSONDecodeError as e:
+        logger.error(f"Error parsing metrics JSON from {metrics_path}: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Error loading metrics from {metrics_path}: {e}")
+        return None
+
+
+def create_preprocessing_config(output_dir: Path, model_type: str) -> None:
+    """Create preprocessing configuration for feature handling."""
+    config = {
+        "preprocessor": {
+            "numeric_features": [
+                "age",
+                "time_in_hospital",
+                "num_lab_procedures",
+                "num_procedures",
+                "num_medications",
+                "number_diagnoses",
+                "total_medications",
+                "medication_density",
+                "numchange",
+                "nummed",
+                "total_encounters",
+                "encounter_per_time",
+                "procedures_per_day",
+                "lab_procedures_per_day",
+                "procedures_to_medications",
+                "diagnoses_per_encounter",
+                "number_outpatient_log1p",
+                "number_emergency_log1p",
+                "number_inpatient_log1p",
+            ],
+            "binary_features": ["gender", "diabetesmed", "change", "insulin_with_oral"],
+            "medication_features": [
+                "metformin",
+                "repaglinide",
+                "nateglinide",
+                "chlorpropamide",
+                "glimepiride",
+                "glipizide",
+                "glyburide",
+                "pioglitazone",
+                "rosiglitazone",
+                "acarbose",
+                "miglitol",
+                "insulin",
+                "glyburide-metformin",
+                "tolazamide",
+                "metformin-pioglitazone",
+                "metformin-rosiglitazone",
+                "glimepiride-pioglitazone",
+                "glipizide-metformin",
+                "troglitazone",
+                "tolbutamide",
+                "acetohexamide",
+            ],
+            "interaction_features": [
+                "num_medications_x_time_in_hospital",
+                "num_procedures_x_time_in_hospital",
+                "num_lab_procedures_x_time_in_hospital",
+                "number_diagnoses_x_time_in_hospital",
+                "age_x_number_diagnoses",
+                "age_x_num_medications",
+                "total_medications_x_number_diagnoses",
+                "num_medications_x_num_procedures",
+                "time_in_hospital_x_num_lab_procedures",
+                "num_medications_x_num_lab_procedures",
+                "change_x_num_medications",
+                "num_medications_x_numchange",
+            ],
+            "ratio_features": [
+                "procedure_medication_ratio",
+                "lab_procedure_ratio",
+                "diagnosis_procedure_ratio",
+            ],
+            "categorical_features": {
+                "admission_type_id": list(range(1, 9)),
+                "discharge_disposition_id": list(range(1, 27)),
+                "admission_source_id": list(range(1, 26)),
+                "level1_diag1": list(range(0, 9)),
+            },
+            "lab_features": {
+                "a1cresult": {"mapping": {">7": 1, ">8": 1, "Norm": 0, "None": -99}},
+                "max_glu_serum": {
+                    "mapping": {">200": 1, ">300": 1, "Norm": 0, "None": -99}
+                },
+            },
+        },
+        "transformations": {
+            "numeric_scaling": "standard",
+            "outlier_handling": {"method": "clip", "std_multiplier": 5},
+            "missing_values": {"numeric": "mean", "categorical": "mode"},
+        },
+        "target": {
+            "name": "readmitted",
+            "type": "binary",
+            "mapping": {">30": 0, "<30": 1, "NO": 0},
+        },
+    }
+
+    config_path = output_dir / "preprocessing_config.json"
+    with config_path.open("w") as f:
+        json.dump(config, f, indent=2)
+    logger.info(f"Created preprocessing config at {config_path}")
+
+
+def create_model_config(output_dir: Path, model_type: str) -> None:
+    """Create config.json for the Hugging Face Inference API."""
+    config = {
+        "architectures": ["TabularBinaryClassification"],
+        "model_type": model_type,
+        "num_classes": 2,
+        "id2label": {"0": "NO_READMISSION", "1": "READMISSION"},
+        "label2id": {"NO_READMISSION": 0, "READMISSION": 1},
+        "task_specific_params": {
+            "classification": {"problem_type": "binary_classification"}
+        },
+        "preprocessing": {"featurization_config": "preprocessing_config.json"},
+    }
+
+    config_path = output_dir / "config.json"
+    with config_path.open("w") as f:
+        json.dump(config, f, indent=2)
+    logger.info(f"Created model config at {config_path}")
+
+
+def create_tokenizer_config(output_dir: Path) -> None:
+    """Create tokenizer configuration for tabular data processing."""
+    config = {
+        "feature_extractor_type": "tabular",
+        "framework": "pt",
+        "num_features": None,  # Will be set during preprocessing
+        "requires_preprocessing": True,
+        "preprocessing_config": "preprocessing_config.json",
+    }
+
+    config_path = output_dir / "tokenizer_config.json"
+    with config_path.open("w") as f:
+        json.dump(config, f, indent=2)
+    logger.info(f"Created tokenizer config at {config_path}")
+
+
+def copy_model_artifacts(output_dir: Path) -> bool:
+    """Copy all model artifacts to the output directory."""
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        for model_type, paths in MODEL_DIRS.items():
+            if paths["root"].exists():
+                dest_dir = output_dir / model_type
+                dest_dir.mkdir(parents=True, exist_ok=True)
+
+                # Copy model files
+                model_dest = dest_dir / "model"
+                model_dest.mkdir(parents=True, exist_ok=True)
+
+                # Copy all files to the destination first
+                if paths["model"].exists():
+                    shutil.copy2(paths["model"], model_dest)
+                model_dir = paths["model"].parent
+                for file in model_dir.glob("*"):
+                    if file.is_file():
+                        shutil.copy2(file, model_dest)
+
+                # Copy metrics
+                metrics_dest = dest_dir / "metrics"
+                metrics_dest.mkdir(parents=True, exist_ok=True)
+                if paths["metrics"].exists():
+                    shutil.copy2(paths["metrics"], metrics_dest)
+
+                # Copy feature importance if it exists
+                if (
+                    "feature_importance" in paths
+                    and paths["feature_importance"].exists()
+                ):
+                    shutil.copy2(
+                        paths["feature_importance"],
+                        metrics_dest / "feature_importance.csv",
+                    )
+
+                # Copy plots
+                if paths["plots"].exists():
+                    plots_dest = dest_dir / "plots"
+                    plots_dest.mkdir(parents=True, exist_ok=True)
+                    for plot in paths["plots"].glob("*.png"):
+                        shutil.copy2(plot, plots_dest)
+
+                logger.info(f"Copied {model_type} artifacts to {dest_dir}")
+
+        return True
+    except Exception as e:
+        logger.error(f"Error copying model artifacts: {e}")
+        return False
+
+
+def find_best_model() -> Tuple[Optional[str], Optional[Dict]]:
+    """Find the model with the highest test AUC score."""
+    best_model = None
+    best_metrics = None
+
+    for model_type, paths in MODEL_DIRS.items():
+        metrics = load_metrics(paths["metrics"])
+        if metrics and (
+            not best_metrics or metrics["test_auc"] > best_metrics["test_auc"]
+        ):
+            best_metrics = metrics
+            best_model = model_type
+
+    if best_model:
+        logger.info(
+            f"Best model is {best_model} with AUC: {best_metrics['test_auc']:.4f}"
+        )
+    else:
+        logger.error("No valid model metrics found")
+
+    return best_model, best_metrics
+
+
+def create_model_card(best_model: str, metrics: Dict, output_dir: Path) -> None:
+    """Create and save the model card."""
+    from huggingface_hub.repocard_data import EvalResult
+
+    eval_results = [
+        EvalResult(
+            task_type="binary-classification",
+            dataset_type="hospital-readmission",
+            dataset_name="Diabetes 130-US Hospitals",
+            metric_type=metric_type,
+            metric_value=metrics.get(f"test_{metric_type}", "N/A"),
+            metric_name=metric_type,
+        )
+        for metric_type in ["accuracy", "auc"]
+    ]
+
+    card_data = ModelCardData(
+        language="en",
+        license="mit",
+        model_name=REPO_ID,
+        eval_results=eval_results,
+        library_name="transformers",
+    )
+
+    # Load feature importance if available
+    feature_importance_df = None
+    if "feature_importance" in MODEL_DIRS[best_model]:
+        try:
+            fi_path = MODEL_DIRS[best_model]["feature_importance"]
+            if fi_path.exists():
+                feature_importance_df = pd.read_csv(fi_path)
+                feature_importance_df = feature_importance_df[
+                    feature_importance_df["importance"] > 0
+                ].sort_values("importance", ascending=False)
+        except Exception as e:
+            logger.warning(f"Could not load feature importance: {e}")
+
+    content = f"""
 ---
 pipeline_tag: tabular-classification
 {card_data.to_yaml()}
 ---
 
-# {self.repo_id}
+# {REPO_ID}
 
 ## Model Description
 
@@ -261,169 +380,274 @@ This model predicts 30-day hospital readmissions for diabetic patients using his
 and machine learning techniques. The model aims to identify high-risk individuals enabling targeted
 interventions and improved healthcare resource allocation.
 
+## Overview
+
+- **Task:** Binary Classification (Hospital Readmission Prediction)
+- **Model Type:** {best_model}
+- **Framework:** Python {best_model.replace('_', ' ').title()}
+- **License:** MIT
+- **Last Updated:** {pd.Timestamp.now().strftime('%Y-%m-%d')}
+
 ## Performance Metrics
 
 - **Test Accuracy:** {metrics.get('test_accuracy', 'N/A'):.4f}
 - **Test ROC-AUC:** {metrics.get('test_auc', 'N/A'):.4f}
 """
 
-        # Add feature importance section if available
-        if feature_importance_df is not None and not feature_importance_df.empty:
-            content += self._format_feature_importance(feature_importance_df)
+    # Add feature importance section if available
+    if feature_importance_df is not None and not feature_importance_df.empty:
+        content += "\n## Feature Importance\n\n"
+        content += "Significant features and their importance scores:\n\n"
+        content += "| Feature | Importance | p-value | 99% CI |\n"
+        content += "|---------|------------|----------|----------|\n"
 
-        # Add remaining sections
-        content += self._get_model_card_sections()
-
-        return content
-
-    def _create_preprocessing_config(self, model_type: str) -> None:
-        """Create preprocessing configuration.
-
-        :param model_type: Type of model
-        :type model_type: str
-        :raises IOError: If config creation fails
-        """
-        try:
-            config = {
-                "preprocessor": {
-                    "numeric_features": self.cfg.features.numeric_features,
-                    "binary_features": self.cfg.features.binary_features,
-                    "categorical_features": self.cfg.features.categorical_features,
-                    "interaction_features": self.cfg.features.interaction_features,
-                    "ratio_features": self.cfg.features.ratio_features
-                },
-                "transformations": {
-                    "numeric_scaling": "standard",
-                    "outlier_handling": {
-                        "method": "clip",
-                        "std_multiplier": 5
-                    },
-                    "missing_values": {
-                        "numeric": "mean",
-                        "categorical": "mode"
-                    }
-                },
-                "target": {
-                    "name": "readmitted",
-                    "type": "binary",
-                    "mapping": {">30": 0, "<30": 1, "NO": 0}
-                }
-            }
-
-            config_path = self.output_dir / "preprocessing_config.json"
-            with config_path.open("w") as f:
-                json.dump(config, f, indent=2)
-            logger.info(f"Created preprocessing config at {config_path}")
-
-        except Exception as e:
-            logger.error(f"Failed to create preprocessing config: {e}")
-            raise IOError(f"Preprocessing config creation failed: {e}")
-
-    def _create_model_config(self, model_type: str) -> None:
-        """Create model configuration.
-
-        :param model_type: Type of model
-        :type model_type: str
-        :raises IOError: If config creation fails
-        """
-        try:
-            config = {
-                "architectures": ["TabularBinaryClassification"],
-                "model_type": model_type,
-                "num_classes": 2,
-                "id2label": {"0": "NO_READMISSION", "1": "READMISSION"},
-                "label2id": {"NO_READMISSION": 0, "READMISSION": 1},
-                "task_specific_params": {
-                    "classification": {"problem_type": "binary_classification"}
-                },
-                "preprocessing": {"featurization_config": "preprocessing_config.json"}
-            }
-
-            config_path = self.output_dir / "config.json"
-            with config_path.open("w") as f:
-                json.dump(config, f, indent=2)
-            logger.info(f"Created model config at {config_path}")
-
-        except Exception as e:
-            logger.error(f"Failed to create model config: {e}")
-            raise IOError(f"Model config creation failed: {e}")
-
-    def _upload_to_huggingface(self) -> None:
-        """Upload model to HuggingFace Hub.
-
-        :raises RuntimeError: If upload fails
-        """
-        try:
-            token = self._get_hf_token()
-            os.environ["HF_TRANSFER"] = "1"  # Enable faster uploads
-
-            # Upload folder
-            logger.info(f"Starting upload to {self.repo_id}...")
-            api = HfApi(token=token)
-            api.create_repo(
-                repo_id=self.repo_id,
-                exist_ok=True,
-                private=self.cfg.huggingface.private
+        for idx, row in feature_importance_df.iterrows():
+            p_value = (
+                f"{row['p_value']:.2e}"
+                if row["p_value"] < 0.001
+                else f"{row['p_value']:.4f}"
             )
+            content += f"| {idx} | {row['importance']:.4f} | {p_value} | [{row['p99_low']:.4f}, {row['p99_high']:.4f}] |\n"
 
-            api.upload_folder(
-                repo_id=self.repo_id,
-                folder_path=str(self.output_dir),
-                commit_message=f"Update model artifacts"
-            )
+        content += "\n*Note: Only features with non-zero importance are shown. The confidence intervals (CI) are calculated at the 99% level. Features with p-value < 0.05 are considered statistically significant.*\n"
 
-            logger.info(f"Successfully uploaded model to {self.repo_id}")
+    content += """
+## Features
 
-        except Exception as e:
-            logger.error(f"Failed to upload to HuggingFace: {e}")
-            raise RuntimeError(f"HuggingFace upload failed: {e}")
+### Numeric Features
+- Patient demographics (age)
+- Hospital stay metrics (time_in_hospital, num_procedures, num_lab_procedures)
+- Medication metrics (num_medications, total_medications)
+- Service utilization (number_outpatient, number_emergency, number_inpatient)
+- Diagnostic information (number_diagnoses)
 
-    def _get_hf_token(self) -> str:
-        """Get HuggingFace token from configuration.
+### Binary Features
+- Patient characteristics (gender)
+- Medication flags (diabetesmed, change, insulin_with_oral)
 
-        :return: HuggingFace token
-        :rtype: str
-        :raises EnvironmentError: If token is not available
-        """
-        token = self.cfg.huggingface.token
-        if not token:
-            raise EnvironmentError("HuggingFace token not found in configuration")
-        return token
+### Interaction Features
+- Time-based interactions (medications × time, procedures × time)
+- Complexity indicators (age × diagnoses, medications × procedures)
+- Resource utilization (lab procedures × time, medications × changes)
 
-    def _convert_keras_to_onnx(
-        self,
-        keras_model_path: Path,
-        output_dir: Path
-    ) -> Optional[Path]:
-        """Convert Keras model to ONNX format.
+### Ratio Features
+- Resource efficiency (procedure/medication ratio, lab/procedure ratio)
+- Diagnostic density (diagnosis/procedure ratio)
 
-        :param keras_model_path: Path to Keras model
-        :type keras_model_path: Path
-        :param output_dir: Output directory
-        :type output_dir: Path
-        :return: Path to ONNX model
-        :rtype: Optional[Path]
-        """
-        try:
-            keras_model = tf.keras.models.load_model(keras_model_path)
-            keras_model.output_names = ["output"]
+## Intended Use
 
-            input_shape = keras_model.input_shape[1:]
-            input_signature = (
-                tf.TensorSpec((None, *input_shape), tf.float32, name="input"),
-            )
+This model is designed for healthcare professionals to assess the risk of 30-day readmission
+for diabetic patients. It should be used as a supportive tool in conjunction with clinical judgment.
 
-            model_proto, _ = tf2onnx.convert.from_keras(
-                keras_model, input_signature=input_signature
-            )
+### Primary Intended Uses
+- Predict likelihood of 30-day hospital readmission
+- Support resource allocation and intervention planning
+- Aid in identifying high-risk patients
+- Assist in care management decision-making
 
-            onnx_path = output_dir / "model.onnx"
-            with open(onnx_path, "wb") as f:
-                f.write(model_proto.SerializeToString())
+### Out-of-Scope Uses
+- Non-diabetic patient populations
+- Predicting readmissions beyond 30 days
+- Making final decisions without clinical oversight
+- Use as sole determinant for patient care decisions
+- Emergency or critical care decision-making
 
-            logger.info(f"Converted Keras model to ONNX: {onnx_path}")
-            return onnx_path
+## Training Data
 
-        except Exception as e:
-            logger.error(f"Failed to convert model to ONNX: {e}")
-            return None
+The model was trained on the [Diabetes 130-US Hospitals Dataset](https://doi.org/10.24432/C5230J)
+(1999-2008) from UCI ML Repository. This dataset includes:
+
+- Over 100,000 hospital admissions
+- 50+ features including patient demographics, diagnoses, procedures
+- Binary outcome: readmission within 30 days
+- Comprehensive medication tracking
+- Detailed hospital utilization metrics
+
+## Training Procedure
+
+### Data Preprocessing
+- Missing value imputation using mean/mode
+- Outlier handling using 5-sigma clipping
+- Feature scaling using StandardScaler
+- Categorical encoding using one-hot encoding
+- Log transformation for skewed features
+
+### Feature Engineering
+- Created interaction terms between key variables
+- Generated resource utilization ratios
+- Aggregated medication usage metrics
+- Developed time-based interaction features
+- Constructed diagnostic density metrics
+
+### Model Training
+- Data split: 70% training, 15% validation, 15% test
+- Cross-validation for model selection
+- Hyperparameter optimization via grid search
+- Early stopping to prevent overfitting
+- Model selection based on ROC-AUC performance
+
+## Limitations & Biases
+
+### Known Limitations
+- Model performance depends on data quality and completeness
+- Limited to the scope of training data timeframe (1999-2008)
+- May not generalize to significantly different healthcare systems
+- Requires standardized input data format
+
+### Potential Biases
+- May exhibit demographic biases present in training data
+- Performance may vary across different hospital systems
+- Could be influenced by regional healthcare practices
+- Might show temporal biases due to historical data
+
+### Recommendations
+- Regular model monitoring and retraining
+- Careful validation in new deployment contexts
+- Assessment of performance across demographic groups
+- Integration with existing clinical workflows
+
+## Monitoring & Maintenance
+
+### Monitoring Requirements
+- Track prediction accuracy across different patient groups
+- Monitor input data distribution shifts
+- Assess feature importance stability
+- Evaluate performance metrics over time
+
+### Maintenance Schedule
+- Quarterly performance reviews recommended
+- Annual retraining with updated data
+- Regular bias assessments
+- Ongoing validation against current practices
+
+## Citation
+
+```bibtex
+@misc{diabetes-readmission-model,
+  title = {Hospital Readmission Prediction Model for Diabetic Patients},
+  author = {Agustin, Jonathan and Robertson, Zack and Vo, Lisa},
+  year = {2024},
+  publisher = {Hugging Face},
+  howpublished = {\\url{https://huggingface.co/{REPO_ID}}}
+}
+
+@misc{diabetes-dataset,
+  title = {Diabetes 130-US Hospitals for Years 1999-2008 Data Set},
+  author = {Strack, B. and DeShazo, J. and Gennings, C. and Olmo, J. and
+            Ventura, S. and Cios, K. and Clore, J.},
+  year = {2014},
+  publisher = {UCI Machine Learning Repository},
+  doi = {10.24432/C5230J}
+}
+```
+
+## Model Card Authors
+
+Jonathan Agustin, Zack Robertson, Lisa Vo
+
+## For Questions, Issues, or Feedback
+
+- GitHub Issues: [Repository Issues](https://github.com/aai540-group3/diabetes-readmission/issues)
+- Email: [team contact information]
+
+## Updates and Versions
+
+- {pd.Timestamp.now().strftime('%Y-%m-%d')}: Initial model release
+- Feature engineering pipeline implemented
+- Comprehensive preprocessing system added
+- Model evaluation and selection completed
+
+---
+Last updated: {pd.Timestamp.now().strftime('%Y-%m-%d')}
+"""
+
+    card = ModelCard(content)
+    card.save(output_dir / "README.md")
+    logger.info(f"Created model card at {output_dir / 'README.md'}")
+
+
+def upload_to_huggingface() -> bool:
+    """Upload the model directory to Hugging Face using rsync-like functionality."""
+    token = get_hf_token()
+    os.environ["HF_TRANSFER"] = "1"  # Enable faster uploads
+
+    try:
+        # Login to Hugging Face
+        logger.info("Logging into Hugging Face...")
+        login_cmd = ["huggingface-cli", "login", "--token", token]
+        subprocess.run(login_cmd, check=True, capture_output=True, text=True)
+
+        # Upload folder
+        logger.info(f"Starting upload to {REPO_ID}...")
+        upload_folder(repo_id=REPO_ID, folder_path=str(OUTPUT_DIR), repo_type="model")
+        logger.info(f"Successfully uploaded model to {REPO_ID}")
+        return True
+    except Exception as e:
+        logger.error(f"Error uploading to Hugging Face: {str(e)}")
+        return False
+
+
+def upload_ui_to_huggingface() -> bool:
+    token = get_hf_token()
+    os.environ["HF_TRANSFER"] = "1"  # Enable faster uploads
+
+    try:
+        # Login to Hugging Face
+        logger.info("Logging into Hugging Face...")
+        login_cmd = ["huggingface-cli", "login", "--token", token]
+        subprocess.run(login_cmd, check=True, capture_output=True, text=True)
+
+        # Upload folder
+        logger.info(f"Starting upload to {REPO_ID}...")
+        upload_folder(repo_id=REPO_ID, folder_path=str(SPACES_DIR), repo_type="space")
+        logger.info(f"Successfully uploaded space to {REPO_ID}")
+        return True
+    except Exception as e:
+        logger.error(f"Error uploading to Hugging Face: {str(e)}")
+        return False
+
+
+def main():
+    """Main deployment function."""
+    try:
+        # Copy all model artifacts to output directory
+        if not copy_model_artifacts(OUTPUT_DIR):
+            logger.error("Failed to copy model artifacts")
+            return False
+
+        # Find best performing model
+        best_model, best_metrics = find_best_model()
+        if not best_model or not best_metrics:
+            logger.error("Could not determine best model")
+            return False
+
+        # Create model card
+        create_model_card(best_model, best_metrics, OUTPUT_DIR)
+
+        # Create inference configs
+        create_preprocessing_config(OUTPUT_DIR, best_model)
+        create_model_config(OUTPUT_DIR, best_model)
+        create_tokenizer_config(OUTPUT_DIR)
+
+        # Upload to Hugging Face
+        if not upload_to_huggingface():
+            logger.error("Failed to upload to Hugging Face")
+            return False
+
+        # Upload UI to Hugging Face Spaces
+        if not upload_ui_to_huggingface():
+            logger.error("Failed to upload UI to Hugging Face Spaces")
+            return False
+
+        logger.info("Deployment completed successfully")
+        return True
+
+    except Exception as e:
+        logger.exception(f"Deployment failed: {e}")
+        return False
+
+
+if __name__ == "__main__":
+    success = main()
+    if not success:
+        exit(1)

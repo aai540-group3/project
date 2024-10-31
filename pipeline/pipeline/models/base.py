@@ -15,11 +15,8 @@ from typing import Dict, Optional, Union
 import joblib
 import numpy as np
 import pandas as pd
+from loguru import logger
 from omegaconf import DictConfig
-
-from ..utils.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 class BaseModel(ABC):

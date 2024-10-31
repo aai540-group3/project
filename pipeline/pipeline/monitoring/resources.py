@@ -13,20 +13,16 @@ from typing import Dict, List, Optional
 
 import GPUtil
 import psutil
+from loguru import logger
 from prometheus_client import Gauge
 
-from ..utils.logging import get_logger
 from .base import BaseMonitor
-
-logger = get_logger(__name__)
 
 # Prometheus metrics
 CPU_USAGE = Gauge("system_cpu_usage_percent", "CPU usage percentage")
 MEMORY_USAGE = Gauge("system_memory_usage_bytes", "Memory usage in bytes")
 GPU_USAGE = Gauge("system_gpu_usage_percent", "GPU usage percentage", ["gpu_id"])
-DISK_USAGE = Gauge(
-    "system_disk_usage_percent", "Disk usage percentage", ["mount_point"]
-)
+DISK_USAGE = Gauge("system_disk_usage_percent", "Disk usage percentage", ["mount_point"])
 
 
 class ResourceMonitor(BaseMonitor):
@@ -197,9 +193,7 @@ class ResourceMonitor(BaseMonitor):
                     "device": partition.device,
                 }
             except Exception as e:
-                logger.warning(
-                    f"Failed to collect disk metrics for {partition.mountpoint}: {e}"
-                )
+                logger.warning(f"Failed to collect disk metrics for {partition.mountpoint}: {e}")
 
         # Add disk I/O metrics
         try:
@@ -332,19 +326,11 @@ class ResourceMonitor(BaseMonitor):
             return self.metrics_history
 
         cutoff = datetime.now() - timedelta(minutes=minutes)
-        return [
-            m
-            for m in self.metrics_history
-            if datetime.fromisoformat(m["timestamp"]) > cutoff
-        ]
+        return [m for m in self.metrics_history if datetime.fromisoformat(m["timestamp"]) > cutoff]
 
     def cleanup_old_metrics(self) -> None:
         """Clean up old metrics data."""
         retention_days = self.cfg.retention_days
         cutoff = datetime.now() - timedelta(days=retention_days)
 
-        self.metrics_history = [
-            m
-            for m in self.metrics_history
-            if datetime.fromisoformat(m["timestamp"]) > cutoff
-        ]
+        self.metrics_history = [m for m in self.metrics_history if datetime.fromisoformat(m["timestamp"]) > cutoff]

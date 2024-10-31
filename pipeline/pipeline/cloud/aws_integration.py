@@ -14,11 +14,8 @@ from typing import Dict, List, Optional
 
 import boto3
 from botocore.exceptions import ClientError
+from loguru import logger
 from omegaconf import DictConfig
-
-from ..utils.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 class AWSIntegration:
@@ -40,9 +37,7 @@ class AWSIntegration:
 
     def _initialize_clients(self) -> None:
         """Initialize AWS service clients."""
-        session = boto3.Session(
-            profile_name=self.cfg.profile, region_name=self.cfg.region
-        )
+        session = boto3.Session(profile_name=self.cfg.profile, region_name=self.cfg.region)
 
         self.cloudwatch = session.client("cloudwatch")
         self.logs = session.client("logs")
@@ -79,17 +74,13 @@ class AWSIntegration:
             if dimensions:
                 metric_data["Dimensions"] = dimensions
 
-            self.cloudwatch.put_metric_data(
-                Namespace=self.cfg.cloudwatch.namespace, MetricData=[metric_data]
-            )
+            self.cloudwatch.put_metric_data(Namespace=self.cfg.cloudwatch.namespace, MetricData=[metric_data])
 
         except ClientError as e:
             logger.error(f"Failed to log metric to CloudWatch: {e}")
             raise
 
-    def create_log_stream(
-        self, log_stream_name: str, log_group_name: Optional[str] = None
-    ) -> None:
+    def create_log_stream(self, log_stream_name: str, log_group_name: Optional[str] = None) -> None:
         """Create CloudWatch log stream.
 
         :param log_stream_name: Log stream name
@@ -100,9 +91,7 @@ class AWSIntegration:
         """
         try:
             log_group = log_group_name or self.cfg.cloudwatch.log_group
-            self.logs.create_log_stream(
-                logGroupName=log_group, logStreamName=log_stream_name
-            )
+            self.logs.create_log_stream(logGroupName=log_group, logStreamName=log_stream_name)
         except ClientError as e:
             logger.error(f"Failed to create log stream: {e}")
             raise
@@ -140,9 +129,7 @@ class AWSIntegration:
             logger.error(f"Failed to put log events: {e}")
             raise
 
-    def upload_artifact(
-        self, file_path: str, s3_key: str, metadata: Optional[Dict] = None
-    ) -> None:
+    def upload_artifact(self, file_path: str, s3_key: str, metadata: Optional[Dict] = None) -> None:
         """Upload artifact to S3.
 
         :param file_path: Local file path

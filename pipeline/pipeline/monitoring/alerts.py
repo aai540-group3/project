@@ -16,11 +16,8 @@ from typing import Dict, List, Optional, Set
 
 import requests
 from jinja2 import Template
+from loguru import logger
 from omegaconf import DictConfig
-
-from ..utils.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 class AlertManager:
@@ -227,9 +224,7 @@ class AlertManager:
             html_content = self.templates["email"].render(alert=alert)
             msg.attach(MIMEText(html_content, "html"))
 
-            with smtplib.SMTP(
-                self.cfg.email.smtp_host, self.cfg.email.smtp_port
-            ) as server:
+            with smtplib.SMTP(self.cfg.email.smtp_host, self.cfg.email.smtp_port) as server:
                 if self.cfg.email.use_tls:
                     server.starttls()
                 if self.cfg.email.username and self.cfg.email.password:
@@ -259,17 +254,13 @@ class AlertManager:
                 "details": alert,
             }
 
-            response = requests.post(
-                "https://events.pagerduty.com/v2/enqueue", json=payload, timeout=5
-            )
+            response = requests.post("https://events.pagerduty.com/v2/enqueue", json=payload, timeout=5)
             response.raise_for_status()
 
         except Exception as e:
             logger.error(f"Failed to send PagerDuty notification: {e}")
 
-    def get_active_alerts(
-        self, severity: Optional[str] = None, alert_type: Optional[str] = None
-    ) -> List[Dict]:
+    def get_active_alerts(self, severity: Optional[str] = None, alert_type: Optional[str] = None) -> List[Dict]:
         """Get active alerts with optional filtering.
 
         :param severity: Filter by severity
@@ -288,9 +279,7 @@ class AlertManager:
 
         return alerts
 
-    def get_alert_history(
-        self, days: Optional[int] = None, include_resolved: bool = True
-    ) -> List[Dict]:
+    def get_alert_history(self, days: Optional[int] = None, include_resolved: bool = True) -> List[Dict]:
         """Get alert history.
 
         :param days: Number of days of history
@@ -307,9 +296,7 @@ class AlertManager:
 
         if days:
             cutoff = datetime.now() - timedelta(days=days)
-            alerts = [
-                a for a in alerts if datetime.fromisoformat(a["timestamp"]) > cutoff
-            ]
+            alerts = [a for a in alerts if datetime.fromisoformat(a["timestamp"]) > cutoff]
 
         return alerts
 
@@ -319,7 +306,5 @@ class AlertManager:
         cutoff = datetime.now() - timedelta(days=retention_days)
 
         self.alert_history = [
-            alert
-            for alert in self.alert_history
-            if datetime.fromisoformat(alert["timestamp"]) > cutoff
+            alert for alert in self.alert_history if datetime.fromisoformat(alert["timestamp"]) > cutoff
         ]

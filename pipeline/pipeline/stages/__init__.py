@@ -1,34 +1,15 @@
 """
 Pipeline Stages
-============
+===============
 
 .. module:: pipeline.stages
-   :synopsis: Pipeline stage implementations
+   :synopsis: Modules defining individual pipeline stages
+
+.. moduleauthor:: aai540-group3
+
+This package contains modules for each stage of the pipeline, from data ingestion to model training and deployment.
 """
 
 from .base import PipelineStage
-from .infrastruct import InfrastructStage
-from .ingest import IngestStage
-from .preprocess import PreprocessStage
-from .featurize import FeaturizeStage
-from .explore import ExploreStage
-from .train import TrainStage
-from .evaluate import EvaluateStage
-from .register import RegisterStage
-from .optimize import OptimizeStage
-from .deploy import DeployStage
 
-
-__all__ = [
-    "PipelineStage",
-    "InfrastructStage",
-    "IngestStage",
-    "PreprocessStage",
-    "FeaturizeStage",
-    "ExploreStage",
-    "TrainStage",
-    "EvaluateStage",
-    "RegisterStage",
-    "OptimizeStage",
-    "DeployStage",
-]
+__all__ = ["PipelineStage"]

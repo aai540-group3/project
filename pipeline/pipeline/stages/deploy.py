@@ -1,5 +1,5 @@
 """
-Model Deployment Stage
+Deploy Stage
 ===================
 
 .. module:: pipeline.stages.deploy
@@ -17,15 +17,13 @@ import pandas as pd
 import tensorflow as tf
 import tf2onnx
 from huggingface_hub import HfApi, ModelCard, ModelCardData
+from loguru import logger
 from omegaconf import DictConfig
 
-from ..utils.logging import get_logger
 from .base import PipelineStage
 
-logger = get_logger(__name__)
 
-
-class DeploymentStage(PipelineStage):
+class DeployStage(PipelineStage):
     """Deployment stage for model artifacts.
 
     Handles model deployment to HuggingFace Hub, including:
@@ -59,16 +57,12 @@ class DeploymentStage(PipelineStage):
         return {
             "logistic_regression": {
                 "root": Path(self.cfg.paths.models) / "logistic_regression/artifacts",
-                "model": Path(self.cfg.paths.models)
-                / "logistic_regression/artifacts/model/model.joblib",
-                "metrics": Path(self.cfg.paths.models)
-                / "logistic_regression/artifacts/metrics/metrics.json",
+                "model": Path(self.cfg.paths.models) / "logistic_regression/artifacts/model/model.joblib",
+                "metrics": Path(self.cfg.paths.models) / "logistic_regression/artifacts/metrics/metrics.json",
                 "feature_importance": Path(self.cfg.paths.models)
                 / "logistic_regression/artifacts/metrics/feature_importance.csv",
-                "plots": Path(self.cfg.paths.models)
-                / "logistic_regression/artifacts/plots",
-                "scaler": Path(self.cfg.paths.models)
-                / "logistic_regression/artifacts/model/scaler.joblib",
+                "plots": Path(self.cfg.paths.models) / "logistic_regression/artifacts/plots",
+                "scaler": Path(self.cfg.paths.models) / "logistic_regression/artifacts/model/scaler.joblib",
             },
             # Add other model configurations similarly
         }
@@ -144,16 +138,12 @@ class DeploymentStage(PipelineStage):
 
         for model_type, paths in self.model_dirs.items():
             metrics = self._load_metrics(paths["metrics"])
-            if metrics and (
-                not best_metrics or metrics["test_auc"] > best_metrics["test_auc"]
-            ):
+            if metrics and (not best_metrics or metrics["test_auc"] > best_metrics["test_auc"]):
                 best_metrics = metrics
                 best_model = model_type
 
         if best_model:
-            logger.info(
-                f"Best model is {best_model} with AUC: {best_metrics['test_auc']:.4f}"
-            )
+            logger.info(f"Best model is {best_model} with AUC: {best_metrics['test_auc']:.4f}")
         else:
             logger.error("No valid model metrics found")
 
@@ -197,9 +187,7 @@ class DeploymentStage(PipelineStage):
             )
 
             # Generate card content
-            content = self._generate_model_card_content(
-                best_model, metrics, card_data, feature_importance_df
-            )
+            content = self._generate_model_card_content(best_model, metrics, card_data, feature_importance_df)
 
             # Save model card
             card = ModelCard(content)
@@ -225,9 +213,7 @@ class DeploymentStage(PipelineStage):
             fi_path = self.model_dirs[model_type]["feature_importance"]
             if fi_path.exists():
                 df = pd.read_csv(fi_path)
-                return df[df["importance"] > 0].sort_values(
-                    "importance", ascending=False
-                )
+                return df[df["importance"] > 0].sort_values("importance", ascending=False)
         except Exception as e:
             logger.warning(f"Could not load feature importance: {e}")
         return None
@@ -332,9 +318,7 @@ interventions and improved healthcare resource allocation.
                 "num_classes": 2,
                 "id2label": {"0": "NO_READMISSION", "1": "READMISSION"},
                 "label2id": {"NO_READMISSION": 0, "READMISSION": 1},
-                "task_specific_params": {
-                    "classification": {"problem_type": "binary_classification"}
-                },
+                "task_specific_params": {"classification": {"problem_type": "binary_classification"}},
                 "preprocessing": {"featurization_config": "preprocessing_config.json"},
             }
 
@@ -389,9 +373,7 @@ interventions and improved healthcare resource allocation.
             raise EnvironmentError("HuggingFace token not found in configuration")
         return token
 
-    def _convert_keras_to_onnx(
-        self, keras_model_path: Path, output_dir: Path
-    ) -> Optional[Path]:
+    def _convert_keras_to_onnx(self, keras_model_path: Path, output_dir: Path) -> Optional[Path]:
         """Convert Keras model to ONNX format.
 
         :param keras_model_path: Path to Keras model
@@ -406,13 +388,9 @@ interventions and improved healthcare resource allocation.
             keras_model.output_names = ["output"]
 
             input_shape = keras_model.input_shape[1:]
-            input_signature = (
-                tf.TensorSpec((None, *input_shape), tf.float32, name="input"),
-            )
+            input_signature = (tf.TensorSpec((None, *input_shape), tf.float32, name="input"),)
 
-            model_proto, _ = tf2onnx.convert.from_keras(
-                keras_model, input_signature=input_signature
-            )
+            model_proto, _ = tf2onnx.convert.from_keras(keras_model, input_signature=input_signature)
 
             onnx_path = output_dir / "model.onnx"
             with open(onnx_path, "wb") as f:

@@ -12,11 +12,8 @@ from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
+from loguru import logger
 from sklearn.model_selection import cross_val_score
-
-from ..utils.logging import get_logger
-
-logger = get_logger(__name__)
 
 
 class DataValidator:
@@ -45,10 +42,7 @@ class DataValidator:
             if col in data.columns:
                 actual_type = str(data[col].dtype)
                 if actual_type != expected_type:
-                    errors.append(
-                        f"Column {col} has type {actual_type}, "
-                        f"expected {expected_type}"
-                    )
+                    errors.append(f"Column {col} has type {actual_type}, " f"expected {expected_type}")
 
         return errors
 
@@ -73,17 +67,13 @@ class DataValidator:
             if "range" in rules:
                 min_val, max_val = rules["range"]
                 if data[col].min() < min_val or data[col].max() > max_val:
-                    errors.append(
-                        f"Column {col} values outside range " f"[{min_val}, {max_val}]"
-                    )
+                    errors.append(f"Column {col} values outside range " f"[{min_val}, {max_val}]")
 
             # Check categories
             if "categories" in rules:
                 invalid = set(data[col].unique()) - set(rules["categories"])
                 if invalid:
-                    errors.append(
-                        f"Column {col} contains invalid categories: {invalid}"
-                    )
+                    errors.append(f"Column {col} contains invalid categories: {invalid}")
 
             # Check missing values
             if "allow_missing" in rules:
@@ -117,10 +107,7 @@ class ModelValidator:
 
         # Check shape
         if expected_shape and y_pred.shape != expected_shape:
-            errors.append(
-                f"Prediction shape {y_pred.shape} != "
-                f"expected shape {expected_shape}"
-            )
+            errors.append(f"Prediction shape {y_pred.shape} != " f"expected shape {expected_shape}")
 
         # Check range
         if value_range:
@@ -163,9 +150,6 @@ class ModelValidator:
         mean_score = scores.mean()
 
         if mean_score < threshold:
-            errors.append(
-                f"Cross-validation {metric} ({mean_score:.3f}) "
-                f"below threshold ({threshold})"
-            )
+            errors.append(f"Cross-validation {metric} ({mean_score:.3f}) " f"below threshold ({threshold})")
 
         return errors

@@ -81,11 +81,7 @@ def list_venvs() -> List[str]:
     Returns:
         List of virtual environment names
     """
-    return [
-        path.name[5:]  # Remove '.venv-' prefix
-        for path in PROJECT_ROOT.glob(".venv-*")
-        if path.is_dir()
-    ]
+    return [path.name[5:] for path in PROJECT_ROOT.glob(".venv-*") if path.is_dir()]
 
 
 def check_venv(name: str) -> bool:
@@ -117,13 +113,9 @@ def check_venv(name: str) -> bool:
 
         # Read requirements
         with open(VENV_CONFIGS[name]) as f:
-            required = set(
-                line.strip() for line in f if line.strip() and not line.startswith("#")
-            )
+            required = set(line.strip() for line in f if line.strip() and not line.startswith("#"))
 
-        return all(
-            any(req.startswith(r.split("==")[0]) for r in installed) for req in required
-        )
+        return all(any(req.startswith(r.split("==")[0]) for r in installed) for req in required)
     except subprocess.CalledProcessError:
         return False
 
