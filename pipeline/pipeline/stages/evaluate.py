@@ -11,19 +11,21 @@ Model Evaluation Stage
 from pathlib import Path
 from typing import Dict
 
-import pandas as pd
 import mlflow
+import pandas as pd
 
-from .base import PipelineStage
-from ..utils.logging import get_logger
+from pipeline.stages.base import PipelineStage
+from pipeline.utils.logging import get_logger
+
 from ..utils.metrics import calculate_metrics, get_confusion_matrix
 from ..utils.visualization import (
-    plot_roc_curves,
     plot_confusion_matrices,
-    plot_feature_importance
+    plot_feature_importance,
+    plot_roc_curves,
 )
 
 logger = get_logger(__name__)
+
 
 class EvaluationStage(PipelineStage):
     """Model evaluation and comparison stage.
@@ -51,17 +53,13 @@ class EvaluationStage(PipelineStage):
 
             # Evaluate each model
             for model_name in self.cfg.model_types:
-                model_results = self._evaluate_model(
-                    model_name, X_test, y_test
-                )
+                model_results = self._evaluate_model(model_name, X_test, y_test)
                 results[model_name] = model_results["metrics"]
                 feature_importance[model_name] = model_results["feature_importance"]
                 predictions[model_name] = model_results["predictions"]
 
             # Generate comparison plots
-            self._generate_comparison_plots(
-                y_test, predictions, feature_importance
-            )
+            self._generate_comparison_plots(y_test, predictions, feature_importance)
 
             # Save and log results
             self._save_results(results)
@@ -74,10 +72,7 @@ class EvaluationStage(PipelineStage):
             raise RuntimeError(f"Evaluation failed: {str(e)}")
 
     def _evaluate_model(
-        self,
-        model_name: str,
-        X_test: pd.DataFrame,
-        y_test: pd.Series
+        self, model_name: str, X_test: pd.DataFrame, y_test: pd.Series
     ) -> Dict:
         """Evaluate single model.
 
@@ -101,10 +96,7 @@ class EvaluationStage(PipelineStage):
 
         # Calculate metrics
         metrics = calculate_metrics(
-            y_test,
-            y_pred,
-            y_pred_proba,
-            self.cfg.evaluation.metrics
+            y_test, y_pred, y_pred_proba, self.cfg.evaluation.metrics
         )
 
         # Calculate confusion matrix
@@ -114,24 +106,18 @@ class EvaluationStage(PipelineStage):
         # Get feature importance if available
         feature_importance = (
             model.feature_importance(X_test)
-            if hasattr(model, 'feature_importance')
+            if hasattr(model, "feature_importance")
             else None
         )
 
         return {
             "metrics": metrics,
             "feature_importance": feature_importance,
-            "predictions": {
-                "y_pred": y_pred,
-                "y_pred_proba": y_pred_proba
-            }
+            "predictions": {"y_pred": y_pred, "y_pred_proba": y_pred_proba},
         }
 
     def _generate_comparison_plots(
-        self,
-        y_test: pd.Series,
-        predictions: Dict,
-        feature_importance: Dict
+        self, y_test: pd.Series, predictions: Dict, feature_importance: Dict
     ) -> None:
         """Generate comparison plots.
 
@@ -149,14 +135,14 @@ class EvaluationStage(PipelineStage):
         plot_roc_curves(
             y_test,
             {name: pred["y_pred_proba"] for name, pred in predictions.items()},
-            save_path=plot_dir / "roc_curves.png"
+            save_path=plot_dir / "roc_curves.png",
         )
 
         # Confusion matrices
         plot_confusion_matrices(
             y_test,
             {name: pred["y_pred"] for name, pred in predictions.items()},
-            save_path=plot_dir / "confusion_matrices.png"
+            save_path=plot_dir / "confusion_matrices.png",
         )
 
         # Feature importance comparison
@@ -164,7 +150,7 @@ class EvaluationStage(PipelineStage):
             plot_feature_importance(
                 feature_importance,
                 top_n=self.cfg.evaluation.feature_importance.top_n,
-                save_path=plot_dir / "feature_importance.png"
+                save_path=plot_dir / "feature_importance.png",
             )
 
     def _save_results(self, results: Dict) -> None:
@@ -177,16 +163,12 @@ class EvaluationStage(PipelineStage):
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Save metrics
-        pd.DataFrame(results).to_json(
-            output_dir / "model_comparison.json"
-        )
+        pd.DataFrame(results).to_json(output_dir / "model_comparison.json")
 
         # Log to MLflow
         if self.cfg.mlflow.enabled:
             for model_name, metrics in results.items():
-                mlflow.log_metrics(
-                    {f"{model_name}_{k}": v for k, v in metrics.items()}
-                )
+                mlflow.log_metrics({f"{model_name}_{k}": v for k, v in metrics.items()})
 
     def _log_best_model(self, results: Dict) -> None:
         """Log best model information.
@@ -195,16 +177,12 @@ class EvaluationStage(PipelineStage):
         :type results: Dict
         """
         metric = self.cfg.evaluation.primary_metric
-        best_model = max(
-            results.keys(),
-            key=lambda k: results[k][metric]
-        )
+        best_model = max(results.keys(), key=lambda k: results[k][metric])
         best_score = results[best_model][metric]
 
         logger.info(f"Best model: {best_model} ({metric}={best_score:.4f})")
 
         # Log to tracking systems
-        self.log_metrics({
-            "best_model_score": best_score,
-            "best_model_name": best_model
-        })
+        self.log_metrics(
+            {"best_model_score": best_score, "best_model_name": best_model}
+        )

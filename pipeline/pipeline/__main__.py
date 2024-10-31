@@ -2,7 +2,6 @@
 
 import logging
 
-import click
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
@@ -17,7 +16,6 @@ def main(cfg: DictConfig) -> None:
     :type cfg: DictConfig
     """
     import subprocess
-    from pathlib import Path
 
     logger.info("Starting MLOps pipeline")
     logger.info(f"Configuration:\n{OmegaConf.to_yaml(cfg)}")
@@ -25,7 +23,7 @@ def main(cfg: DictConfig) -> None:
     try:
         # Run DVC pipeline
         result = subprocess.run(
-            ["dvc", "repro"], check=True, capture_output=True, text=True
+            ["dvc", "repro", "--force", "--verbose"], check=True, capture_output=True, text=True
         )
         logger.info(f"DVC output:\n{result.stdout}")
 

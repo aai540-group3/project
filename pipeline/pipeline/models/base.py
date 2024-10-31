@@ -12,14 +12,15 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Optional, Union
 
+import joblib
 import numpy as np
 import pandas as pd
 from omegaconf import DictConfig
-import joblib
 
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
+
 
 class BaseModel(ABC):
     """Abstract base class for all machine learning models.
@@ -60,7 +61,7 @@ class BaseModel(ABC):
         y_train: pd.Series,
         X_val: Optional[pd.DataFrame] = None,
         y_val: Optional[pd.Series] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         """Train the model.
 
@@ -104,7 +105,7 @@ class BaseModel(ABC):
                 "model": self._model,
                 "metrics": self.metrics,
                 "config": self.cfg,
-                "is_fitted": self._is_fitted
+                "is_fitted": self._is_fitted,
             }
             joblib.dump(model_data, path)
             logger.info(f"Model saved to {path}")

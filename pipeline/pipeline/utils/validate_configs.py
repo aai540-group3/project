@@ -39,7 +39,7 @@ def validate_main_config(config: Dict) -> None:
 
 def validate_model_config(config: Dict) -> None:
     """Validate model configuration."""
-    required_keys = ["name", "type", "hyperparameters", "optimization", "training"]
+    required_keys = ["name", "type", "hyperparameters", "optimize", "training"]
     for key in required_keys:
         if key not in config:
             raise ValueError(f"Missing required key in model config: {key}")

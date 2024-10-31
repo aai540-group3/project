@@ -1,0 +1,5 @@
+dvc[all]
+virtualenv
+ruff
+dvclive
+feast

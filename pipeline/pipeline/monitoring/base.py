@@ -11,11 +11,13 @@ Base Monitoring
 from abc import ABC
 from datetime import datetime
 from typing import Dict, List, Optional
+
 from omegaconf import DictConfig
 
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
+
 
 class BaseMonitor(ABC):
     """Base class for all monitoring components.
@@ -39,7 +41,7 @@ class BaseMonitor(ABC):
 
         :raises ValueError: If required parameters are missing
         """
-        required = ['enabled', 'alerts']
+        required = ["enabled", "alerts"]
         if not all(hasattr(self.cfg, param) for param in required):
             raise ValueError(f"Missing required configuration parameters: {required}")
 
@@ -69,10 +71,10 @@ class BaseMonitor(ABC):
         :rtype: Dict
         """
         return {
-            'timestamp': datetime.now().isoformat(),
-            'type': self.__class__.__name__,
-            'severity': self._determine_severity(alert_data),
-            'data': alert_data
+            "timestamp": datetime.now().isoformat(),
+            "type": self.__class__.__name__,
+            "severity": self._determine_severity(alert_data),
+            "data": alert_data,
         }
 
     def _determine_severity(self, alert_data: Dict) -> str:
@@ -84,7 +86,7 @@ class BaseMonitor(ABC):
         :rtype: str
         """
         # Override in subclasses for specific severity logic
-        return 'warning'
+        return "warning"
 
     def _send_slack_alert(self, alert: Dict) -> None:
         """Send alert to Slack.
@@ -119,9 +121,7 @@ class BaseMonitor(ABC):
             logger.error(f"Failed to send email alert: {e}")
 
     def get_alerts(
-        self,
-        severity: Optional[str] = None,
-        limit: Optional[int] = None
+        self, severity: Optional[str] = None, limit: Optional[int] = None
     ) -> List[Dict]:
         """Get monitoring alerts.
 
@@ -135,8 +135,7 @@ class BaseMonitor(ABC):
         filtered_alerts = self.alerts
         if severity:
             filtered_alerts = [
-                alert for alert in filtered_alerts
-                if alert['severity'] == severity
+                alert for alert in filtered_alerts if alert["severity"] == severity
             ]
 
         if limit:

@@ -27,7 +27,7 @@ def install_dependencies() -> None:
     """Install project dependencies."""
     requirements_files = [
         "requirements.txt",
-        "requirements-dev.txt",
+        "dev.txt",
     ]
 
     for req_file in requirements_files:
@@ -49,7 +49,8 @@ def initialize_dvc() -> None:
 
     # Add remote storage
     subprocess.run(
-        ["dvc", "remote", "add", "-d", "storage", "s3://your-bucket/dvc"], check=True
+        ["dvc", "remote", "add", "-d", "storage", "s3://your-bucket/dvcstore"],
+        check=True,
     )
 
     logger.info("Initialized DVC")

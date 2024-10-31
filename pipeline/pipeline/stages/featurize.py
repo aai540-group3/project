@@ -1,6 +1,5 @@
-# pipeline/pipeline/stages/featurize.py
 """
-Feature Engineering Stage
+Featurize Stage
 =====================
 
 .. module:: pipeline.stages.featurize
@@ -16,12 +15,13 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-from .base import PipelineStage
-from ..utils.logging import get_logger
+from pipeline.stages.base import PipelineStage
+from pipeline.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-class FeatureEngineeringStage(PipelineStage):
+
+class FeaturizeStage(PipelineStage):
     """Feature engineering stage implementation.
 
     Handles feature creation, selection, and preprocessing.
@@ -90,10 +90,7 @@ class FeatureEngineeringStage(PipelineStage):
         return features
 
     def _scale_features(
-        self,
-        train: pd.DataFrame,
-        val: pd.DataFrame,
-        test: pd.DataFrame
+        self, train: pd.DataFrame, val: pd.DataFrame, test: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Scale features using StandardScaler.
 
@@ -123,10 +120,7 @@ class FeatureEngineeringStage(PipelineStage):
         return train_scaled, val_scaled, test_scaled
 
     def _save_features(
-        self,
-        train: pd.DataFrame,
-        val: pd.DataFrame,
-        test: pd.DataFrame
+        self, train: pd.DataFrame, val: pd.DataFrame, test: pd.DataFrame
     ) -> None:
         """Save processed features.
 
@@ -151,3 +145,15 @@ class FeatureEngineeringStage(PipelineStage):
 
         except Exception as e:
             raise IOError(f"Failed to save features: {e}")
+
+
+if __name__ == "__main__":
+    import hydra
+    from omegaconf import DictConfig
+
+    @hydra.main(config_path="../../conf", config_name="config")
+    def main(cfg: DictConfig) -> None:
+        stage = FeaturizeStage(cfg)
+        stage.run()
+
+    main()

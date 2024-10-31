@@ -16,10 +16,11 @@ import pandas as pd
 from autogluon.tabular import TabularPredictor
 from omegaconf import DictConfig
 
-from .base import BaseModel
 from ..utils.logging import get_logger
+from .base import BaseModel
 
 logger = get_logger(__name__)
+
 
 class AutoGluonModel(BaseModel):
     """AutoGluon model with automated machine learning capabilities.
@@ -48,8 +49,10 @@ class AutoGluonModel(BaseModel):
             "label": model_cfg.label,
             "problem_type": model_cfg.problem_type,
             "eval_metric": model_cfg.eval_metric,
-            "path": str(Path(self.cfg.model_path) / f"autogluon_{self.cfg.experiment.name}"),
-            "verbosity": model_cfg.verbosity
+            "path": str(
+                Path(self.cfg.model_path) / f"autogluon_{self.cfg.experiment.name}"
+            ),
+            "verbosity": model_cfg.verbosity,
         }
 
     def _get_training_args(self) -> Dict:
@@ -58,15 +61,17 @@ class AutoGluonModel(BaseModel):
         :return: Training arguments
         :rtype: Dict
         """
-        train_cfg = (self.cfg.quick_mode.training
-                    if self.cfg.experiment.name == "quick"
-                    else self.cfg.training)
+        train_cfg = (
+            self.cfg.quick_mode.training
+            if self.cfg.experiment.name == "quick"
+            else self.cfg.training
+        )
 
         return {
             "time_limit": train_cfg.time_limit,
             "presets": train_cfg.presets,
             "hyperparameters": train_cfg.hyperparameters,
-            "hyperparameter_tune_kwargs": train_cfg.get('hyperparameter_tune_kwargs')
+            "hyperparameter_tune_kwargs": train_cfg.get("hyperparameter_tune_kwargs"),
         }
 
     def train(
@@ -75,7 +80,7 @@ class AutoGluonModel(BaseModel):
         y_train: pd.Series,
         X_val: Optional[pd.DataFrame] = None,
         y_val: Optional[pd.Series] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         """Train AutoGluon model.
 
@@ -101,17 +106,12 @@ class AutoGluonModel(BaseModel):
                 val_data[self.cfg.model.label] = y_val
 
             # Initialize predictor
-            self.predictor = TabularPredictor(
-                **self._get_predictor_args()
-            )
+            self.predictor = TabularPredictor(**self._get_predictor_args())
 
             # Train model
             train_args = self._get_training_args()
             self.predictor.fit(
-                train_data=train_data,
-                tuning_data=val_data,
-                **train_args,
-                **kwargs
+                train_data=train_data, tuning_data=val_data, **train_args, **kwargs
             )
 
             # Calculate validation metrics

@@ -1,12 +1,11 @@
 import logging
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 import optuna
 from hydra.utils import instantiate
-from omegaconf import DictConfig
 
-from ..utils.optimization import HyperparameterOptimizer
+from ..utils.optimize import HyperparameterOptimizer
 from .base import PipelineStage
 
 logger = logging.getLogger(__name__)
@@ -26,7 +25,7 @@ class OptimizationStage(PipelineStage):
 
             # Initialize model and optimizer
             model = instantiate(self.cfg.model)
-            optimizer = HyperparameterOptimizer(self.cfg.optimization)
+            optimizer = HyperparameterOptimizer(self.cfg.optimize)
 
             # Define objective function
             def objective(trial: optuna.Trial) -> float:
@@ -43,12 +42,12 @@ class OptimizationStage(PipelineStage):
                 )
 
                 # Get validation metric
-                metric_value = model.metrics[self.cfg.optimization.metric]
+                metric_value = model.metrics[self.cfg.optimize.metric]
 
                 # Log to MLflow
                 self.tracker.log_metrics(
                     {
-                        f"trial_{trial.number}_{self.cfg.optimization.metric}": metric_value
+                        f"trial_{trial.number}_{self.cfg.optimize.metric}": metric_value
                     }
                 )
 
@@ -56,7 +55,7 @@ class OptimizationStage(PipelineStage):
 
             # Run optimization
             best_params = optimizer.optimize(
-                objective, direction=self.cfg.optimization.direction
+                objective, direction=self.cfg.optimize.direction
             )
 
             # Log best parameters
@@ -68,7 +67,7 @@ class OptimizationStage(PipelineStage):
             self._save_results(optimizer)
 
             logger.info(
-                f"Best {self.cfg.optimization.metric}: " f"{optimizer.best_value:.4f}"
+                f"Best {self.cfg.optimize.metric}: " f"{optimizer.best_value:.4f}"
             )
 
         finally:
@@ -85,7 +84,7 @@ class OptimizationStage(PipelineStage):
         """
         params = {}
 
-        for name, space in self.cfg.optimization.param_space.items():
+        for name, space in self.cfg.optimize.param_space.items():
             if space.type == "float":
                 params[name] = trial.suggest_float(
                     name, space.low, space.high, log=space.get("log", False)
@@ -108,7 +107,7 @@ class OptimizationStage(PipelineStage):
             optimizer: Hyperparameter optimizer
         """
         # Create output directory
-        output_dir = Path(self.cfg.paths.optimization) / self.cfg.model.name
+        output_dir = Path(self.cfg.paths.optimize) / self.cfg.model.name
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Save study statistics

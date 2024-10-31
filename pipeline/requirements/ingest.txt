@@ -1,0 +1,8 @@
+pandas
+numpy
+pyarrow
+ucimlrepo
+boto3
+requests
+python-dotenv
+uv

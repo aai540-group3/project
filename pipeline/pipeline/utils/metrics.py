@@ -1,6 +1,6 @@
 """
 Metrics Utilities
-==============
+=================
 
 .. module:: pipeline.utils.metrics
    :synopsis: Metrics calculation and tracking utilities
@@ -9,16 +9,21 @@ Metrics Utilities
 """
 
 from typing import Dict, Optional, Tuple
+
 import numpy as np
 from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score, f1_score,
-    roc_auc_score, average_precision_score, confusion_matrix
+    accuracy_score,
+    average_precision_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
 )
 
+
 def calculate_metrics(
-    y_true: np.ndarray,
-    y_pred: np.ndarray,
-    y_pred_proba: Optional[np.ndarray] = None
+    y_true: np.ndarray, y_pred: np.ndarray, y_pred_proba: Optional[np.ndarray] = None
 ) -> Dict[str, float]:
     """Calculate standard classification metrics.
 
@@ -43,16 +48,18 @@ def calculate_metrics(
     }
 
     if y_pred_proba is not None:
-        metrics.update({
-            "roc_auc": roc_auc_score(y_true, y_pred_proba),
-            "avg_precision": average_precision_score(y_true, y_pred_proba)
-        })
+        metrics.update(
+            {
+                "roc_auc": roc_auc_score(y_true, y_pred_proba),
+                "avg_precision": average_precision_score(y_true, y_pred_proba),
+            }
+        )
 
     return metrics
 
+
 def get_confusion_matrix(
-    y_true: np.ndarray,
-    y_pred: np.ndarray
+    y_true: np.ndarray, y_pred: np.ndarray
 ) -> Tuple[np.ndarray, Dict[str, float]]:
     """Calculate confusion matrix and derived metrics.
 

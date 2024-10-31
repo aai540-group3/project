@@ -10,6 +10,7 @@ Data Quality Monitoring
 
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set
+
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -18,6 +19,7 @@ from ..utils.logging import get_logger
 from .base import BaseMonitor
 
 logger = get_logger(__name__)
+
 
 class DataQualityMonitor(BaseMonitor):
     """Monitor and validate data quality.
@@ -41,11 +43,11 @@ class DataQualityMonitor(BaseMonitor):
     def _initialize_constraints(self) -> None:
         """Initialize data quality constraints."""
         self.constraints = {
-            'missing_threshold': self.cfg.constraints.missing_threshold,
-            'outlier_std': self.cfg.constraints.outlier_std,
-            'categorical_levels': self.cfg.constraints.categorical_levels,
-            'correlation_threshold': self.cfg.constraints.correlation_threshold,
-            'value_ranges': self.cfg.constraints.value_ranges
+            "missing_threshold": self.cfg.constraints.missing_threshold,
+            "outlier_std": self.cfg.constraints.outlier_std,
+            "categorical_levels": self.cfg.constraints.categorical_levels,
+            "correlation_threshold": self.cfg.constraints.correlation_threshold,
+            "value_ranges": self.cfg.constraints.value_ranges,
         }
 
     def check_quality(self, data: pd.DataFrame) -> Dict:
@@ -61,18 +63,18 @@ class DataQualityMonitor(BaseMonitor):
             raise ValueError("Empty dataset provided")
 
         results = {
-            'timestamp': datetime.now().isoformat(),
-            'checks': {
-                'missing_values': self._check_missing_values(data),
-                'outliers': self._check_outliers(data),
-                'categorical_validity': self._check_categorical_validity(data),
-                'value_ranges': self._check_value_ranges(data),
-                'correlations': self._check_correlations(data)
-            }
+            "timestamp": datetime.now().isoformat(),
+            "checks": {
+                "missing_values": self._check_missing_values(data),
+                "outliers": self._check_outliers(data),
+                "categorical_validity": self._check_categorical_validity(data),
+                "value_ranges": self._check_value_ranges(data),
+                "correlations": self._check_correlations(data),
+            },
         }
 
         # Aggregate results
-        results['summary'] = self._summarize_results(results['checks'])
+        results["summary"] = self._summarize_results(results["checks"])
 
         # Record violations
         self._record_violations(results)
@@ -91,18 +93,17 @@ class DataQualityMonitor(BaseMonitor):
         for column in data.columns:
             missing_rate = data[column].isnull().mean()
             missing_stats[column] = {
-                'rate': missing_rate,
-                'count': data[column].isnull().sum(),
-                'violated': missing_rate > self.constraints['missing_threshold']
+                "rate": missing_rate,
+                "count": data[column].isnull().sum(),
+                "violated": missing_rate > self.constraints["missing_threshold"],
             }
 
         return {
-            'details': missing_stats,
-            'total_rate': data.isnull().mean().mean(),
-            'violated_columns': [
-                col for col, stats in missing_stats.items()
-                if stats['violated']
-            ]
+            "details": missing_stats,
+            "total_rate": data.isnull().mean().mean(),
+            "violated_columns": [
+                col for col, stats in missing_stats.items() if stats["violated"]
+            ],
         }
 
     def _check_outliers(self, data: pd.DataFrame) -> Dict:
@@ -118,20 +119,20 @@ class DataQualityMonitor(BaseMonitor):
 
         for column in numeric_columns:
             z_scores = np.abs(stats.zscore(data[column].dropna()))
-            outlier_mask = z_scores > self.constraints['outlier_std']
+            outlier_mask = z_scores > self.constraints["outlier_std"]
 
             outlier_stats[column] = {
-                'count': outlier_mask.sum(),
-                'rate': outlier_mask.mean(),
-                'violated': outlier_mask.mean() > self.cfg.constraints.outlier_threshold
+                "count": outlier_mask.sum(),
+                "rate": outlier_mask.mean(),
+                "violated": outlier_mask.mean()
+                > self.cfg.constraints.outlier_threshold,
             }
 
         return {
-            'details': outlier_stats,
-            'violated_columns': [
-                col for col, stats in outlier_stats.items()
-                if stats['violated']
-            ]
+            "details": outlier_stats,
+            "violated_columns": [
+                col for col, stats in outlier_stats.items() if stats["violated"]
+            ],
         }
 
     def _check_categorical_validity(self, data: pd.DataFrame) -> Dict:
@@ -143,23 +144,22 @@ class DataQualityMonitor(BaseMonitor):
         :rtype: Dict
         """
         categorical_stats = {}
-        expected_levels = self.constraints['categorical_levels']
+        expected_levels = self.constraints["categorical_levels"]
 
         for column, levels in expected_levels.items():
             if column in data.columns:
                 unexpected = set(data[column].unique()) - set(levels)
                 categorical_stats[column] = {
-                    'unexpected_values': list(unexpected),
-                    'unexpected_count': len(unexpected),
-                    'violated': len(unexpected) > 0
+                    "unexpected_values": list(unexpected),
+                    "unexpected_count": len(unexpected),
+                    "violated": len(unexpected) > 0,
                 }
 
         return {
-            'details': categorical_stats,
-            'violated_columns': [
-                col for col, stats in categorical_stats.items()
-                if stats['violated']
-            ]
+            "details": categorical_stats,
+            "violated_columns": [
+                col for col, stats in categorical_stats.items() if stats["violated"]
+            ],
         }
 
     def _check_value_ranges(self, data: pd.DataFrame) -> Dict:
@@ -171,27 +171,26 @@ class DataQualityMonitor(BaseMonitor):
         :rtype: Dict
         """
         range_stats = {}
-        value_ranges = self.constraints['value_ranges']
+        value_ranges = self.constraints["value_ranges"]
 
         for column, range_def in value_ranges.items():
             if column in data.columns:
                 violations = (
-                    (data[column] < range_def['min']) |
-                    (data[column] > range_def['max'])
+                    (data[column] < range_def["min"])
+                    | (data[column] > range_def["max"])
                 ).sum()
 
                 range_stats[column] = {
-                    'violation_count': violations,
-                    'violation_rate': violations / len(data),
-                    'violated': violations > 0
+                    "violation_count": violations,
+                    "violation_rate": violations / len(data),
+                    "violated": violations > 0,
                 }
 
         return {
-            'details': range_stats,
-            'violated_columns': [
-                col for col, stats in range_stats.items()
-                if stats['violated']
-            ]
+            "details": range_stats,
+            "violated_columns": [
+                col for col, stats in range_stats.items() if stats["violated"]
+            ],
         }
 
     def _check_correlations(self, data: pd.DataFrame) -> Dict:
@@ -204,29 +203,31 @@ class DataQualityMonitor(BaseMonitor):
         """
         numeric_data = data.select_dtypes(include=[np.number])
         if numeric_data.empty:
-            return {'details': {}, 'violated_pairs': []}
+            return {"details": {}, "violated_pairs": []}
 
         corr_matrix = numeric_data.corr()
-        threshold = self.constraints['correlation_threshold']
+        threshold = self.constraints["correlation_threshold"]
 
         high_corr_pairs = []
         for i in range(len(corr_matrix.columns)):
-            for j in range(i+1, len(corr_matrix.columns)):
+            for j in range(i + 1, len(corr_matrix.columns)):
                 if abs(corr_matrix.iloc[i, j]) > threshold:
-                    high_corr_pairs.append({
-                        'features': (
-                            corr_matrix.columns[i],
-                            corr_matrix.columns[j]
-                        ),
-                        'correlation': corr_matrix.iloc[i, j]
-                    })
+                    high_corr_pairs.append(
+                        {
+                            "features": (
+                                corr_matrix.columns[i],
+                                corr_matrix.columns[j],
+                            ),
+                            "correlation": corr_matrix.iloc[i, j],
+                        }
+                    )
 
         return {
-            'details': {
-                'correlation_matrix': corr_matrix.to_dict(),
-                'high_correlation_pairs': high_corr_pairs
+            "details": {
+                "correlation_matrix": corr_matrix.to_dict(),
+                "high_correlation_pairs": high_corr_pairs,
             },
-            'violated_pairs': [pair['features'] for pair in high_corr_pairs]
+            "violated_pairs": [pair["features"] for pair in high_corr_pairs],
         }
 
     def _summarize_results(self, checks: Dict) -> Dict:
@@ -238,17 +239,16 @@ class DataQualityMonitor(BaseMonitor):
         :rtype: Dict
         """
         total_violations = sum(
-            len(check.get('violated_columns', []))
-            for check in checks.values()
+            len(check.get("violated_columns", [])) for check in checks.values()
         )
 
         return {
-            'total_violations': total_violations,
-            'checks_passed': total_violations == 0,
-            'violation_types': {
-                check_type: len(check.get('violated_columns', []))
+            "total_violations": total_violations,
+            "checks_passed": total_violations == 0,
+            "violation_types": {
+                check_type: len(check.get("violated_columns", []))
                 for check_type, check in checks.items()
-            }
+            },
         }
 
     def _record_violations(self, results: Dict) -> None:
@@ -257,11 +257,11 @@ class DataQualityMonitor(BaseMonitor):
         :param results: Quality check results
         :type results: Dict
         """
-        if results['summary']['total_violations'] > 0:
+        if results["summary"]["total_violations"] > 0:
             violation = {
-                'timestamp': results['timestamp'],
-                'violations': results['summary']['violation_types'],
-                'details': results['checks']
+                "timestamp": results["timestamp"],
+                "violations": results["summary"]["violation_types"],
+                "details": results["checks"],
             }
             self.violations.append(violation)
 
@@ -269,10 +269,7 @@ class DataQualityMonitor(BaseMonitor):
             if self.cfg.alerts.enabled:
                 self._send_alerts(violation)
 
-    def get_violation_history(
-        self,
-        days: Optional[int] = None
-    ) -> List[Dict]:
+    def get_violation_history(self, days: Optional[int] = None) -> List[Dict]:
         """Get historical violation records.
 
         :param days: Number of days of history
@@ -285,8 +282,9 @@ class DataQualityMonitor(BaseMonitor):
 
         cutoff = datetime.now() - timedelta(days=days)
         return [
-            v for v in self.violations
-            if datetime.fromisoformat(v['timestamp']) > cutoff
+            v
+            for v in self.violations
+            if datetime.fromisoformat(v["timestamp"]) > cutoff
         ]
 
     def update_reference_statistics(self, data: pd.DataFrame) -> None:
@@ -296,8 +294,8 @@ class DataQualityMonitor(BaseMonitor):
         :type data: pd.DataFrame
         """
         self.reference_stats = {
-            'timestamp': datetime.now().isoformat(),
-            'statistics': self._calculate_reference_statistics(data)
+            "timestamp": datetime.now().isoformat(),
+            "statistics": self._calculate_reference_statistics(data),
         }
         logger.info("Updated reference statistics")
 
@@ -315,18 +313,18 @@ class DataQualityMonitor(BaseMonitor):
         numeric_data = data.select_dtypes(include=[np.number])
         for column in numeric_data.columns:
             stats[column] = {
-                'mean': data[column].mean(),
-                'std': data[column].std(),
-                'quantiles': data[column].quantile([0.25, 0.5, 0.75]).to_dict(),
-                'range': (data[column].min(), data[column].max())
+                "mean": data[column].mean(),
+                "std": data[column].std(),
+                "quantiles": data[column].quantile([0.25, 0.5, 0.75]).to_dict(),
+                "range": (data[column].min(), data[column].max()),
             }
 
         # Categorical statistics
         categorical_data = data.select_dtypes(exclude=[np.number])
         for column in categorical_data.columns:
             stats[column] = {
-                'value_counts': data[column].value_counts().to_dict(),
-                'unique_count': data[column].nunique()
+                "value_counts": data[column].value_counts().to_dict(),
+                "unique_count": data[column].nunique(),
             }
 
         return stats

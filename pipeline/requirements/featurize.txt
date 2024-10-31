@@ -1,0 +1,5 @@
+feast
+pandas
+numpy
+scikit-learn
+pydantic<2.0.0

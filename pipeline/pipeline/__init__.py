@@ -1,37 +1,20 @@
 """
-Diabetic Readmission Risk Prediction Pipeline
-==========================================
-
-A complete MLOps pipeline for predicting hospital readmission risk.
+MLOps Pipeline
+===========
 
 .. module:: pipeline
    :synopsis: MLOps pipeline for diabetic readmission prediction
-
-.. moduleauthor:: aai540-group3
 """
 
 from importlib.metadata import version
 
 __version__ = version("pipeline")
 
-from .models import AutoGluonModel, LogisticRegressionModel, NeuralNetworkModel
-from .stages import (
-    DataIngestionStage,
-    PreprocessingStage,
-    FeatureEngineeringStage,
-    TrainingStage,
-    EvaluationStage,
-    DeploymentStage
-)
+# Import only what's needed for infrastructure stage
+from .stages.base import PipelineStage
+from .stages.infrastruct import InfrastructStage
 
 __all__ = [
-    'AutoGluonModel',
-    'LogisticRegressionModel',
-    'NeuralNetworkModel',
-    'DataIngestionStage',
-    'PreprocessingStage',
-    'FeatureEngineeringStage',
-    'TrainingStage',
-    'EvaluationStage',
-    'DeploymentStage',
+    "PipelineStage",
+    "InfrastructStage",
 ]

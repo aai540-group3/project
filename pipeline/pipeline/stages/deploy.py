@@ -19,10 +19,11 @@ import tf2onnx
 from huggingface_hub import HfApi, ModelCard, ModelCardData
 from omegaconf import DictConfig
 
-from .base import PipelineStage
 from ..utils.logging import get_logger
+from .base import PipelineStage
 
 logger = get_logger(__name__)
+
 
 class DeploymentStage(PipelineStage):
     """Deployment stage for model artifacts.
@@ -58,11 +59,16 @@ class DeploymentStage(PipelineStage):
         return {
             "logistic_regression": {
                 "root": Path(self.cfg.paths.models) / "logistic_regression/artifacts",
-                "model": Path(self.cfg.paths.models) / "logistic_regression/artifacts/model/model.joblib",
-                "metrics": Path(self.cfg.paths.models) / "logistic_regression/artifacts/metrics/metrics.json",
-                "feature_importance": Path(self.cfg.paths.models) / "logistic_regression/artifacts/metrics/feature_importance.csv",
-                "plots": Path(self.cfg.paths.models) / "logistic_regression/artifacts/plots",
-                "scaler": Path(self.cfg.paths.models) / "logistic_regression/artifacts/model/scaler.joblib",
+                "model": Path(self.cfg.paths.models)
+                / "logistic_regression/artifacts/model/model.joblib",
+                "metrics": Path(self.cfg.paths.models)
+                / "logistic_regression/artifacts/metrics/metrics.json",
+                "feature_importance": Path(self.cfg.paths.models)
+                / "logistic_regression/artifacts/metrics/feature_importance.csv",
+                "plots": Path(self.cfg.paths.models)
+                / "logistic_regression/artifacts/plots",
+                "scaler": Path(self.cfg.paths.models)
+                / "logistic_regression/artifacts/model/scaler.joblib",
             },
             # Add other model configurations similarly
         }
@@ -138,8 +144,9 @@ class DeploymentStage(PipelineStage):
 
         for model_type, paths in self.model_dirs.items():
             metrics = self._load_metrics(paths["metrics"])
-            if metrics and (not best_metrics or
-                          metrics["test_auc"] > best_metrics["test_auc"]):
+            if metrics and (
+                not best_metrics or metrics["test_auc"] > best_metrics["test_auc"]
+            ):
                 best_metrics = metrics
                 best_model = model_type
 
@@ -152,9 +159,7 @@ class DeploymentStage(PipelineStage):
 
         return best_model, best_metrics
 
-
-
-# pipeline/pipeline/stages/deploy.py (continued)
+    # pipeline/pipeline/stages/deploy.py (continued)
 
     def _create_model_card(self, best_model: str, metrics: Dict) -> None:
         """Create model card with metrics and documentation.
@@ -174,7 +179,7 @@ class DeploymentStage(PipelineStage):
                     "dataset_name": "Diabetes 130-US Hospitals",
                     "metric_type": metric_type,
                     "metric_value": metrics.get(f"test_{metric_type}", "N/A"),
-                    "metric_name": metric_type
+                    "metric_name": metric_type,
                 }
                 for metric_type in ["accuracy", "auc"]
             ]
@@ -188,7 +193,7 @@ class DeploymentStage(PipelineStage):
                 license="mit",
                 model_name=self.repo_id,
                 eval_results=eval_results,
-                library_name="transformers"
+                library_name="transformers",
             )
 
             # Generate card content
@@ -232,7 +237,7 @@ class DeploymentStage(PipelineStage):
         model_type: str,
         metrics: Dict,
         card_data: ModelCardData,
-        feature_importance_df: Optional[pd.DataFrame]
+        feature_importance_df: Optional[pd.DataFrame],
     ) -> str:
         """Generate model card content.
 
@@ -290,24 +295,18 @@ interventions and improved healthcare resource allocation.
                     "binary_features": self.cfg.features.binary_features,
                     "categorical_features": self.cfg.features.categorical_features,
                     "interaction_features": self.cfg.features.interaction_features,
-                    "ratio_features": self.cfg.features.ratio_features
+                    "ratio_features": self.cfg.features.ratio_features,
                 },
                 "transformations": {
                     "numeric_scaling": "standard",
-                    "outlier_handling": {
-                        "method": "clip",
-                        "std_multiplier": 5
-                    },
-                    "missing_values": {
-                        "numeric": "mean",
-                        "categorical": "mode"
-                    }
+                    "outlier_handling": {"method": "clip", "std_multiplier": 5},
+                    "missing_values": {"numeric": "mean", "categorical": "mode"},
                 },
                 "target": {
                     "name": "readmitted",
                     "type": "binary",
-                    "mapping": {">30": 0, "<30": 1, "NO": 0}
-                }
+                    "mapping": {">30": 0, "<30": 1, "NO": 0},
+                },
             }
 
             config_path = self.output_dir / "preprocessing_config.json"
@@ -336,7 +335,7 @@ interventions and improved healthcare resource allocation.
                 "task_specific_params": {
                     "classification": {"problem_type": "binary_classification"}
                 },
-                "preprocessing": {"featurization_config": "preprocessing_config.json"}
+                "preprocessing": {"featurization_config": "preprocessing_config.json"},
             }
 
             config_path = self.output_dir / "config.json"
@@ -363,13 +362,13 @@ interventions and improved healthcare resource allocation.
             api.create_repo(
                 repo_id=self.repo_id,
                 exist_ok=True,
-                private=self.cfg.huggingface.private
+                private=self.cfg.huggingface.private,
             )
 
             api.upload_folder(
                 repo_id=self.repo_id,
                 folder_path=str(self.output_dir),
-                commit_message=f"Update model artifacts"
+                commit_message=f"Update model artifacts",
             )
 
             logger.info(f"Successfully uploaded model to {self.repo_id}")
@@ -391,9 +390,7 @@ interventions and improved healthcare resource allocation.
         return token
 
     def _convert_keras_to_onnx(
-        self,
-        keras_model_path: Path,
-        output_dir: Path
+        self, keras_model_path: Path, output_dir: Path
     ) -> Optional[Path]:
         """Convert Keras model to ONNX format.
 

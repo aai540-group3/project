@@ -1,4 +1,3 @@
-# pipeline/pipeline/models/neural.py
 """
 Neural Network Model Implementation
 ===============================
@@ -10,7 +9,7 @@ Neural Network Model Implementation
 """
 
 from pathlib import Path
-from typing import Dict, Optional, List, Any
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -19,10 +18,11 @@ from omegaconf import DictConfig
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.class_weight import compute_class_weight
 
-from .base import BaseModel
 from ..utils.logging import get_logger
+from .base import BaseModel
 
 logger = get_logger(__name__)
+
 
 class NeuralNetworkModel(BaseModel):
     """Neural network model with flexible architecture.
@@ -52,9 +52,11 @@ class NeuralNetworkModel(BaseModel):
         :rtype: tf.keras.Model
         """
         # Get architecture config based on mode
-        arch_cfg = (self.cfg.quick_mode.architecture
-                   if self.cfg.experiment.name == "quick"
-                   else self.cfg.architecture)
+        arch_cfg = (
+            self.cfg.quick_mode.architecture
+            if self.cfg.experiment.name == "quick"
+            else self.cfg.architecture
+        )
 
         # Build layers
         layers = []
@@ -63,27 +65,26 @@ class NeuralNetworkModel(BaseModel):
         input_layer = tf.keras.layers.Input(shape=(input_dim,))
         x = input_layer
 
-        if arch_cfg.input_layer.get('batch_norm', False):
+        if arch_cfg.input_layer.get("batch_norm", False):
             x = tf.keras.layers.BatchNormalization()(x)
-        if arch_cfg.input_layer.get('dropout', 0) > 0:
+        if arch_cfg.input_layer.get("dropout", 0) > 0:
             x = tf.keras.layers.Dropout(arch_cfg.input_layer.dropout)(x)
 
         # Hidden layers
         for layer_cfg in arch_cfg.hidden_layers:
             x = tf.keras.layers.Dense(
-                units=layer_cfg.units,
-                activation=layer_cfg.activation
+                units=layer_cfg.units, activation=layer_cfg.activation
             )(x)
 
-            if layer_cfg.get('batch_norm', False):
+            if layer_cfg.get("batch_norm", False):
                 x = tf.keras.layers.BatchNormalization()(x)
-            if layer_cfg.get('dropout', 0) > 0:
+            if layer_cfg.get("dropout", 0) > 0:
                 x = tf.keras.layers.Dropout(layer_cfg.dropout)(x)
 
         # Output layer
         output = tf.keras.layers.Dense(
             units=arch_cfg.output_layer.units,
-            activation=arch_cfg.output_layer.activation
+            activation=arch_cfg.output_layer.activation,
         )(x)
 
         # Create model
@@ -93,7 +94,7 @@ class NeuralNetworkModel(BaseModel):
         model.compile(
             optimizer=self._get_optimizer(),
             loss=self._get_loss(),
-            metrics=self._get_metrics()
+            metrics=self._get_metrics(),
         )
 
         return model
@@ -104,16 +105,20 @@ class NeuralNetworkModel(BaseModel):
         :return: Configured optimizer
         :rtype: tf.keras.optimizers.Optimizer
         """
-        opt_cfg = (self.cfg.quick_mode.training.optimizer
-                  if self.cfg.experiment.name == "quick"
-                  else self.cfg.training.optimizer)
+        opt_cfg = (
+            self.cfg.quick_mode.training.optimizer
+            if self.cfg.experiment.name == "quick"
+            else self.cfg.training.optimizer
+        )
 
-        return tf.keras.optimizers.get(opt_cfg.name).from_config({
-            "learning_rate": opt_cfg.learning_rate,
-            "beta_1": opt_cfg.get('beta_1', 0.9),
-            "beta_2": opt_cfg.get('beta_2', 0.999),
-            "epsilon": opt_cfg.get('epsilon', 1e-07)
-        })
+        return tf.keras.optimizers.get(opt_cfg.name).from_config(
+            {
+                "learning_rate": opt_cfg.learning_rate,
+                "beta_1": opt_cfg.get("beta_1", 0.9),
+                "beta_2": opt_cfg.get("beta_2", 0.999),
+                "epsilon": opt_cfg.get("epsilon", 1e-07),
+            }
+        )
 
     def _get_loss(self) -> Any:
         """Get loss function from configuration.
@@ -121,9 +126,11 @@ class NeuralNetworkModel(BaseModel):
         :return: Loss function
         :rtype: Any
         """
-        train_cfg = (self.cfg.quick_mode.training
-                    if self.cfg.experiment.name == "quick"
-                    else self.cfg.training)
+        train_cfg = (
+            self.cfg.quick_mode.training
+            if self.cfg.experiment.name == "quick"
+            else self.cfg.training
+        )
         return train_cfg.loss
 
     def _get_metrics(self) -> List[str]:
@@ -132,9 +139,11 @@ class NeuralNetworkModel(BaseModel):
         :return: List of metrics
         :rtype: List[str]
         """
-        train_cfg = (self.cfg.quick_mode.training
-                    if self.cfg.experiment.name == "quick"
-                    else self.cfg.training)
+        train_cfg = (
+            self.cfg.quick_mode.training
+            if self.cfg.experiment.name == "quick"
+            else self.cfg.training
+        )
         return [
             tf.keras.metrics.get(metric) if isinstance(metric, str) else metric
             for metric in train_cfg.metrics
@@ -146,24 +155,28 @@ class NeuralNetworkModel(BaseModel):
         :return: List of callbacks
         :rtype: List[tf.keras.callbacks.Callback]
         """
-        train_cfg = (self.cfg.quick_mode.training
-                    if self.cfg.experiment.name == "quick"
-                    else self.cfg.training)
+        train_cfg = (
+            self.cfg.quick_mode.training
+            if self.cfg.experiment.name == "quick"
+            else self.cfg.training
+        )
 
         callbacks = []
 
         # Early stopping
-        if train_cfg.get('early_stopping'):
-            callbacks.append(tf.keras.callbacks.EarlyStopping(
-                **train_cfg.early_stopping
-            ))
+        if train_cfg.get("early_stopping"):
+            callbacks.append(
+                tf.keras.callbacks.EarlyStopping(**train_cfg.early_stopping)
+            )
 
         # Model checkpoint
-        if train_cfg.get('model_checkpoint'):
-            callbacks.append(tf.keras.callbacks.ModelCheckpoint(
-                filepath=str(Path(self.cfg.model_path) / "best_model.h5"),
-                **train_cfg.model_checkpoint
-            ))
+        if train_cfg.get("model_checkpoint"):
+            callbacks.append(
+                tf.keras.callbacks.ModelCheckpoint(
+                    filepath=str(Path(self.cfg.model_path) / "best_model.h5"),
+                    **train_cfg.model_checkpoint,
+                )
+            )
 
         return callbacks
 
@@ -175,13 +188,15 @@ class NeuralNetworkModel(BaseModel):
         :return: Class weights dictionary or None
         :rtype: Optional[Dict[int, float]]
         """
-        train_cfg = (self.cfg.quick_mode.training
-                    if self.cfg.experiment.name == "quick"
-                    else self.cfg.training)
+        train_cfg = (
+            self.cfg.quick_mode.training
+            if self.cfg.experiment.name == "quick"
+            else self.cfg.training
+        )
 
-        if train_cfg.get('class_weight') == 'balanced':
+        if train_cfg.get("class_weight") == "balanced":
             classes = np.unique(y)
-            weights = compute_class_weight('balanced', classes=classes, y=y)
+            weights = compute_class_weight("balanced", classes=classes, y=y)
             return dict(zip(classes, weights))
         return None
 
@@ -191,7 +206,7 @@ class NeuralNetworkModel(BaseModel):
         y_train: pd.Series,
         X_val: Optional[pd.DataFrame] = None,
         y_val: Optional[pd.Series] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         """Train neural network model.
 
@@ -216,9 +231,11 @@ class NeuralNetworkModel(BaseModel):
             self.model = self._build_model(X_train.shape[1])
 
             # Get training configuration
-            train_cfg = (self.cfg.quick_mode.training
-                        if self.cfg.experiment.name == "quick"
-                        else self.cfg.training)
+            train_cfg = (
+                self.cfg.quick_mode.training
+                if self.cfg.experiment.name == "quick"
+                else self.cfg.training
+            )
 
             # Calculate class weights if enabled
             class_weights = self._get_class_weights(y_train)
@@ -232,7 +249,7 @@ class NeuralNetworkModel(BaseModel):
                 epochs=train_cfg.epochs,
                 callbacks=self._get_callbacks(),
                 class_weight=class_weights,
-                **kwargs
+                **kwargs,
             )
 
             self._is_fitted = True

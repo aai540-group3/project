@@ -1,6 +1,6 @@
 """
 Logging Configuration
-==================
+=====================
 
 .. module:: pipeline.utils.logging
    :synopsis: Centralized logging configuration
@@ -8,101 +8,130 @@ Logging Configuration
 .. moduleauthor:: aai540-group3
 """
 
-import logging
+from loguru import logger, Logger
 import sys
 from pathlib import Path
-from typing import Optional
-
 from omegaconf import DictConfig
+from typing import Optional
+from rich.logging import RichHandler
 
-class ColoredFormatter(logging.Formatter):
-    """Custom formatter providing colored output for different log levels.
 
-    :param fmt: Log message format
-    :type fmt: str
-    :param datefmt: Date format
-    :type datefmt: str
+def setup_logging(cfg: Optional[DictConfig] = None) -> Logger:
     """
-
-    COLORS = {
-        'DEBUG': '\033[94m',
-        'INFO': '\033[92m',
-        'WARNING': '\033[93m',
-        'ERROR': '\033[91m',
-        'CRITICAL': '\033[91m',
-        'RESET': '\033[0m'
-    }
-
-    def format(self, record: logging.LogRecord) -> str:
-        """Format log record with appropriate colors.
-
-        :param record: Log record to format
-        :type record: logging.LogRecord
-        :return: Formatted log message
-        :rtype: str
-        """
-        if hasattr(sys.stderr, 'isatty') and sys.stderr.isatty():
-            record.levelname = (
-                f"{self.COLORS.get(record.levelname, self.COLORS['RESET'])}"
-                f"{record.levelname}{self.COLORS['RESET']}"
-            )
-        return super().format(record)
-
-def setup_logging(
-    cfg: Optional[DictConfig] = None,
-    name: Optional[str] = None,
-    log_file: Optional[Path] = None
-) -> logging.Logger:
-    """Set up logging configuration with console and file handlers.
+    Set up logging configuration using Loguru and Rich based on the provided configuration.
 
     :param cfg: Configuration object containing logging settings
     :type cfg: Optional[DictConfig]
-    :param name: Logger name
-    :type name: Optional[str]
-    :param log_file: Path to log file
-    :type log_file: Optional[Path]
-    :return: Configured logger
-    :rtype: logging.Logger
+    :return: Configured Loguru logger
+    :rtype: Logger
     :raises OSError: If log file cannot be created
     """
-    logger = logging.getLogger(name)
-    if logger.handlers:
+    if not cfg or not cfg.get("enabled", True):
+        logger.disable("pipeline")
         return logger
 
-    log_level = logging.DEBUG if cfg and cfg.get('debug', False) else logging.INFO
-    logger.setLevel(log_level)
+    # Remove the default Loguru handler to prevent duplicate logs
+    logger.remove()
 
-    # Console handler setup
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(log_level)
-    formatter = ColoredFormatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+    # Set global log levels with colors
+    logger.level("DEBUG", color="<cyan>{level}</cyan>")
+    logger.level("INFO", color="<green>{level}</green>")
+    logger.level("WARNING", color="<yellow>{level}</yellow>")
+    logger.level("ERROR", color="<red>{level}</red>")
+    logger.level("CRITICAL", color="<magenta>{level}</magenta>")
+
+    # Console handler setup with Rich
+    console_cfg = cfg.get("console", {})
+    if console_cfg.get("enabled", True):
+        if console_cfg.get("use_rich", False):
+            # Integrate Rich with Loguru
+            rich_handler = RichHandler(
+                level=console_cfg.get("level", "DEBUG"),
+                format=console_cfg.get(
+                    "format",
+                    "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} - {message}",
+                ),
+                rich_tracebacks=True,  # Enables Rich's enhanced tracebacks
+                markup=console_cfg.get("colored", True),
+            )
+            logger.add(
+                rich_handler,
+                enqueue=True
+            )
+        else:
+            # Traditional Loguru console handler
+            logger.add(
+                sys.stdout,
+                level=console_cfg.get("level", "DEBUG"),
+                format=console_cfg.get(
+                    "format",
+                    "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} - {message}",
+                ),
+                colorize=console_cfg.get("colored", True),
+                enqueue=True
+            )
 
     # File handler setup
-    if log_file:
+    file_cfg = cfg.get("file", {})
+    if file_cfg.get("enabled", False):
+        log_file = Path(file_cfg.get("path", "pipeline.log"))
         try:
             log_file.parent.mkdir(parents=True, exist_ok=True)
-            file_handler = logging.FileHandler(str(log_file))
-            file_handler.setLevel(log_level)
-            file_handler.setFormatter(logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            ))
-            logger.addHandler(file_handler)
+            logger.add(
+                str(log_file),
+                level=file_cfg.get("level", "INFO"),
+                format=file_cfg.get(
+                    "format",
+                    "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} - {message}",
+                ),
+                rotation=file_cfg.get("rotation", "1 day"),
+                retention=file_cfg.get("retention", "7 days"),
+                compression=file_cfg.get("compression", "zip"),
+                encoding='utf-8',
+                enqueue=True
+            )
         except OSError as e:
             raise OSError(f"Failed to create log file: {e}")
 
-    logger.propagate = False
+    # Set up specific loggers
+    loggers_cfg = cfg.get("loggers", {})
+    for logger_name, logger_settings in loggers_cfg.items():
+        # Loguru does not support named loggers like the standard logging module.
+        # However, you can bind context to log messages to simulate named loggers.
+        # Here, we'll add a sink with a filter based on the logger name.
+        logger.add(
+            sys.stdout,
+            level=logger_settings.get("level", "INFO"),
+            format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} - {message}",
+            filter=lambda record, name=logger_name: name in record["name"],
+            colorize=logger_settings.get("colored", True),
+            enqueue=True
+        )
+
+    # Exception handling to log uncaught exceptions
+    def handle_exception(exc_type: type, exc_value: BaseException, exc_traceback: Optional[object]) -> None:
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+        logger.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+    sys.excepthook = handle_exception
+
     return logger
 
-def get_logger(name: Optional[str] = None) -> logging.Logger:
-    """Get or create a logger with the specified name.
+
+def get_logger(name: Optional[str] = None, cfg: Optional[DictConfig] = None) -> Logger:
+    """
+    Get or create a logger with the specified name based on the config.
 
     :param name: Logger name
     :type name: Optional[str]
+    :param cfg: Configuration object containing logging settings
+    :type cfg: Optional[DictConfig]
     :return: Logger instance
-    :rtype: logging.Logger
+    :rtype: Logger
     """
-    return setup_logging(name=name)
+    setup_logging(cfg)
+    if name:
+        return logger.bind(name=name)
+    return logger

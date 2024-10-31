@@ -11,22 +11,23 @@ Visualization Utilities
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import auc, roc_curve
 from sklearn.preprocessing import StandardScaler
 
 from .logging import get_logger
 
 logger = get_logger(__name__)
 
+
 def plot_roc_curves(
     y_true: np.ndarray,
     y_pred_probas: Dict[str, np.ndarray],
     save_path: Optional[Path] = None,
-    figsize: tuple = (10, 6)
+    figsize: tuple = (10, 6),
 ) -> None:
     """Plot ROC curves for multiple models.
 
@@ -44,28 +45,26 @@ def plot_roc_curves(
     for model_name, y_pred_proba in y_pred_probas.items():
         fpr, tpr, _ = roc_curve(y_true, y_pred_proba)
         roc_auc = auc(fpr, tpr)
-        plt.plot(
-            fpr, tpr,
-            label=f'{model_name} (AUC = {roc_auc:.3f})'
-        )
+        plt.plot(fpr, tpr, label=f"{model_name} (AUC = {roc_auc:.3f})")
 
-    plt.plot([0, 1], [0, 1], 'k--')
+    plt.plot([0, 1], [0, 1], "k--")
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('ROC Curves Comparison')
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("ROC Curves Comparison")
     plt.legend(loc="lower right")
 
     if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.close()
+
 
 def plot_confusion_matrices(
     y_true: np.ndarray,
     y_preds: Dict[str, np.ndarray],
     save_path: Optional[Path] = None,
-    figsize: tuple = (15, 5)
+    figsize: tuple = (15, 5),
 ) -> None:
     """Plot confusion matrices for multiple models.
 
@@ -84,29 +83,24 @@ def plot_confusion_matrices(
         axes = [axes]
 
     for ax, (model_name, y_pred) in zip(axes, y_preds.items()):
-        cm = pd.crosstab(y_true, y_pred, normalize='true')
-        sns.heatmap(
-            cm,
-            annot=True,
-            fmt='.2%',
-            cmap='Blues',
-            ax=ax
-        )
-        ax.set_title(f'{model_name}\nConfusion Matrix')
-        ax.set_xlabel('Predicted')
-        ax.set_ylabel('Actual')
+        cm = pd.crosstab(y_true, y_pred, normalize="true")
+        sns.heatmap(cm, annot=True, fmt=".2%", cmap="Blues", ax=ax)
+        ax.set_title(f"{model_name}\nConfusion Matrix")
+        ax.set_xlabel("Predicted")
+        ax.set_ylabel("Actual")
 
     plt.tight_layout()
 
     if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.close()
+
 
 def plot_feature_importance(
     feature_importance: Dict[str, Dict[str, float]],
     top_n: int = 20,
     save_path: Optional[Path] = None,
-    figsize: tuple = (12, 6)
+    figsize: tuple = (12, 6),
 ) -> None:
     """Plot feature importance comparison.
 
@@ -124,9 +118,11 @@ def plot_feature_importance(
     for model_name, scores in feature_importance.items():
         if scores is None:
             continue
-        normalized_scores = StandardScaler().fit_transform(
-            np.array(list(scores.values())).reshape(-1, 1)
-        ).ravel()
+        normalized_scores = (
+            StandardScaler()
+            .fit_transform(np.array(list(scores.values())).reshape(-1, 1))
+            .ravel()
+        )
         combined_scores[model_name] = dict(zip(scores.keys(), normalized_scores))
 
     if not combined_scores:
@@ -140,16 +136,11 @@ def plot_feature_importance(
 
     # Plot
     plt.figure(figsize=figsize)
-    sns.heatmap(
-        all_scores.loc[top_features],
-        annot=True,
-        fmt='.2f',
-        cmap='YlOrRd'
-    )
-    plt.title('Feature Importance Comparison')
-    plt.xlabel('Model')
-    plt.ylabel('Feature')
+    sns.heatmap(all_scores.loc[top_features], annot=True, fmt=".2f", cmap="YlOrRd")
+    plt.title("Feature Importance Comparison")
+    plt.xlabel("Model")
+    plt.ylabel("Feature")
 
     if save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.close()

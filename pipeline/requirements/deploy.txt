@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+gunicorn
+pydantic
+prometheus-client
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+redis
+boto3
+mlflow

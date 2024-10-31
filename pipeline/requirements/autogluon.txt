@@ -1,0 +1,5 @@
+autogluon.tabular
+pandas
+numpy
+scikit-learn
+joblib

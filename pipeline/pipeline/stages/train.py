@@ -3,7 +3,7 @@ Model Training Stage
 =================
 
 .. module:: pipeline.stages.train
-   :synopsis: Model training and optimization stage
+   :synopsis: Model training and optimize stage
 
 .. moduleauthor:: aai540-group3
 """
@@ -13,11 +13,12 @@ from typing import Optional
 import pandas as pd
 from hydra.utils import instantiate
 
-from .base import PipelineStage
-from ..utils.logging import get_logger
 from ..models.base import BaseModel
+from ..utils.logging import get_logger
+from .base import PipelineStage
 
 logger = get_logger(__name__)
+
 
 class TrainingStage(PipelineStage):
     """Model training stage implementation.
@@ -73,7 +74,7 @@ class TrainingStage(PipelineStage):
         self,
         model: BaseModel,
         train_data: pd.DataFrame,
-        val_data: Optional[pd.DataFrame] = None
+        val_data: Optional[pd.DataFrame] = None,
     ) -> None:
         """Train model with provided data.
 
@@ -100,7 +101,7 @@ class TrainingStage(PipelineStage):
                 y_train=y_train,
                 X_val=X_val,
                 y_val=y_val,
-                **self.cfg.training.params
+                **self.cfg.training.params,
             )
 
             self.log_metrics(model.metrics)
