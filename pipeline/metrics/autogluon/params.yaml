@@ -1,0 +1,5 @@
+train_size: 77156
+test_size: 19290
+features: 59
+data_hash: 0a8a9e72e2eebd344910709dc9f37037
+mode: quick

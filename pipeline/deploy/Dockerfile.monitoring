@@ -1,0 +1,22 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt monitoring.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -r monitoring.txt
+
+# Copy application code
+COPY pipeline/ pipeline/
+COPY conf/ conf/
+
+# Set environment variables
+ENV PYTHONPATH=/app
+
+# Run monitoring application
+CMD ["python", "-m", "pipeline.monitoring.app"]

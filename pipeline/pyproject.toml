@@ -1,0 +1,143 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pipeline"
+version = "0.1.0"
+description = "MLOps Pipeline"
+readme = "README.md"
+requires-python = ">=3.8,<3.12"
+license = { text = "MIT" }
+authors = [
+    { name = "Jonathan Agustin", email = "jonathan.agustin@example.com" },
+    { name = "Zack Robertson", email = "zack.robertson@example.com" },
+    { name = "Lisa Vo", email = "lisa.vo@example.com" },
+]
+keywords = ["mlops", "diabetes", "prediction", "healthcare"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = ["dvc[s3]", "loguru", "pip", "python-dotenv", "uv"]
+
+[project.optional-dependencies]
+dev = ["ruff", "pytest"]
+
+[tool.hatch.envs.default]
+features = ["dev"]
+dependencies = ["pytest"]
+
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+
+[tool.flake8]
+max-line-length = 120
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "site-packages",
+    "build",
+    "dist",
+    ".mypy_cache",
+    ".pytest_cache",
+]
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+line_length = 120
+known_third_party = ["feast", "yaml"]
+skip_glob = [".venv-*/*"]
+
+[tool.pylint]
+disable = [
+    "missing-docstring",
+    "invalid-name",
+    "line-too-long",
+    "too-few-public-methods",
+    "import-error",
+]
+max-line-length = 120
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+strict = false
+exclude = "\\.venv-.*"
+
+[tool.coverage.run]
+source = ["pipeline/src", "pipeline/models"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.uv]
+cache-dir = "./.uv_cache"
+
+[tool.ruff]
+exclude = [
+    "__pypackages__",
+    "_build",
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git-rewrite",
+    ".git",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".uv_cache",
+    ".venv-*",
+    ".venv",
+    ".vscode",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+line-length = 120
+indent-width = 4
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+ignore = []
+fixable = ["ALL"]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--verbose --cov=src --cov-report=html --cov-report=term-missing"
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+    "slow: Slow running tests",
+]

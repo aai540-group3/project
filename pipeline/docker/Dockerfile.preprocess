@@ -1,0 +1,17 @@
+# ---------------------------------------------------------------------------------
+# Base Image for Preprocessing Stage
+# ---------------------------------------------------------------------------------
+FROM ghcr.io/aai540-group3/pipeline-base
+
+RUN pip install --no-cache-dir \
+    pandas \
+    numpy \
+    scikit-learn \
+    scipy \
+    category_encoders \
+    feature_engine \
+    imbalanced-learn \
+    optuna \
+    shap
+
+ENTRYPOINT ["python"]

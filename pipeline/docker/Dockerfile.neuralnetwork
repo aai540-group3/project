@@ -1,0 +1,13 @@
+# ---------------------------------------------------------------------------------
+# Base Image for Neural Network Stage
+# ---------------------------------------------------------------------------------
+FROM ghcr.io/aai540-group3/pipeline-base
+
+RUN pip install --no-cache-dir \
+    numpy \
+    pandas \
+    tensorflow \
+    omegaconf \
+    scikit-learn
+
+ENTRYPOINT ["python"]

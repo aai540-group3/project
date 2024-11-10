@@ -1,0 +1,466 @@
+---
+#-------------------------------------------------------------------------------
+# DEFAULTS
+#-------------------------------------------------------------------------------
+defaults:
+  - override hydra/hydra_logging: colorlog
+  - override hydra/job_logging: colorlog
+
+#-------------------------------------------------------------------------------
+# HYDRA
+#-------------------------------------------------------------------------------
+hydra:
+  # Enable chdir to allow relative paths to work correctly
+  job:
+    chdir: true
+  # Set the output directory for the experiment
+  run:
+    dir: outputs/${hydra.job.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  # Enable verbose logging
+  verbose: true
+
+# -----------------------------------------------------------------------------
+# Global Settings
+# -----------------------------------------------------------------------------
+globals:
+  mode: "quick"
+  seed: 42
+  version: "0.1.0"
+  debug: false
+  target_column: "readmitted"
+
+# -----------------------------------------------------------------------------
+# Paths Configuration
+# -----------------------------------------------------------------------------
+paths:
+  root: ${hydra:runtime.cwd}
+  data: ${paths.root}/data
+  raw: ${paths.root}/data/raw
+  interim: ${paths.root}/data/interim
+  processed: ${paths.root}/data/processed
+  features: ${paths.root}/data/features
+  models: ${paths.root}/models
+  artifacts: ${paths.root}/artifacts
+  metadata: ${paths.root}/metadata
+  metrics: ${paths.root}/metrics
+  reports: ${paths.root}/reports
+  logs: ${paths.root}/logs
+  pipeline: ${paths.root}/pipeline
+  deploy: ${paths.root}/pipeline/deploy
+  docker: ${paths.root}/pipeline/docker
+  registry: ${paths.root}/pipeline/registry
+
+# -----------------------------------------------------------------------------
+# Stage Configurations
+# -----------------------------------------------------------------------------
+stages:
+  build:
+    enabled: true
+    registry: "ghcr.io"
+    repository: "aai540-group3/pipeline"
+    push_images: true
+    dockerfile_dir: "./pipeline/docker"
+    mode_settings:
+      quick:
+        images:
+          - base
+          - ingest
+          - preprocess
+          - logistic
+      full:
+        images:
+          - base
+          - infrastruct
+          - ingest
+          - preprocess
+          - explore
+          - featurize
+          - optimize
+          - autogluon
+          - logistic
+          - neural
+          - evaluate
+          - register
+          - deploy
+    defaults:
+      mode: "quick"
+
+  ingest:
+    enabled: true
+    requires_data: false
+    save_data: true
+    mode_settings:
+      quick:
+        sample_size: 1000
+      full:
+        sample_size: null
+    defaults:
+      mode: "quick"
+    sources:
+      - type: uci
+        dataset_id: 296
+        name: "Diabetes 130-US hospitals"
+        required: true
+        version: "1.0.0"
+
+  preprocess:
+    enabled: true
+    requires_data: true
+    save_data: true
+    mode_settings:
+      quick:
+        drop_columns:
+          - weight
+          - payer_code
+        missing_values:
+          strategy: simple
+      full:
+        drop_columns:
+          - weight
+          - payer_code
+          - medical_specialty
+          - examide
+          - citoglipton
+        missing_values:
+          numeric:
+            strategy: median
+            fill_value: 0
+          categorical:
+            strategy: mode
+            fill_value: unknown
+    defaults:
+      mode: "quick"
+
+  featurize:
+    enabled: true
+    requires_data: true
+    save_data: true
+    mode_settings:
+      quick:
+        interactions: false
+        polynomial: false
+        selection_count: 5
+      full:
+        interactions: true
+        polynomial: true
+        selection_count: 20
+    defaults:
+      mode: "quick"
+
+  optimize:
+    enabled: true
+    requires_data: true
+    save_data: false
+    mode_settings:
+      quick:
+        n_trials: 1
+        timeout: 600
+        param_space:
+          logistic:
+            C:
+              type: float
+              low: 0.1
+              high: 10
+              log: true
+          neural:
+            learning_rate:
+              type: float
+              low: 1e-4
+              high: 1e-2
+              log: true
+      full:
+        n_trials: 100
+        timeout: 3600
+        param_space:
+          logistic:
+            C:
+              type: float
+              low: 1e-4
+              high: 1e4
+              log: true
+          neural:
+            learning_rate:
+              type: float
+              low: 1e-5
+              high: 1e-3
+              log: true
+    defaults:
+      mode: "quick"
+      metric: "roc_auc"
+      direction: "maximize"
+  train:
+    enabled: true
+    requires_data: true
+    save_data: true
+    mode_settings:
+      quick:
+        epochs: 1
+        batch_size: 32
+        cross_validation:
+          enabled: false
+          n_folds: 0
+        metrics:
+          - accuracy
+          - roc_auc
+      full:
+        epochs: 100
+        batch_size: 32
+        cross_validation:
+          enabled: true
+          n_folds: 5
+        metrics:
+          - accuracy
+          - roc_auc
+          - precision
+          - recall
+          - f1
+    defaults:
+      mode: "quick"
+    optimizer:
+      name: adam
+      learning_rate: 0.001
+      beta_1: 0.9
+      beta_2: 0.999
+    early_stopping:
+      enabled: true
+      monitor: val_loss
+      min_delta: 0.001
+      mode: min
+      restore_best_weights: true
+      patience:
+        quick: 3
+        full: 10
+
+  evaluate:
+    enabled: true
+    requires_data: true
+    save_data: false
+    mode_settings:
+      quick:
+        metrics:
+          - accuracy
+          - roc_auc
+      full:
+        metrics:
+          - accuracy
+          - roc_auc
+          - precision
+          - recall
+          - f1
+    defaults:
+      mode: "quick"
+      threshold: 0.5
+      feature_importance: true
+      confusion_matrix: true
+
+  deploy:
+    enabled: true
+    requires_data: false
+    save_data: false
+    mode_settings:
+      quick:
+        enabled: false
+        requirements: []
+      full:
+        enabled: true
+        requirements:
+          - tensorflow
+          - scikit-learn
+          - pandas
+    defaults:
+      mode: "quick"
+      platform: huggingface
+      model_format: onnx
+      endpoints:
+        prediction:
+          timeout: 30
+          batch_size: 32
+
+# -----------------------------------------------------------------------------
+# Model Configurations
+# -----------------------------------------------------------------------------
+models:
+  logistic:
+    mode_settings:
+      quick:
+        enabled: true
+        hyperparameters:
+          C: 1.0
+          penalty: l2
+          solver: lbfgs
+          max_iter: 100
+      full:
+        enabled: true
+        hyperparameters:
+          C: 1.0
+          penalty: l2
+          solver: lbfgs
+          max_iter: 1000
+          class_weight: balanced
+    defaults:
+      mode: "quick"
+
+  neural:
+    mode_settings:
+      quick:
+        enabled: false
+        architecture:
+          input_layer:
+            units: 64
+            dropout: 0.1
+          hidden_layers:
+            - units: 32
+              dropout: 0.1
+          output_layer:
+            units: 1
+            activation: sigmoid
+      full:
+        enabled: true
+        architecture:
+          input_layer:
+            units: 128
+            dropout: 0.2
+          hidden_layers:
+            - units: 64
+              dropout: 0.2
+            - units: 32
+              dropout: 0.1
+          output_layer:
+            units: 1
+            activation: sigmoid
+    defaults:
+      mode: "quick"
+
+  autogluon:
+    mode_settings:
+      quick:
+        enabled: false
+        hyperparameters:
+          time_limit: 600
+          presets: medium_quality
+      full:
+        enabled: true
+        hyperparameters:
+          time_limit: 3600
+          presets: best_quality
+    defaults:
+      mode: "quick"
+
+# -----------------------------------------------------------------------------
+# Infrastructure Configuration
+# -----------------------------------------------------------------------------
+infrastructure:
+  aws:
+    region: "us-east-1"
+    profile: "default"
+    s3:
+      bucket_name: "aai540-group3"
+      bucket_versioning: "enabled"
+    dynamodb:
+      table_name: "aai540-group3"
+      billing_mode: "PAY_PER_REQUEST"
+
+# -----------------------------------------------------------------------------
+# Tracking Configuration
+# -----------------------------------------------------------------------------
+tracking:
+  mode_settings:
+    quick:
+      mlflow: true
+      wandb: false
+      dvc: true
+    full:
+      mlflow: true
+      wandb: true
+      dvc: true
+  defaults:
+    mode: "quick"
+    mlflow:
+      tracking_uri: "./mlruns"
+      registry_uri: "./mlruns"
+    wandb:
+      project: "aai540-group3"
+      entity: "aai540"
+      mode: "offline"
+    dvc:
+      remote: "s3://aai540-group3/dvcstore"
+      auto_push: false
+
+# -----------------------------------------------------------------------------
+# Quality Configuration
+# -----------------------------------------------------------------------------
+quality:
+  mode_settings:
+    quick:
+      enabled: true
+      metrics:
+        - missing_values
+        - data_types
+      thresholds:
+        missing_values: 0.1
+        correlation: 0.9
+    full:
+      enabled: true
+      metrics:
+        - missing_values
+        - data_types
+        - unique_values
+        - correlations
+        - distributions
+        - outliers
+      thresholds:
+        missing_values: 0.05
+        correlation: 0.8
+        outlier_std: 3
+  defaults:
+    mode: "quick"
+
+# -----------------------------------------------------------------------------
+# Visualization Configuration
+# -----------------------------------------------------------------------------
+visualization:
+  mode_settings:
+    quick:
+      enabled: true
+      dpi: 100
+      formats: ["png"]
+      plots:
+        correlation: true
+        distributions: false
+        feature_importance: true
+    full:
+      enabled: true
+      dpi: 300
+      formats: ["png", "pdf"]
+      style: "seaborn-v0_8-bright"
+      plots:
+        correlation:
+          enabled: true
+          figsize: [12, 10]
+          cmap: "coolwarm"
+          annot: true
+        distributions:
+          enabled: true
+          figsize: [15, null]
+          n_cols: 3
+        feature_importance:
+          enabled: true
+          figsize: [12, null]
+          palette: "viridis"
+        quality_metrics:
+          enabled: true
+          figsize: [15, 15]
+          n_cols: 2
+  defaults:
+    mode: "quick"
+
+# -----------------------------------------------------------------------------
+# Experiment Configuration
+# -----------------------------------------------------------------------------
+experiment:
+  name_format: "{mode}_{timestamp}"
+  registry:
+    enabled: true
+    selection_metric: roc_auc
+    selection_threshold: 0.8
+    uri: "./mlruns"

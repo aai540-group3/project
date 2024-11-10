@@ -1,0 +1,56 @@
+name: Codacy Security Scan
+
+on:
+  schedule:
+    - cron: "0 0,12 * * *" # Run this job at midnight and noon every day
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  codacy-security-scan:
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    name: Codacy Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Cache Docker Layers
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        with:
+          path: /home/runner/.docker/buildx/
+          key: ${{ runner.os }}-buildx-${{ hashFiles('.github/workflows/codacy-analysis.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Cache Apt Packages
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        with:
+          path: /var/cache/apt/archives/**.deb
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/codacy-analysis.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      - name: Run Codacy Analysis CLI
+        uses: codacy/codacy-analysis-cli-action@97bf5df3c09e75f5bcd72695998f96ebd701846e # v4.4.5
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          verbose: true
+          format: sarif
+          output: results.sarif
+          gh-code-scanning-compat: true
+          max-allowed-issues: 2147483647
+
+      - name: Upload SARIF results file
+        uses: github/codeql-action/upload-sarif@af56b044b5d41c317aef5d19920b3183cb4fbbec # codeql-bundle-v2.19.2
+        with:
+          sarif_file: results.sarif
+          category: codacy

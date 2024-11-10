@@ -1,0 +1,13 @@
+# ---------------------------------------------------------------------------------
+# Base Image for Logistic Regression Stage
+# ---------------------------------------------------------------------------------
+FROM ghcr.io/aai540-group3/pipeline-base:latest
+
+RUN pip install \
+    --no-cache-dir \
+    scikit-learn \
+    pandas \
+    numpy \
+    joblib
+
+ENTRYPOINT ["python"]

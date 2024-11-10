@@ -1,0 +1,73 @@
+{
+  "timestamp": "2024-11-10T12:12:35.263189+00:00",
+  "stage": "feast",
+  "domains": {
+    "demographic": {
+      "feature_count": 3,
+      "features": [
+        "race",
+        "gender",
+        "age"
+      ]
+    },
+    "clinical": {
+      "feature_count": 5,
+      "features": [
+        "time_in_hospital",
+        "num_lab_procedures",
+        "num_procedures",
+        "num_medications",
+        "number_diagnoses"
+      ]
+    },
+    "service": {
+      "feature_count": 3,
+      "features": [
+        "number_outpatient",
+        "number_emergency",
+        "number_inpatient"
+      ]
+    },
+    "labs": {
+      "feature_count": 2,
+      "features": [
+        "max_glu_serum",
+        "a1cresult"
+      ]
+    },
+    "medications": {
+      "feature_count": 7,
+      "features": [
+        "metformin",
+        "glyburide",
+        "insulin",
+        "glyburide-metformin",
+        "glipizide-metformin",
+        "metformin-rosiglitazone",
+        "metformin-pioglitazone"
+      ]
+    },
+    "diagnosis": {
+      "feature_count": 10,
+      "features": [
+        "diag_1",
+        "diag_2",
+        "diag_3",
+        "number_diagnoses",
+        "level1_diag1",
+        "level1_diag2",
+        "level1_diag3",
+        "num_medications|number_diagnoses",
+        "age|number_diagnoses",
+        "number_diagnoses|time_in_hospital"
+      ]
+    }
+  },
+  "services": {
+    "readmission_prediction": {
+      "feature_count": 6,
+      "description": "Features for predicting readmission risk"
+    }
+  },
+  "store_config": "coerce_tz_aware: true\nentity_key_serialization_version: 2\noffline_store:\n  database: diabetes_readmission_feast\n  db_schema: feast\n  host: localhost\n  password: postgres\n  port: 5432\n  type: postgres\n  user: postgres\nonline_store:\n  database: diabetes_readmission_feast\n  db_schema: feast\n  host: localhost\n  password: postgres\n  port: 5432\n  type: postgres\n  user: postgres\nproject: diabetes_readmission\nprovider: local\nregistry:\n  cache_ttl_seconds: 600\n  path: postgresql+psycopg://postgres:postgres@localhost:5432/diabetes_registry\n  registry_type: sql\n  sqlalchemy_config_kwargs:\n    echo: false\n    pool_pre_ping: true\n"
+}

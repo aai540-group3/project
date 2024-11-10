@@ -1,0 +1,16 @@
+{
+    "exclude": [
+        "__pycache__",
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".venv-*",
+        ".venv",
+        ".vscode",
+        "build",
+        "dist",
+        "node_modules",
+        "venv-*",
+        "venv",
+    ]
+}

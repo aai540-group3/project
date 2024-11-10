@@ -1,0 +1,13 @@
+{
+  "timestamp": "2024-11-10T12:09:16.489799+00:00",
+  "stage": "infrastruct",
+  "region": "us-east-1",
+  "resources": [
+    {
+      "type": "s3_bucket",
+      "name": "aai540-group3",
+      "status": "exists"
+    }
+  ],
+  "status": "cleaned_up"
+}

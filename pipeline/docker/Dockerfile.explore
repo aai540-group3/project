@@ -1,0 +1,14 @@
+# ---------------------------------------------------------------------------------
+# Base Image for Explore Stage
+# ---------------------------------------------------------------------------------
+FROM ghcr.io/aai540-group3/pipeline-base:latest
+
+RUN pip install \
+    --no-cache-dir \
+    pandas \
+    numpy \
+    matplotlib \
+    seaborn \
+    cleanlab
+
+ENTRYPOINT ["python"]

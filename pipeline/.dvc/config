@@ -1,0 +1,15 @@
+[core]
+    remote = dvcstore
+    autostage = True
+    analytics = false
+[studio]
+    url = https://studio.iterative.ai
+[exp]
+    auto_push = True
+[hydra]
+    enabled = True
+    config_dir = conf
+    config_name = config.yaml
+['remote "dvcstore"']
+    url = s3://aai540-group3/dvcstore
+    region = us-east-1

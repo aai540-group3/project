@@ -1,0 +1,193 @@
+name: Package Deliverables
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/package-deliverables.yml"
+      - "pipeline/**"
+      - "LICENSE"
+      - "README.md"
+      - "Final_Project_Team_3_Deliverable_1.pdf"
+      - "Final_Project_Team_3_Deliverable_2.mp4"
+      - "Final_Project_Team_3_Deliverable_2.pptx"
+      - "packaging/manifest.json"
+  repository_dispatch:
+    types:
+      - package-deliverables
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  PACKAGES: packaging/packages.txt
+  MANIFEST_FILE: packaging/manifest.json
+
+jobs:
+  check-manifest:
+    runs-on: ubuntu-latest
+    outputs:
+      manifest_changed: ${{ steps.manifest_check.outputs.manifest_changed }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Cache Apt Archives
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
+          sudo apt-get install -y jq zip
+
+      - name: Create Manifest Zip File
+        run: |
+          echo "Reading files from $MANIFEST_FILE"
+          readarray -t files_to_zip_array < <(jq -r '.files[]' "$MANIFEST_FILE")
+          echo "Zipping the following files:"
+          printf '%s\n' "${files_to_zip_array[@]}"
+
+          # Remove the existing ZIP file if it exists
+          rm -f manifest_files.zip
+
+          zip -r manifest_files.zip "$MANIFEST_FILE" "${files_to_zip_array[@]}" || {
+            echo "Error creating manifest_files.zip"
+            exit 1
+          }
+
+      - name: Compute Current Hash
+        id: compute_hash
+        run: |
+          CURRENT_HASH=$(sha256sum manifest_files.zip | awk '{print $1}')
+          echo "CURRENT_HASH=$CURRENT_HASH" >> $GITHUB_ENV
+
+      - name: Get Previous Hash
+        id: get_previous_hash
+        run: |
+          PREVIOUS_HASH=$(jq -r '.hash // ""' $MANIFEST_FILE)
+          echo "PREVIOUS_HASH=$PREVIOUS_HASH" >> $GITHUB_ENV
+
+      - name: Compare Hashes
+        id: manifest_check
+        run: |
+          if [ "$CURRENT_HASH" = "$PREVIOUS_HASH" ]; then
+            echo "Hashes match. Skipping package generation."
+            echo "manifest_changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Hashes do not match. Proceeding with package generation."
+            echo "manifest_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+  package-repo:
+    runs-on: ubuntu-latest
+    needs: check-manifest
+    if: needs.check-manifest.outputs.manifest_changed == 'true'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 1
+
+      - name: Cache Apt Archives
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
+          sudo apt-get install -y jq zip
+
+      - name: Zip Deliverables
+        run: |
+          echo "Reading files from $MANIFEST_FILE"
+          readarray -t files_to_zip_array < <(jq -r '.files[]' "$MANIFEST_FILE")
+          echo "Zipping the following files:"
+          printf '%s\n' "${files_to_zip_array[@]}"
+
+          # Remove the existing ZIP file if it exists
+          rm -f Final_Project_Team_3_Deliverable_3.zip
+
+          zip -r Final_Project_Team_3_Deliverable_3.zip "${files_to_zip_array[@]}" || {
+            echo "Error creating Final_Project_Team_3_Deliverable_3.zip"
+            exit 1
+          }
+
+      - name: Get File Size
+        id: get_file_size
+        run: |
+          FILESIZE=$(stat -c%s Final_Project_Team_3_Deliverable_3.zip)
+          echo "FILESIZE=$FILESIZE" >> $GITHUB_ENV
+
+      - name: Get File Hash
+        id: get_file_hash
+        run: |
+          FILEHASH=$(sha256sum Final_Project_Team_3_Deliverable_3.zip | awk '{print $1}')
+          echo "FILEHASH=$FILEHASH" >> $GITHUB_ENV
+
+      - name: Update manifest.json with Hash and Size
+        run: |
+          jq --arg FILEHASH "$FILEHASH" --arg FILESIZE "$FILESIZE" '.hash = $FILEHASH | .size = $FILESIZE' "$MANIFEST_FILE" > temp_manifest.json
+          mv temp_manifest.json "$MANIFEST_FILE"
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config pull.rebase false
+
+      - name: Commit changes
+        run: |
+          git add "$MANIFEST_FILE" Final_Project_Team_3_Deliverable_3.zip
+          if git diff --staged --quiet; then
+            echo "No changes detected. Skipping commit and push."
+            echo "CHANGED=false" >> $GITHUB_ENV
+          else
+            git stash
+            git pull origin main
+            git stash pop
+            git add "$MANIFEST_FILE" Final_Project_Team_3_Deliverable_3.zip
+            git commit -m "Add Final_Project_Team_3_Deliverable_3.zip"
+            echo "Changes committed."
+            echo "CHANGED=true" >> $GITHUB_ENV
+          fi
+
+      - name: Push to Remote
+        run: |
+          git push origin main || {
+            echo "Push failed. Creating a pull request..."
+            gh pr create --title "Automated Manifest and Deliverable Update" --body "Push to main failed. Updated manifest and Deliverable included." --label "automated-pr"
+          }
+          echo "Changes pushed successfully (or pull request created)."
+
+      - name: Upload ZIP File as Artifact
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: Final_Project_Team_3_Deliverable_3
+          path: Final_Project_Team_3_Deliverable_3.zip
+
+      - name: Repository Dispatch
+        if: env.CHANGED == 'true'
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        with:
+          token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
+          repository: aai540-group3/project
+          event-type: create-release
+
+      - name: Cleanup
+        if: always()
+        run: rm -f manifest_files.zip Final_Project_Team_3_Deliverable_3.zip

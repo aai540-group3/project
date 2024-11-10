@@ -1,0 +1,14 @@
+# ---------------------------------------------------------------------------------
+# Base Image for Feature Engineering Stage
+# ---------------------------------------------------------------------------------
+FROM ghcr.io/aai540-group3/pipeline-base:latest
+
+RUN pip install \
+    --no-cache-dir \
+    feast \
+    pandas \
+    numpy \
+    scikit-learn \
+    "pydantic<2.0"
+
+ENTRYPOINT ["python"]

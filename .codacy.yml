@@ -1,0 +1,166 @@
+version: 2.0
+
+engines:
+  # Duplication detection
+  duplication:
+    enabled: true
+    exclude_patterns:
+      - "**/test/**"
+      - "**/*_test.py"
+    config:
+      languages:
+        python:
+          python_version: 3
+    languages:
+      - python
+    mass_threshold: 40
+    min_tokens: 70
+    identical_nodes_only: true
+
+  # Enabled engines
+  pylintpython3: { enabled: true }
+  flake8: { enabled: true }
+  bandit: { enabled: true }
+  mypy: { enabled: true }
+  pydocstyle: { enabled: true }
+  trivy: { enabled: true }
+  shellcheck: { enabled: true }
+  semgrep: { enabled: true }
+  markdownlint: { enabled: true }
+  hadolint: { enabled: true }
+
+  # Explicitly disabled engines
+  ameba: { enabled: false }
+  brakeman: { enabled: false }
+  checkov: { enabled: false }
+  checkstyle: { enabled: false }
+  codacy-scalameta-pro: { enabled: false }
+  codenarc: { enabled: false }
+  coffeelint: { enabled: false }
+  cppcheck: { enabled: false }
+  credo: { enabled: false }
+  dartanalyzer: { enabled: false }
+  detekt: { enabled: false }
+  eslint-8: { enabled: false }
+  flawfinder: { enabled: false }
+  jacksonlinter: { enabled: false }
+  phpcs: { enabled: false }
+  phpmd: { enabled: false }
+  pmd: { enabled: false }
+  pmdcpd: { enabled: false }
+  prospector: { enabled: false }
+  psscriptanalyzer: { enabled: false }
+  remark-lint: { enabled: false }
+  revive: { enabled: false }
+  rubocop: { enabled: false }
+  scalastyle: { enabled: false }
+  sonarcsharp: { enabled: false }
+  sonarvb: { enabled: false }
+  spectral: { enabled: false }
+  SQLint: { enabled: false }
+  stylelint: { enabled: false }
+  swiftlint: { enabled: false }
+  tsqllint: { enabled: false }
+
+include_paths:
+  - "src/**/*.py"
+  - "scripts/**/*.py"
+  - "scripts/**/*.sh"
+  - "configs/**/*.yaml"
+  - "**/*.md"
+  - "**/Dockerfile"
+  - ".github/workflows/**/*.yml"
+
+exclude_paths:
+  - ".devcontainer/**"
+  - ".dvc/**"
+  - ".git/**"
+  - ".gitea/**"
+  - ".ipynb_checkpoints/**"
+  - ".temp/**"
+  - ".venv-*/**"
+  - ".venv/**"
+  - ".vscode/**"
+  - "*.egg-info"
+  - "*.egg"
+  - "*.mp3"
+  - "*.mp4"
+  - "*.png"
+  - "*.zip"
+  - "**/__pycache__/**"
+  - "**/debug/**"
+  - "**/migrations/**"
+  - "**/settings.py"
+  - "data/**"
+  - "docs/**"
+  - "huggingface/**"
+  - "models/**"
+  - "node_modules/**"
+  - "notebooks/**"
+  - "outputs/**"
+  - "src/dvclive/**"
+  - "temp/**"
+  - "terraform/**"
+  - "tests/**"
+  - "video-assets/**"
+
+languages:
+  python: { enabled: true }
+  shell: { enabled: true }
+  dockerfile: { enabled: true }
+  markdown: { enabled: true }
+  yaml: { enabled: true }
+  javascript: { enabled: false }
+  typescript: { enabled: false }
+
+tools:
+  flake8:
+    enabled: true
+    config: .flake8
+    python_version: 3
+  pylint:
+    enabled: true
+    config: .pylintrc
+    python_version: 3
+  mypy:
+    enabled: true
+    config: mypy.ini
+    python_version: 3
+  pydocstyle:
+    enabled: true
+    python_version: 3
+  bandit:
+    enabled: true
+  trivy:
+    enabled: true
+  shellcheck:
+    enabled: true
+    include:
+      - "**/*.sh"
+      - "**/*.bash"
+  semgrep:
+    enabled: true
+    include:
+      - "**/*.py"
+      - "**/*.yaml"
+      - "**/*.yml"
+    rules:
+      - python
+      - security
+      - best-practice
+  markdownlint:
+    enabled: true
+    include:
+      - "**/*.md"
+  hadolint:
+    enabled: true
+    include:
+      - "**/Dockerfile"
+
+ignore:
+  - "**/*_test.py"
+  - "**/test_*.py"
+  - "**/tests/**"
+
+# File encoding settings to handle MalformedInputException
+file_encoding: utf-8

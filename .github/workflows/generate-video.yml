@@ -1,0 +1,163 @@
+name: Generate Video
+
+on:
+  push:
+    paths:
+      - ".github/workflows/generate-video.yml"
+      - "Final_Project_Team_3_Deliverable_2.pptx"
+      - "pptx2video/packages.txt"
+      - "pptx2video/requirements.txt"
+      - "pptx2video/pptx2video.py"
+  workflow_dispatch:
+    inputs:
+      force_generate:
+        description: "Force regenerate all resources"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  PACKAGES: pptx2video/packages.txt
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+jobs:
+  check-pptx:
+    runs-on: ubuntu-latest
+    outputs:
+      conversion_needed: ${{ steps.check.outputs.conversion_needed }}
+      force_generate: ${{ inputs.force_generate }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 1
+          lfs: true
+
+      - name: Confirm PowerPoint Existence
+        run: |
+          if [ ! -f "Final_Project_Team_3_Deliverable_2.pptx" ]; then
+            echo "::error::PPTX file not found: Final_Project_Team_3_Deliverable_2.pptx"
+            exit 1
+          fi
+
+      - name: Install Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r pptx2video/requirements.txt
+
+      - name: Check if Conversion is Needed
+        id: check
+        run: |
+          python pptx2video/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx --changed > changes.json
+          cat changes.json
+          if grep -q '"conversion_needed": false' changes.json; then
+            echo "Conversion is not needed."
+            echo "conversion_needed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Conversion is needed."
+            echo "conversion_needed=true" >> $GITHUB_OUTPUT
+          fi
+
+  generate-video:
+    needs: check-pptx
+    if: needs.check-pptx.outputs.conversion_needed == 'true' || inputs.force_generate == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 1
+          lfs: true
+
+      - name: Cache Apt Archives
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles(env.PACKAGES) }}
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get --yes install --no-install-recommends $(cat ${{ env.PACKAGES }})
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r pptx2video/requirements.txt
+
+      - name: Run Video Generation Script
+        run: |
+          FORCE_FLAG=""
+          if [ "${{ needs.check-pptx.outputs.force_generate }}" == 'true' ]; then
+            FORCE_FLAG="--force"
+          fi
+          python pptx2video/pptx2video.py Final_Project_Team_3_Deliverable_2.pptx $FORCE_FLAG
+
+      - name: Get Video Duration
+        run: |
+          duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "Final_Project_Team_3_Deliverable_2.mp4")
+          minutes=$(echo "$duration / 60" | bc)
+          seconds=$(printf "%.0f" $(echo "$duration % 60" | bc))
+          DURATION="${minutes}m ${seconds}s"
+          echo "DURATION=$DURATION" >> $GITHUB_ENV
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config pull.rebase false
+
+      - name: Push to Remote
+        run: |
+          git add \
+            Final_Project_Team_3_Deliverable_2.mp4 \
+            pptx2video/video-assets
+          if git diff --staged --quiet; then
+            echo "No changes detected. Skipping commit and push."
+            echo "CHANGED=false" >> $GITHUB_ENV
+          else
+            git stash
+            git pull origin main
+            git stash pop
+            git add \
+              Final_Project_Team_3_Deliverable_2.mp4 \
+              pptx2video/video-assets
+            git commit -m "$DURATION out of 10 minutes"
+            git push origin main || {
+              echo "Push failed. Creating a pull request..."
+              gh pr create --title "Automated Video Update" --body "Push to main failed. Updated video included."
+            }
+            echo "Changes committed and pushed successfully (or pull request created)."
+            echo "CHANGED=true" >> $GITHUB_ENV
+          fi
+
+      - name: Repository Dispatch
+        if: env.CHANGED == 'true'
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        with:
+          token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
+          repository: aai540-group3/project
+          event-type: package-deliverables

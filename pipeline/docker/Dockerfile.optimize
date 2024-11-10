@@ -1,0 +1,17 @@
+# ---------------------------------------------------------------------------------
+# Base Image for Optimize Stage
+# ---------------------------------------------------------------------------------
+FROM ghcr.io/aai540-group3/pipeline-base
+
+RUN pip install --no-cache-dir \
+    optuna \
+    hyperopt \
+    bayesian-optimization \
+    scikit-optimize \
+    pandas \
+    numpy \
+    scikit-learn \
+    plotly \
+    shap
+
+ENTRYPOINT ["python"]

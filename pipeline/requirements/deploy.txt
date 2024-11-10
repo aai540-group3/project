@@ -1,0 +1,7 @@
+huggingface-hub
+loguru
+omegaconf
+pandas
+scikit-learn
+tensorflow
+tf2onnx

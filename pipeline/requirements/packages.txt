@@ -1,0 +1,6 @@
+clang
+graphviz
+graphviz-dev
+python3-dev
+libpq-dev
+postgresql-server-dev-all

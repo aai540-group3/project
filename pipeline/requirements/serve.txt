@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+gunicorn
+pydantic
+redis
+prometheus-client
+python-jose[cryptography]
+passlib[bcrypt]

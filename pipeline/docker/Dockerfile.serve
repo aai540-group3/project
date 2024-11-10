@@ -1,0 +1,17 @@
+# ---------------------------------------------------------------------------------
+# Base Image for Serve Stage
+# ---------------------------------------------------------------------------------
+FROM ghcr.io/aai540-group3/pipeline-base:latest
+
+RUN pip install \
+    --no-cache-dir \
+    fastapi \
+    uvicorn \
+    gunicorn \
+    pydantic \
+    redis \
+    prometheus-client \
+    python-jose[cryptography] \
+    passlib[bcrypt]
+
+ENTRYPOINT ["python"]

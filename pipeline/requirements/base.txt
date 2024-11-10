@@ -1,0 +1,14 @@
+-e .
+joblib
+loguru
+matplotlib
+numpy
+omegaconf
+pandas
+pip
+pipx
+pyarrow
+python-dotenv
+scikit-learn
+seaborn
+uv

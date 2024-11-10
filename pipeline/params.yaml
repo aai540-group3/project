@@ -1,0 +1,137 @@
+project: diabetes_readmission
+version: 0.1.0
+seed: 42
+
+paths:
+  raw: data/raw
+  interim: data/interim
+  processed: data/processed
+  feature_repo: feature_repo
+  metrics: metrics
+  plots: plots
+  models: models
+
+aws:
+  bucket_name: aai540-group3
+  region: us-east-1
+
+feast:
+  config:
+    project: diabetes_readmission
+    provider: local
+    registry:
+      registry_type: sql
+      path: postgresql+psycopg://postgres:postgres@localhost:5432/diabetes_registry
+      cache_ttl_seconds: 600
+      sqlalchemy_config_kwargs:
+        echo: false
+        pool_pre_ping: true
+    offline_store:
+      type: postgres
+      host: localhost
+      port: 5432
+      database: diabetes_readmission_feast
+      db_schema: feast
+      user: postgres
+      password: postgres
+    online_store:
+      type: postgres
+      host: localhost
+      port: 5432
+      database: diabetes_readmission_feast
+      db_schema: feast
+      user: postgres
+      password: postgres
+    entity_key_serialization_version: 2
+    coerce_tz_aware: true
+
+dataset:
+  id: 296
+  name: "Diabetes 130-US Hospitals for Years 1999-2008"
+  source: ucimlrepo
+
+splits:
+  train: 0.80
+  test: 0.10
+  val: 0.10
+
+autogluon:
+  quick:
+    time_limit: 60
+    hyperparameters:
+      GBM:
+        extra_trees: false
+        learning_rate: 0.1
+        num_boost_round: 100
+        num_leaves: 16
+        early_stopping_rounds: 10
+
+  full:
+    time_limit: 7200
+    hyperparameters:
+      GBM:
+        extra_trees: true
+        learning_rate: 0.05
+        num_boost_round: 500
+        num_leaves: 128
+        feature_fraction: 0.8
+        min_data_in_leaf: 20
+      CAT:
+        iterations: 1000
+        depth: 8
+        learning_rate: 0.05
+        min_data_in_leaf: 20
+      XGB:
+        max_depth: 8
+        learning_rate: 0.05
+        n_estimators: 500
+        subsample: 0.8
+        colsample_bytree: 0.8
+      NN_TORCH:
+        num_epochs: 100
+        learning_rate: 0.001
+        dropout_prob: 0.1
+        weight_decay: 0.01
+        batch_size: 512
+        layers: [200, 100]
+    model:
+      label: readmitted
+      metric: roc_auc
+      problem_type: binary
+
+stages:
+  infrastruct: {}
+  ingest: {}
+  preprocess: {}
+  featurize: {}
+  feast: {}
+  explore: {}
+  optimize: {}
+  autogluon: {}
+  neural: {}
+  logistic: {}
+  evaluate: {}
+
+visualization:
+  style: seaborn-v0_8-bright
+  theme:
+    style: whitegrid
+    context: paper
+    font_scale: 1.2
+    rc:
+      figure.dpi: 300
+      savefig.dpi: 300
+      font.size: 12
+      axes.labelsize: 12
+      axes.titlesize: 14
+      xtick.labelsize: 10
+      ytick.labelsize: 10
+      legend.fontsize: 10
+      figure.titlesize: 16
+
+colors:
+  primary: "#2196F3"
+  secondary: "#FF9800"
+  success: "#4CAF50"
+  error: "#F44336"
+  neutral: "#9E9E9E"

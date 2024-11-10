@@ -1,0 +1,320 @@
+stages:
+  setup:
+    cmd:
+      - UV_LINK_MODE=copy uv venv .venv --python 3.11
+      - .venv/bin/python -m ensurepip --upgrade
+      - .venv/bin/python -m pip install -q uv
+      - .venv/bin/uv pip install -q -e .
+      - .venv/bin/uv pip install -q -r requirements/base.txt
+    outs:
+      - .venv:
+          cache: false
+          persist: true
+    deps:
+      - requirements/base.txt
+    always_changed: false
+
+  prepare:
+    cmd:
+      - .venv/bin/uv run --with boto3 python -m pipeline infrastruct
+      - .venv/bin/uv run --with ucimlrepo --with pyarrow python -m pipeline ingest
+    deps:
+      - .venv
+      - requirements/base.txt
+      - pipeline/__main__.py
+    outs:
+      - data/raw/data.parquet:
+          cache: true
+      - data/raw/data.csv:
+          cache: true
+      - data/raw/variables.json:
+          cache: true
+      - data/raw/metadata.json:
+          cache: true
+    metrics:
+      - metrics/ingest/metrics.json:
+          cache: false
+    plots:
+      - plots/ingest/missing_values.png
+      - plots/ingest/data_types.png
+
+  preprocess:
+    cmd:
+      - .venv/bin/uv run python -m pipeline preprocess
+    deps:
+      - .venv
+      - requirements.txt
+      - data/raw/data.csv
+      - pipeline/__main__.py
+    outs:
+      - data/interim/data_cleaned.parquet:
+          cache: true
+    metrics:
+      - metrics/preprocess/metrics.json:
+          cache: false
+    plots:
+      - plots/preprocess/missing_values.png
+      - plots/preprocess/feature_distributions.png
+      - plots/preprocess/target_distribution.png
+
+  explore:
+    cmd:
+      - .venv/bin/uv run python -m pipeline explore
+    deps:
+      - .venv
+      - requirements.txt
+      - data/interim/data_cleaned.parquet
+      - pipeline/__main__.py
+    metrics:
+      - metrics/explore/metrics.json:
+          cache: false
+    plots:
+      - plots/explore/lab_results.png
+      - plots/explore/service_metrics.png
+      - plots/explore/clinical_metrics.png
+      - plots/explore/demographics.png
+      - plots/explore/correlations.png
+      - plots/explore/feature_importance.png:
+          y: feature
+          x: importance
+          title: Top 20 Features by Importance
+      - plots/explore/feature_importance.csv
+
+  featurize:
+    cmd:
+      - .venv/bin/uv run --with boto3 python -m pipeline featurize
+    deps:
+      - .venv
+      - requirements.txt
+      - data/interim/data_cleaned.parquet
+      - pipeline/__main__.py
+    outs:
+      - data/processed/features.parquet:
+          cache: true
+      - data/processed/features_not_onehot.parquet:
+          cache: true
+    metrics:
+      - metrics/featurize/metrics.json:
+          cache: false
+    plots:
+      - plots/featurize/feature_correlations.png
+
+  feast:
+    cmd:
+      - docker volume create feast_pgdata
+      - docker stop feast_postgres || true
+      - docker rm feast_postgres || true
+      - docker run --name feast_postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -v feast_pgdata:/var/lib/postgresql/data -d postgres:13
+      - until docker exec feast_postgres pg_isready -U postgres; do sleep 1; done
+      - .venv/bin/uv run --with psycopg2-binary --with feast[postgres] --with dask[dataframe] python -m pipeline feast
+      - docker stop feast_postgres
+    deps:
+      - .venv
+      - requirements.txt
+      - data/processed/features_not_onehot.parquet
+      - data/processed/features.parquet
+      - pipeline/__main__.py
+    outs:
+      - feature_repo:
+          cache: true
+    metrics:
+      - metrics/feast/metrics.json:
+          cache: false
+
+  autogluon:
+    cmd:
+      - .venv/bin/uv run --with autogluon.tabular --with dvclive python pipeline autogluon
+    deps:
+      - .venv
+      - requirements.txt
+      - data/processed/features.parquet
+      - pipeline/__main__.py
+    outs:
+      - models/autogluon/artifacts/model:
+          cache: true
+    metrics:
+      - metrics/autogluon/model_info.json:
+          cache: false
+    plots:
+      - plots/autogluon/feature_importance.csv:
+          y: importance
+          x: feature
+          title: Feature Importance
+      - plots/autogluon/confusion_matrix.png
+      - plots/autogluon/roc_curve.png
+
+#   optimize:
+#     foreach: ${models}
+#     do:
+#       cmd:
+#         - export UV_LINK_MODE=copy && uv venv .venv-optimize-${item} --python 3.11
+#         - . .venv-optimize-${item}/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/base.txt
+#         - . .venv-optimize-${item}/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/optimize.txt
+#         - . .venv-optimize-${item}/bin/activate && python pipeline/stages/optimize.py model=${item}
+#       deps:
+#         - pipeline/stages/optimize.py
+#         - pipeline/models/${item}.py
+#         - requirements/base.txt
+#         - requirements/optimize.txt
+#         - data/processed/train_features.parquet
+#         - data/processed/val_features.parquet
+#       metrics:
+#         - metrics/optimize/${item}/trials.json
+#       plots:
+#         - metrics/plots/optimize/${item}/parameter_importance.png
+#         - metrics/plots/optimize/${item}/optimization_history.png
+
+#   train:
+#     foreach: ${models}
+#     do:
+#       cmd:
+#         - export UV_LINK_MODE=copy && uv venv .venv-train-${item} --python 3.11
+#         - . .venv-train-${item}/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/base.txt
+#         - . .venv-train-${item}/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/${item}.txt
+#         - . .venv-train-${item}/bin/activate && python pipeline/stages/train.py model=${item}
+#       deps:
+#         - pipeline/stages/train.py
+#         - pipeline/models/${item}.py
+#         - requirements/base.txt
+#         - requirements/${item}.txt
+#         - data/processed/train_features.parquet
+#         - data/processed/val_features.parquet
+#       outs:
+#         - models/${item}/model.pkl
+#       metrics:
+#         - metrics/training/${item}/metrics.json
+#       plots:
+#         - metrics/plots/training/${item}/loss.png
+#         - metrics/plots/training/${item}/confusion_matrix.png
+#         - metrics/plots/training/${item}/roc_curve.png
+
+#   evaluate:
+#     cmd:
+#       - export UV_LINK_MODE=copy && uv venv .venv-evaluate --python 3.11
+#       - . .venv-evaluate/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/base.txt
+#       - . .venv-evaluate/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/evaluate.txt
+#       - . .venv-evaluate/bin/activate && python pipeline/stages/evaluate.py
+#     deps:
+#       - pipeline/stages/evaluate.py
+#       - requirements/base.txt
+#       - requirements/evaluate.txt
+#       - data/processed/test_features.parquet
+#       - models/*/model.pkl
+#     metrics:
+#       - metrics/evaluation/model_comparison.json
+#     plots:
+#       - metrics/plots/evaluation/model_comparison.png
+#       - metrics/plots/evaluation/feature_importance.png
+
+#   register:
+#     cmd:
+#       - export UV_LINK_MODE=copy && uv venv .venv-register --python 3.11
+#       - . .venv-register/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/base.txt
+#       - . .venv-register/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/register.txt
+#       - . .venv-register/bin/activate && python pipeline/stages/register.py
+#     deps:
+#       - pipeline/stages/register.py
+#       - requirements/base.txt
+#       - requirements/register.txt
+#       - metrics/evaluation/model_comparison.json
+#       - models/*/model.pkl
+#     outs:
+#       - registry/metadata.json
+
+#   deploy:
+#     cmd:
+#       - export UV_LINK_MODE=copy && uv venv .venv-deploy --python 3.11
+#       - . .venv-deploy/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/base.txt
+#       - . .venv-deploy/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/deploy.txt
+#       - . .venv-deploy/bin/activate && python pipeline/stages/deploy.py
+#     deps:
+#       - pipeline/stages/deploy.py
+#       - requirements/base.txt
+#       - requirements/deploy.txt
+#       - models/*/model.pkl
+#       - metrics/evaluation/model_comparison.json
+#     outs:
+#       - deploy/huggingface:
+#           persist: true
+
+#   serve:
+#     cmd:
+#       - export UV_LINK_MODE=copy && uv venv .venv-serve --python 3.11
+#       - export UV_LINK_MODE=copy && uv pip install -r requirements/serve.txt --python .venv-serve/bin/python
+#       - export UV_LINK_MODE=copy && uv pip install -e . --python .venv-serve/bin/python
+#       - .venv-serve/bin/uvicorn pipeline.serve.app:app --host 0.0.0.0 --port 8000
+#     deps:
+#       - pipeline/serve/app.py
+#       - models/*/model.pkl
+#       - conf/config.yaml
+#       - requirements/serve.txt
+#     outs:
+#       - serve/logs:
+#           persist: true
+
+#   monitor:
+#     cmd:
+#       - export UV_LINK_MODE=copy && uv venv .venv-monitoring --python 3.11
+#       - export UV_LINK_MODE=copy && uv pip install -r requirements/monitoring.txt --python .venv-monitoring/bin/python
+#       - export UV_LINK_MODE=copy && uv pip install -e . --python .venv-monitoring/bin/python
+#       - .venv-monitoring/bin/python pipeline/stages/monitoring.py
+#     deps:
+#       - pipeline/monitoring/app.py
+#       - conf/config.yaml
+#     metrics:
+#       - metrics/monitoring/system_metrics.json
+#     plots:
+#       - metrics/plots/monitoring/resource_usage.png
+#       - metrics/plots/monitoring/prediction_latency.png
+#       - metrics/plots/monitoring/error_rate.png
+
+# artifacts:
+#   diabetes-dataset:
+#     path: data/raw/data.csv
+#     type: dataset
+#     desc: "Diabetes 130-US hospitals for years 1999-2008 dataset"
+#     labels:
+#       - tabular
+#       - healthcare
+#     meta:
+#       source: "UCI Machine Learning Repository"
+#       url: https://archive.ics.uci.edu/ml/datasets/diabetes+130-us+hospitals+for+years+1999-2008
+#       records: 101766
+#       features: 55
+#   logistic_regression:
+#     path: models/logistic_regression/artifacts/model/model.joblib
+#     type: model
+#     desc: "Trained Logistic Regression model for readmission prediction"
+#     labels:
+#       - baseline
+#       - interpretable
+#     meta:
+#       features: "engineered features, standardized"
+#       algorithm: sklearn.linear_model.LogisticRegression
+#   neural_network:
+#     path: models/neural_network/artifacts/model/model.keras
+#     type: model
+#     desc: "Trained deep Neural Network model for readmission prediction"
+#     labels:
+#       - deep-learning
+#       - tensorflow
+#     meta:
+#       architecture: "MLP, 3 hidden layers"
+#       optimizer: Adam
+#       epochs: 100
+#   autogluon:
+#     path: models/autogluon/artifacts/model/model.pkl
+#     type: model
+#     desc: "Trained AutoGluon ensemble model for readmission prediction"
+#     labels:
+#       - automl
+#       - ensemble
+#     meta:
+#       framework: autogluon
+#       hyperparameters: "tuned with best_quality preset"
+
+vars:
+  - models:
+      - logistic
+      - neural
+      - autogluon

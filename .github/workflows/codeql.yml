@@ -1,0 +1,62 @@
+name: "CodeQL Advanced"
+
+on:
+  push:
+    branches: ["main", "develop"]
+    paths:
+      - "**.py"
+  pull_request:
+    branches: ["main", "develop"]
+    paths:
+      - "**.py"
+  schedule:
+    - cron: "23 8 * * 6" # Run this job at 8:23 PM every Saturday
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: python
+            build-mode: none
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Cache Docker Layers
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        with:
+          path: /home/runner/.docker/buildx/
+          key: ${{ runner.os }}-buildx-${{ hashFiles('.github/workflows/codeql.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Cache Apt Packages
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        with:
+          path: /var/cache/apt/archives/**.deb
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/codeql.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@af56b044b5d41c317aef5d19920b3183cb4fbbec # codeql-bundle-v2.19.2
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@af56b044b5d41c317aef5d19920b3183cb4fbbec # codeql-bundle-v2.19.2
+        with:
+          category: "/language:${{matrix.language}}"
