@@ -653,15 +653,16 @@ stages:
       size: 206215
   feast:
     cmd:
-    - docker volume create feast_pgdata
+    - docker volume create feast_pgdata || true
     - docker stop feast_postgres || true
-    - docker rm feast_postgres || true
+    - docker rm -f feast_postgres || true
     - docker run --name feast_postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432
       -v feast_pgdata:/var/lib/postgresql/data -d postgres:13
     - until docker exec feast_postgres pg_isready -U postgres; do sleep 1; done
     - .venv/bin/uv run --with psycopg2-binary --with feast[postgres] --with dask[dataframe]
       python -m pipeline feast
-    - docker stop feast_postgres
+    - docker stop feast_postgres || true
+    - docker rm -f feast_postgres || true
     deps:
     - path: .venv
       hash: md5
@@ -678,8 +679,8 @@ stages:
       size: 2224183
     - path: pipeline/__main__.py
       hash: md5
-      md5: bb3ad7ecb51621301133478e11da5c95
-      size: 1413
+      md5: c8db56e7c06df77d7e14d2bba0a2e804
+      size: 1414
     - path: requirements.txt
       hash: md5
       md5: de5227a0beeaf96e4f95c6672a0ee8e4
@@ -687,10 +688,58 @@ stages:
     outs:
     - path: feature_repo
       hash: md5
-      md5: 8521f8f5029657af192081965bfc8e80.dir
+      md5: a35fffb3225fdc57b368bdddbe65070c.dir
       size: 2817263
       nfiles: 2
     - path: metrics/feast/metrics.json
       hash: md5
-      md5: a0522cc8539bb57bd7f4bbd1822cd953
+      md5: 5bbd85bd1f527d9421950916867e92b3
       size: 2172
+  autogluon:
+    cmd:
+    - .venv/bin/uv run --with autogluon.tabular[lightgbm] --with dvclive python pipeline
+      autogluon
+    deps:
+    - path: .venv
+      hash: md5
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
+    - path: data/processed/features.parquet
+      hash: md5
+      md5: 0c781e5309ec1e0b47b93b9f915577cf
+      size: 1028452
+    - path: pipeline/__main__.py
+      hash: md5
+      md5: c8db56e7c06df77d7e14d2bba0a2e804
+      size: 1414
+    - path: requirements.txt
+      hash: md5
+      md5: de5227a0beeaf96e4f95c6672a0ee8e4
+      size: 2202
+    outs:
+    - path: metrics/autogluon/feature_importance.csv
+      hash: md5
+      md5: e8bf5de2b4b707d98ebc3cf854313880
+      size: 3723
+    - path: metrics/autogluon/metrics.json
+      hash: md5
+      md5: cdf3f3f0d7f705043a3ec8faba8bd372
+      size: 164
+    - path: models/autogluon
+      hash: md5
+      md5: 97b4cb62dd5e2845c3aee6ea32385d46.dir
+      size: 11678090
+      nfiles: 14
+    - path: plots/autogluon/confusion_matrix.png
+      hash: md5
+      md5: 3fe852261c9e1e9afcf9097f792359c1
+      size: 116224
+    - path: plots/autogluon/feature_importance.png
+      hash: md5
+      md5: 0b07d18e833380069d7d6b70672cff76
+      size: 265039
+    - path: plots/autogluon/roc_curve.png
+      hash: md5
+      md5: f0e572877e236dbd836f0d2ba9a06b2e
+      size: 173801
