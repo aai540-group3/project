@@ -2,3 +2,5 @@
 /mapping.json
 /test.csv
 /train.csv
+/features.parquet
+/features_not_onehot.parquet

@@ -5,7 +5,7 @@ import threading
 from loguru import logger
 
 
-@logger.catch(reraise=True)
+@logger.catch()
 def run_stage(stage_name):
     # Construct the module name and class name based on the stage name
     module_name = f"pipeline.stages.{stage_name}"
@@ -23,7 +23,6 @@ def run_stage(stage_name):
     stage_instance.execute()
 
 
-@logger.catch(reraise=True)
 def main():
     # GET STAGE NAMES
     parser = argparse.ArgumentParser()

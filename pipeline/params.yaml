@@ -21,7 +21,7 @@ feast:
     provider: local
     registry:
       registry_type: sql
-      path: postgresql+psycopg://postgres:postgres@localhost:5432/diabetes_registry
+      path: postgresql+psycopg://feast:feast@localhost:5432/feast
       cache_ttl_seconds: 600
       sqlalchemy_config_kwargs:
         echo: false
@@ -30,24 +30,25 @@ feast:
       type: postgres
       host: localhost
       port: 5432
-      database: diabetes_readmission_feast
-      db_schema: feast
-      user: postgres
-      password: postgres
+      database: feast
+      db_schema: public
+      user: feast
+      password: feast
     online_store:
       type: postgres
       host: localhost
       port: 5432
-      database: diabetes_readmission_feast
-      db_schema: feast
-      user: postgres
-      password: postgres
+      database: feast
+      db_schema: feature_store
+      user: feast
+      password: feast
     entity_key_serialization_version: 2
     coerce_tz_aware: true
 
+target: readmitted
 dataset:
-  id: 296
   name: "Diabetes 130-US Hospitals for Years 1999-2008"
+  id: 296
   source: ucimlrepo
 
 splits:
@@ -56,8 +57,13 @@ splits:
   val: 0.10
 
 autogluon:
+  model:
+    label: readmitted
+    metric: roc_auc
+    problem_type: binary
   quick:
     time_limit: 60
+    presets: medium_quality
     hyperparameters:
       GBM:
         extra_trees: false
@@ -65,9 +71,9 @@ autogluon:
         num_boost_round: 100
         num_leaves: 16
         early_stopping_rounds: 10
-
   full:
     time_limit: 7200
+    presets: best_quality
     hyperparameters:
       GBM:
         extra_trees: true
@@ -94,23 +100,59 @@ autogluon:
         weight_decay: 0.01
         batch_size: 512
         layers: [200, 100]
-    model:
-      label: readmitted
-      metric: roc_auc
-      problem_type: binary
 
-stages:
-  infrastruct: {}
-  ingest: {}
-  preprocess: {}
-  featurize: {}
-  feast: {}
-  explore: {}
-  optimize: {}
-  autogluon: {}
-  neural: {}
-  logistic: {}
-  evaluate: {}
+logistic:
+  model:
+    label: readmitted
+    metric: roc_auc
+    problem_type: binary
+  quick:
+    max_iter: 100
+    solver: lbfgs
+    hyperparameters:
+      C: 1.0
+      penalty: l2
+    optimize:
+      enabled: true
+      param_space:
+        C:
+          type: float
+          low: 0.1
+          high: 1.0
+          log: true
+        penalty:
+          type: categorical
+          choices: [l2]
+      n_trials: 10
+      timeout: 600
+      direction: maximize
+      metric: roc_auc
+  full:
+    max_iter: 1000
+    solver: saga
+    hyperparameters:
+      C: 0.1
+      penalty: l2
+      tol: 1e-4
+      class_weight: balanced
+    optimize:
+      enabled: true
+      param_space:
+        C:
+          type: float
+          low: 0.01
+          high: 10.0
+          log: true
+        penalty:
+          type: categorical
+          choices: [l1, l2]
+        solver:
+          type: categorical
+          choices: [liblinear, saga]
+      n_trials: 50
+      timeout: 3600
+      direction: maximize
+      metric: roc_auc
 
 visualization:
   style: seaborn-v0_8-bright

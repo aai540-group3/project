@@ -1,5 +1,5 @@
 {
-  "timestamp": "2024-11-10T12:10:17.343790+00:00",
+  "timestamp": "2024-11-10T23:08:07.624929+00:00",
   "stage": "explore",
   "dataset": {
     "shape": [
@@ -26,7 +26,7 @@
       "diag_3": 0,
       "number_diagnoses": 0,
       "max_glu_serum": 91357,
-      "a1cresult": 80393,
+      "A1Cresult": 80393,
       "metformin": 0,
       "repaglinide": 0,
       "nateglinide": 0,
@@ -49,7 +49,7 @@
       "metformin-rosiglitazone": 0,
       "metformin-pioglitazone": 0,
       "change": 0,
-      "diabetesmed": 0,
+      "diabetesMed": 0,
       "readmitted": 0,
       "id": 0,
       "level1_diag1": 0,
@@ -372,7 +372,7 @@
           "75%": 1.0,
           "max": 2.0
         },
-        "a1cresult": {
+        "A1Cresult": {
           "count": 16053.0,
           "mean": 1.1719927739363358,
           "std": 0.8609436792765429,
@@ -386,11 +386,11 @@
       "numeric_correlations": {
         "max_glu_serum": {
           "max_glu_serum": 1.0,
-          "a1cresult": 0.5319510918260134
+          "A1Cresult": 0.5319510918260134
         },
-        "a1cresult": {
+        "A1Cresult": {
           "max_glu_serum": 0.5319510918260134,
-          "a1cresult": 1.0
+          "A1Cresult": 1.0
         }
       },
       "readmission_means": {
@@ -398,14 +398,14 @@
           "0": 0.7240757439134355,
           "1": 0.8300153139356815
         },
-        "a1cresult": {
+        "A1Cresult": {
           "0": 1.169867572627054,
           "1": 1.19079754601227
         }
       },
       "missing_rates": {
         "max_glu_serum": 0.9472347220206125,
-        "a1cresult": 0.8335545279223607
+        "A1Cresult": 0.8335545279223607
       }
     },
     "medications": {

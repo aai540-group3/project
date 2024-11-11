@@ -1,14 +1,16 @@
 -e .
+dvclive
 joblib
 loguru
 matplotlib
 numpy
 omegaconf
+optuna
 pandas
 pip
-pipx
 pyarrow
 python-dotenv
 scikit-learn
 seaborn
+testcontainers
 uv

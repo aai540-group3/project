@@ -1,5 +1,5 @@
 {
-  "timestamp": "2024-11-10T12:09:35.778620+00:00",
+  "timestamp": "2024-11-10T23:07:12.827563+00:00",
   "stage": "preprocess",
   "dataset": {
     "initial_shape": [
@@ -26,7 +26,7 @@
       "diag_3": 0,
       "number_diagnoses": 0,
       "max_glu_serum": 91357,
-      "a1cresult": 80393,
+      "A1Cresult": 80393,
       "metformin": 0,
       "repaglinide": 0,
       "nateglinide": 0,
@@ -49,7 +49,7 @@
       "metformin-rosiglitazone": 0,
       "metformin-pioglitazone": 0,
       "change": 0,
-      "diabetesmed": 0,
+      "diabetesMed": 0,
       "readmitted": 0,
       "id": 0,
       "level1_diag1": 0,
@@ -75,7 +75,7 @@
       "diag_3": "float64",
       "number_diagnoses": "float64",
       "max_glu_serum": "float64",
-      "a1cresult": "float64",
+      "A1Cresult": "float64",
       "metformin": "int64",
       "repaglinide": "int64",
       "nateglinide": "int64",
@@ -98,7 +98,7 @@
       "metformin-rosiglitazone": "int64",
       "metformin-pioglitazone": "int64",
       "change": "int64",
-      "diabetesmed": "int64",
+      "diabetesMed": "int64",
       "readmitted": "int64",
       "id": "int64",
       "level1_diag1": "float64",
@@ -139,10 +139,6 @@
       "diag_1",
       "diag_2",
       "diag_3"
-    ],
-    "ids": [
-      "encounter_id",
-      "patient_nbr"
     ]
   },
   "target": {
@@ -150,14 +146,5 @@
       "0": 0.885262219272961,
       "1": 0.11473778072703897
     }
-  },
-  "processing_steps": [
-    "Removed high-missing-value features",
-    "Standardized demographic data",
-    "Processed medication changes",
-    "Mapped admission/discharge codes",
-    "Categorized diagnoses by ICD9 ranges",
-    "Handled outliers",
-    "Converted readmission to binary outcome"
-  ]
+  }
 }

@@ -1,0 +1,451 @@
+{
+  "timestamp": "2024-11-10T14:12:47.997610+00:00",
+  "stage": "autogluon",
+  "model_path": "models/autogluon",
+  "best_model": {
+    "name": "LightGBM",
+    "score": 0.6543643138078916,
+    "hyperparameters": {
+      "learning_rate": 0.1,
+      "extra_trees": false,
+      "num_boost_round": 100,
+      "num_leaves": 16,
+      "early_stopping_rounds": 10
+    }
+  },
+  "leaderboard": {
+    "model": {
+      "0": "LightGBM",
+      "1": "WeightedEnsemble_L2"
+    },
+    "score_val": {
+      "0": 0.6543643138078916,
+      "1": 0.6543643138078916
+    },
+    "eval_metric": {
+      "0": "roc_auc",
+      "1": "roc_auc"
+    },
+    "pred_time_val": {
+      "0": 0.018568754196166992,
+      "1": 0.020382165908813477
+    },
+    "fit_time": {
+      "0": 0.5565431118011475,
+      "1": 0.5603342056274414
+    },
+    "pred_time_val_marginal": {
+      "0": 0.018568754196166992,
+      "1": 0.0018134117126464844
+    },
+    "fit_time_marginal": {
+      "0": 0.5565431118011475,
+      "1": 0.0037910938262939453
+    },
+    "stack_level": {
+      "0": 1,
+      "1": 2
+    },
+    "can_infer": {
+      "0": true,
+      "1": true
+    },
+    "fit_order": {
+      "0": 1,
+      "1": 2
+    },
+    "num_features": {
+      "0": 30,
+      "1": 1
+    },
+    "num_models": {
+      "0": 1,
+      "1": 1
+    },
+    "num_models_w_ancestors": {
+      "0": 1,
+      "1": 2
+    },
+    "memory_size": {
+      "0": 100407,
+      "1": 2655
+    },
+    "memory_size_w_ancestors": {
+      "0": 100407,
+      "1": 103062
+    },
+    "memory_size_min": {
+      "0": 100407,
+      "1": 2655
+    },
+    "memory_size_min_w_ancestors": {
+      "0": 100407,
+      "1": 100407
+    },
+    "num_ancestors": {
+      "0": 0,
+      "1": 1
+    },
+    "num_descendants": {
+      "0": 1,
+      "1": 0
+    },
+    "model_type": {
+      "0": "LGBModel",
+      "1": "WeightedEnsembleModel"
+    },
+    "child_model_type": {
+      "0": null,
+      "1": "GreedyWeightedEnsembleModel"
+    },
+    "stopping_metric": {
+      "0": "log_loss",
+      "1": "roc_auc"
+    },
+    "hyperparameters": {
+      "0": {
+        "learning_rate": 0.1,
+        "extra_trees": false,
+        "num_boost_round": 100,
+        "num_leaves": 16,
+        "early_stopping_rounds": 10
+      },
+      "1": {
+        "use_orig_features": false,
+        "max_base_models": 25,
+        "max_base_models_per_type": 5,
+        "save_bag_folds": true
+      }
+    },
+    "hyperparameters_fit": {
+      "0": {
+        "num_boost_round": 50
+      },
+      "1": {}
+    },
+    "ag_args_fit": {
+      "0": {
+        "max_memory_usage_ratio": 1.0,
+        "max_time_limit_ratio": 1.0,
+        "max_time_limit": null,
+        "min_time_limit": 0,
+        "valid_raw_types": [
+          "bool",
+          "int",
+          "float",
+          "category"
+        ],
+        "valid_special_types": null,
+        "ignored_type_group_special": null,
+        "ignored_type_group_raw": null,
+        "get_features_kwargs": null,
+        "get_features_kwargs_extra": null,
+        "predict_1_batch_size": null,
+        "temperature_scalar": null
+      },
+      "1": {
+        "max_memory_usage_ratio": 1.0,
+        "max_time_limit_ratio": 1.0,
+        "max_time_limit": null,
+        "min_time_limit": 0,
+        "valid_raw_types": null,
+        "valid_special_types": null,
+        "ignored_type_group_special": null,
+        "ignored_type_group_raw": null,
+        "get_features_kwargs": null,
+        "get_features_kwargs_extra": null,
+        "predict_1_batch_size": null,
+        "temperature_scalar": null,
+        "drop_unique": false
+      }
+    },
+    "features": {
+      "0": [
+        "time_in_hospital",
+        "num_procedures",
+        "num_medications",
+        "number_inpatient_log1p",
+        "number_diagnoses",
+        "race_Asian",
+        "race_Caucasian",
+        "race_Hispanic",
+        "race_Other",
+        "admission_type_id_3",
+        "admission_type_id_4",
+        "admission_type_id_5",
+        "discharge_disposition_id_2.0",
+        "discharge_disposition_id_3.5",
+        "admission_source_id_4.0",
+        "admission_source_id_9.0",
+        "level1_diag1_1",
+        "level1_diag1_2",
+        "level1_diag1_3",
+        "level1_diag1_4",
+        "level1_diag1_5",
+        "level1_diag1_6",
+        "level1_diag1_7",
+        "level1_diag1_8",
+        "num_medications|time_in_hospital",
+        "num_medications|num_procedures",
+        "time_in_hospital|num_lab_procedures",
+        "num_medications|num_lab_procedures",
+        "num_medications|number_diagnoses",
+        "number_diagnoses|time_in_hospital"
+      ],
+      "1": [
+        "LightGBM"
+      ]
+    },
+    "compile_time": {
+      "0": null,
+      "1": null
+    },
+    "child_hyperparameters": {
+      "0": null,
+      "1": {
+        "ensemble_size": 25,
+        "subsample_size": 1000000
+      }
+    },
+    "child_hyperparameters_fit": {
+      "0": null,
+      "1": {
+        "ensemble_size": 1
+      }
+    },
+    "child_ag_args_fit": {
+      "0": null,
+      "1": {
+        "max_memory_usage_ratio": 1.0,
+        "max_time_limit_ratio": 1.0,
+        "max_time_limit": null,
+        "min_time_limit": 0,
+        "valid_raw_types": null,
+        "valid_special_types": null,
+        "ignored_type_group_special": null,
+        "ignored_type_group_raw": null,
+        "get_features_kwargs": null,
+        "get_features_kwargs_extra": null,
+        "predict_1_batch_size": null,
+        "temperature_scalar": null,
+        "drop_unique": false
+      }
+    },
+    "ancestors": {
+      "0": [],
+      "1": [
+        "LightGBM"
+      ]
+    },
+    "descendants": {
+      "0": [
+        "WeightedEnsemble_L2"
+      ],
+      "1": []
+    }
+  },
+  "feature_importance": {
+    "importance": {
+      "number_inpatient_log1p": 0.09377541958874083,
+      "discharge_disposition_id_2.0": 0.034672125204924374,
+      "number_diagnoses|time_in_hospital": 0.010398995936333245,
+      "num_medications|number_diagnoses": 0.005875216898351754,
+      "num_medications|num_lab_procedures": 0.003357813563225509,
+      "num_medications|num_procedures": 0.002707239034980513,
+      "time_in_hospital|num_lab_procedures": 0.002452109178111961,
+      "num_medications|time_in_hospital": 0.002359667908637486,
+      "number_diagnoses": 0.0022480998585613808,
+      "level1_diag1_1": 0.0018218168033426797,
+      "level1_diag1_6": 0.0016269660952917598,
+      "level1_diag1_2": 0.001421694956275177,
+      "num_medications": 0.0011658471551850402,
+      "admission_source_id_4.0": 0.0006453576650911952,
+      "level1_diag1_7": 0.0006432731412662429,
+      "discharge_disposition_id_3.5": 0.0003625071064049523,
+      "time_in_hospital": 0.0003133108098155368,
+      "level1_diag1_8": 0.0002916239819280131,
+      "admission_type_id_3": 0.00022612408012310237,
+      "level1_diag1_5": 0.00020687392942080328,
+      "race_Hispanic": 0.00013664159345943004,
+      "level1_diag1_4": 0.0,
+      "admission_type_id_4": 0.0,
+      "race_Other": 0.0,
+      "admission_source_id_9.0": -2.078299346093271e-05,
+      "admission_type_id_5": -4.707005453266078e-05,
+      "num_procedures": -6.589889565649099e-05,
+      "race_Asian": -0.00011067736025738295,
+      "level1_diag1_3": -0.00015996774776643185,
+      "race_Caucasian": -0.000381864274567989
+    },
+    "stddev": {
+      "number_inpatient_log1p": 0.013837175730361051,
+      "discharge_disposition_id_2.0": 0.0057248882895036156,
+      "number_diagnoses|time_in_hospital": 0.003203425563021421,
+      "num_medications|number_diagnoses": 0.0018747607638661787,
+      "num_medications|num_lab_procedures": 0.002055391686252029,
+      "num_medications|num_procedures": 0.0013841631987259611,
+      "time_in_hospital|num_lab_procedures": 0.0017068508317900897,
+      "num_medications|time_in_hospital": 0.0022731909263498584,
+      "number_diagnoses": 0.001704349123218657,
+      "level1_diag1_1": 0.0004443035709149937,
+      "level1_diag1_6": 0.0009282134336338243,
+      "level1_diag1_2": 0.002577204013953373,
+      "num_medications": 0.0007723741309659175,
+      "admission_source_id_4.0": 0.0002759578349824907,
+      "level1_diag1_7": 0.0008670084791846985,
+      "discharge_disposition_id_3.5": 0.00025362518815103354,
+      "time_in_hospital": 0.0019713124487820903,
+      "level1_diag1_8": 0.0006384289147857644,
+      "admission_type_id_3": 0.00025362415037643454,
+      "level1_diag1_5": 0.00022274920454491896,
+      "race_Hispanic": 0.0001516289156070412,
+      "level1_diag1_4": 0.0,
+      "admission_type_id_4": 0.0,
+      "race_Other": 0.0,
+      "admission_source_id_9.0": 0.0006413460540851935,
+      "admission_type_id_5": 0.00042687086408952897,
+      "num_procedures": 0.0003521409050647055,
+      "race_Asian": 6.745803748536342e-05,
+      "level1_diag1_3": 0.0003839045303583387,
+      "race_Caucasian": 0.00033915341826437395
+    },
+    "p_value": {
+      "number_inpatient_log1p": 5.527277061651879e-05,
+      "discharge_disposition_id_2.0": 8.604056593613133e-05,
+      "number_diagnoses|time_in_hospital": 0.0009563764008311211,
+      "num_medications|number_diagnoses": 0.0010916752909239987,
+      "num_medications|num_lab_procedures": 0.010857170858661173,
+      "num_medications|num_procedures": 0.005967910967253691,
+      "time_in_hospital|num_lab_procedures": 0.016257337475861413,
+      "num_medications|time_in_hospital": 0.04051796837374451,
+      "number_diagnoses": 0.020996018954142454,
+      "level1_diag1_1": 0.00039282803423806227,
+      "level1_diag1_6": 0.008628464809786393,
+      "level1_diag1_2": 0.14245667937853232,
+      "num_medications": 0.013954597364249663,
+      "admission_source_id_4.0": 0.003193389955712337,
+      "level1_diag1_7": 0.08622311764529592,
+      "discharge_disposition_id_3.5": 0.01651299999311951,
+      "time_in_hospital": 0.37012312890301446,
+      "level1_diag1_8": 0.182405796147987,
+      "admission_type_id_3": 0.05848325037590095,
+      "level1_diag1_5": 0.05320958654294168,
+      "race_Hispanic": 0.057069884763336805,
+      "level1_diag1_4": 0.5,
+      "admission_type_id_4": 0.5,
+      "race_Other": 0.5,
+      "admission_source_id_9.0": 0.5271429647541084,
+      "admission_type_id_5": 0.5913095514513849,
+      "num_procedures": 0.6514467964166322,
+      "race_Asian": 0.9892920197507292,
+      "level1_diag1_3": 0.7978920712029511,
+      "race_Caucasian": 0.9672401791472035
+    },
+    "n": {
+      "number_inpatient_log1p": 5,
+      "discharge_disposition_id_2.0": 5,
+      "number_diagnoses|time_in_hospital": 5,
+      "num_medications|number_diagnoses": 5,
+      "num_medications|num_lab_procedures": 5,
+      "num_medications|num_procedures": 5,
+      "time_in_hospital|num_lab_procedures": 5,
+      "num_medications|time_in_hospital": 5,
+      "number_diagnoses": 5,
+      "level1_diag1_1": 5,
+      "level1_diag1_6": 5,
+      "level1_diag1_2": 5,
+      "num_medications": 5,
+      "admission_source_id_4.0": 5,
+      "level1_diag1_7": 5,
+      "discharge_disposition_id_3.5": 5,
+      "time_in_hospital": 5,
+      "level1_diag1_8": 5,
+      "admission_type_id_3": 5,
+      "level1_diag1_5": 5,
+      "race_Hispanic": 5,
+      "level1_diag1_4": 5,
+      "admission_type_id_4": 5,
+      "race_Other": 5,
+      "admission_source_id_9.0": 5,
+      "admission_type_id_5": 5,
+      "num_procedures": 5,
+      "race_Asian": 5,
+      "level1_diag1_3": 5,
+      "race_Caucasian": 5
+    },
+    "p99_high": {
+      "number_inpatient_log1p": 0.12226635566764714,
+      "discharge_disposition_id_2.0": 0.04645974931937731,
+      "number_diagnoses|time_in_hospital": 0.016994893446640884,
+      "num_medications|number_diagnoses": 0.009735375223099658,
+      "num_medications|num_lab_procedures": 0.00758989345375054,
+      "num_medications|num_procedures": 0.005557250192325759,
+      "time_in_hospital|num_lab_procedures": 0.005966538631953308,
+      "num_medications|time_in_hospital": 0.007040199444829354,
+      "number_diagnoses": 0.00575737825987686,
+      "level1_diag1_1": 0.0027366439967846036,
+      "level1_diag1_6": 0.003538170384416835,
+      "level1_diag1_2": 0.006728193641750093,
+      "num_medications": 0.0027561761661888326,
+      "admission_source_id_4.0": 0.0012135586614627552,
+      "level1_diag1_7": 0.0024284555832381986,
+      "discharge_disposition_id_3.5": 0.0008847248742805602,
+      "time_in_hospital": 0.004372270388291405,
+      "level1_diag1_8": 0.0016061579414972413,
+      "admission_type_id_3": 0.0007483397112064674,
+      "level1_diag1_5": 0.0006655176202999767,
+      "race_Hispanic": 0.0004488476264286571,
+      "level1_diag1_4": 0.0,
+      "admission_type_id_4": 0.0,
+      "race_Other": 0.0,
+      "admission_source_id_9.0": 0.0012997573962449697,
+      "admission_type_id_5": 0.0008318629546100173,
+      "num_procedures": 0.000659164094976277,
+      "race_Asian": 2.8219671294142055e-05,
+      "level1_diag1_3": 0.0006304969863658836,
+      "race_Caucasian": 0.0003164573012367526
+    },
+    "p99_low": {
+      "number_inpatient_log1p": 0.06528448350983453,
+      "discharge_disposition_id_2.0": 0.02288450109047144,
+      "number_diagnoses|time_in_hospital": 0.003803098426025604,
+      "num_medications|number_diagnoses": 0.0020150585736038503,
+      "num_medications|num_lab_procedures": -0.000874266327299522,
+      "num_medications|num_procedures": -0.00014277212236473314,
+      "time_in_hospital|num_lab_procedures": -0.0010623202757293853,
+      "num_medications|time_in_hospital": -0.0023208636275543824,
+      "number_diagnoses": -0.0012611785427540981,
+      "level1_diag1_1": 0.0009069896099007558,
+      "level1_diag1_6": -0.0002842381938333153,
+      "level1_diag1_2": -0.0038848037291997384,
+      "num_medications": -0.00042448185581875223,
+      "admission_source_id_4.0": 7.71566687196351e-05,
+      "level1_diag1_7": -0.001141909300705713,
+      "discharge_disposition_id_3.5": -0.00015971066147065557,
+      "time_in_hospital": -0.003745648768660332,
+      "level1_diag1_8": -0.0010229099776412152,
+      "admission_type_id_3": -0.0002960915509602627,
+      "level1_diag1_5": -0.0002517697614583701,
+      "race_Hispanic": -0.000175564439509797,
+      "level1_diag1_4": 0.0,
+      "admission_type_id_4": 0.0,
+      "race_Other": 0.0,
+      "admission_source_id_9.0": -0.001341323383166835,
+      "admission_type_id_5": -0.0009260030636753389,
+      "num_procedures": -0.0007909618862892591,
+      "race_Asian": -0.00024957439180890793,
+      "level1_diag1_3": -0.0009504324818987472,
+      "race_Caucasian": -0.0010801858503727306
+    }
+  },
+  "training_time": null,
+  "metrics": {
+    "accuracy": 0.8853291861067911,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "roc_auc": 0.6506681819635343,
+    "pr_auc": 0.1857204749144571
+  },
+  "model_params": {}
+}
