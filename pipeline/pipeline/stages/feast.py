@@ -2,25 +2,25 @@ import os
 import pathlib
 import shutil
 import tempfile
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from dataclasses import dataclass
 
 import feast
-import pandas as pd
-import yaml
 import numpy as np
+import pandas as pd
 import psycopg
 import pyarrow as pa
-from psycopg.conninfo import make_conninfo
+import yaml
+from feast.type_map import arrow_to_pg_type
 from loguru import logger
 from omegaconf import OmegaConf
+from psycopg.conninfo import make_conninfo
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
-from feast.type_map import arrow_to_pg_type
 
-from pipeline.stages.base import PipelineStage
-from pipeline.stages.feature_repo import entities, feature_service, features
+from .feature_repo import entities, feature_service, features
+from .stage import Stage
 
 
 @dataclass
@@ -32,7 +32,7 @@ class PostgresConfig:
     database: str
     user: str
     password: str
-    db_schema: str = "public"  # Default schema
+    db_schema: str = "public"
     min_conn: int = 1
     max_conn: int = 10
     keepalives_idle: int = 30
@@ -53,6 +53,7 @@ def wait_for_postgres(
 ):
     """Wait for PostgreSQL to be ready for connections."""
     import time
+
     from psycopg import OperationalError
 
     for attempt in range(max_retries):
@@ -193,7 +194,7 @@ class PostgresManager:
             self._pool = None
 
 
-class Feast(PipelineStage):
+class Feast(Stage):
     """Pipeline stage for feature store setup using PostgreSQL with pgvector."""
 
     def __init__(self, *args, **kwargs):
@@ -366,10 +367,26 @@ class Feast(PipelineStage):
             logger.error(f"Error details: {str(e)}")
             raise
 
-    def _prepare_feature_data(self, src_df: pd.DataFrame) -> pd.DataFrame:
-        """Prepare feature data for Feast ingestion."""
-        logger.info("Started preparing feature data")
-        df = src_df.copy()
+    def data_has_changed(self, df: pd.DataFrame) -> bool:
+        """Check if data has changed based on a hash."""
+        data_hash = pd.util.hash_pandas_object(df).sum()
+        hash_file = pathlib.Path(self.cfg.paths.feature_repo) / "data_hash.txt"
+
+        if hash_file.exists():
+            with open(hash_file, "r") as f:
+                last_hash = int(f.read().strip())
+            if last_hash == data_hash:
+                logger.info("Data has not changed. Skipping preparation.")
+                return False
+
+        # Save the new hash
+        with open(hash_file, "w") as f:
+            f.write(str(data_hash))
+        return True
+
+    def _prepare_feature_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        if not self.data_has_changed(df):
+            return df
 
         try:
             # Add/update event_timestamp
@@ -468,7 +485,6 @@ class Feast(PipelineStage):
             logger.error(f"Error during feature data preparation: {str(e)}")
             raise
 
-    @logger.catch()
     def run(self):
         """Set up and configure feature store with PostgreSQL and pgvector extension."""
         try:
@@ -503,20 +519,26 @@ class Feast(PipelineStage):
                     .with_env("POSTGRES_USER", online_store_cfg.get("user", "postgres"))
                     .with_env("POSTGRES_PASSWORD", online_store_cfg.get("password", "postgres"))
                     .with_env("POSTGRES_DB", online_store_cfg.get("database", "registry"))
-                    .with_exposed_ports(5432)
+                    .with_exposed_ports(online_store_cfg.get("port", 5432))
                     .with_volume_mapping(init_sql_path, "/docker-entrypoint-initdb.d/init.sql")
-                    .with_bind_ports(5432, 5432)
+                    .with_bind_ports(online_store_cfg.get("port", 5432), online_store_cfg.get("port", 5432))
                 )
                 container.start()
 
                 # Wait for database to be ready with better logging
-                log_string_to_wait_for = "database system is ready to accept connections"
-                wait_for_logs(container=container, predicate=log_string_to_wait_for, timeout=120)
+                wait_for_logs(
+                    container=container,
+                    predicate="database system is ready to accept connections",
+                    timeout=120,
+                )
                 logger.info("PostgreSQL container logs indicate database system is ready")
 
                 # Additional wait for init process
-                init_log_string_to_wait_for = "PostgreSQL init process complete"
-                wait_for_logs(container=container, predicate=init_log_string_to_wait_for, timeout=120)
+                wait_for_logs(
+                    container=container,
+                    predicate="PostgreSQL init process complete",
+                    timeout=120,
+                )
                 logger.info("PostgreSQL init process complete according to logs")
 
                 exposed_port = container.get_exposed_port(5432)

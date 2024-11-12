@@ -13,3 +13,10 @@ This package is the entry point for all pipeline functionalities, including stag
 from importlib.metadata import version
 
 __version__ = version("pipeline")
+
+import pipeline
+
+__all__ = [
+    "__version__",
+    "pipeline",
+]

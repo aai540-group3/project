@@ -6,13 +6,12 @@ import pandas as pd
 import seaborn as sns
 from loguru import logger
 
-from pipeline.stages.base import PipelineStage
+from .stage import Stage
 
 
-class Preprocess(PipelineStage):
+class Preprocess(Stage):
     """Pipeline stage for data preprocessing."""
 
-    @logger.catch()
     def run(self):
         """Execute preprocessing pipeline."""
 

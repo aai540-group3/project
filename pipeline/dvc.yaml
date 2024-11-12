@@ -22,7 +22,7 @@ stages:
       - .venv
       - pipeline/__init__.py
       - pipeline/__main__.py
-      - pipeline/stages/base.py
+      - pipeline/stages/stage.py
       - pipeline/stages/infrastruct.py
       - pipeline/stages/ingest.py
       - requirements/base.txt
@@ -56,7 +56,7 @@ stages:
       - data/raw/data.csv
       - pipeline/__init__.py
       - pipeline/__main__.py
-      - pipeline/stages/base.py
+      - pipeline/stages/stage.py
       - pipeline/stages/preprocess.py
       - requirements/base.txt
     outs:
@@ -115,7 +115,7 @@ stages:
       - data/interim/data.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
-      - pipeline/stages/base.py
+      - pipeline/stages/stage.py
       - pipeline/stages/explore.py
       - requirements/base.txt
     metrics:
@@ -191,7 +191,7 @@ stages:
       - data/interim/data.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
-      - pipeline/stages/base.py
+      - pipeline/stages/stage.py
       - pipeline/stages/featurize.py
     outs:
       - data/processed/features.parquet:
@@ -272,7 +272,7 @@ stages:
       - .venv
       - data/processed/features_not_onehot.parquet
       - data/processed/features.parquet
-      - pipeline/stages/base.py
+      - pipeline/stages/stage.py
       - pipeline/stages/feast.py
       - pipeline/stages/feature_repo.py
       - requirements/base.txt
@@ -286,7 +286,7 @@ stages:
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/autogluon.py
-      - pipeline/stages/base.py
+      - pipeline/stages/stage.py
       - requirements/base.txt
     outs:
       - models/autogluon:
@@ -313,17 +313,17 @@ stages:
 
   logistic:
     cmd:
-      - .venv/bin/uv python pipeline logistic
+      - MODE=quick .venv/bin/uv run --with imblearn --with dvclive python pipeline logistic
     deps:
       - .venv
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
-      - pipeline/stages/base.py
+      - pipeline/stages/stage.py
       - pipeline/stages/logistic.py
       - requirements/base.txt
     outs:
-      - models/logistic:
+      - models/logistic/model.joblib:
           cache: true
     metrics:
       - metrics/logistic/metrics.json:
@@ -340,6 +340,10 @@ stages:
           x: FPR
           y: TPR
           title: ROC Curve
+      - plots/logistic/precision_recall_curve.png:
+          x: Recall
+          y: Precision
+          title: Precision-Recall Curve
       - plots/logistic/feature_importance.png:
           y: feature
           x: importance

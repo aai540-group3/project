@@ -19,10 +19,10 @@ from omegaconf import DictConfig
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.class_weight import compute_class_weight
 
-from .base import BaseModel
+from .base import Model
 
 
-class NeuralNetworkModel(BaseModel):
+class NeuralNetworkModel(Model):
     """Neural network model with flexible architecture.
 
     :param cfg: Model configuration

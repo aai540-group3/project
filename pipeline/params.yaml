@@ -45,135 +45,171 @@ feast:
     entity_key_serialization_version: 2
     coerce_tz_aware: true
 
-target: readmitted
 dataset:
   name: "Diabetes 130-US Hospitals for Years 1999-2008"
   id: 296
   source: ucimlrepo
+  splits:
+    train: 0.80
+    test: 0.10
+    val: 0.10
 
-splits:
-  train: 0.80
-  test: 0.10
-  val: 0.10
+models.base:
+  mode: quick
+  label: readmitted
+  metric: roc_auc
+  problem_type: binary
 
-autogluon:
-  model:
-    label: readmitted
-    metric: roc_auc
-    problem_type: binary
-  quick:
-    time_limit: 60
-    presets: medium_quality
-    hyperparameters:
-      GBM:
-        extra_trees: false
-        learning_rate: 0.1
-        num_boost_round: 100
-        num_leaves: 16
-        early_stopping_rounds: 10
-  full:
-    time_limit: 7200
-    presets: best_quality
-    hyperparameters:
-      GBM:
-        extra_trees: true
-        learning_rate: 0.05
-        num_boost_round: 500
-        num_leaves: 128
-        feature_fraction: 0.8
-        min_data_in_leaf: 20
-      CAT:
-        iterations: 1000
-        depth: 8
-        learning_rate: 0.05
-        min_data_in_leaf: 20
-      XGB:
-        max_depth: 8
-        learning_rate: 0.05
-        n_estimators: 500
-        subsample: 0.8
-        colsample_bytree: 0.8
-      NN_TORCH:
-        num_epochs: 100
-        learning_rate: 0.001
-        dropout_prob: 0.1
-        weight_decay: 0.01
-        batch_size: 512
-        layers: [200, 100]
+models.autogluon.quick:
+  time_limit: 60
+  presets: medium_quality
+  hyperparameters:
+    GBM:
+      extra_trees: false
+      learning_rate: 0.1
+      num_boost_round: 100
+      num_leaves: 16
+      early_stopping_rounds: 10
 
-logistic:
-  model:
-    label: readmitted
-    metric: roc_auc
-    problem_type: binary
-  quick:
-    max_iter: 100
-    solver: lbfgs
-    hyperparameters:
-      C: 1.0
-      penalty: l2
-    optimize:
-      enabled: true
-      param_space:
-        C:
-          type: float
-          low: 0.1
-          high: 1.0
-          log: true
-        penalty:
-          type: categorical
-          choices: [l2]
-      n_trials: 10
-      timeout: 600
-      direction: maximize
-      metric: roc_auc
-  full:
-    max_iter: 1000
-    solver: saga
-    hyperparameters:
-      C: 0.1
-      penalty: l2
-      tol: 1e-4
-      class_weight: balanced
-    optimize:
-      enabled: true
-      param_space:
-        C:
-          type: float
-          low: 0.01
-          high: 10.0
-          log: true
-        penalty:
-          type: categorical
-          choices: [l1, l2]
-        solver:
-          type: categorical
-          choices: [liblinear, saga]
-      n_trials: 50
-      timeout: 3600
-      direction: maximize
-      metric: roc_auc
+models.autogluon.full:
+  time_limit: 7200
+  presets: best_quality
+  hyperparameters:
+    GBM:
+      extra_trees: true
+      learning_rate: 0.05
+      num_boost_round: 500
+      num_leaves: 128
+      feature_fraction: 0.8
+      min_data_in_leaf: 20
+    CAT:
+      iterations: 1000
+      depth: 8
+      learning_rate: 0.05
+      min_data_in_leaf: 20
+    XGB:
+      max_depth: 8
+      learning_rate: 0.05
+      n_estimators: 500
+      subsample: 0.8
+      colsample_bytree: 0.8
+    NN_TORCH:
+      num_epochs: 100
+      learning_rate: 0.001
+      dropout_prob: 0.1
+      weight_decay: 0.01
+      batch_size: 512
+      layers: [200, 100]
 
+models.logistic.quick:
+  max_iter: 100
+  solver: lbfgs
+  hyperparameters:
+    C: 1.0
+    penalty: l2
+
+  optimize:
+    enabled: true
+    param_space:
+      C:
+        type: float
+        low: 0.1
+        high: 1.0
+        log: true
+      penalty:
+        type: categorical
+        choices: [l2]
+    n_trials: 10
+    timeout: 600
+    direction: maximize
+
+models.logistic.full:
+  optimize: true
+  max_iter: 1000
+  solver: saga
+  hyperparameters:
+    C: 0.1
+    penalty: l2
+    tol: 1e-4
+    class_weight: balanced
+    param_space:
+      C:
+        type: float
+        low: 0.01
+        high: 10.0
+        log: true
+      penalty:
+        type: categorical
+        choices: [l1, l2]
+      solver:
+        type: categorical
+        choices: [liblinear, saga]
+    n_trials: 50
+    timeout: 3600
+    direction: maximize
+
+#-----------------------------------------------------------------------------#
+# Visualization settings
+#-----------------------------------------------------------------------------#
 visualization:
-  style: seaborn-v0_8-bright
+  style: "seaborn-v0_8-white"
+  palette: "viridis"
   theme:
-    style: whitegrid
-    context: paper
-    font_scale: 1.2
+    style: "white"
+    context: "paper"
+    font_scale: 1.6
     rc:
+      # Core settings
       figure.dpi: 300
       savefig.dpi: 300
-      font.size: 12
-      axes.labelsize: 12
-      axes.titlesize: 14
-      xtick.labelsize: 10
-      ytick.labelsize: 10
-      legend.fontsize: 10
-      figure.titlesize: 16
+      figure.figsize: [10, 6.18] # Golden ratio
+      figure.facecolor: "white"
+      figure.autolayout: true
+      # Typography
+      font.family: ["Fira Sans", "Helvetica Neue", "Arial", "sans-serif"]
+      axes.labelsize: 13
+      axes.titlesize: 15
+      axes.labelweight: "regular"
+      xtick.labelsize: 11
+      ytick.labelsize: 11
+      # Axes Styling
+      axes.spines.top: false
+      axes.spines.right: false
+      axes.spines.left: true
+      axes.spines.bottom: true
+      axes.linewidth: 0.8
+      axes.axisbelow: true
+      # Grid styling
+      grid.linestyle: ":"
+      grid.alpha: 0.15
+      grid.color: "#666666"
+      # Legend Styling
+      legend.fontsize: 11
+      legend.frameon: false
+      legend.borderaxespad: 0.5
+      # Colors
+      axes.prop_cycle.color:
+        [
+          "#0077BB",
+          "#EE7733",
+          "#009988",
+          "#EE3377",
+          "#CC3311",
+          "#33BBEE",
+          "#BB5566",
+        ]
 
-colors:
-  primary: "#2196F3"
-  secondary: "#FF9800"
-  success: "#4CAF50"
-  error: "#F44336"
-  neutral: "#9E9E9E"
+plots:
+  confusion_matrix:
+    title: "Confusion Matrix"
+    x: "Predicted"
+    y: "Actual"
+    template: "confusion"
+  roc_curve:
+    title: "ROC Curve"
+    x: "FPR"
+    y: "TPR"
+  feature_importance:
+    title: "Top 20 Features by Importance"
+    x: "importance"
+    y: "feature"

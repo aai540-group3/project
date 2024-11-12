@@ -18,10 +18,10 @@ from huggingface_hub import HfApi, ModelCard, ModelCardData
 from loguru import logger
 from omegaconf import DictConfig
 
-from .base import PipelineStage
+from .stage import Stage
 
 
-class DeployStage(PipelineStage):
+class Deploy(Stage):
     """Deployment stage for model artifacts.
 
     Handles model deployment to HuggingFace Hub, including:

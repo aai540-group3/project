@@ -1,5 +1,6 @@
 {
     "editor.formatOnSave": true,
+    "python.formatting.provider": "ruff",
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.autoImportCompletions": true,
     "python.testing.pytestArgs": [

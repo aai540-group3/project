@@ -7,13 +7,12 @@ import seaborn as sns
 import ucimlrepo
 from loguru import logger
 
-from pipeline.stages.base import PipelineStage
+from .stage import Stage
 
 
-class Ingest(PipelineStage):
+class Ingest(Stage):
     """Pipeline stage for data ingestion."""
 
-    @logger.catch()
     def run(self):
         """Ingest data from UCI ML Repository and perform initial data analysis."""
         # Suppress specific pandas warnings

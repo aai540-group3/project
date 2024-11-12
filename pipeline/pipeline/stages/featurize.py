@@ -7,13 +7,12 @@ import seaborn as sns
 from loguru import logger
 from sklearn.ensemble import RandomForestClassifier
 
-from pipeline.stages.base import PipelineStage
+from .stage import Stage
 
 
-class Featurize(PipelineStage):
+class Featurize(Stage):
     """Pipeline stage for feature engineering with medical domain knowledge."""
 
-    @logger.catch()
     def run(self):
         """Generate and transform features with medical domain expertise."""
 

@@ -13,10 +13,11 @@ from pathlib import Path
 from loguru import logger
 
 import docker
-from pipeline.stages.base import PipelineStage
+
+from .stage import Stage
 
 
-class BuildStage(PipelineStage):
+class Build(Stage):
     """Build stage for container images.
 
     Handles building and pushing Docker images for pipeline stages.
@@ -110,4 +111,4 @@ class BuildStage(PipelineStage):
 
 
 if __name__ == "__main__":
-    BuildStage().execute()
+    Build().execute()

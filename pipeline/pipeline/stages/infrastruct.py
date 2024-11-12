@@ -1,10 +1,10 @@
 import boto3
 from loguru import logger
 
-from pipeline.stages.base import PipelineStage
+from .stage import Stage
 
 
-class Infrastruct(PipelineStage):
+class Infrastruct(Stage):
     """Pipeline stage for setting up AWS infrastructure."""
 
     def run(self):

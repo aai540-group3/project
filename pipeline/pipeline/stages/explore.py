@@ -1,5 +1,4 @@
 import pathlib
-import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,10 +8,10 @@ from loguru import logger
 from scipy.stats import chi2_contingency
 from sklearn.ensemble import RandomForestClassifier
 
-from pipeline.stages.base import PipelineStage
+from .stage import Stage
 
 
-class Explore(PipelineStage):
+class Explore(Stage):
     """Pipeline stage for data exploration and analysis."""
 
     def run(self):

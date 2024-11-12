@@ -14,8 +14,8 @@ Available Models
 Each model supports both quick validation and full training modes.
 """
 
-from .autogluon import AutoGluonModel
-from .base import BaseModel
+from .autogluon import AutogluonModel
+from .base import Model
 from .logistic import LogisticRegressionModel
 from .neural import NeuralNetworkModel
 
