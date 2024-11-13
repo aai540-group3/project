@@ -33,20 +33,6 @@ class Stage(ABC):
         else:
             raise ValueError(f"Unsupported file format: {file_path.suffix}")
 
-    def split_data(self, X, y):
-        """Split data into training, validation, and test sets."""
-        train_size = self.cfg.splits.train
-        val_size = self.cfg.splits.val
-        test_size = self.cfg.splits.test
-
-        X_train, X_temp, y_train, y_temp = train_test_split(
-            X, y, test_size=(1 - train_size), random_state=self.cfg.seed, stratify=y
-        )
-        X_val, X_test, y_val, y_test = train_test_split(
-            X_temp, y_temp, test_size=(test_size / (val_size + test_size)), random_state=self.cfg.seed, stratify=y_temp
-        )
-        return X_train, X_val, X_test, y_train, y_val, y_test
-
     def log_metrics(self, metrics):
         """Log metrics to DVC Live and console."""
         for name, value in metrics.items():
@@ -71,6 +57,25 @@ class Stage(ABC):
         if self.live:
             self.live.log_params(params)
 
+    def _convert_numpy_types(self, obj):
+        """Convert numpy types to native Python types."""
+        import numpy as np
+        import pandas as pd
+
+        if isinstance(obj, (np.integer, np.int64)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float64)):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, pd.Series):
+            return obj.to_list()
+        elif isinstance(obj, dict):
+            return {key: self._convert_numpy_types(value) for key, value in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return [self._convert_numpy_types(item) for item in obj]
+        return obj
+
     def save_output(self, data: Union[pd.DataFrame, dict], filename: str, subdir: str = "data") -> Path:
         """Save output data in appropriate format."""
         output_path = Path(subdir) / filename
@@ -87,7 +92,9 @@ class Stage(ABC):
                     raise ValueError(f"Unsupported format for DataFrame: {filename}")
             elif isinstance(data, (dict, list)):
                 if filename.endswith(".json"):
-                    output_path.write_text(json.dumps(data, indent=2))
+                    # Convert numpy types before JSON serialization
+                    serializable_data = self._convert_numpy_types(data)
+                    output_path.write_text(json.dumps(serializable_data, indent=2))
                 else:
                     raise ValueError(f"Unsupported format for dict/list: {filename}")
             else:
@@ -117,8 +124,7 @@ class Stage(ABC):
                 logger.info(f"COMPLETED STAGE: {self.name} in {duration:.2f}s")
             except Exception as e:
                 logger.error(f"FAILED STAGE: {self.name}")
-                logger.error(f"Error: {str(e)}")
-                logger.exception("Full error:")
+                logger.exception(e)
                 sys.exit(1)
             finally:
                 if self.live:

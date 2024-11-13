@@ -1,69 +1,57 @@
-"""
-AutoGluon Model Implementation
-==============================
+import pathlib
+import typing
 
-.. module:: pipeline.models.autogluon
-   :synopsis: Configuration-driven AutoGluon model
-
-.. moduleauthor:: aai540-group3
-"""
-
-from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
-
-import numpy as np
 import pandas as pd
 from autogluon.tabular import TabularPredictor
 from loguru import logger
-from omegaconf import DictConfig
+from omegaconf import OmegaConf
 
-from pipeline.models.base import Model
-from pipeline.models.metrics import Metrics
+from .metrics import Metrics
+from .model import Model
 
 
-class AutogluonModel(Model):
-    """Concrete implementation of BaseModel using AutoGluon."""
+class Autogluon(Model):
+    """Concrete AutoGluon Model implementation."""
 
-    def __init__(self, cfg: DictConfig):
-        """Initialize the AutogluonModel."""
-        super().__init__(cfg)
-        self.predictor: Optional[TabularPredictor] = None
-        self.label_column: str = self.cfg.get("label_column", "readmitted")
-        self.problem_type: str = self.cfg.autogluon.get("problem_type", "binary")
-        self.eval_metric: str = self.cfg.autogluon.get("eval_metric", "roc_auc")
-        self.model_params: Dict[str, Any] = self.cfg.autogluon.get("model_params", {})
-        logger.info(f"AutogluonModel initialized with label column '{self.label_column}'.")
+    def __init__(self):
+        """Initialize Autogluon."""
+        super().__init__()
+        self.predictor: typing.Optional[TabularPredictor] = None
 
-    def train(self) -> Tuple[Path, Metrics]:
+    def train(self) -> typing.Tuple[pathlib.Path, Metrics]:
         """Train the AutoGluon model."""
         logger.info("Starting training with AutoGluon.")
-        train_data = pd.concat([self.cfg.data.X_train, self.cfg.data.y_train], axis=1)
-        tuning_data = pd.concat([self.cfg.data.X_val, self.cfg.data.y_val], axis=1)
 
+        # Prepare training and tuning data
+        train_data = pd.concat([self.X_train, self.y_train], axis=1)
+        tuning_data = pd.concat([self.X_val, self.y_val], axis=1)
+
+        # Convert OmegaConf configurations to a standard Python dictionary
+        hyperparameters = OmegaConf.to_container(self.model_config.get("hyperparameters", {}), resolve=True)
+
+        # Initialize and fit the TabularPredictor
         self.predictor = TabularPredictor(
             label=self.label_column,
             path=str(self.models_dir),
-            eval_metric=self.eval_metric,
-            problem_type=self.problem_type,
+            eval_metric=self.model_config.get("metric", "roc_auc"),
+            problem_type=self.model_config.get("problem_type", "binary"),
         ).fit(
             train_data=train_data,
             tuning_data=tuning_data,
-            hyperparameters=self.hyperparameters,
-            time_limit=self.cfg.autogluon.get("time_limit", 60),
-            presets=self.cfg.autogluon.get("presets", "medium_quality"),
+            hyperparameters=hyperparameters,
+            time_limit=self.model_config.get("time_limit", 60),
+            presets=self.model_config.get("presets", "medium_quality"),
             verbosity=2,
         )
 
-        # Save the trained model
+        # Save the trained model path
         model_path = self.save_model_path()
 
         # Evaluate on validation data
-        y_val = self.cfg.data.y_val
-        y_pred = self.predictor.predict(self.cfg.data.X_val)
-        y_proba = self.predictor.predict_proba(self.cfg.data.X_val).iloc[:, 1]
-
+        y_pred = self.predictor.predict(self.X_val)
+        y_proba = self.predictor.predict_proba(self.X_val).iloc[:, 1]
         metrics = Metrics(
-            y_true=y_val.tolist(),
+            y_true=self.y_val.tolist(),
             y_pred=y_pred.tolist(),
             y_proba=y_proba.tolist(),
         )
@@ -71,11 +59,11 @@ class AutogluonModel(Model):
         logger.info("Training completed.")
         return model_path, metrics
 
-    def predict(self, X: pd.DataFrame) -> np.ndarray:
+    def predict(self, X: pd.DataFrame) -> pd.Series:
         """Generate predictions using the trained model."""
         if not self.predictor:
             raise ValueError("Model has not been trained or loaded.")
-        return self.predictor.predict(X).values
+        return self.predictor.predict(X)
 
     def predict_proba(self, X: pd.DataFrame) -> pd.DataFrame:
         """Generate prediction probabilities using the trained model."""
@@ -84,34 +72,31 @@ class AutogluonModel(Model):
         return self.predictor.predict_proba(X)
 
     def evaluate(self, X: pd.DataFrame, y: pd.Series) -> Metrics:
-        """Evaluate the model on the test set."""
+        """Evaluate the model on the provided test set."""
         if not self.predictor:
             raise ValueError("Model has not been trained or loaded.")
-        y_pred = self.predictor.predict(X).tolist()
-        y_proba = self.predictor.predict_proba(X).iloc[:, 1].tolist()
+        y_pred = self.predict(X)
+        y_proba = self.predict_proba(X).iloc[:, 1]
         metrics = Metrics(
             y_true=y.tolist(),
-            y_pred=y_pred,
-            y_proba=y_proba,
+            y_pred=y_pred.tolist(),
+            y_proba=y_proba.tolist(),
         )
         logger.info("Evaluation completed.")
         return metrics
 
-    def optimize(self) -> Dict[str, Any]:
-        """Perform hyperparameter optimization."""
-        logger.info("AutoGluon handles hyperparameter optimization internally during training.")
-        logger.info("Hyperparameter optimization completed.")
-        return self.hyperparameters
-
-    def save_model_path(self) -> Path:
+    def save_model_path(self) -> pathlib.Path:
         """Save the trained AutoGluon predictor."""
         model_path = self.models_dir / "autogluon_predictor"
         self.predictor.save(model_path)
         logger.info(f"Model saved at '{model_path}'.")
         return model_path
 
-    def load_model(self, source_path: Optional[Path] = None) -> None:
+    def load_model(self, source_path: typing.Optional[pathlib.Path] = None) -> None:
         """Load a trained AutoGluon predictor from disk."""
         source_path = source_path or (self.models_dir / "autogluon_predictor")
+        if not source_path.exists():
+            logger.error(f"Model file not found at '{source_path}'.")
+            raise FileNotFoundError(f"Model file not found at '{source_path}'.")
         self.predictor = TabularPredictor.load(str(source_path))
         logger.info(f"Model loaded from '{source_path}'.")

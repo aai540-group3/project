@@ -1,5 +1,5 @@
 {
-  "timestamp": "2024-11-11T00:49:31.995830+00:00",
+  "timestamp": "2024-11-13T06:55:34.004438+00:00",
   "stage": "feast",
   "feast_version": "0.41.3",
   "feature_views": [
@@ -9,7 +9,9 @@
     "labs",
     "medications",
     "diagnosis",
-    "interactions"
+    "interactions",
+    "admissions",
+    "target"
   ],
   "feature_services": [
     "readmission_prediction"

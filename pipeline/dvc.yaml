@@ -1,354 +1,566 @@
 stages:
-  setup:
-    cmd:
-      - UV_LINK_MODE=copy uv venv .venv --python 3.11
-      - .venv/bin/python -m ensurepip --upgrade
-      - .venv/bin/python -m pip install -q uv
-      - .venv/bin/uv pip install -q -e .
-      - .venv/bin/uv pip install -q -r requirements/base.txt
-    outs:
-      - .venv:
-          cache: false
-          persist: true
-    deps:
-      - requirements/base.txt
-    always_changed: false
+    setup:
+        cmd:
+            - UV_LINK_MODE=copy uv venv .venv --python 3.11
+            - .venv/bin/python -m ensurepip --upgrade
+            - .venv/bin/python -m pip install -q uv
+            - .venv/bin/uv pip install -q -e .
+            - .venv/bin/uv pip install -q -r requirements/base.txt
+        outs:
+            - .venv:
+                  cache: false
+                  persist: true
+        deps:
+            - requirements/base.txt
+        always_changed: false
 
-  prepare:
-    cmd:
-      - .venv/bin/uv run --with boto3 python -m pipeline infrastruct
-      - .venv/bin/uv run --with ucimlrepo --with pyarrow python -m pipeline ingest
-    deps:
-      - .venv
-      - pipeline/__init__.py
-      - pipeline/__main__.py
-      - pipeline/stages/stage.py
-      - pipeline/stages/infrastruct.py
-      - pipeline/stages/ingest.py
-      - requirements/base.txt
-    outs:
-      - data/raw/data.parquet:
-          cache: true
-      - data/raw/data.csv:
-          cache: true
-      - data/raw/variables.json:
-          cache: true
-      - data/raw/metadata.json:
-          cache: true
-    metrics:
-      - metrics/ingest/metrics.json:
-          cache: false
-    plots:
-      - plots/ingest/missing_values.png:
-          x: feature
-          y: missing_rate
-          title: Distribution - Missing Values
-      - plots/ingest/data_types.png:
-          x: dtype
-          y: count
-          title: Distribution - Data Types
+    prepare:
+        cmd:
+            - .venv/bin/uv run --with boto3 python -m pipeline infrastruct
+            - .venv/bin/uv run --with ucimlrepo --with pyarrow python -m pipeline ingest
+        deps:
+            - .venv
+            - pipeline/__init__.py
+            - pipeline/__main__.py
+            - pipeline/stages/stage.py
+            - pipeline/stages/infrastruct.py
+            - pipeline/stages/ingest.py
+            - requirements/base.txt
+        outs:
+            - data/raw/data.parquet:
+                  cache: true
+            - data/raw/data.csv:
+                  cache: true
+            - data/raw/variables.json:
+                  cache: true
+            - data/raw/metadata.json:
+                  cache: true
+        metrics:
+            - metrics/ingest/metrics.json:
+                  cache: false
+        plots:
+            - plots/ingest/missing_values.png:
+                  x: feature
+                  y: missing_rate
+                  title: Distribution - Missing Values
+            - plots/ingest/data_types.png:
+                  x: dtype
+                  y: count
+                  title: Distribution - Data Types
 
-  preprocess:
-    cmd:
-      - .venv/bin/uv run python -m pipeline preprocess
-    deps:
-      - .venv
-      - data/raw/data.csv
-      - pipeline/__init__.py
-      - pipeline/__main__.py
-      - pipeline/stages/stage.py
-      - pipeline/stages/preprocess.py
-      - requirements/base.txt
-    outs:
-      - data/interim/data.parquet:
-          cache: true
-    metrics:
-      - metrics/preprocess/metrics.json:
-          cache: false
-    plots:
-      - plots/preprocess/missing_values.png:
-          x: feature
-          y: missing_rate
-          title: Heatmap - Missing Values
-      - plots/preprocess/time_in_hospital_distribution.png:
-          x: time_in_hospital
-          y: count
-          title: Distribution - time_in_hospital
-      - plots/preprocess/num_lab_procedures_distribution.png:
-          x: num_lab_procedures
-          y: count
-          title: Distribution - num_lab_procedures
-      - plots/preprocess/num_procedures_distribution.png:
-          x: num_procedures
-          y: count
-          title: Distribution - num_procedures
-      - plots/preprocess/num_medications_distribution.png:
-          x: num_medications
-          y: count
-          title: Distribution - num_medications
-      - plots/preprocess/number_diagnoses_distribution.png:
-          x: number_diagnoses
-          y: count
-          title: Distribution - number_diagnoses
-      - plots/preprocess/number_outpatient_distribution.png:
-          x: number_outpatient
-          y: count
-          title: Distribution - number_outpatient
-      - plots/preprocess/number_emergency_distribution.png:
-          x: number_emergency
-          y: count
-          title: Distribution - number_emergency
-      - plots/preprocess/number_inpatient_distribution.png:
-          x: number_inpatient
-          y: count
-          title: Distribution - number_inpatient
-      - plots/preprocess/readmission_distribution.png:
-          x: readmitted
-          y: count
-          title: Distribution - readmitted
+    preprocess:
+        cmd:
+            - .venv/bin/uv run python -m pipeline preprocess
+        deps:
+            - .venv
+            - data/raw/data.csv
+            - pipeline/__init__.py
+            - pipeline/__main__.py
+            - pipeline/stages/stage.py
+            - pipeline/stages/preprocess.py
+            - requirements/base.txt
+        outs:
+            - data/interim/cleaned.parquet:
+                  cache: true
+        metrics:
+            - metrics/preprocess/metrics.json:
+                  cache: false
+        plots:
+            - plots/preprocess/missing_values.png:
+                  x: feature
+                  y: missing_rate
+                  title: Heatmap - Missing Values
+            - plots/preprocess/time_in_hospital_distribution.png:
+                  x: time_in_hospital
+                  y: count
+                  title: Distribution - time_in_hospital
+            - plots/preprocess/num_lab_procedures_distribution.png:
+                  x: num_lab_procedures
+                  y: count
+                  title: Distribution - num_lab_procedures
+            - plots/preprocess/num_procedures_distribution.png:
+                  x: num_procedures
+                  y: count
+                  title: Distribution - num_procedures
+            - plots/preprocess/num_medications_distribution.png:
+                  x: num_medications
+                  y: count
+                  title: Distribution - num_medications
+            - plots/preprocess/number_diagnoses_distribution.png:
+                  x: number_diagnoses
+                  y: count
+                  title: Distribution - number_diagnoses
+            - plots/preprocess/number_outpatient_distribution.png:
+                  x: number_outpatient
+                  y: count
+                  title: Distribution - number_outpatient
+            - plots/preprocess/number_emergency_distribution.png:
+                  x: number_emergency
+                  y: count
+                  title: Distribution - number_emergency
+            - plots/preprocess/number_inpatient_distribution.png:
+                  x: number_inpatient
+                  y: count
+                  title: Distribution - number_inpatient
+            - plots/preprocess/readmission_distribution.png:
+                  x: readmitted
+                  y: count
+                  title: Distribution - readmitted
 
-  explore:
-    cmd:
-      - .venv/bin/uv run python -m pipeline explore
-    deps:
-      - .venv
-      - data/interim/data.parquet
-      - pipeline/__init__.py
-      - pipeline/__main__.py
-      - pipeline/stages/stage.py
-      - pipeline/stages/explore.py
-      - requirements/base.txt
-    metrics:
-      - metrics/explore/metrics.json:
-          cache: false
-    plots:
-      - plots/explore/lab_results_distribution.png:
-          x: result
-          y: count
-          title: Lab Results Distribution and Readmission Status
-      - plots/explore/service_utilization_distribution.png:
-          x: value
-          y: density
-          title: Service Utilization Distribution and Readmission Status
-      - plots/explore/clinical_metrics_boxplot.png:
-          x: readmitted
-          y: value
-          title: Clinical Metrics Distribution and Readmission Status
-      - plots/explore/demographics_age_distribution.png:
-          x: age
-          y: count
-          title: Demographic Analysis by Age, Race, and Gender
-      - plots/explore/correlation_matrix_heatmap.png:
-          x: feature1
-          y: feature2
-          title: Correlation Matrix for Numeric Features
-      - plots/explore/feature_importance.png:
-          x: importance
-          y: feature
-          title: Top 20 Features by Importance
-      - plots/explore/feature_importance.csv:
-          x: feature
-          y: importance
-          title: Feature Importance Data
-      - plots/explore/demographic_numeric_correlation_heatmap.png:
-          x: feature1
-          y: feature2
-          title: Demographic Numeric Correlation Heatmap
-      - plots/explore/clinical_numeric_correlation_heatmap.png:
-          x: feature1
-          y: feature2
-          title: Clinical Numeric Correlation Heatmap
-      - plots/explore/service_numeric_correlation_heatmap.png:
-          x: feature1
-          y: feature2
-          title: Service Numeric Correlation Heatmap
-      - plots/explore/labs_numeric_correlation_heatmap.png:
-          x: feature1
-          y: feature2
-          title: Labs Numeric Correlation Heatmap
-      - plots/explore/medications_numeric_correlation_heatmap.png:
-          x: feature1
-          y: feature2
-          title: Medications Numeric Correlation Heatmap
-      - plots/explore/diagnosis_numeric_correlation_heatmap.png:
-          x: feature1
-          y: feature2
-          title: Diagnosis Numeric Correlation Heatmap
-      - plots/explore/race_distribution.png:
-          x: race
-          y: count
-          title: Race Distribution and Readmission
-      - plots/explore/race_chi_square.png:
-          x: race
-          y: readmitted
-          title: Chi-Square Test for Race
+    explore:
+        cmd:
+            - .venv/bin/uv run python -m pipeline explore
+        deps:
+            - .venv
+            - data/interim/cleaned.parquet
+            - pipeline/__init__.py
+            - pipeline/__main__.py
+            - pipeline/stages/stage.py
+            - pipeline/stages/explore.py
+            - requirements/base.txt
+        metrics:
+            - metrics/explore/metrics.json:
+                  cache: false
+        plots:
+            - plots/explore/clinical_numeric_correlation_heatmap.png:
+                  x: feature1
+                  y: feature2
+                  title: Clinical - Correlation Heatmap
+            - plots/explore/service_numeric_correlation_heatmap.png:
+                  x: feature1
+                  y: feature2
+                  title: Service - Correlation Heatmap
 
-  featurize:
-    cmd:
-      - .venv/bin/uv run --with boto3 python -m pipeline featurize
-    deps:
-      - .venv
-      - data/interim/data.parquet
-      - pipeline/__init__.py
-      - pipeline/__main__.py
-      - pipeline/stages/stage.py
-      - pipeline/stages/featurize.py
-    outs:
-      - data/processed/features.parquet:
-          cache: true
-      - data/processed/features_not_onehot.parquet:
-          cache: true
-    metrics:
-      - metrics/featurize/metrics.json:
-          cache: false
-      - metrics/featurize/statistics.json:
-          cache: false
-    plots:
-      - plots/featurize/feature_correlations.png:
-          cache: false
-          title: Feature Correlations Heatmap
-      - plots/featurize/feature_importance.png:
-          cache: false
-          title: Top 20 Features by Importance
-      - plots/featurize/feature_importance.csv:
-          cache: false
-          type: csv
-          x: feature
-          y: importance
-      - plots/featurize/readmission_distribution.png:
-          cache: false
-          title: Distribution of Readmission
-      - plots/featurize/age_distribution.png:
-          cache: false
-          title: Distribution of Age
-      - plots/featurize/time_in_hospital_distribution.png:
-          cache: false
-          title: Distribution of Time in Hospital
-      - plots/featurize/num_med_distribution.png:
-          cache: false
-          title: Distribution of Number of Medications
-      - plots/featurize/service_utilization_distribution.png:
-          cache: false
-          title: Distribution of Service Utilization
-      - plots/featurize/num_procedures_distribution.png:
-          cache: false
-          title: Distribution of Number of Procedures
-      - plots/featurize/num_change_distribution.png:
-          cache: false
-          title: Distribution of Medication Changes
-      - plots/featurize/num_med_time_in_hospital_distribution.png:
-          cache: false
-          title: Distribution of Medications and Time in Hospital
-      - plots/featurize/num_med_num_procedures_distribution.png:
-          cache: false
-          title: Distribution of Medications and Procedures
-      - plots/featurize/time_in_hospital_num_lab_procedures_distribution.png:
-          cache: false
-          title: Distribution of Time and Lab Procedures
-      - plots/featurize/num_med_num_lab_procedures_distribution.png:
-          cache: false
-          title: Distribution of Medications and Lab Procedures
-      - plots/featurize/num_med_number_diagnoses_distribution.png:
-          cache: false
-          title: Distribution of Medications and Diagnoses
-      - plots/featurize/age_number_diagnoses_distribution.png:
-          cache: false
-          title: Distribution of Age and Diagnoses
-      - plots/featurize/change_num_med_distribution.png:
-          cache: false
-          title: Distribution of Changes and Medications
-      - plots/featurize/number_diagnoses_time_in_hospital_distribution.png:
-          cache: false
-          title: Distribution of Diagnoses and Time
-      - plots/featurize/num_med_num_change_distribution.png:
-          cache: false
-          title: Distribution of Medications and Changes
+            # Categorical Distribution Plots
+            - plots/explore/race_distribution.png:
+                  x: race
+                  y: count
+                  title: Race Distribution and Readmission Status
+            - plots/explore/gender_distribution.png:
+                  x: gender
+                  y: count
+                  title: Gender Distribution and Readmission Status
+            - plots/explore/age_distribution.png:
+                  x: age
+                  y: count
+                  title: Age Distribution and Readmission Status
+            - plots/explore/max_glu_serum_distribution.png:
+                  x: max_glu_serum
+                  y: count
+                  title: Max Glucose Serum Distribution and Readmission Status
+            - plots/explore/A1Cresult_distribution.png:
+                  x: A1Cresult
+                  y: count
+                  title: A1C Result Distribution and Readmission Status
+            - plots/explore/metformin_distribution.png:
+                  x: metformin
+                  y: count
+                  title: Metformin Distribution and Readmission Status
+            - plots/explore/glyburide_distribution.png:
+                  x: glyburide
+                  y: count
+                  title: Glyburide Distribution and Readmission Status
+            - plots/explore/insulin_distribution.png:
+                  x: insulin
+                  y: count
+                  title: Insulin Distribution and Readmission Status
+            - plots/explore/glyburide-metformin_distribution.png:
+                  x: glyburide-metformin
+                  y: count
+                  title: Glyburide-Metformin Distribution and Readmission Status
+            - plots/explore/glipizide-metformin_distribution.png:
+                  x: glipizide-metformin
+                  y: count
+                  title: Glipizide-Metformin Distribution and Readmission Status
+            - plots/explore/metformin-rosiglitazone_distribution.png:
+                  x: metformin-rosiglitazone
+                  y: count
+                  title: Metformin-Rosiglitazone Distribution and Readmission Status
+            - plots/explore/metformin-pioglitazone_distribution.png:
+                  x: metformin-pioglitazone
+                  y: count
+                  title: Metformin-Pioglitazone Distribution and Readmission Status
+            - plots/explore/diag_1_distribution.png:
+                  x: diag_1
+                  y: count
+                  title: Diagnosis 1 Distribution and Readmission Status
+            - plots/explore/diag_2_distribution.png:
+                  x: diag_2
+                  y: count
+                  title: Diagnosis 2 Distribution and Readmission Status
+            - plots/explore/diag_3_distribution.png:
+                  x: diag_3
+                  y: count
+                  title: Diagnosis 3 Distribution and Readmission Status
 
-  feast:
-    cmd:
-      - docker stop $(docker ps -a -q --filter publish=5432)  &>/dev/null || true
-      - .venv/bin/uv run --with psycopg2-binary --with feast[postgres] --with dask[dataframe] python -m pipeline feast
-    deps:
-      - .venv
-      - data/processed/features_not_onehot.parquet
-      - data/processed/features.parquet
-      - pipeline/stages/stage.py
-      - pipeline/stages/feast.py
-      - pipeline/stages/feature_repo.py
-      - requirements/base.txt
+            # Chi-Square Test Plots
+            - plots/explore/race_chi_square.png:
+                  x: race
+                  y: readmitted
+                  title: Chi-Square Test for Race
+            - plots/explore/gender_chi_square.png:
+                  x: gender
+                  y: readmitted
+                  title: Chi-Square Test for Gender
+            - plots/explore/age_chi_square.png:
+                  x: age
+                  y: readmitted
+                  title: Chi-Square Test for Age
+            - plots/explore/payer_code_chi_square.png:
+                  x: payer_code
+                  y: readmitted
+                  title: Chi-Square Test for Payer Code
+            - plots/explore/medical_specialty_chi_square.png:
+                  x: medical_specialty
+                  y: readmitted
+                  title: Chi-Square Test for Medical Specialty
+            - plots/explore/diag_1_chi_square.png:
+                  x: diag_1
+                  y: readmitted
+                  title: Chi-Square Test for Diagnosis 1
+            - plots/explore/diag_2_chi_square.png:
+                  x: diag_2
+                  y: readmitted
+                  title: Chi-Square Test for Diagnosis 2
+            - plots/explore/diag_3_chi_square.png:
+                  x: diag_3
+                  y: readmitted
+                  title: Chi-Square Test for Diagnosis 3
+            - plots/explore/max_glu_serum_chi_square.png:
+                  x: max_glu_serum
+                  y: readmitted
+                  title: Chi-Square Test for Max Glucose Serum
+            - plots/explore/A1Cresult_chi_square.png:
+                  x: A1Cresult
+                  y: readmitted
+                  title: Chi-Square Test for A1C Result
+            - plots/explore/metformin_chi_square.png:
+                  x: metformin
+                  y: readmitted
+                  title: Chi-Square Test for Metformin
+            - plots/explore/repaglinide_chi_square.png:
+                  x: repaglinide
+                  y: readmitted
+                  title: Chi-Square Test for Repaglinide
+            - plots/explore/nateglinide_chi_square.png:
+                  x: nateglinide
+                  y: readmitted
+                  title: Chi-Square Test for Nateglinide
+            - plots/explore/chlorpropamide_chi_square.png:
+                  x: chlorpropamide
+                  y: readmitted
+                  title: Chi-Square Test for Chlorpropamide
+            - plots/explore/glimepiride_chi_square.png:
+                  x: glimepiride
+                  y: readmitted
+                  title: Chi-Square Test for Glimepiride
+            - plots/explore/acetohexamide_chi_square.png:
+                  x: acetohexamide
+                  y: readmitted
+                  title: Chi-Square Test for Acetohexamide
+            - plots/explore/glipizide_chi_square.png:
+                  x: glipizide
+                  y: readmitted
+                  title: Chi-Square Test for Glipizide
+            - plots/explore/glyburide_chi_square.png:
+                  x: glyburide
+                  y: readmitted
+                  title: Chi-Square Test for Glyburide
+            - plots/explore/tolbutamide_chi_square.png:
+                  x: tolbutamide
+                  y: readmitted
+                  title: Chi-Square Test for Tolbutamide
+            - plots/explore/pioglitazone_chi_square.png:
+                  x: pioglitazone
+                  y: readmitted
+                  title: Chi-Square Test for Pioglitazone
+            - plots/explore/rosiglitazone_chi_square.png:
+                  x: rosiglitazone
+                  y: readmitted
+                  title: Chi-Square Test for Rosiglitazone
+            - plots/explore/acarbose_chi_square.png:
+                  x: acarbose
+                  y: readmitted
+                  title: Chi-Square Test for Acarbose
+            - plots/explore/miglitol_chi_square.png:
+                  x: miglitol
+                  y: readmitted
+                  title: Chi-Square Test for Miglitol
+            - plots/explore/troglitazone_chi_square.png:
+                  x: troglitazone
+                  y: readmitted
+                  title: Chi-Square Test for Troglitazone
+            - plots/explore/tolazamide_chi_square.png:
+                  x: tolazamide
+                  y: readmitted
+                  title: Chi-Square Test for Tolazamide
+            - plots/explore/insulin_chi_square.png:
+                  x: insulin
+                  y: readmitted
+                  title: Chi-Square Test for Insulin
+            - plots/explore/glyburide-metformin_chi_square.png:
+                  x: glyburide-metformin
+                  y: readmitted
+                  title: Chi-Square Test for Glyburide-Metformin
+            - plots/explore/glipizide-metformin_chi_square.png:
+                  x: glipizide-metformin
+                  y: readmitted
+                  title: Chi-Square Test for Glipizide-Metformin
+            - plots/explore/glimepiride-pioglitazone_chi_square.png:
+                  x: glimepiride-pioglitazone
+                  y: readmitted
+                  title: Chi-Square Test for Glimepiride-Pioglitazone
+            - plots/explore/metformin-pioglitazone_chi_square.png:
+                  x: metformin-pioglitazone
+                  y: readmitted
+                  title: Chi-Square Test for Metformin-Pioglitazone
+            - plots/explore/change_chi_square.png:
+                  x: change
+                  y: readmitted
+                  title: Chi-Square Test for Change
+            - plots/explore/diabetesMed_chi_square.png:
+                  x: diabetesMed
+                  y: readmitted
+                  title: Chi-Square Test for DiabetesMed
 
-  autogluon:
-    cmd:
-      - .venv/bin/uv run --with autogluon.tabular[lightgbm] --with dvclive python pipeline autogluon
-    deps:
-      - .venv
-      - data/processed/features.parquet
-      - pipeline/__init__.py
-      - pipeline/__main__.py
-      - pipeline/stages/autogluon.py
-      - pipeline/stages/stage.py
-      - requirements/base.txt
-    outs:
-      - models/autogluon:
-          cache: true
-    metrics:
-      - metrics/autogluon/metrics.json:
-          cache: false
-      - metrics/autogluon/feature_importance.csv:
-          cache: false
-    plots:
-      - plots/autogluon/confusion_matrix.png:
-          title: Confusion Matrix
-          x: Predicted
-          y: Actual
-          template: confusion
-      - plots/autogluon/roc_curve.png:
-          x: FPR
-          y: TPR
-          title: ROC Curve
-      - plots/autogluon/feature_importance.png:
-          y: feature
-          x: importance
-          title: Top 20 Features by Importance
+            # Domain-Specific Plots
+            - plots/explore/lab_results_distribution.png:
+                  x: result
+                  y: count
+                  title: Lab Results Distribution and Readmission Status
+            - plots/explore/service_utilization_distribution.png:
+                  x: value
+                  y: density
+                  title: Service Utilization Distribution and Readmission Status
+            - plots/explore/clinical_metrics_boxplot.png:
+                  x: readmitted
+                  y: value
+                  title: Clinical Metrics Distribution and Readmission Status
+            - plots/explore/demographics_age_distribution.png:
+                  x: age
+                  y: count
+                  title: Age Distribution and Readmission Status
+            - plots/explore/correlation_matrix_heatmap.png:
+                  x: feature1
+                  y: feature2
+                  title: Correlation Matrix Heatmap
+            - plots/explore/feature_importance.png:
+                  x: importance
+                  y: feature
+                  title: Top 20 Features by Importance
+            - plots/explore/feature_importance.csv:
+                  x: feature
+                  y: importance
+                  title: Feature Importance Data
 
-  logistic:
-    cmd:
-      - MODE=quick .venv/bin/uv run --with imblearn --with dvclive python pipeline logistic
-    deps:
-      - .venv
-      - data/processed/features.parquet
-      - pipeline/__init__.py
-      - pipeline/__main__.py
-      - pipeline/stages/stage.py
-      - pipeline/stages/logistic.py
-      - requirements/base.txt
-    outs:
-      - models/logistic/model.joblib:
-          cache: true
-    metrics:
-      - metrics/logistic/metrics.json:
-          cache: false
-      - metrics/logistic/feature_importance.csv:
-          cache: false
-    plots:
-      - plots/logistic/confusion_matrix.png:
-          title: Confusion Matrix
-          x: Predicted
-          y: Actual
-          template: confusion
-      - plots/logistic/roc_curve.png:
-          x: FPR
-          y: TPR
-          title: ROC Curve
-      - plots/logistic/precision_recall_curve.png:
-          x: Recall
-          y: Precision
-          title: Precision-Recall Curve
-      - plots/logistic/feature_importance.png:
-          y: feature
-          x: importance
-          title: Top 20 Features by Importance
+    featurize:
+        cmd:
+            - .venv/bin/uv run --with boto3 python -m pipeline featurize
+        deps:
+            - .venv
+            - data/interim/cleaned.parquet
+            - pipeline/__init__.py
+            - pipeline/__main__.py
+            - pipeline/stages/stage.py
+            - pipeline/stages/featurize.py
+        outs:
+            - data/processed/features.parquet:
+                  cache: true
+            - data/processed/features_not_onehot.parquet:
+                  cache: true
+        metrics:
+            - metrics/featurize/metrics.json:
+                  cache: false
+            - metrics/featurize/statistics.json:
+                  cache: false
+        plots:
+            - plots/featurize/feature_correlations.png:
+                  cache: false
+                  title: Feature Correlations Heatmap
+                  x: feature
+                  y: feature
+            - plots/featurize/feature_importance.png:
+                  cache: false
+                  title: Top 20 Features by Importance
+                  x: importance
+                  y: feature
+            - plots/featurize/feature_importance.csv:
+                  cache: false
+                  type: csv
+                  x: feature
+                  y: importance
+            - plots/featurize/readmission_distribution.png:
+                  cache: false
+                  title: Distribution of Readmission
+                  x: readmitted
+                  y: Count
+            - plots/featurize/age_distribution.png:
+                  cache: false
+                  title: Distribution of Age
+                  x: age
+                  y: Frequency
+            - plots/featurize/time_in_hospital_distribution.png:
+                  cache: false
+                  title: Distribution of Time in Hospital
+                  x: time_in_hospital
+                  y: Frequency
+            - plots/featurize/num_medications_distribution.png:
+                  cache: false
+                  title: Distribution of Number of Medications
+                  x: num_medications
+                  y: Frequency
+            - plots/featurize/num_procedures_distribution.png:
+                  cache: false
+                  title: Distribution of Number of Procedures
+                  x: num_procedures
+                  y: Frequency
+            - plots/featurize/num_medications_time_in_hospital_distribution.png:
+                  cache: false
+                  title: Distribution of Medications and Time in Hospital
+                  x: num_medications|time_in_hospital
+                  y: Frequency
+            - plots/featurize/num_medications_num_procedures_distribution.png:
+                  cache: false
+                  title: Distribution of Medications and Procedures
+                  x: num_medications|num_procedures
+                  y: Frequency
+            - ? plots/featurize/time_in_hospital_num_lab_procedures_distribution.png
+              : cache: false
+                title: Distribution of Time and Lab Procedures
+                x: time_in_hospital|num_lab_procedures
+                y: Frequency
+            - ? plots/featurize/num_medications_num_lab_procedures_distribution.png
+              : cache: false
+                title: Distribution of Medications and Lab Procedures
+                x: num_medications|num_lab_procedures
+                y: Frequency
+            - plots/featurize/num_medications_number_diagnoses_distribution.png:
+                  cache: false
+                  title: Distribution of Medications and Diagnoses
+                  x: num_medications|number_diagnoses
+                  y: Frequency
+            - plots/featurize/age_number_diagnoses_distribution.png:
+                  cache: false
+                  title: Distribution of Age and Diagnoses
+                  x: age|number_diagnoses
+                  y: Frequency
+            - plots/featurize/change_num_medications_distribution.png:
+                  cache: false
+                  title: Distribution of Changes and Medications
+                  x: change|num_medications
+                  y: Frequency
+            - ? plots/featurize/number_diagnoses_time_in_hospital_distribution.png
+              : cache: false
+                title: Distribution of Diagnoses and Time
+                x: number_diagnoses|time_in_hospital
+                y: Frequency
+            - plots/featurize/num_medications_numchange_distribution.png:
+                  cache: false
+                  title: Distribution of Medications and Changes
+                  x: num_medications|numchange
+                  y: Frequency
 
+    feast:
+        cmd:
+            - docker stop $(docker ps -a -q --filter publish=5432)  &>/dev/null || true
+            - .venv/bin/uv run --with psycopg2-binary --with feast[postgres] --with dask[dataframe] python -m pipeline feast
+        deps:
+            - .venv
+            - data/processed/features_not_onehot.parquet
+            - data/processed/features.parquet
+            - pipeline/stages/stage.py
+            - pipeline/stages/feast.py
+            - pipeline/stages/feature_repo.py
+            - requirements/base.txt
+
+    autogluon:
+        cmd:
+            - .venv/bin/uv run --with autogluon.tabular[lightgbm] --with dvclive python pipeline autogluon
+        deps:
+            - .venv
+            - data/processed/features.parquet
+            - pipeline/__init__.py
+            - pipeline/__main__.py
+            - pipeline/stages/autogluon.py
+            - pipeline/stages/stage.py
+            - pipeline/models/autogluon.py
+            - pipeline/models/model.py
+            - requirements/base.txt
+        outs:
+            - models/autogluon:
+                  cache: true
+        metrics:
+            - metrics/autogluon/metrics.json:
+                  cache: false
+            - metrics/autogluon/feature_importance.csv:
+                  cache: false
+        plots:
+            - plots/autogluon/confusion_matrix.png:
+                  title: Confusion Matrix
+                  x: Predicted
+                  y: Actual
+                  template: confusion
+            - plots/autogluon/roc_curve.png:
+                  title: ROC Curve
+                  x: False Positive Rate (FPR)
+                  y: True Positive Rate (TPR)
+                  template: roc
+            - plots/autogluon/precision_recall_curve.png:
+                  title: Precision-Recall Curve
+                  x: Recall
+                  y: Precision
+                  template: precision_recall
+            - plots/autogluon/calibration_curve.png:
+                  title: Calibration Curve
+                  x: Mean Predicted Probability
+                  y: Fraction of Positives
+                  template: calibration
+            - plots/autogluon/probability_distribution.png:
+                  title: Probability Distribution
+                  x: Predicted Probability
+                  y: Density
+            - plots/autogluon/feature_importance.png:
+                  title: Top 20 Features by Importance
+                  y: feature
+                  x: importance
+
+    logistic:
+        cmd:
+            - MODE=quick .venv/bin/uv run --with imblearn --with dvclive python pipeline logistic
+        deps:
+            - .venv
+            - data/processed/features.parquet
+            - pipeline/__init__.py
+            - pipeline/__main__.py
+            - pipeline/stages/stage.py
+            - pipeline/stages/logistic.py
+            - requirements/base.txt
+        outs:
+            - models/logistic/model.joblib:
+                  cache: true
+        metrics:
+            - metrics/logistic/metrics.json:
+                  cache: false
+            - metrics/logistic/feature_importance.csv:
+                  cache: false
+        plots:
+            - plots/logistic/confusion_matrix.png:
+                  title: Confusion Matrix
+                  x: Predicted
+                  y: Actual
+                  template: confusion
+            - plots/logistic/roc_curve.png:
+                  x: FPR
+                  y: TPR
+                  title: ROC Curve
+            - plots/logistic/precision_recall_curve.png:
+                  x: Recall
+                  y: Precision
+                  title: Precision-Recall Curve
+            - plots/logistic/feature_importance.png:
+                  y: feature
+                  x: importance
+                  title: Top 20 Features by Importance
 #   optimize:
 #     foreach: ${models}
 #     do:
@@ -495,8 +707,3 @@ stages:
 #       framework: autogluon
 #       hyperparameters: "tuned with best_quality preset"
 
-vars:
-  - models:
-      - logistic
-      - neural
-      - autogluon

@@ -13,108 +13,13 @@ class Preprocess(Stage):
     """Pipeline stage for data preprocessing."""
 
     def run(self):
-        """Execute preprocessing pipeline."""
-
-        DEMOGRAPHIC_FEATURES = [
-            "race",
-            "gender",
-            "age",
-        ]
+        """Execute preprocessing pipeline to clean data without creating new features."""
 
         HIGH_MISSING_FEATURES = [
-            "weight",
-            "payer_code",
-            "medical_specialty",
-            "examide",
-            "citoglipton",
-        ]
-
-        DIAGNOSIS_FEATURES = [
-            "diag_1",
-            "diag_2",
-            "diag_3",
-        ]
-
-        AGE_MAP = {
-            "[0-10)": 5,
-            "[10-20)": 15,
-            "[20-30)": 25,
-            "[30-40)": 35,
-            "[40-50)": 45,
-            "[50-60)": 55,
-            "[60-70)": 65,
-            "[70-80)": 75,
-            "[80-90)": 85,
-            "[90-100)": 95,
-        }
-
-        BINARY_MAP = {
-            "gender": {
-                "Male": 1,
-                "Female": 0,
-            },
-            "change": {
-                "Ch": 1,
-                "No": 0,
-            },
-            "diabetesMed": {
-                "Yes": 1,
-                "No": 0,
-            },
-        }
-
-        LAB_MAP = {
-            "A1Cresult": {
-                ">8": 2,
-                ">7": 1,
-                "Norm": 0,
-                "None": -99,
-            },
-            "max_glu_serum": {
-                ">300": 2,
-                ">200": 1,
-                "Norm": 0,
-                "None": -99,
-            },
-        }
-
-        MEDICATIONS = [
-            "metformin",
-            "repaglinide",
-            "nateglinide",
-            "chlorpropamide",
-            "glimepiride",
-            "acetohexamide",
-            "glipizide",
-            "glyburide",
-            "tolbutamide",
-            "pioglitazone",
-            "rosiglitazone",
-            "acarbose",
-            "miglitol",
-            "troglitazone",
-            "tolazamide",
-            "insulin",
-            "glyburide-metformin",
-            "glipizide-metformin",
-            "glimepiride-pioglitazone",
-            "metformin-rosiglitazone",
-            "metformin-pioglitazone",
-        ]
-
-        DISCHARGE_MAP = {
-            6: 1, 8: 1, 9: 1, 13: 1,                       # HOME
-            3: 2, 4: 2, 5: 2, 14: 2, 22: 2, 23: 2, 24: 2,  # HEALTHCARE FACILITY
-            12: 10, 15: 10, 16: 10, 17: 10,                # OUTPATIENT
-            25: 18, 26: 18,                                # PSYCHIATRIC
-        }  # fmt: off
-
-        ADMISSION_MAP = {
-            2: 1,  3: 1,                                   # PHYSICIAN REFERRAL
-            5: 4,  6: 4,  10: 4, 22: 4, 25: 4,             # TRANSFER
-            15: 9, 17: 9, 20: 9, 21: 9,                    # EMERGENCY
-            13: 11, 14: 11,                                # OTHER
-        }  # fmt: off
+            "weight",       # 96.86% missing (98,569/101,766), only 9 unique values when present
+            "examide",      # No variation: single value for all records (zero-variance predictor)
+            "citoglipton",  # No variation: single value for all records (zero-variance predictor)
+        ]  # fmt: off
 
         # Define paths for saving plots
         plots_dir = pathlib.Path(self.cfg.paths.plots) / self.name
@@ -125,149 +30,175 @@ class Preprocess(Stage):
         logger.info("Loading raw data...")
         df = pd.read_csv("data/raw/data.csv", low_memory=False)
 
-        logger.info("Cleaning data...")
-        logger.info("Dropping missing features with too many missing values")
+        # Capture initial metrics
+        logger.info("Capturing initial data metrics")
+        metrics = {
+            "initial_shape": list(df.shape),
+            "initial_memory_mb": df.memory_usage(deep=True).sum() / 1024**2,
+            "missing_values": df.isnull().sum().to_dict(),
+            "missing_values_rate": (df.isnull().mean() * 100).to_dict(),
+            "dtypes": df.dtypes.astype(str).to_dict(),
+            "unique_values": {col: df[col].nunique() for col in df.columns},
+            "column_names": list(df.columns),
+            "five_number_summary": df.describe().to_dict(),
+        }
+
+        # Capture number of missing values for each high-missing column before dropping
+        metrics["high_missing_features_dropped"] = {
+            col: df[col].isnull().sum() for col in HIGH_MISSING_FEATURES if col in df.columns
+        }
+
+        # Handle medical specialty and payer code before other preprocessing
+        logger.info("Processing medical specialty and payer code")
+
+        # Analyze and visualize medical specialty distribution
+        plt.figure(figsize=(12, 6))
+        specialty_counts = df["medical_specialty"].value_counts().head(15)
+        sns.barplot(x=specialty_counts.values, y=specialty_counts.index)
+        plt.title("Top 15 Medical Specialties")
+        plt.xlabel("Count")
+        plt.tight_layout()
+        plt.savefig(plots_dir / "medical_specialty_distribution.png", bbox_inches="tight")
+        plt.close()
+
+        # Fill missing values with meaningful categories
+        df["medical_specialty"] = df["medical_specialty"].fillna("Unknown Specialty")
+        df["payer_code"] = df["payer_code"].fillna("Unknown Payer")
+
+        # Capture specialty and payer code distributions in metrics
+        metrics.update(
+            {
+                "medical_specialty_distribution": df["medical_specialty"].value_counts().to_dict(),
+                "payer_code_distribution": df["payer_code"].value_counts().to_dict(),
+            }
+        )
+
+        # Drop columns with high missing values
+        logger.info("Dropping columns with excessive missing values")
         df = df.drop(columns=HIGH_MISSING_FEATURES, errors="ignore")
 
-        # Replace missing values
-        logger.info("Replacing missing values")
+        # Replace missing placeholders
+        logger.info("Replacing missing placeholders")
         df = df.replace("?", np.nan)
 
-        # Apply filters
-        logger.info("Applying filters")
+        # Before filtering, capture diagnosis code distributions
+        logger.info("Capturing diagnosis code distributions")
+
+        for diag_col in ["diag_1", "diag_2", "diag_3"]:
+            if diag_col in df.columns:
+                # Get top 20 diagnoses and their stats
+                diagnosis_stats = (
+                    pd.DataFrame(
+                        {
+                            "diagnosis": df[diag_col],
+                            "readmitted": df["readmitted"].map({"<30": 1, ">30": 0, "NO": 0}),
+                        }
+                    )
+                    .groupby("diagnosis")
+                    .agg({"readmitted": ["count", "mean"]})
+                    .reset_index()
+                )
+
+                diagnosis_stats.columns = ["diagnosis", "count", "readmission_rate"]
+                diagnosis_stats = diagnosis_stats.nlargest(20, "count").sort_values("count", ascending=True)
+
+                # Create the visualization
+                fig, ax = plt.subplots(figsize=(15, 8))
+
+                # Create color map based on readmission rates
+                norm = plt.Normalize(
+                    diagnosis_stats["readmission_rate"].min(), diagnosis_stats["readmission_rate"].max()
+                )
+                cmap = plt.cm.RdYlBu
+                sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+                sm.set_array([])  # Only needed for older versions of Matplotlib
+
+                # Apply the color map to the bars
+                bars = ax.barh(
+                    diagnosis_stats["diagnosis"],
+                    diagnosis_stats["count"],
+                    color=cmap(norm(diagnosis_stats["readmission_rate"])),
+                )
+
+                # Configure axes
+                ax.set_title(f"Top 20 {diag_col} Codes - Count and Readmission Rate")
+                ax.set_xlabel("Number of Patients")
+                ax.set_ylabel("Diagnosis Code")
+
+                # Add colorbar associated with the current Axes
+                cbar = fig.colorbar(sm, ax=ax)
+                cbar.set_label("Readmission Rate")
+
+                # Adjust layout and save
+                plt.tight_layout()
+                plot_path = plots_dir / f"{diag_col}_distribution.png"
+                plt.savefig(plot_path, bbox_inches="tight", dpi=300)
+                plt.close()
+
+        # Filter out unwanted data
+        logger.info("Applying data filters")
         mask = (
             (df["gender"].isin(["Male", "Female"]))
             & (df["race"].notna() & (df["race"] != "?"))
             & (df["diag_1"].notna() & (df["diag_1"] != "?"))
             & (df["diag_2"].notna() & (df["diag_2"] != "?"))
             & (df["diag_3"].notna() & (df["diag_3"] != "?"))
-            & (df["discharge_disposition_id"] != 11)
+            & (df["discharge_disposition_id"] != 11)  # Exclude expired patients
         )
         df = df[mask].copy()
 
-        # Reset index and add ID
-        logger.info("Resetting index and adding ID column")
+        # Reset index and add unique ID if not present
+        logger.info("Resetting index and adding unique 'id' column")
         df = df.reset_index(drop=True)
         df["id"] = df.index
 
-        # Apply mappings
-        logger.info("Applying feature mappings")
-        df["age"] = df["age"].map(AGE_MAP)
-
-        for col, mapping in BINARY_MAP.items():
-            if col not in df.columns:
-                raise KeyError(f"Binary mapping column not found: {col}")
-            df[col] = df[col].map(mapping)
-
-        for col, mapping in LAB_MAP.items():
-            if col not in df.columns:
-                raise KeyError(f"Lab mapping column not found: {col}")
-            df[col] = df[col].map(mapping)
-
-        # Process medications
-        logger.info("Processing medications")
-        logger.trace(f"Columns found:\n {df.columns}")
-        for med in MEDICATIONS:
-            if med not in df.columns:
-                raise KeyError(f"Medication column '{med}' not found")
-            df[med] = df[med].map(lambda x: 2 if x == "Up" else (1 if x in ["Down", "Steady"] else 0))
-
-        # Process admission and discharge codes
-        logger.info("Processing admission and discharge codes")
-        if "admission_type_id" not in df.columns:
-            raise KeyError("Column 'admission_type_id' not found for mapping")
-        df["admission_type_id"] = df["admission_type_id"].map(lambda x: 1 if x in [2, 7] else (5 if x in [6, 8] else x))
-
-        if "discharge_disposition_id" not in df.columns:
-            raise KeyError("Column 'discharge_disposition_id' not found for mapping")
-        df["discharge_disposition_id"] = df["discharge_disposition_id"].map(DISCHARGE_MAP, na_action="ignore")
-
-        if "admission_source_id" not in df.columns:
-            raise KeyError("Column 'admission_source_id' not found for mapping")
-        df["admission_source_id"] = df["admission_source_id"].map(ADMISSION_MAP, na_action="ignore")
-
-        # PROCESS DIAGNOSES
-        logger.info("Processing diagnoses")
-        for i in range(1, 4):
-            diag_col = f"diag_{i}"
-            level_col = f"level1_diag{i}"
-
-            if diag_col not in df.columns:
-                raise KeyError(f"Diagnosis column '{diag_col}' not found")
-
-            # CONVERT DIAGNOSIS CODES
-            df[diag_col] = df[diag_col].astype(str)
-            df[diag_col] = df[diag_col].apply(lambda x: "0" if any(code in str(x) for code in ["V", "E"]) else x)
-            df[diag_col] = pd.to_numeric(df[diag_col], errors="coerce")
-
-            # MAP TO DIAGNOSIS CATEGORIES
-            conditions = [
-                (((df[diag_col] >= 390) & (df[diag_col] < 460)) | (df[diag_col] == 785)),  # CIRCULATORY
-                (((df[diag_col] >= 460) & (df[diag_col] < 520)) | (df[diag_col] == 786)),  # RESPIRATORY
-                (((df[diag_col] >= 520) & (df[diag_col] < 580)) | (df[diag_col] == 787)),  # DIGESTIVE
-                (df[diag_col] == 250),                                                     # DIABETES
-                ((df[diag_col] >= 800) & (df[diag_col] < 1000)),                           # INJURY
-                ((df[diag_col] >= 710) & (df[diag_col] < 740)),                            # MUSCULOSKELETAL
-                (((df[diag_col] >= 580) & (df[diag_col] < 630)) | (df[diag_col] == 788)),  # GENITOURINARY
-                ((df[diag_col] >= 140) & (df[diag_col] < 240)),                            # NEOPLASMS
-            ]  # fmt: off
-            choices = range(1, 9)
-            df[level_col] = np.select(conditions, choices, default=0)
-
-        # HANDLE OUTLIERS
-        logger.info("Handling outliers")
-        exclude_cols = ["readmitted", "id"]
-        numeric_cols = df.select_dtypes(include=[np.number]).columns.difference(exclude_cols)
-
+        # Handle outliers by clipping
+        logger.info("Clipping outliers for numeric features")
+        numeric_cols = df.select_dtypes(include=[np.number]).columns.difference(["id", "readmitted"])
         for col in numeric_cols:
             Q1 = df[col].quantile(0.25)
             Q3 = df[col].quantile(0.75)
             IQR = Q3 - Q1
             lower_bound = Q1 - 1.5 * IQR
             upper_bound = Q3 + 1.5 * IQR
-            initial_min, initial_max = df[col].min(), df[col].max()
             df[col] = df[col].clip(lower=lower_bound, upper=upper_bound)
-            final_min, final_max = df[col].min(), df[col].max()
-            logger.debug(f"Clipped '{col}' from ({initial_min}, {initial_max}) to ({final_min}, {final_max})")
 
-        # PROCESS TARGET VARIABLE
+        # Process target variable
         logger.info("Processing target variable")
         if "readmitted" not in df.columns:
             raise KeyError("Target column 'readmitted' not found")
         df["readmitted"] = df["readmitted"].map(lambda x: 1 if x == "<30" else 0)
 
-        # VALIDATE TARGET VARIABLE
-        logger.info("Validating target variable")
+        # Validate target variable to ensure no data loss
         if df["readmitted"].nunique() < 2:
-            logger.error("Lost all positive cases during preprocessing!")
-            raise ValueError("Lost all positive cases during preprocessing!")
+            logger.error("All positive cases lost during preprocessing!")
+            raise ValueError("All positive cases lost during preprocessing.")
 
-        # SAVE PROCESSED DATA
-        logger.info("Saving processed data")
-        self.save_output(df, "data.parquet", "data/interim")
+        # Capture target balance for metrics
+        target_balance = df["readmitted"].value_counts(normalize=True).to_dict()
+        metrics["target_balance"] = target_balance
 
-        # Calculate and save metrics
-        logger.info("Calculating and saving metrics")
-        metrics = {
-            "dataset": {
-                "initial_shape": df.shape,
-                "memory_mb": df.memory_usage(deep=True).sum() / 1024**2,
-                "missing_values": df.isnull().sum().to_dict(),
-                "dtypes": df.dtypes.astype(str).to_dict(),
-            },
-            "features": {
-                "demographic": DEMOGRAPHIC_FEATURES,
-                "medications": MEDICATIONS,
-                "diagnosis": DIAGNOSIS_FEATURES,
-            },
-            "target": {"distribution": df["readmitted"].value_counts(normalize=True).to_dict()},
-        }
+        # Update metrics after processing
+        logger.info("Capturing post-cleaning metrics")
+        metrics.update(
+            {
+                "final_shape": list(df.shape),
+                "final_memory_mb": df.memory_usage(deep=True).sum() / 1024**2,
+                "post_cleaning_missing_values": df.isnull().sum().to_dict(),
+                "post_cleaning_missing_rate": (df.isnull().mean() * 100).to_dict(),
+                "final_dtypes": df.dtypes.astype(str).to_dict(),
+                "target_distribution": df["readmitted"].value_counts(normalize=True).to_dict(),
+            }
+        )
+
+        # Save consolidated metrics
         self.save_metrics("metrics", metrics)
 
-        # GENERATE AND SAVE PLOTS
-        logger.info("Generating and saving plots")
+        # Save cleaned data
+        logger.info("Saving cleaned data")
+        self.save_output(df, "cleaned.parquet", "data/interim")
 
-        # MISSING VALUES HEATMAP
+        # Generate and save missing values plot
         logger.info("Generating Missing Values Heatmap")
         plt.figure(figsize=(12, 8))
         missing_data = df.isnull().mean().to_frame("missing_rate")
@@ -286,8 +217,8 @@ class Preprocess(Stage):
         logger.debug(f"Saved Missing Values Heatmap to: {missing_plot_path}")
         plt.close()
 
-        # FEATURE DISTRIBUTIONS
-        logger.info("Generating Feature Distributions Plots")
+        # Generate feature distribution plots
+        logger.info("Generating Feature Distribution Plots")
         NUMERICAL_FEATURES = [
             "time_in_hospital",
             "num_lab_procedures",
@@ -312,10 +243,8 @@ class Preprocess(Stage):
             logger.debug(f"Saved {feature} distribution plot to: {plot_path}")
             plt.close()
 
-        # TARGET DISTRIBUTION
+        # Generate target distribution plot
         logger.info("Generating Target Distribution Plot")
-        if "readmitted" not in df.columns:
-            raise KeyError("Target column 'readmitted' not found")
         plt.figure(figsize=(6, 6))
         sns.countplot(data=df, x="readmitted", hue="readmitted", legend=False)
         plt.title("Distribution - Readmission")

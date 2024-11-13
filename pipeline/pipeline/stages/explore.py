@@ -19,7 +19,7 @@ class Explore(Stage):
 
         try:
             # Load data
-            df = self.load_data("data.parquet", "data/interim")
+            df = self.load_data("cleaned.parquet", "data/interim")
             logger.info(f"Dataset loaded with shape: {df.shape}")
 
             # Define feature groups

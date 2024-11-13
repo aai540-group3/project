@@ -195,12 +195,44 @@ class PostgresManager:
 
 
 class Feast(Stage):
-    """Pipeline stage for feature store setup using PostgreSQL with pgvector."""
+    """Pipeline stage for feature store setup with early hash checking."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._temp_dirs = []
         self._pg_manager = None
+
+    def check_data_hash(self, src_path: pathlib.Path) -> bool:
+        """Check if source data has changed by comparing hashes.
+        Returns True if data has changed or hash doesn't exist."""
+        try:
+            # Read the source parquet file
+            df = pd.read_parquet(src_path)
+
+            # Calculate current data hash
+            data_hash = pd.util.hash_pandas_object(df).sum()
+
+            # Define hash file location
+            hash_file = pathlib.Path(self.cfg.paths.feature_repo) / "data_hash.txt"
+
+            # Check if hash file exists and compare hashes
+            if hash_file.exists():
+                with open(hash_file, "r") as f:
+                    last_hash = int(f.read().strip())
+                if last_hash == data_hash:
+                    logger.info("Data hash matches previous run. Skipping feature store setup.")
+                    return False
+
+            # Save the new hash
+            hash_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(hash_file, "w") as f:
+                f.write(str(data_hash))
+            logger.info("Data has changed or is new. Proceeding with feature store setup.")
+            return True
+
+        except Exception as e:
+            logger.warning(f"Error checking data hash: {str(e)}. Will proceed with feature store setup.")
+            return True
 
     def _setup_postgres_manager(self, db_config: Dict[str, Any]) -> PostgresManager:
         """Set up PostgreSQL manager with configuration."""
@@ -250,19 +282,89 @@ class Feast(Stage):
             )
             logger.info("Created entity reference table: feast_patient_entities")
 
-            # Verify all required columns for feature views exist
+            # Update the main features table with any new columns
+            self._pg_manager.create_table_from_df(
+                df=df, table_name="feast_diabetes_features", if_exists="replace", schema="feast"
+            )
+            logger.info("Updated main features table with all required columns")
+
+            # Verify table creation and column existence
+            verify_sql = """
+            SELECT 
+                table_name,
+                string_agg(column_name, ', ') as columns
+            FROM information_schema.columns
+            WHERE table_schema = 'feast'
+            GROUP BY table_name;
+            """
+            with self._pg_manager.get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(f'SET search_path TO "{self._pg_manager.config.db_schema}"')
+                    cur.execute(verify_sql)
+                    results = cur.fetchall()
+
+                    for table_name, columns in results:
+                        logger.info(f"Table {table_name} columns: {columns}")
+
+            logger.info("Feature tables setup completed successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to set up feature tables: {str(e)}")
+            # Log detailed error information
+            logger.error(f"Error type: {type(e).__name__}")
+            logger.error(f"Error details: {str(e)}")
+            raise
+
+    def _setup_feature_tables(self, df: pd.DataFrame):
+        """Set up required feature tables in PostgreSQL aligned with feature views."""
+        try:
+            logger.info("Setting up feature tables...")
+
+            # Ensure patient_id exists
+            if "patient_id" not in df.columns:
+                logger.info("Adding patient_id column")
+                df["patient_id"] = range(1, len(df) + 1)
+
+            # Ensure event_timestamp exists
+            if "event_timestamp" not in df.columns:
+                logger.info("Adding event_timestamp column")
+                df["event_timestamp"] = pd.Timestamp(
+                    self.cfg.dataset.get("timestamp", "1970-01-01T00:00:00Z")
+                ).tz_convert("UTC")
+
+            # Create the main features table that all feature views source from
+            self._pg_manager.create_table_from_df(
+                df=df, table_name="feast_diabetes_features", if_exists="replace", schema="feast"
+            )
+            logger.info("Created main features table: feast_diabetes_features")
+
+            # Create index on the main table
+            index_sql = """
+            CREATE INDEX IF NOT EXISTS idx_diabetes_features_patient 
+            ON feast.feast_diabetes_features(patient_id, event_timestamp);
+            """
+            self._pg_manager.execute_query(index_sql)
+            logger.info("Created index on feast_diabetes_features")
+
+            # Create patient entity reference table
+            entity_cols = ["patient_id", "event_timestamp"]
+            entity_df = df[entity_cols].copy().drop_duplicates()
+            self._pg_manager.create_table_from_df(
+                df=entity_df, table_name="feast_patient_entities", if_exists="replace", schema="feast"
+            )
+            logger.info("Created entity reference table: feast_patient_entities")
+
+            # Define required columns for each view
             required_columns = {
                 "admissions": [
-                    "admission_type_id_3",
-                    "admission_type_id_4",
-                    "admission_type_id_5",
-                    "discharge_disposition_id_2.0",
-                    "discharge_disposition_id_3.5",
-                    "admission_source_id_4.0",
-                    "admission_source_id_9.0",
-                    "admission_source_id_11.0",
+                    *[col for col in df.columns if col.startswith("admission_type_id_")],
+                    *[col for col in df.columns if col.startswith("discharge_disposition_id_")],
+                    *[col for col in df.columns if col.startswith("admission_source_id_")],
                 ],
-                "demographic": ["age", "race_Asian", "race_Caucasian", "race_Hispanic", "race_Other"],
+                "demographic": [
+                    "age",
+                    *[col for col in df.columns if col.startswith("race_")],
+                ],
                 "clinical": [
                     "time_in_hospital",
                     "num_lab_procedures",
@@ -274,11 +376,14 @@ class Feast(Stage):
                 ],
                 "service": [
                     "service_utilization",
-                    "number_outpatient_log1p",
-                    "number_emergency_log1p",
-                    "number_inpatient_log1p",
+                    *[col for col in df.columns if col.startswith("number_outpatient_log1p")],
+                    *[col for col in df.columns if col.startswith("number_emergency_log1p")],
+                    *[col for col in df.columns if col.startswith("number_inpatient_log1p")],
                 ],
-                "labs": ["max_glu_serum", "A1Cresult"],
+                "labs": [
+                    "max_glu_serum",
+                    "A1Cresult",
+                ],
                 "medications": [
                     "metformin",
                     "repaglinide",
@@ -303,49 +408,34 @@ class Feast(Stage):
                     "metformin-pioglitazone",
                 ],
                 "diagnosis": [
-                    "level1_diag1_1",
-                    "level1_diag1_2",
-                    "level1_diag1_3",
-                    "level1_diag1_4",
-                    "level1_diag1_5",
-                    "level1_diag1_6",
-                    "level1_diag1_7",
-                    "level1_diag1_8",
+                    *[col for col in df.columns if col.startswith("level1_diag1_")],
                 ],
                 "interactions": [
-                    "num_med|time_in_hospital",
-                    "num_med|num_procedures",
-                    "time_in_hospital|num_lab_procedures",
-                    "num_med|num_lab_procedures",
-                    "num_med|number_diagnoses",
-                    "age|number_diagnoses",
-                    "change|num_med",
-                    "number_diagnoses|time_in_hospital",
-                    "num_med|num_change",
+                    *[col for col in df.columns if "|" in col],
                 ],
                 "target": ["readmitted"],
             }
 
-            # Check for missing columns and log warnings
+            # Add missing columns with default values
             for view_name, columns in required_columns.items():
                 missing_cols = [col for col in columns if col not in df.columns]
                 if missing_cols:
-                    logger.warning(f"Missing columns for {view_name} view: {missing_cols}")
+                    logger.info(f"Adding missing columns for {view_name} view: {missing_cols}")
+                    for col in missing_cols:
+                        # For specific clinical columns, use appropriate defaults
+                        if col in ["num_lab_procedures", "num_medications", "number_diagnoses"]:
+                            df[col] = df["num_procedures"] if "num_procedures" in df.columns else 0
+                        else:
+                            df[col] = 0
+                    logger.info(f"Added {len(missing_cols)} missing columns with default values")
 
-            # Add any missing binary columns with default values
-            for view_name, columns in required_columns.items():
-                for col in columns:
-                    if col not in df.columns:
-                        logger.warning(f"Adding missing column {col} with default value 0")
-                        df[col] = 0
-
-            # Update the main features table with any new columns
+            # Update the main features table with the new columns (only once)
             self._pg_manager.create_table_from_df(
                 df=df, table_name="feast_diabetes_features", if_exists="replace", schema="feast"
             )
             logger.info("Updated main features table with all required columns")
 
-            # Verify table creation and column existence
+            # Verify table creation and column existence using cursor instead of pd.read_sql
             verify_sql = """
             SELECT 
                 table_name,
@@ -354,135 +444,28 @@ class Feast(Stage):
             WHERE table_schema = 'feast'
             GROUP BY table_name;
             """
-            with self._pg_manager.get_connection() as conn:
-                tables_df = pd.read_sql(verify_sql, conn)
 
-            for _, row in tables_df.iterrows():
-                logger.info(f"Table {row['table_name']} columns: {row['columns']}")
+            with self._pg_manager.get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(f'SET search_path TO "{self._pg_manager.config.db_schema}"')
+                    cur.execute(verify_sql)
+                    results = cur.fetchall()
+
+                    for table_name, columns in results:
+                        logger.info(f"Table {table_name} columns: {columns}")
+
+                    # Add row count verification
+                    for table_name in ["feast_diabetes_features", "feast_patient_entities"]:
+                        cur.execute(f"SELECT COUNT(*) FROM feast.{table_name}")
+                        count = cur.fetchone()[0]
+                        logger.info(f"Table {table_name} contains {count} rows")
+
+            logger.info("Feature tables setup completed successfully")
 
         except Exception as e:
             logger.error(f"Failed to set up feature tables: {str(e)}")
-            # Log detailed error information
             logger.error(f"Error type: {type(e).__name__}")
             logger.error(f"Error details: {str(e)}")
-            raise
-
-    def data_has_changed(self, df: pd.DataFrame) -> bool:
-        """Check if data has changed based on a hash."""
-        data_hash = pd.util.hash_pandas_object(df).sum()
-        hash_file = pathlib.Path(self.cfg.paths.feature_repo) / "data_hash.txt"
-
-        if hash_file.exists():
-            with open(hash_file, "r") as f:
-                last_hash = int(f.read().strip())
-            if last_hash == data_hash:
-                logger.info("Data has not changed. Skipping preparation.")
-                return False
-
-        # Save the new hash
-        with open(hash_file, "w") as f:
-            f.write(str(data_hash))
-        return True
-
-    def _prepare_feature_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        if not self.data_has_changed(df):
-            return df
-
-        try:
-            # Add/update event_timestamp
-            if "event_timestamp" not in df.columns:
-                logger.debug("Adding event_timestamp column")
-                df["event_timestamp"] = datetime.now(timezone.utc)
-            elif not pd.api.types.is_datetime64_any_dtype(df["event_timestamp"]):
-                logger.debug("Converting event_timestamp to datetime")
-                df["event_timestamp"] = pd.to_datetime(df["event_timestamp"])
-
-            # Ensure event_timestamp is timezone-aware
-            if df["event_timestamp"].dt.tz is None:
-                logger.debug("Making event_timestamp timezone-aware")
-                df["event_timestamp"] = df["event_timestamp"].dt.tz_localize("UTC")
-
-            # Add/update patient_id if needed
-            if "patient_id" not in df.columns:
-                logger.debug("Adding patient_id column from index")
-                df["patient_id"] = df.index
-
-            # Convert patient_id to string if it's not already
-            df["patient_id"] = df["patient_id"].astype(str)
-
-            # Handle null values
-            numeric_columns = df.select_dtypes(include=["float64", "int64"]).columns
-            categorical_columns = df.select_dtypes(include=["object", "category"]).columns
-
-            # Fill numeric nulls with median
-            for col in numeric_columns:
-                if df[col].isnull().any():
-                    logger.debug(f"Filling null values in {col} with median")
-                    df[col] = df[col].fillna(df[col].median())
-
-            # Fill categorical nulls with mode
-            for col in categorical_columns:
-                if df[col].isnull().any():
-                    logger.debug(f"Filling null values in {col} with mode")
-                    df[col] = df[col].fillna(df[col].mode()[0])
-
-            # Ensure all required columns have correct types
-            type_conversions = {
-                "age": "float64",
-                "gender": "float64",
-                "race": "str",
-                "time_in_hospital": "float64",
-                "num_lab_procedures": "float64",
-                "num_procedures": "float64",
-                "num_medications": "float64",
-                "number_diagnoses": "float64",
-                "max_glu_serum": "float64",
-                "A1Cresult": "float64",
-                "metformin": "float64",
-                "insulin": "float64",
-            }
-
-            for col, dtype in type_conversions.items():
-                if col in df.columns:
-                    logger.debug(f"Converting {col} to {dtype}")
-                    try:
-                        if dtype == "str":
-                            df[col] = df[col].astype(str)
-                        else:
-                            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(dtype)
-                    except Exception as e:
-                        logger.warning(f"Could not convert {col} to {dtype}: {str(e)}")
-
-            # Convert boolean columns to float64 (Feast requirement)
-            bool_columns = df.select_dtypes(include=["bool"]).columns
-            for col in bool_columns:
-                logger.debug(f"Converting boolean column {col} to float64")
-                df[col] = df[col].astype(float)
-
-            # Create entity columns if needed for feature views
-            entity_time_cols = ["patient_id", "event_timestamp"]
-            missing_cols = [col for col in entity_time_cols if col not in df.columns]
-            if missing_cols:
-                raise ValueError(f"Missing required columns: {missing_cols}")
-
-            # Final validation
-            required_cols = ["patient_id", "event_timestamp"]
-            for col in required_cols:
-                if df[col].isnull().any():
-                    raise ValueError(f"Column {col} contains null values")
-
-            # Add created_timestamp if needed
-            if "created_timestamp" not in df.columns:
-                logger.debug("Adding created_timestamp column")
-                df["created_timestamp"] = datetime.now(timezone.utc)
-
-            logger.info(f"Feature data preparation completed. Shape: {df.shape}")
-            logger.debug(f"Columns in prepared data: {list(df.columns)}")
-
-            return df
-
-        except Exception as e:
-            logger.error(f"Error during feature data preparation: {str(e)}")
             raise
 
     def run(self):
@@ -498,11 +481,20 @@ class Feast(Stage):
                 if key not in feast_config:
                     raise ValueError(f"Missing required Feast configuration: {key}")
 
+            # Check source data path exists
+            src_path = pathlib.Path(self.cfg.paths.processed) / "features_not_onehot.parquet"
+            if not src_path.exists():
+                raise FileNotFoundError(f"Source data not found at: {src_path}")
+
+            # If data hasn't changed, skip feature store setup
+            if not self.check_data_hash(src_path):
+                return
+
             online_store_cfg = feast_config.get("online_store", {})
 
             container = None
             try:
-                # Create init.sql file for pgvector extension
+                # PostgreSQL container setup
                 init_sql_content = """
                 CREATE SCHEMA IF NOT EXISTS feast;
                 CREATE EXTENSION IF NOT EXISTS vector;
@@ -525,21 +517,12 @@ class Feast(Stage):
                 )
                 container.start()
 
-                # Wait for database to be ready with better logging
                 wait_for_logs(
                     container=container,
                     predicate="database system is ready to accept connections",
                     timeout=120,
                 )
                 logger.info("PostgreSQL container logs indicate database system is ready")
-
-                # Additional wait for init process
-                wait_for_logs(
-                    container=container,
-                    predicate="PostgreSQL init process complete",
-                    timeout=120,
-                )
-                logger.info("PostgreSQL init process complete according to logs")
 
                 exposed_port = container.get_exposed_port(5432)
                 logger.info(f"Started pgvector/pgvector:pg16 container on port: {exposed_port}")
@@ -574,90 +557,48 @@ class Feast(Stage):
                     if store in feast_config:
                         feast_config[store].update(db_config)
 
-                if "online_store" in feast_config:
-                    feast_config["online_store"].update(
-                        {
-                            "type": "postgres",
-                            "vector_enabled": True,
-                            "vector_len": 2,
-                        }
-                    )
-
-                # Ensure required top-level fields
-                required_fields = ["project", "provider", "entity_key_serialization_version", "coerce_tz_aware"]
-                top_level_config = {
-                    field: feast_config.pop(field, None) for field in required_fields if field in feast_config
-                }
-                feast_config = {**top_level_config, **feast_config}
-
                 # Feature repository setup
                 feature_repo_path = pathlib.Path(self.cfg.paths.feature_repo).resolve()
                 feature_repo_path.mkdir(parents=True, exist_ok=True)
 
-                # Process feature data
+                # Copy data for Feast
                 src_path = pathlib.Path(self.cfg.paths.processed) / "features_not_onehot.parquet"
                 dest_path = feature_repo_path / "features_not_onehot.parquet"
                 shutil.copy2(src_path, dest_path)
                 logger.info(f"Copied features file to: {dest_path}")
 
-                # Load and prepare feature data
-                df = pd.read_parquet(dest_path)
-                df = self._prepare_feature_data(df)
-
                 # Set up feature tables in PostgreSQL
+                df = self.load_data("features.parquet", "data/processed")
                 self._setup_feature_tables(df)
-
-                # Save prepared data back to parquet
-                df.to_parquet(dest_path, index=False)
 
                 # Create feature store configuration
                 with open(feature_repo_path / "feature_store.yaml", "w") as f:
                     yaml.dump(feast_config, f)
                 logger.info(f"Created feature store config at: {feature_repo_path / 'feature_store.yaml'}")
 
-                # Copy feature definitions
-                feature_repo_source = pathlib.Path(__file__).parent / "feature_repo.py"
-                shutil.copy2(feature_repo_source, feature_repo_path / "feature_repo.py")
-                logger.info(f"Copied feature definitions to: {feature_repo_path / 'feature_repo.py'}")
-
                 # Initialize and apply feature store
                 store = feast.FeatureStore(repo_path=str(feature_repo_path))
                 store.apply([entities, *features, feature_service])
                 logger.info("Applied feature definitions.")
 
-                # Try to materialize with better error handling
+                # Materialize feature views
                 try:
                     store.materialize_incremental(end_date=datetime.now(timezone.utc))
                     logger.info("Successfully materialized feature views.")
                 except Exception as e:
                     logger.error(f"Failed to materialize feature views: {str(e)}")
-                    # Log additional diagnostic information
-                    logger.debug("Checking table existence and permissions...")
-                    try:
-                        self._pg_manager.execute_query(
-                            "SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema = 'feast';"
-                        )
-                    except Exception as check_e:
-                        logger.error(f"Failed to check tables: {str(check_e)}")
-                    raise e
-                    # Materialize feature views
-                    try:
-                        store.materialize_incremental(end_date=datetime.now(timezone.utc))
-                        logger.info("Materialized feature views.")
-                    except Exception as e:
-                        logger.error(f"Failed to materialize feature views: {str(e)}")
-                        raise
+                    raise
 
-                    # Save metrics
-                    metrics = {
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
-                        "feast_version": feast.__version__,
-                        "feature_views": [fv.name for fv in store.list_feature_views()],
-                        "feature_services": [fs.name for fs in store.list_feature_services()],
-                        "entities": [e.name for e in store.list_entities()],
-                    }
-                    self.save_metrics("metrics", metrics)
-                    logger.info("Feature store setup completed.")
+                # Save metrics
+                metrics = {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "feast_version": feast.__version__,
+                    "feature_views": [fv.name for fv in store.list_feature_views()],
+                    "feature_services": [fs.name for fs in store.list_feature_services()],
+                    "entities": [e.name for e in store.list_entities()],
+                }
+                self.save_metrics("metrics", metrics)
+                logger.info("Feature store setup completed.")
 
             finally:
                 if self._pg_manager:

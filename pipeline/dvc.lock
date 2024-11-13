@@ -10,8 +10,8 @@ stages:
     deps:
     - path: requirements/base.txt
       hash: md5
-      md5: 5050f4f60d20602fe4410bcb29394c32
-      size: 132
+      md5: ad4949ee1718c53cb857ae9f720ffd5d
+      size: 149
     outs:
     - path: .venv
       hash: md5
@@ -61,31 +61,31 @@ stages:
       size: 1884
     - path: pipeline/stages/preprocess.py
       hash: md5
-      md5: a5273bf8fc0cdd55a5ea529fcefac598
-      size: 12400
+      md5: db48c25bd535a30296b56440f184446e
+      size: 10896
       isexec: true
     - path: pipeline/stages/stage.py
       hash: md5
-      md5: c9cd5ee8a245b4e18bea8fa8cec7da2f
-      size: 5110
+      md5: f3b11490fd7c2d588d94fdcba77023f1
+      size: 5302
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 5050f4f60d20602fe4410bcb29394c32
-      size: 132
+      md5: ad4949ee1718c53cb857ae9f720ffd5d
+      size: 149
     outs:
-    - path: data/interim/data.parquet
+    - path: data/interim/cleaned.parquet
       hash: md5
-      md5: ff7f3f24f1d817188240d403e29f217a
-      size: 1645476
+      md5: 223ea481ba2bb2de4084b7fab860ec52
+      size: 1801254
     - path: metrics/preprocess/metrics.json
       hash: md5
-      md5: 27e62d59eafe38f4d7ec0dfe01d002d9
-      size: 3727
+      md5: 736aeedbe1afe7e4fab85fae8f49c845
+      size: 15356
     - path: plots/preprocess/missing_values.png
       hash: md5
-      md5: 4c8d142e220a2e2f5af880977e1c818b
-      size: 482959
+      md5: 7b3f99be8f7905cc53828e7a20c90e69
+      size: 480350
     - path: plots/preprocess/num_lab_procedures_distribution.png
       hash: md5
       md5: 7101d0cf2927621f95c6bf8ea4ff056a
@@ -131,10 +131,10 @@ stages:
       md5: d751713988987e9331980363e24189ce.dir
       size: 0
       nfiles: 0
-    - path: data/interim/data.parquet
+    - path: data/interim/cleaned.parquet
       hash: md5
-      md5: ff7f3f24f1d817188240d403e29f217a
-      size: 1645476
+      md5: 223ea481ba2bb2de4084b7fab860ec52
+      size: 1801254
     - path: pipeline/__init__.py
       hash: md5
       md5: 516d9abddfbef26ec011250ca5cf66aa
@@ -145,107 +145,99 @@ stages:
       size: 1884
     - path: pipeline/stages/featurize.py
       hash: md5
-      md5: 52561ab15f86fafb234683c67d290e98
-      size: 15363
+      md5: 951a68727ec341359d84a5eb1988801a
+      size: 21219
       isexec: true
     - path: pipeline/stages/stage.py
       hash: md5
-      md5: c9cd5ee8a245b4e18bea8fa8cec7da2f
-      size: 5110
+      md5: f3b11490fd7c2d588d94fdcba77023f1
+      size: 5302
       isexec: true
     outs:
     - path: data/processed/features.parquet
       hash: md5
-      md5: 496c907119330ae4232f7b6237fce100
-      size: 565552
+      md5: d689a4a6098c1d804a9b5339048b14be
+      size: 1378122
     - path: data/processed/features_not_onehot.parquet
       hash: md5
-      md5: 1b14321b5c868684f9af0b7b6bfd99af
-      size: 1808900
+      md5: 5b1a3246f0ed7e8935fed8d1d18bfb14
+      size: 2575190
     - path: metrics/featurize/metrics.json
       hash: md5
-      md5: 4e62c149dbafc52bae3e573ccb565536
-      size: 1762
+      md5: bcb0d40ad635d5b7056c354eeb968419
+      size: 1727
     - path: metrics/featurize/statistics.json
       hash: md5
-      md5: dc4d635ee27af87e7630318b246ea4ff
-      size: 3145
+      md5: 506b84defa5e0b30e54129f2459cd36b
+      size: 2690
     - path: plots/featurize/age_distribution.png
       hash: md5
-      md5: 7ba1845b28aab194d68a1734868d9c78
-      size: 80088
+      md5: e08a801e4afe1b788bc487245b71982d
+      size: 170021
     - path: plots/featurize/age_number_diagnoses_distribution.png
       hash: md5
-      md5: 90847ec23dbd6233caf170979598b249
-      size: 106624
-    - path: plots/featurize/change_num_med_distribution.png
+      md5: 58a45d78f7f4ed5129128397b9ecfbd5
+      size: 220381
+    - path: plots/featurize/change_num_medications_distribution.png
       hash: md5
-      md5: e0e6824c03532a90acacc24ecf4d94db
-      size: 99656
+      md5: 6c6b563161b1ff10891a40d6aa937c8c
+      size: 139366
     - path: plots/featurize/feature_correlations.png
       hash: md5
-      md5: 6ae4e2f17b9beaac2597e5eae464fa10
-      size: 637990
+      md5: 76ef8b4f3ed7b711772993d75ec01f9e
+      size: 211623
     - path: plots/featurize/feature_importance.csv
       hash: md5
-      md5: 5aabfc05aeab4460ed530e34b19041af
-      size: 768
+      md5: d4b3a52916691b5cb63250136e042b19
+      size: 853
     - path: plots/featurize/feature_importance.png
       hash: md5
-      md5: 38bd7b4acf8f49ded9c867936a6018a3
-      size: 284359
-    - path: plots/featurize/num_change_distribution.png
+      md5: e485508c37a849e74374a9ed2f4626dc
+      size: 354829
+    - path: plots/featurize/num_medications_distribution.png
       hash: md5
-      md5: ee76bc16afda769ce91f0b49df6db2a6
-      size: 101758
-    - path: plots/featurize/num_med_distribution.png
+      md5: 5d6c2bae1a31c604da5d96e7b5b92cf6
+      size: 151064
+    - path: plots/featurize/num_medications_num_lab_procedures_distribution.png
       hash: md5
-      md5: f040eba849f41334b26e99bb5a04fcee
-      size: 96176
-    - path: plots/featurize/num_med_num_change_distribution.png
+      md5: 6e5d27c4fa92f36dfcd4a8c3212567d0
+      size: 176335
+    - path: plots/featurize/num_medications_num_procedures_distribution.png
       hash: md5
-      md5: 95d358f3263634dbc3d49d913c86a57d
-      size: 113960
-    - path: plots/featurize/num_med_num_lab_procedures_distribution.png
+      md5: 6bc9e950ee2da47e0c9100986aab8c00
+      size: 149047
+    - path: plots/featurize/num_medications_number_diagnoses_distribution.png
       hash: md5
-      md5: d2953c3cd71febc88704ae3b494cec49
-      size: 120611
-    - path: plots/featurize/num_med_num_procedures_distribution.png
+      md5: dadc31c283625b5dbc52ff5e9445461d
+      size: 176021
+    - path: plots/featurize/num_medications_numchange_distribution.png
       hash: md5
-      md5: c45b6bb6d7e0fb537954bb845e5ca0fe
-      size: 116805
-    - path: plots/featurize/num_med_number_diagnoses_distribution.png
+      md5: a4555f43f2732f6ede60fa6700f51f4d
+      size: 162797
+    - path: plots/featurize/num_medications_time_in_hospital_distribution.png
       hash: md5
-      md5: 4a40ce1cae2ced93340107fb82fe7941
-      size: 121025
-    - path: plots/featurize/num_med_time_in_hospital_distribution.png
-      hash: md5
-      md5: 3c377ca96d5173fcd71326432da96bcd
-      size: 113561
+      md5: 4c11f7d28fe3efbbefd6d24857c384aa
+      size: 181040
     - path: plots/featurize/num_procedures_distribution.png
       hash: md5
       md5: 1fccc43152e4a732a4ec8b762af3b9eb
       size: 137617
     - path: plots/featurize/number_diagnoses_time_in_hospital_distribution.png
       hash: md5
-      md5: 532f68b2dbf5ca5a8f0c8d7895721314
-      size: 201386
+      md5: 239e968b7a753e242407c6866739febd
+      size: 201341
     - path: plots/featurize/readmission_distribution.png
       hash: md5
       md5: 5a039486c695971472accf7e3f7bfbc0
       size: 105169
-    - path: plots/featurize/service_utilization_distribution.png
-      hash: md5
-      md5: 589a97c60d69dddfa258f8d4219c02d3
-      size: 136375
     - path: plots/featurize/time_in_hospital_distribution.png
       hash: md5
       md5: de7d88294b0b076b2b3dc2f0072c54e2
       size: 178078
     - path: plots/featurize/time_in_hospital_num_lab_procedures_distribution.png
       hash: md5
-      md5: 113506c8ae543872f9b67b89b22a0a64
-      size: 176102
+      md5: 3ac867a3e15ec64d686b50c9991bfea4
+      size: 177556
   explore:
     cmd:
     - .venv/bin/uv run python -m pipeline explore
@@ -255,10 +247,10 @@ stages:
       md5: d751713988987e9331980363e24189ce.dir
       size: 0
       nfiles: 0
-    - path: data/interim/data.parquet
+    - path: data/interim/cleaned.parquet
       hash: md5
-      md5: ff7f3f24f1d817188240d403e29f217a
-      size: 1645476
+      md5: 223ea481ba2bb2de4084b7fab860ec52
+      size: 1801254
     - path: pipeline/__init__.py
       hash: md5
       md5: 516d9abddfbef26ec011250ca5cf66aa
@@ -269,13 +261,13 @@ stages:
       size: 1884
     - path: pipeline/stages/explore.py
       hash: md5
-      md5: aeade628e1da0881caecc8b9f7bb28cc
-      size: 14770
+      md5: ec7d14262aeac3cc35a2d4927e9c0a9d
+      size: 14773
       isexec: true
     - path: pipeline/stages/stage.py
       hash: md5
-      md5: c9cd5ee8a245b4e18bea8fa8cec7da2f
-      size: 5110
+      md5: f3b11490fd7c2d588d94fdcba77023f1
+      size: 5302
       isexec: true
     - path: requirements/base.txt
       hash: md5
@@ -284,8 +276,40 @@ stages:
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: 99d03995acccb12e8eb6329f0077cabd
-      size: 20870
+      md5: 5aceb73d976a09ce4b43412b4707a611
+      size: 655583
+    - path: plots/explore/A1Cresult_chi_square.png
+      hash: md5
+      md5: 7aea173ea15ae4e63f1a5691d0bd5a3d
+      size: 113844
+    - path: plots/explore/A1Cresult_distribution.png
+      hash: md5
+      md5: e750d53a07071505c8f0434a2723a757
+      size: 120302
+    - path: plots/explore/acarbose_chi_square.png
+      hash: md5
+      md5: fc845f4e8c0825afec28de76784122e9
+      size: 145886
+    - path: plots/explore/acetohexamide_chi_square.png
+      hash: md5
+      md5: 68515a1bf6680dd3ed13ab361b144a16
+      size: 138109
+    - path: plots/explore/age_chi_square.png
+      hash: md5
+      md5: 45261ba1b82c4e392cacef9f4d5cf4c1
+      size: 151744
+    - path: plots/explore/age_distribution.png
+      hash: md5
+      md5: 74fbb293e887d28083073437289ac11e
+      size: 159259
+    - path: plots/explore/change_chi_square.png
+      hash: md5
+      md5: e0c5778de0873fb14a397fa0d3c55388
+      size: 94129
+    - path: plots/explore/chlorpropamide_chi_square.png
+      hash: md5
+      md5: debabb237a2ea71bfdddee3fca4ab686
+      size: 150565
     - path: plots/explore/clinical_metrics_boxplot.png
       hash: md5
       md5: 9e9b0447f3ae95bbc207080eee688534
@@ -296,40 +320,152 @@ stages:
       size: 255613
     - path: plots/explore/correlation_matrix_heatmap.png
       hash: md5
-      md5: 392d7d200ee8394286a5627cb2d6ca7b
-      size: 976918
-    - path: plots/explore/demographic_numeric_correlation_heatmap.png
-      hash: md5
-      md5: 774db866d607f3721506c2a37f54b38a
-      size: 93301
+      md5: d2d4c2871620f64dd30031e71f4e42ec
+      size: 575175
     - path: plots/explore/demographics_age_distribution.png
       hash: md5
-      md5: 50382f0868c84a570820d482aff5a31e
-      size: 245647
-    - path: plots/explore/diagnosis_numeric_correlation_heatmap.png
+      md5: 7d433a275aeb6d07e219f5d3ee04943e
+      size: 410857
+    - path: plots/explore/diabetesMed_chi_square.png
       hash: md5
-      md5: 1ce7d69b2c5b07768feca0c98e6af479
-      size: 336831
+      md5: e4f829402bb3ee5a4643fae309f59bb7
+      size: 115232
+    - path: plots/explore/diag_1_chi_square.png
+      hash: md5
+      md5: b2eb96f8e6fdddc18e5018f63e0bd178
+      size: 166257
+    - path: plots/explore/diag_1_distribution.png
+      hash: md5
+      md5: 6775f811194436c63a66622f84fc2c06
+      size: 174180
+    - path: plots/explore/diag_2_chi_square.png
+      hash: md5
+      md5: 9e847970254e99aba663d8fd11b6f44e
+      size: 175257
+    - path: plots/explore/diag_2_distribution.png
+      hash: md5
+      md5: b5f06f39bb436734e7172582a0b773f6
+      size: 182670
+    - path: plots/explore/diag_3_chi_square.png
+      hash: md5
+      md5: 1d31d609fe20141a29110045945d13df
+      size: 176596
+    - path: plots/explore/diag_3_distribution.png
+      hash: md5
+      md5: 7c7b8f1162bfeb9963fd590c38f78e50
+      size: 184195
     - path: plots/explore/feature_importance.csv
       hash: md5
-      md5: 299acbfcf4fe1dacacc456fed62de8f9
-      size: 1172
+      md5: a9b94dec066d523935c131a0ccedb5e5
+      size: 428
     - path: plots/explore/feature_importance.png
       hash: md5
-      md5: 8280a1d973ad75260db9868fc5c76b53
-      size: 236499
+      md5: 23c19e452b8078d638e492379c2e86f7
+      size: 206820
+    - path: plots/explore/gender_chi_square.png
+      hash: md5
+      md5: 4cf41d5caef019a62d2bb8fa37c978a5
+      size: 102094
+    - path: plots/explore/gender_distribution.png
+      hash: md5
+      md5: 7495322a6c8ad90b84900c1c2b9c952f
+      size: 110023
+    - path: plots/explore/glimepiride-pioglitazone_chi_square.png
+      hash: md5
+      md5: d5bfcf047d7e66c933c4c24bf93653b6
+      size: 146345
+    - path: plots/explore/glimepiride_chi_square.png
+      hash: md5
+      md5: d5f33dc1634d5c956c3be358d76cc871
+      size: 144231
+    - path: plots/explore/glipizide-metformin_chi_square.png
+      hash: md5
+      md5: 25f32a17a5ded912a109030cfcb227c3
+      size: 138010
+    - path: plots/explore/glipizide-metformin_distribution.png
+      hash: md5
+      md5: 9f26b1071ca18fd83d3841081887adfc
+      size: 144312
+    - path: plots/explore/glipizide_chi_square.png
+      hash: md5
+      md5: f103015029355d16d722bac6f90a0770
+      size: 133754
+    - path: plots/explore/glyburide-metformin_chi_square.png
+      hash: md5
+      md5: 90f0c08016eb885480b72f61c9d8ad3a
+      size: 152669
+    - path: plots/explore/glyburide-metformin_distribution.png
+      hash: md5
+      md5: 57e996017e86f98b68f54c0cfa1d0b90
+      size: 158172
+    - path: plots/explore/glyburide_chi_square.png
+      hash: md5
+      md5: 8c67d98a129e163d34da7035327469c0
+      size: 143374
+    - path: plots/explore/glyburide_distribution.png
+      hash: md5
+      md5: 2e7f9dc427470174c6ada24dd54773c4
+      size: 149842
+    - path: plots/explore/insulin_chi_square.png
+      hash: md5
+      md5: e3142e6620e3358bb1c3bd51e80d0c4c
+      size: 132897
+    - path: plots/explore/insulin_distribution.png
+      hash: md5
+      md5: 9f2459727fb33f873fe743e56bc74f65
+      size: 140108
     - path: plots/explore/lab_results_distribution.png
       hash: md5
-      md5: 58f1379aaea28786fedf2ec652627888
-      size: 162647
-    - path: plots/explore/labs_numeric_correlation_heatmap.png
+      md5: 03844780220e0124a8ce633b61fe8315
+      size: 175713
+    - path: plots/explore/max_glu_serum_chi_square.png
       hash: md5
-      md5: d855c6c37463e62babe15a0cd0d8449f
-      size: 100121
-    - path: plots/explore/medications_numeric_correlation_heatmap.png
+      md5: 7a89e93ba731530e0a5e5e7f8bd7cfb8
+      size: 108670
+    - path: plots/explore/max_glu_serum_distribution.png
       hash: md5
-      md5: 2beae4fae561765b7875a5046f071789
-      size: 198632
+      md5: 5208ba8c175bed6cca9b3fba3f4fd8c5
+      size: 114072
+    - path: plots/explore/medical_specialty_chi_square.png
+      hash: md5
+      md5: e1c17488db44d1cfe22c67e654e14c45
+      size: 1150956
+    - path: plots/explore/metformin-pioglitazone_chi_square.png
+      hash: md5
+      md5: 4c9efe97feb906b984088728628416a8
+      size: 142111
+    - path: plots/explore/metformin-pioglitazone_distribution.png
+      hash: md5
+      md5: 33421b0962cbe99da6eb7b174effc205
+      size: 149464
+    - path: plots/explore/metformin-rosiglitazone_distribution.png
+      hash: md5
+      md5: d5d8b0c4e1e58a797b8751f8d45c1628
+      size: 134306
+    - path: plots/explore/metformin_chi_square.png
+      hash: md5
+      md5: 2dfb8b16ca972f6c9e4a6056badffdd5
+      size: 133890
+    - path: plots/explore/metformin_distribution.png
+      hash: md5
+      md5: 1b7dbb58817bc3f197a3578bec3625ec
+      size: 139281
+    - path: plots/explore/miglitol_chi_square.png
+      hash: md5
+      md5: 9dbd55b3a1d8b4b799ce1179ebebf885
+      size: 138893
+    - path: plots/explore/nateglinide_chi_square.png
+      hash: md5
+      md5: 6b35044ecebc73ff1dce2610252512e3
+      size: 144341
+    - path: plots/explore/payer_code_chi_square.png
+      hash: md5
+      md5: 972f2ebb798f34cd7e0261b6247ec4d5
+      size: 190095
+    - path: plots/explore/pioglitazone_chi_square.png
+      hash: md5
+      md5: f4160c320398891d7f3d7827db9a16bb
+      size: 146828
     - path: plots/explore/race_chi_square.png
       hash: md5
       md5: 7cee99fb8e069971d994f13878bf7fee
@@ -338,6 +474,14 @@ stages:
       hash: md5
       md5: 244797e97a7b40f2818cf84712c073b6
       size: 171605
+    - path: plots/explore/repaglinide_chi_square.png
+      hash: md5
+      md5: 2aa8187bddd710715b36151dee33e355
+      size: 145224
+    - path: plots/explore/rosiglitazone_chi_square.png
+      hash: md5
+      md5: e2b88c6fd9ff729ee2f4e4b5ddf75cd2
+      size: 147775
     - path: plots/explore/service_numeric_correlation_heatmap.png
       hash: md5
       md5: a1f316edb26ede92440e4ef64d910542
@@ -346,6 +490,18 @@ stages:
       hash: md5
       md5: 7c51a9beff6debf4e05f96a7b30c7494
       size: 236030
+    - path: plots/explore/tolazamide_chi_square.png
+      hash: md5
+      md5: e336bb3c972db344257b3a391e7e66af
+      size: 135314
+    - path: plots/explore/tolbutamide_chi_square.png
+      hash: md5
+      md5: c51ce50466bddabe056f3512bbcd5528
+      size: 132499
+    - path: plots/explore/troglitazone_chi_square.png
+      hash: md5
+      md5: d80103871e4f6535c0567f897a3a946d
+      size: 132900
   ingest_parquet:
     cmd: .venv/bin/python src/ingest.py
     deps:
@@ -808,13 +964,13 @@ stages:
       isexec: true
     - path: pipeline/stages/stage.py
       hash: md5
-      md5: c9cd5ee8a245b4e18bea8fa8cec7da2f
-      size: 5110
+      md5: f3b11490fd7c2d588d94fdcba77023f1
+      size: 5302
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 5050f4f60d20602fe4410bcb29394c32
-      size: 132
+      md5: ad4949ee1718c53cb857ae9f720ffd5d
+      size: 149
     outs:
     - path: data/raw/data.csv
       hash: md5
@@ -834,7 +990,7 @@ stages:
       size: 17401
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: 18cff89728e8c9b044f9e1b1721edaa8
+      md5: 721ab3aa371c57e40160bb7a0577c453
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5
@@ -857,24 +1013,24 @@ stages:
       nfiles: 0
     - path: data/processed/features.parquet
       hash: md5
-      md5: 496c907119330ae4232f7b6237fce100
-      size: 565552
+      md5: d689a4a6098c1d804a9b5339048b14be
+      size: 1378122
     - path: data/processed/features_not_onehot.parquet
       hash: md5
-      md5: 1b14321b5c868684f9af0b7b6bfd99af
-      size: 1808900
+      md5: 5b1a3246f0ed7e8935fed8d1d18bfb14
+      size: 2575190
     - path: pipeline/stages/feast.py
       hash: md5
-      md5: 9950e243bd9db7f438c2bfc5044121fa
-      size: 27648
+      md5: 1d9c3f7e5754acb0d8f1d1eed8cb42ba
+      size: 25357
     - path: pipeline/stages/feature_repo.py
       hash: md5
-      md5: 0ee45083bccebac63499c02f925e763d
-      size: 6523
+      md5: db7130a6b8f916993aa87f44722e2db3
+      size: 6219
     - path: pipeline/stages/stage.py
       hash: md5
-      md5: c9cd5ee8a245b4e18bea8fa8cec7da2f
-      size: 5110
+      md5: f3b11490fd7c2d588d94fdcba77023f1
+      size: 5302
       isexec: true
     - path: requirements/base.txt
       hash: md5

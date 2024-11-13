@@ -2,14 +2,14 @@ import importlib
 
 __all__ = [
     "autogluon",
-    "logistic_regression",
     "explore",
     "feast",
     "featurize",
     "infrastruct",
     "ingest",
-    "pipeline",
+    "logistic_regression",
     "preprocess",
+    "stage",
 ]
 
 

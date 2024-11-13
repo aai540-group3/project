@@ -1,4 +1,5 @@
 import pathlib
+from datetime import datetime, timezone
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,6 +10,210 @@ from sklearn.ensemble import RandomForestClassifier
 
 from .stage import Stage
 
+# Constants
+MEDICATIONS = [
+    "metformin",
+    "repaglinide",
+    "nateglinide",
+    "chlorpropamide",
+    "glimepiride",
+    "acetohexamide",
+    "glipizide",
+    "glyburide",
+    "tolbutamide",
+    "pioglitazone",
+    "rosiglitazone",
+    "acarbose",
+    "miglitol",
+    "troglitazone",
+    "tolazamide",
+    "insulin",
+    "glyburide-metformin",
+    "glipizide-metformin",
+    "glimepiride-pioglitazone",
+    "metformin-rosiglitazone",
+    "metformin-pioglitazone",
+]
+
+AGE_MAP = {
+    "[0-10)": 5,
+    "[10-20)": 15,
+    "[20-30)": 25,
+    "[30-40)": 35,
+    "[40-50)": 45,
+    "[50-60)": 55,
+    "[60-70)": 65,
+    "[70-80)": 75,
+    "[80-90)": 85,
+    "[90-100)": 95,
+}
+
+BINARY_MAP = {
+    "gender": {"Male": 1, "Female": 0},
+    "change": {"Ch": 1, "No": 0},
+    "diabetesMed": {"Yes": 1, "No": 0},
+}
+
+LAB_MAP = {
+    "A1Cresult": {">8": 1, ">7": 1, "Norm": 0},  # Removed "None": -99
+    "max_glu_serum": {">300": 1, ">200": 1, "Norm": 0},  # Removed "None": -99
+}
+
+DISCHARGE_MAP = {
+    6: 1,
+    8: 1,
+    9: 1,
+    13: 1,  # HOME
+    3: 2,
+    4: 2,
+    5: 2,
+    14: 2,
+    22: 2,
+    23: 2,
+    24: 2,  # HEALTHCARE FACILITY
+    12: 10,
+    15: 10,
+    16: 10,
+    17: 10,  # OUTPATIENT
+    25: 18,
+    26: 18,  # PSYCHIATRIC
+}
+
+ADMISSION_MAP = {
+    2: 1,
+    3: 1,  # PHYSICIAN REFERRAL
+    5: 4,
+    6: 4,
+    10: 4,
+    22: 4,
+    25: 4,  # TRANSFER
+    15: 9,
+    17: 9,
+    20: 9,
+    21: 9,  # EMERGENCY
+    13: 11,
+    14: 11,  # OTHER
+}
+
+ADMISSION_TYPE_MAP = {
+    2: 1,
+    7: 1,  # EMERGENCY/URGENT
+    6: 5,
+    8: 5,  # OTHER
+}
+
+MEDICATION_STATUS_MAP = {"No": 0, "Steady": 1, "Up": 1, "Down": 1}
+
+DIAGNOSIS_CATEGORIES = {
+    "circulatory": lambda x: ((x >= 390) & (x < 460)) | (x == 785),
+    "respiratory": lambda x: ((x >= 460) & (x < 520)) | (x == 786),
+    "digestive": lambda x: ((x >= 520) & (x < 580)) | (x == 787),
+    "diabetes": lambda x: (x == 250),
+    "injury": lambda x: (x >= 800) & (x < 1000),
+    "musculoskeletal": lambda x: (x >= 710) & (x < 740),
+    "genitourinary": lambda x: ((x >= 580) & (x < 630)) | (x == 788),
+    "neoplasms": lambda x: (x >= 140) & (x < 240),
+}
+
+SKEWED_FEATURES = ["number_outpatient", "number_inpatient", "number_emergency"]
+
+INTERACTION_TERMS = [
+    ("age", "number_diagnoses"),
+    ("change", "num_medications"),
+    ("num_medications", "num_lab_procedures"),
+    ("num_medications", "num_procedures"),
+    ("num_medications", "number_diagnoses"),
+    ("num_medications", "numchange"),
+    ("num_medications", "time_in_hospital"),
+    ("number_diagnoses", "time_in_hospital"),
+    ("time_in_hospital", "num_lab_procedures"),
+]
+
+NUMERIC_FEATURES = [
+    "age",
+    "num_medications",
+    "num_procedures",
+    "numchange",
+    "service_utilization",
+    "time_in_hospital",
+]
+
+CATEGORICAL_FEATURES = [
+    "A1Cresult",
+    "admission_source_id",
+    "admission_type_id",
+    "discharge_disposition_id",
+    "level1_diag1",
+    "max_glu_serum",
+    "race",
+]
+
+TARGET_FEATURE_SET = [
+    "A1Cresult_0",
+    "A1Cresult_1",
+    "acarbose",
+    "admission_source_id_4",
+    "admission_source_id_7",
+    "admission_source_id_9",
+    "admission_type_id_3",
+    "admission_type_id_5",
+    "AfricanAmerican",
+    "age",
+    "age|number_diagnoses",
+    "Asian",
+    "Caucasian",
+    "change|num_medications",
+    "chlorpropamide",
+    "discharge_disposition_id_10",
+    "discharge_disposition_id_18",
+    "discharge_disposition_id_2",
+    "discharge_disposition_id_7",
+    "gender_1",
+    "glimepiride",
+    "glipizide",
+    "glyburide-metformin",
+    "glyburide",
+    "Hispanic",
+    "insulin",
+    "level1_diag1_1.0",
+    "level1_diag1_2.0",
+    "level1_diag1_3.0",
+    "level1_diag1_4.0",
+    "level1_diag1_5.0",
+    "level1_diag1_6.0",
+    "level1_diag1_7.0",
+    "level1_diag1_8.0",
+    "max_glu_serum_0",
+    "max_glu_serum_1",
+    "metformin",
+    "nateglinide",
+    "num_medications",
+    "num_medications|num_lab_procedures",
+    "num_medications|num_procedures",
+    "num_medications|number_diagnoses",
+    "num_medications|numchange",
+    "num_medications|time_in_hospital",
+    "num_procedures",
+    "number_diagnoses",
+    "number_diagnoses|time_in_hospital",
+    "number_emergency_log1p",
+    "number_inpatient_log1p",
+    "number_outpatient_log1p",
+    "Other",
+    "pioglitazone",
+    "repaglinide",
+    "rosiglitazone",
+    "time_in_hospital",
+    "time_in_hospital|num_lab_procedures",
+    "tolazamide",
+]
+
+HIGH_MISSING_VALUES = [
+    "weight",
+    "payer_code",
+    "medical_specialty",
+]
+
 
 class Featurize(Stage):
     """Pipeline stage for feature engineering with medical domain knowledge."""
@@ -17,146 +222,75 @@ class Featurize(Stage):
         """Generate and transform features with medical domain expertise."""
 
         # Load preprocessed data
-        df = self.load_data("data.parquet", "data/interim")
+        df = self.load_data("cleaned.parquet", "data/interim")
         logger.info(f"Initial shape: {df.shape}")
+        logger.debug(f"Columns:\n{df.columns}")
 
-        # Define paths for saving plots
+        # Define paths for saving outputs and plots
+        output_dir = pathlib.Path("data/processed")
+        output_dir.mkdir(parents=True, exist_ok=True)
         plots_dir = pathlib.Path(self.cfg.paths.plots) / self.name
         plots_dir.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Plots will be saved to: {plots_dir}")
 
-        # MEDICATIONS LIST
-        MEDICATIONS = [
-            "metformin",
-            "repaglinide",
-            "nateglinide",
-            "chlorpropamide",
-            "glimepiride",
-            "acetohexamide",
-            "glipizide",
-            "glyburide",
-            "tolbutamide",
-            "pioglitazone",
-            "rosiglitazone",
-            "acarbose",
-            "miglitol",
-            "troglitazone",
-            "tolazamide",
-            "insulin",
-            "glyburide-metformin",
-            "glipizide-metformin",
-            "glimepiride-pioglitazone",
-            "metformin-rosiglitazone",
-            "metformin-pioglitazone",
-        ]
+        # Create a unique patient ID if it doesn't exist
+        if "patient_id" not in df.columns:
+            df["patient_id"] = range(1, len(df) + 1)
+            logger.info("Created 'patient_id' column.")
+        elif not df["patient_id"].is_unique:
+            logger.warning("'patient_id' column is not unique. Overwriting with unique IDs.")
+            df["patient_id"] = range(1, len(df) + 1)
 
-        # AGE PROCESSING
-        # Convert age categories to meaningful numeric values
-        age_dict = {
-            "[0-10)": 5,
-            "[10-20)": 15,
-            "[20-30)": 25,
-            "[30-40)": 35,
-            "[40-50)": 45,
-            "[50-60)": 55,
-            "[60-70)": 65,
-            "[70-80)": 75,
-            "[80-90)": 85,
-            "[90-100)": 95,
-        }
-        df["age"] = df["age"].map(age_dict)
+        # Add event_timestamp if it doesn't exist
+        if "event_timestamp" not in df.columns:
+            df["event_timestamp"] = [pd.Timestamp(datetime.now(timezone.utc)).round("s") for _ in range(len(df))]
+            logger.info("Created 'event_timestamp' column with UTC-aware timestamps.")
+
+        # Drop columns with extensive missing values
+        df = df.drop(columns=[col for col in HIGH_MISSING_VALUES if col in df.columns])
+
+        # Age processing
+        df["age"] = df["age"].map(AGE_MAP)
+        assert df["age"].between(5, 95).all(), "Age values are not correctly transformed to midpoints"
         logger.info("Age categories converted to midpoints")
 
-        # MEDICATION PROCESSING
-        med_mapping = {"No": 0, "Steady": 1, "Up": 1, "Down": 1}
-        change_mapping = {"No": 0, "Steady": 0, "Up": 1, "Down": 1}
-
+        # Medication processing
         for med in MEDICATIONS:
             if med not in df.columns:
                 raise RuntimeError(f"Medication column not found: {med}")
-            df[f"{med}_med"] = df[med].map(med_mapping)
-            df[f"{med}_change"] = df[med].map(change_mapping)
-            df[med] = df[med].map(med_mapping)
+            df[med] = df[med].map(MEDICATION_STATUS_MAP)
 
-        # CALCULATE MEDICATION COUNTS
-        df["num_med"] = df[[f"{med}_med" for med in MEDICATIONS]].sum(axis=1)
-        df["num_change"] = df[[f"{med}_change" for med in MEDICATIONS]].sum(axis=1)
-
-        # CLEANUP TEMPORARY COLUMNS
-        for med in MEDICATIONS:
-            df = df.drop([f"{med}_med", f"{med}_change"], axis=1)
-
-        logger.info("Medication features processed")
-
-        # SERVICE UTILIZATION
+        # Calculate medication change count and service utilization
+        df["numchange"] = df[MEDICATIONS].apply(lambda row: sum(row == 1), axis=1)
         df["service_utilization"] = df["number_outpatient"] + df["number_emergency"] + df["number_inpatient"]
 
-        # BINARY ENCODINGS
-        binary_mappings = {
-            "change": {"Ch": 1, "No": 0},
-            "diabetesMed": {"Yes": 1, "No": 0},
-            "gender": {"Male": 1, "Female": 0},
-        }
-
-        for col, mapping in binary_mappings.items():
+        # Binary encodings
+        for col, mapping in BINARY_MAP.items():
             if col not in df.columns:
                 raise RuntimeError(f"Binary mapping column not found: {col}")
             df[col] = df[col].map(mapping)
 
-        # LAB RESULTS
-        lab_mappings = {
-            "A1Cresult": {">8": 1, ">7": 1, "Norm": 0, "None": -99},
-            "max_glu_serum": {">300": 1, ">200": 1, "Norm": 0, "None": -99},
-        }
-
-        for col, mapping in lab_mappings.items():
+        # Lab results
+        for col, mapping in LAB_MAP.items():
             if col not in df.columns:
                 raise RuntimeError(f"Lab mapping column not found: {col}")
             df[col] = df[col].map(mapping)
 
-        # ADMISSION TYPE MAPPING
-        admission_type_map = {
-            2: 1, 7: 1,  # EMERGENCY/URGENT
-            6: 5, 8: 5,  # OTHER
-        }  # fmt: off
+        # Admission type mapping
         if "admission_type_id" not in df.columns:
             raise RuntimeError("Column 'admission_type_id' not found")
-        df["admission_type_id"] = df["admission_type_id"].replace(admission_type_map)
+        df["admission_type_id"] = df["admission_type_id"].replace(ADMISSION_TYPE_MAP)
 
-        # DISCHARGE DISPOSITION MAPPING
-        discharge_map = {
-            6: 1, 8: 1, 9: 1, 13: 1,                       # HOME
-            3: 2, 4: 2, 5: 2, 14: 2, 22: 2, 23: 2, 24: 2,  # HEALTHCARE
-            12: 10, 15: 10, 16: 10, 17: 10,                # OUTPATIENT
-            25: 18, 26: 18,                                # PSYCHIATRIC
-        }  # fmt: off
+        # Discharge and admission mappings
         if "discharge_disposition_id" not in df.columns:
             raise RuntimeError("Column 'discharge_disposition_id' not found")
-        df["discharge_disposition_id"] = df["discharge_disposition_id"].replace(discharge_map)
+        df["discharge_disposition_id"] = df["discharge_disposition_id"].replace(DISCHARGE_MAP)
 
-        # ADMISSION SOURCE MAPPING
-        admission_source_map = {
-            2: 1, 3: 1,                       # PHYSICIAN REFERRAL
-            5: 4, 6: 4, 10: 4, 22: 4, 25: 4,  # TRANSFER
-            15: 9, 17: 9, 20: 9, 21: 9,       # EMERGENCY
-            13: 11, 14: 11,                   # OTHER
-        }  # fmt: off
         if "admission_source_id" not in df.columns:
             raise RuntimeError("Column 'admission_source_id' not found")
-        df["admission_source_id"] = df["admission_source_id"].replace(admission_source_map)
+        df["admission_source_id"] = df["admission_source_id"].replace(ADMISSION_MAP)
 
-        # DIAGNOSIS CATEGORIZATION
-        diagnosis_categories = {
-            "CIRCULATORY": lambda x: ((x >= 390) & (x < 460)) | (x == 785),
-            "RESPIRATORY": lambda x: ((x >= 460) & (x < 520)) | (x == 786),
-            "DIGESTIVE": lambda x: ((x >= 520) & (x < 580)) | (x == 787),
-            "DIABETES": lambda x: (x == 250),
-            "INJURY": lambda x: (x >= 800) & (x < 1000),
-            "MUSCULOSKELETAL": lambda x: (x >= 710) & (x < 740),
-            "GENITOURINARY": lambda x: ((x >= 580) & (x < 630)) | (x == 788),
-            "NEOPLASMS": lambda x: (x >= 140) & (x < 240),
-        }
-
+        # Diagnosis categorization
         for i in range(1, 4):
             diag_col = f"diag_{i}"
             level_col = f"level1_diag{i}"
@@ -166,150 +300,201 @@ class Featurize(Stage):
                 df[level_col] = 0
                 continue
 
-            # Convert diagnosis codes
-            df[diag_col] = df[diag_col].astype(str)
-            df[diag_col] = df[diag_col].apply(lambda x: "0" if any(c in str(x) for c in ["V", "E"]) else x)
+            # Convert diagnosis code and categorize
+            df[diag_col] = df[diag_col].astype(str).apply(lambda x: "0" if any(c in x for c in ["V", "E"]) else x)
             df[diag_col] = pd.to_numeric(df[diag_col], errors="coerce")
 
-            # Create diagnosis categories
-            conditions = [v(df[diag_col]) for v in diagnosis_categories.values()]
-            choices = range(1, len(diagnosis_categories) + 1)
-            df[level_col] = np.select(conditions, choices, default=0)
+            # Apply categorization functions
+            df[level_col] = 0  # Default value
+            for idx, (category, func) in enumerate(DIAGNOSIS_CATEGORIES.items(), start=1):
+                df.loc[func(df[diag_col]), level_col] = idx
 
-        logger.info("Diagnosis categorization completed")
-
-        # HANDLE SKEWED FEATURES
-        skewed_features = ["number_outpatient", "number_inpatient", "number_emergency"]
-
-        for col in skewed_features:
-            if col not in df.columns:
-                raise RuntimeError(f"Skewed feature column not found: {col}")
-            if (df[col] >= 0).all():
-                df[f"{col}_log1p"] = np.log1p(df[col])
-            elif (df[col] > 0).all():
-                df[f"{col}_log"] = np.log(df[col])
+        # Log transformations for skewed features
+        for col in SKEWED_FEATURES:
+            if col in df.columns:
+                if df[col].skew() > 2:
+                    df[f"{col}_log1p"] = np.log1p(df[col])
+                    logger.debug(f"Applied log1p transformation to '{col}'")
+                else:
+                    df[f"{col}_log1p"] = df[col]  # Keep original if not skewed
             else:
-                raise RuntimeError(f"Skewed feature contains invalid values: {col}")
+                logger.warning(f"Skewed feature '{col}' not found in DataFrame.")
+                df[f"{col}_log1p"] = 0  # Default if missing
 
-        # INTERACTION TERMS
-        interactions = [
-            ("num_med", "time_in_hospital"),
-            ("num_med", "num_procedures"),
-            ("time_in_hospital", "num_lab_procedures"),
-            ("num_med", "num_lab_procedures"),
-            ("num_med", "number_diagnoses"),
-            ("age", "number_diagnoses"),
-            ("change", "num_med"),
-            ("number_diagnoses", "time_in_hospital"),
-            ("num_med", "num_change"),
-        ]
+        # Binary encodings for race categories
+        race_categories = ["Asian", "Hispanic", "Caucasian", "AfricanAmerican", "Other"]
+        for race in race_categories:
+            if race not in df.columns:
+                if "race" in df.columns:
+                    df[race] = (df["race"] == race).astype(int)
+                else:
+                    df[race] = 0  # Default if 'race' column is missing
+                logger.debug(f"Created binary column for race: '{race}'")
 
-        for term1, term2 in interactions:
-            if term1 not in df.columns or term2 not in df.columns:
-                raise RuntimeError(f"Interaction terms '{term1}' and/or '{term2}' not found")
-            df[f"{term1}|{term2}"] = df[term1] * df[term2]
+        # Define expected categories for binary features
+        expected_binary_categories = {
+            "A1Cresult": ["0", "1"],
+            "max_glu_serum": ["0", "1"],
+            "gender": ["0", "1"],
+        }
 
-        logger.info("Interaction terms created")
+        # Define expected categories for multi-categorical features
+        expected_multi_categories = {
+            "admission_source_id": ["1", "2", "3", "4", "7", "9"],  # Replace with actual categories
+            "admission_type_id": ["3", "5"],
+            "discharge_disposition_id": ["2", "7", "10", "18"],
+            "level1_diag1": [f"{i}.0" for i in range(1, 9)],  # '1.0' to '8.0'
+        }
 
-        # ONE-HOT ENCODING
-        categorical_features = [
-            "race",
-            "gender",
-            "admission_type_id",
-            "discharge_disposition_id",
-            "admission_source_id",
-            "max_glu_serum",
-            "A1Cresult",
-            "level1_diag1",
-        ]
+        # One-hot encode binary features without dropping any categories
+        for col, categories in expected_binary_categories.items():
+            if col in df.columns:
+                # Convert to string to ensure consistent naming
+                df[col] = df[col].astype(str)
+                dummies = pd.get_dummies(df[col], prefix=col, drop_first=False)
+                # Ensure all expected dummy columns are present
+                for cat in categories:
+                    dummy_col = f"{col}_{cat}"
+                    if dummy_col not in dummies.columns:
+                        dummies[dummy_col] = 0  # Add missing dummy column with 0
+                df = pd.concat([df, dummies], axis=1)
+                logger.debug(f"One-hot encoded binary feature '{col}' with {len(dummies.columns)} dummy variables.")
 
-        # Save pre-encoding data
-        output_pre_onehot = pathlib.Path("data/processed/features_not_onehot.parquet")
-        df.to_parquet(output_pre_onehot, index=False)
-        logger.debug(f"Saved pre-encoding features to: {output_pre_onehot}")
+        # One-hot encode multi-categorical features without dropping the first category
+        for col, categories in expected_multi_categories.items():
+            if col in df.columns:
+                # Convert to string to ensure consistent naming
+                df[col] = df[col].astype(str)
+                dummies = pd.get_dummies(df[col], prefix=col, drop_first=False)
+                # Ensure all expected dummy columns are present
+                for cat in categories:
+                    dummy_col = f"{col}_{cat}"
+                    if dummy_col not in dummies.columns:
+                        dummies[dummy_col] = 0  # Add missing dummy column with 0
+                df = pd.concat([df, dummies], axis=1)
+                logger.debug(
+                    f"One-hot encoded multi-categorical feature '{col}' with {len(dummies.columns)} dummy variables."
+                )
 
-        # PERFORM ONE-HOT ENCODING
-        df = pd.get_dummies(df, columns=categorical_features, drop_first=True)
+        # Drop original categorical columns after encoding
+        df = df.drop(columns=[col for col in CATEGORICAL_FEATURES if col in df.columns])
 
-        # SELECT FINAL FEATURES
-        feature_set = [
-            # NUMERIC FEATURES
-            "age",
-            "num_change",
-            "num_med",
-            "num_procedures",
-            "number_diagnoses",
-            "number_emergency_log1p",
-            "number_inpatient_log1p",
-            "number_outpatient_log1p",
-            "service_utilization",
-            "time_in_hospital",
-            # MEDICATIONS
-            *MEDICATIONS,
-            # ENCODED CATEGORICAL FEATURES
-            *[c for c in df.columns if c.startswith("race_")],
-            *[c for c in df.columns if c.startswith("gender_")],
-            *[c for c in df.columns if c.startswith("admission_type_id_")],
-            *[c for c in df.columns if c.startswith("discharge_disposition_id_")],
-            *[c for c in df.columns if c.startswith("admission_source_id_")],
-            *[c for c in df.columns if c.startswith("max_glu_serum_")],
-            *[c for c in df.columns if c.startswith("A1Cresult_")],
-            *[c for c in df.columns if c.startswith("level1_diag1_")],
-            # INTERACTION TERMS
-            *[c for c in df.columns if "|" in c],
-        ]
+        # Save the non-one-hot encoded features
+        df_not_onehot = df.copy()
+        df_not_onehot.to_parquet(output_dir / "features_not_onehot.parquet", index=False)
+        logger.debug("Saved non-one-hot encoded features to 'features_not_onehot.parquet'.")
 
-        # VERIFY FEATURES EXIST
-        missing_features = [feat for feat in feature_set if feat not in df.columns]
+        # Create Interaction Terms
+        for term1, term2 in INTERACTION_TERMS:
+            if term1 in df.columns and term2 in df.columns:
+                interaction_col = f"{term1}|{term2}"
+                df[interaction_col] = df[term1] * df[term2]
+                logger.debug(f"Created interaction term '{interaction_col}'")
+            else:
+                logger.warning(
+                    f"Cannot create interaction term '{term1}|{term2}' because one or both features are missing."
+                )
+
+        # Final selection of columns
+        # Ensure 'readmitted' is present
+        if "readmitted" not in df.columns:
+            raise RuntimeError("Target column 'readmitted' not found in DataFrame.")
+
+        # Select target features if they exist
+        existing_target_features = [col for col in TARGET_FEATURE_SET if col in df.columns]
+        df_final = df.loc[:, existing_target_features + ["readmitted"]].copy()
+
+        logger.info("Checking for missing features in final dataset")
+        missing_features = set(TARGET_FEATURE_SET) - set(df_final.columns)
         if missing_features:
-            logger.warning(f"Missing features: {missing_features}")
+            logger.warning(f"Missing features in final dataset: {missing_features}")
+            # Investigate why these features are missing
+            for feature in missing_features:
+                if feature.startswith("A1Cresult_"):
+                    # Possible issue with binary encoding
+                    logger.error(f"Binary encoding for 'A1Cresult' might be incorrect. Missing feature: {feature}")
+                elif feature.startswith("max_glu_serum_"):
+                    # Possible issue with binary encoding
+                    logger.error(f"Binary encoding for 'max_glu_serum' might be incorrect. Missing feature: {feature}")
+                elif feature.startswith("level1_diag1_"):
+                    # Possible issue with diagnosis categorization
+                    logger.error(f"Diagnosis categorization might be incorrect. Missing feature: {feature}")
+                elif feature.startswith("gender_"):
+                    # Possible issue with binary encoding of gender
+                    logger.error(f"Binary encoding for 'gender' might be incorrect. Missing feature: {feature}")
+                else:
+                    # Other features
+                    logger.error(f"Feature '{feature}' is missing due to unexpected data or encoding issues.")
+            # Raise error to halt pipeline and prompt investigation
+            raise RuntimeError(f"Missing features in final dataset: {missing_features}")
+        else:
+            logger.info("All target features are present in the final dataset.")
 
-        # CREATE FINAL DATASET
-        df_final = df[feature_set + ["readmitted"]].copy()
+        # Save processed features
+        df_final.to_parquet(output_dir / "features.parquet", index=False)
+        logger.info(f"Feature engineering completed. Final shape: {df_final.shape}")
 
-        # SAVE PROCESSED FEATURES
-        output_features = pathlib.Path("data/processed/features.parquet")
-        df_final.to_parquet(output_features, index=False)
-        logger.debug(f"Saved final features to: {output_features}")
-
-        # SAVE METRICS
+        # Generate and save metrics
         metrics = {
             "total_features": len(df_final.columns),
             "feature_groups": {
                 "medications": len(MEDICATIONS),
-                "lab_results": len(lab_mappings),
-                "diagnoses": len(diagnosis_categories),
-                "interactions": len(interactions),
-                "binary": len(binary_mappings),
-                "categorical": len(categorical_features),
+                "lab_results": len(LAB_MAP),
+                "diagnoses": len(DIAGNOSIS_CATEGORIES),
+                "interactions": len(INTERACTION_TERMS),
+                "binary": len(BINARY_MAP),
+                "categorical": len(CATEGORICAL_FEATURES),
             },
             "feature_names": list(df_final.columns),
         }
         self.save_metrics("metrics", metrics)
 
-        # GENERATE VISUALIZATIONS
+        # Filter NUMERIC_FEATURES and INTERACTION_TERMS based on availability in df_final
+        numeric_features = [feature for feature in NUMERIC_FEATURES if feature in df_final.columns]
+        interaction_terms_present = [
+            (term1, term2) for term1, term2 in INTERACTION_TERMS if f"{term1}|{term2}" in df_final.columns
+        ]
+
+        # Generate statistics
+        stats = {
+            "readmission_rate": float(df_final["readmitted"].mean()),
+            "total_patients": len(df_final),
+            "readmitted_patients": int(df_final["readmitted"].sum()),
+            "feature_stats": df_final[numeric_features].describe().to_dict(),
+            "missing_values": df_final.isnull().sum().to_dict(),
+        }
+        self.save_metrics("statistics", stats)
+
+        # Generate and save visualizations
         logger.info("Generating visualizations")
 
-        # FEATURE CORRELATION HEATMAP
-        plt.figure(figsize=(12, 10))
-        corr_matrix = df.select_dtypes(include=[np.number]).corr()
-        sns.heatmap(
-            corr_matrix,
-            annot=False,
-            cmap="RdBu",
-            center=0,
-            mask=np.triu(np.ones_like(corr_matrix, dtype=bool)),
-            square=True,
-            cbar_kws={"shrink": 0.5},
-        )
-        plt.title("Feature Correlation Heatmap")
-        plt.tight_layout()
-        plt.savefig(plots_dir / "feature_correlations.png", bbox_inches="tight")
-        plt.close()
+        # Correlation plot for numeric features in df_final
+        if numeric_features:  # Check if there are any numeric features
+            plt.figure(figsize=(12, 10))
+            corr_matrix = df_final[numeric_features].corr()
 
-        # FEATURE IMPORTANCE
-        X = df.drop("readmitted", axis=1)
-        y = df["readmitted"]
+            mask = np.triu(np.ones_like(corr_matrix), k=1)
+            sns.heatmap(
+                corr_matrix,
+                mask=mask,
+                cmap="coolwarm",
+                center=0,
+                annot=True,
+                fmt=".2f",
+                square=True,
+                linewidths=0.5,
+                cbar_kws={"label": "Correlation Coefficient"},
+            )
+            plt.title("Numeric Feature Correlations")
+            plt.tight_layout()
+            figure_filename = plots_dir / "feature_correlations.png"
+            plt.savefig(str(figure_filename), bbox_inches="tight")
+            plt.close()
+            logger.debug(f"Saved correlation heatmap to: {figure_filename}")
+
+        # Feature importance plot
+        X = df_final.drop("readmitted", axis=1)
+        y = df_final["readmitted"]
         X = X.fillna(0)
 
         model = RandomForestClassifier(random_state=42)
@@ -321,31 +506,22 @@ class Featurize(Stage):
             .head(20)
         )
 
-        plt.figure(figsize=(10, 8))
+        plt.figure(figsize=(12, 10))
         sns.barplot(data=importance_df, y="feature", x="importance")
         plt.title("Top 20 Features by Importance")
+        plt.xlabel("Importance")
+        plt.ylabel("Feature")
         plt.tight_layout()
-        plt.savefig(plots_dir / "feature_importance.png", bbox_inches="tight")
+        figure_filename = plots_dir / "feature_importance.png"
+        plt.savefig(str(figure_filename), bbox_inches="tight")
+        logger.debug(f"Saved feature importance plot to: {figure_filename}")
         plt.close()
+        csv_filename = plots_dir / "feature_importance.csv"
+        importance_df.to_csv(str(csv_filename), index=False)
+        logger.debug(f"Saved feature importance data to: {csv_filename}")
 
-        # SAVE FEATURE IMPORTANCE DATA
-        importance_df.to_csv(plots_dir / "feature_importance.csv", index=False)
-
-        # DISTRIBUTION PLOTS
-        numeric_features = [
-            "age",
-            "time_in_hospital",
-            "num_med",
-            "service_utilization",
-            "num_procedures",
-            "num_change",
-        ]
-
+        # Distribution plots for numeric features
         for feature in numeric_features:
-            if feature not in df_final.columns:
-                raise RuntimeError(f"Feature for distribution plot not found: {feature}")
-
-            logger.info(f"Generating distribution plot for: {feature}")
             plt.figure(figsize=(10, 6))
             sns.histplot(df_final, x=feature, kde=True, bins=30, color="skyblue")
             plt.title(f"Distribution of {feature.replace('_', ' ').title()}")
@@ -354,46 +530,32 @@ class Featurize(Stage):
             plt.tight_layout()
             plt.savefig(plots_dir / f"{feature}_distribution.png", bbox_inches="tight")
             plt.close()
+            logger.debug(f"Saved distribution plot for {feature} to: {plots_dir / f'{feature}_distribution.png'}")
 
-        # DISTRIBUTION PLOTS FOR INTERACTION TERMS
-        for term1, term2 in interactions:
+        # Distribution plots for interaction terms
+        for term1, term2 in interaction_terms_present:
             feature = f"{term1}|{term2}"
-            filename_feature = feature.replace("|", "_")
-            if feature not in df_final.columns:
-                logger.warning(f"Interaction feature not found: {feature}")
-                continue
-
-            logger.info(f"Generating distribution plot for interaction: {feature}")
             plt.figure(figsize=(10, 6))
             sns.histplot(df_final[feature], kde=True, bins=30, color="salmon")
-            plt.title(f"Distribution of {term1.title()} and {term2.title()}")
-            plt.xlabel(f"{term1.replace('_', ' ').title()} and {term2.replace('_', ' ').title()}")
+            plt.title(f"Distribution of {term1.replace('_', ' ').title()} and {term2.replace('_', ' ').title()}")
+            plt.xlabel(f"{term1.replace('_', ' ').title()} * {term2.replace('_', ' ').title()}")
             plt.ylabel("Frequency")
             plt.tight_layout()
-            plt.savefig(plots_dir / f"{filename_feature}_distribution.png", bbox_inches="tight")
+            plot_filepath = plots_dir / f"{feature.replace('|', '_')}_distribution.png"
+            plt.savefig(str(plot_filepath), bbox_inches="tight")
             plt.close()
+            logger.debug(f"Saved distribution plot for interaction term {feature} to: {plot_filepath}")
 
-        # READMISSION DISTRIBUTION
+        # Readmission distribution plot
         plt.figure(figsize=(8, 6))
         sns.countplot(data=df_final, x="readmitted")
         plt.title("Distribution of Readmission")
         plt.xlabel("Readmitted")
         plt.ylabel("Count")
         plt.tight_layout()
-        plt.savefig(plots_dir / "readmission_distribution.png", bbox_inches="tight")
+        figure_filename = plots_dir / "readmission_distribution.png"
+        plt.savefig(str(figure_filename), bbox_inches="tight")
         plt.close()
+        logger.debug(f"Saved readmission distribution plot to: {figure_filename}")
 
-        # SAVE ADDITIONAL STATISTICS
-        stats = {
-            "readmission_rate": float(df_final["readmitted"].mean()),
-            "total_patients": len(df_final),
-            "readmitted_patients": int(df_final["readmitted"].sum()),
-            "feature_stats": df_final[numeric_features].describe().to_dict(),
-            "missing_values": df_final.isnull().sum().to_dict(),
-        }
-
-        # SAVE TO METRICS
-        self.save_metrics("statistics", stats)
-
-        logger.info(f"Feature engineering completed. Final shape: {df_final.shape}")
-        logger.info(f"Total features generated: {len(feature_set)}")
+        logger.info("All visualizations generated and saved successfully.")

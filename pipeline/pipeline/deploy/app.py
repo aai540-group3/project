@@ -1,13 +1,10 @@
 import logging
-from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
-import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from pipeline.models.base import Model
 from pipeline.utils.registry import ModelRegistry
 
 logger = logging.getLogger(__name__)

@@ -90,6 +90,22 @@ class Metrics:
             json.dump(self.get_metrics(), f, indent=4)
         logger.info(f"Metrics saved to JSON at '{filepath}'.")
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, Union[List[int], List[float]]]) -> "Metrics":
+        """Create a Metrics instance from a dictionary.
+
+        :param data: Dictionary containing 'y_true', 'y_pred', and 'y_proba' as keys
+        :type data: Dict[str, Union[List[int], List[float]]]
+        :return: Instance of Metrics class populated with values from the dictionary
+        :rtype: Metrics
+        """
+        y_true = data.get("y_true")
+        y_pred = data.get("y_pred")
+        y_proba = data.get("y_proba")
+
+        logger.info("Creating Metrics instance from dictionary.")
+        return cls(y_true=y_true, y_pred=y_pred, y_proba=y_proba)
+
     def get_metrics(self) -> Dict[str, Optional[float]]:
         """Compute and return classification metrics.
 

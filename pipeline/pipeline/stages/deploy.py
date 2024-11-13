@@ -350,7 +350,7 @@ interventions and improved healthcare resource allocation.
             api.upload_folder(
                 repo_id=self.repo_id,
                 folder_path=str(self.output_dir),
-                commit_message=f"Update model artifacts",
+                commit_message="Update model artifacts",
             )
 
             logger.info(f"Successfully uploaded model to {self.repo_id}")
