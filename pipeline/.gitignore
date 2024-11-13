@@ -143,3 +143,7 @@ data/feature_repo/feature_store.yaml
 data/feature_repo/features_not_onehot.parquet
 data/feature_repo/metrics.json
 data/feature_repo/features.parquet
+feature_repo/data_hash.txt
+feature_repo/feature_store.yaml
+feature_repo/features.parquet
+metrics/feast/metrics.json
