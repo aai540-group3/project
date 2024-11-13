@@ -137,3 +137,4 @@ plots/preprocess/number_inpatient_distribution.png
 plots/preprocess/number_outpatient_distribution.png
 plots/preprocess/readmission_distribution.png
 plots/preprocess/time_in_hospital_distribution.png
+plots/autogluon/feature_importance.csv
