@@ -147,3 +147,4 @@ feature_repo/data_hash.txt
 feature_repo/feature_store.yaml
 feature_repo/features.parquet
 metrics/feast/metrics.json
+feature_repo/feature_repo.py
