@@ -1,7 +1,8 @@
 all:
-	pip install dvc && cd pipeline && MODE=full dvc repro
+	pip install dvc[s3] && MODE=full dvc repro
 
 clean:
+	cd ..
 	find . -name ".ruff_cache" -exec rm -rf {} +
 	find . -name ".uv_cache" -exec rm -rf {} +
 	find . -name ".venv" -exec rm -rf {} +

@@ -61,8 +61,7 @@ jobs:
           TABLE_NAME: ${{ secrets.TABLE_NAME }}
           BUCKET_KEYS: ${{ secrets.BUCKET_KEYS }}
         run: |
-          pip install dvc[s3] uv
-          MODE=full dvc repro -f
+          make
           dvc push
 
       - name: Push to Git Remote
