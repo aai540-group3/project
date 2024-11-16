@@ -227,16 +227,6 @@ process_path() {
 }
 
 #######################################
-# Clean up DVC lock file and rerun reproduction.
-# Globals:
-#   DVC_LOCK_FILE
-#######################################
-cleanup_and_reproduce() {
-    rm -f "${DVC_LOCK_FILE}"
-    dvc repro -v
-}
-
-#######################################
 # Main function that orchestrates the DVC path processing.
 # Globals:
 #   None
@@ -290,7 +280,8 @@ main() {
         log_info "No changes to commit"
     fi
 
-    cleanup_and_reproduce
+    rm -f "${DVC_LOCK_FILE}"
+    dvc repro -v
 }
 
 # Execute main function

@@ -1,4 +1,0 @@
-clang
-graphviz
-graphviz-dev
-python3-dev
