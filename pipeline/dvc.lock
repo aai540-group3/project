@@ -1,0 +1,31 @@
+schema: '2.0'
+stages:
+  setup:
+    cmd:
+    - UV_LINK_MODE=copy uv venv .venv --python 3.9
+    - .venv/bin/python -m ensurepip --upgrade
+    - .venv/bin/python -m pip install -q uv
+    - .venv/bin/uv pip install -q --no-cache-dir -e .
+    - .venv/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
+    - cp -r .venv .venv-models
+    - .venv-models/bin/uv pip install --no-cache-dir -r requirements/models.txt
+    deps:
+    - path: requirements/base.txt
+      hash: md5
+      md5: aa1d2b05692758cb14e458ad5e114701
+      size: 105
+    - path: requirements/models.txt
+      hash: md5
+      md5: 1990e8fd4cc60ee9ec446af8d9970aa4
+      size: 35
+    outs:
+    - path: .venv
+      hash: md5
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
+    - path: .venv-models
+      hash: md5
+      md5: 3801146cb8bb941f01821c1513fd28c4.dir
+      size: 753709541
+      nfiles: 33690

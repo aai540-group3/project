@@ -2,6 +2,7 @@ __pycache__/
 !.gitkeep
 .archive/
 .cache
+.combineignore
 .coverage
 .coverage.*
 .DS_Store
@@ -52,6 +53,7 @@ __pycache__/
 *.tmp
 *.toc
 build/
+combine.py
 combined.txt
 coverage.xml
 debug/
@@ -70,6 +72,7 @@ mlruns/
 nosetests.xml
 outputs/
 parts/
+pin-workflows.py
 pip-delete-this-directory.txt
 pip-log.txt
 sdist/
