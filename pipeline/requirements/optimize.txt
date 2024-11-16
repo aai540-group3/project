@@ -1,5 +1,0 @@
-optuna
-pandas
-numpy
-scikit-learn
-plotly
