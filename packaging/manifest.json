@@ -6,7 +6,7 @@
     "Final_Project_Team_3_Deliverable_2.pptx",
     "Final_Project_Team_3_Deliverable_3.zip",
     "LICENSE",
-    "Makefile",
+    "pipeline/Makefile",
     "pipeline/__init__.py",
     "pipeline/data/interim/cleaned.parquet",
     "pipeline/data/processed/features.parquet",

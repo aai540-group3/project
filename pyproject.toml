@@ -1,255 +1,200 @@
 [build-system]
-requires = [
-    "setuptools",
-    "wheel",
-    "uv",
-]
+requires = ["setuptools>=68.0.0", "wheel>=0.40.0", "uv>=0.1.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "diabetic-readmission-risk-prediction"
 version = "0.1.0"
-description = "Diabetic Readmission Risk Prediction using Machine Learning"
+description = "Machine learning pipeline for predicting diabetic patient readmission risk"
 readme = "README.md"
-requires-python = ""
-license = { text = "MIT" }
+requires-python = ">=3.9,<3.12"
+license = {text = "MIT"}
 authors = [
-    { name = "Jonathan Agustin", email = "jonathan.agustin@example.com" },
-    { name = "Zack Robertson", email = "zack.robertson@example.com" },
-    { name = "Lisa Vo", email = "lisa.vo@example.com" },
+    {name = "Jonathan Agustin", email = "jonathan.agustin@example.com"},
+    {name = "Zack Robertson", email = "zack.robertson@example.com"},
+    {name = "Lisa Vo", email = "lisa.vo@example.com"}
 ]
-keywords = [
-    "mlops",
-    "diabetes",
-    "prediction",
-    "healthcare",
-]
+keywords = ["mlops", "machine-learning", "healthcare", "diabetes", "readmission"]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Healthcare Industry",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
 ]
+
 dependencies = [
-    "aiohttp",
-    "autogluon.tabular",
-    "cleanlab",
-    "dvc",
-    "dvclive",
-    "fastapi",
-    "feast",
-    "feast",
-    "imblearn",
-    "joblib",
-    "matplotlib",
-    "numpy",
-    "openai",
-    "optuna",
-    "pandas",
-    "passlib",
-    "pdf2image",
-    "pillow",
-    "prometheus-client",
-    "pyarrow",
-    "python-jose",
-    "python-multipart",
-    "python-pptx",
-    "redis",
-    "requests",
-    "scikit-learn",
-    "seaborn",
-    "tenacity",
-    "tensorflow",
-    "uv",
-    "uvicorn",
-    "wandb",
+    # Core ML/Data Science
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "scikit-learn>=1.3.0",
+    "torch>=2.0.0",
+    "shap>=0.42.0",
+    "autogluon.tabular[all]>=1.0.0",
+    
+    # Data Processing
+    "pyarrow>=14.0.0",
+    "imbalanced-learn>=0.11.0",
+    "cleanlab>=2.5.0",
+    
+    # MLOps & Pipeline
+    "dvc[s3]>=3.30.0",
+    "feast[postgres]>=0.34.0",
+    "mlflow>=2.9.0",
+    "dvclive>=3.0.0",
+    
+    # Visualization
+    "matplotlib>=3.8.0",
+    "seaborn>=0.13.0",
+    
+    # Infrastructure & Deployment
+    "boto3>=1.34.0",
+    "docker>=7.0.0",
+    "fastapi>=0.109.0",
+    "huggingface-hub>=0.20.0",
+    
+    # Utils
+    "loguru>=0.7.0",
+    "omegaconf>=2.3.0",
+    "joblib>=1.3.0",
+    "psycopg2-binary>=2.9.0",
+    "uv>=0.1.0",
 ]
+
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "black",
-    "flake8",
-    "isort",
-    "mypy",
-    "pylint",
-    "pydocstyle",
-    "bandit",
-    "codecov",
+    # Testing
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-sugar>=0.9.7",
+    
+    # Linting & Formatting
+    "black>=23.12.0",
+    "ruff>=0.1.0",
+    "mypy>=1.8.0",
+    "isort>=5.13.0",
+    
+    # Type Checking
     "types-requests",
-    "types-setuptools",
-    "types-toml",
-    "types-urllib3",
-    "types-python-dateutil",
     "types-PyYAML",
-    "types-scipy",
-    "types-dataclasses",
-    "types-PyQt5",
-    "types-PyQt6",
-    "types-PySide2",
-    "types-pyarrow",
-    "types-pandas",
-    "types-pydantic",
-    "types-joblib",
-    "types-psutil",
-    "types-opencv-python",
-    "types-lxml",
-    "types-pyqt6",
-    "types-pyside2",
-    "types-matplotlib",
-    "types-openpyxl",
-    "types-aiohttp",
-    "types-typing-extensions",
-    "types-cryptography",
-    "types-yaml",
-    "ucimlrepo",
+    "types-python-dateutil",
+    "types-setuptools",
+    "types-psycopg2",
+    "types-boto3",
+    
+    # Security
+    "bandit>=1.7.0",
+    "safety>=2.3.0",
+]
+
+ci = [
+    "codecov>=2.1.0",
+    "coverage>=7.4.0",
+]
+
+docs = [
+    "sphinx>=7.1.0",
+    "sphinx-rtd-theme>=2.0.0",
+    "sphinxcontrib-napoleon>=0.7.0",
 ]
 
 [tool.black]
 line-length = 120
-target-version = [
-    "py37",
-    "py38",
-    "py39",
-    "py310",
-    "py311",
-]
-
-[tool.flake8]
-max-line-length = 120
-exclude = [
-    ".git",
-    "__pycache__",
-    ".venv",
-    "site-packages",
-    "build",
-    "dist",
-    ".mypy_cache",
-    ".pytest_cache",
-]
+target-version = ["py39", "py310", "py311"]
+include = '\.pyi?$'
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+^/docs
+'''
 
 [tool.isort]
+profile = "black"
 multi_line_output = 3
 include_trailing_comma = true
+force_grid_wrap = 0
 line_length = 120
-known_third_party = [
-    "feast",
-    "yaml",
-]
-skip_glob = [
-    ".venv-*/*",
-]
-
-[tool.pylint]
-disable = [
-    "missing-docstring",
-    "invalid-name",
-    "line-too-long",
-    "too-few-public-methods",
-    "import-error",
-]
-max-line-length = 120
+known_first_party = ["pipeline"]
+known_third_party = ["feast", "dvc", "mlflow"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+show_error_codes = true
 ignore_missing_imports = true
-strict = false
-exclude = "\\.venv-.*"
-
-[tool.coverage.run]
-source = [
-    "pipeline/src",
-    "pipeline/models",
-]
-
-[tool.coverage.report]
-show_missing = true
-
-[tool.uv]
-environments = [
-    "sys_platform == 'linux'",
-]
 
 [tool.ruff]
+select = [
+    "E",  # pycodestyle errors
+    "F",  # pyflakes
+    "B",  # flake8-bugbear
+    "C",  # flake8-comprehensions
+    "I",  # isort
+]
+ignore = []
+line-length = 120
+target-version = "py311"
 exclude = [
-    "__pypackages__",
-    "_build",
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git-rewrite",
     ".git",
-    ".hg",
-    ".ipynb_checkpoints",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".pyenv",
-    ".pytest_cache",
-    ".pytype",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".uv_cache",
-    ".venv-*",
-    ".venv",
-    ".vscode",
-    "buck-out",
+    ".venv*",
+    "__pycache__",
     "build",
     "dist",
-    "node_modules",
-    "site-packages",
-    "venv",
 ]
-
-line-length = 120
-indent-width = 4
-target-version = "py311"
 
 [tool.ruff.lint]
-# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
-# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
-# McCabe complexity (`C901`) by default.
-select = [
-    "E4",
-    "E7",
-    "E9",
-    "F",
-]
-ignore = [
-]
-
-# Allow fix for all enabled rules (when `--fix`) is provided.
-fixable = [
-    "ALL",
-]
-unfixable = [
-]
-
-# Allow unused variables when underscore-prefixed.
+fixable = ["ALL"]
+unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.format]
-# Like Black, use double quotes for strings.
 quote-style = "double"
-
-# Like Black, indent with spaces, rather than tabs.
 indent-style = "space"
-
-# Like Black, respect magic trailing commas.
 skip-magic-trailing-comma = false
-
-# Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
 
-# Enable auto-formatting of code examples in docstrings. Markdown,
-# reStructuredText code/literal blocks and doctests are all supported.
-#
-# This is currently disabled by default, but it is planned for this
-# to be opt-out in the future.
-docstring-code-format = false
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --cov=pipeline --cov-report=xml"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 
-# Set the line length limit used when formatting code snippets in
-# docstrings.
-#
-# This only has an effect when the `docstring-code-format` setting is
-# enabled.
-docstring-code-line-length = "dynamic"
+[tool.coverage.run]
+source = ["pipeline"]
+branch = true
+omit = [
+    "tests/*",
+    "setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+show_missing = true
+fail_under = 80
+
+[tool.setuptools]
+packages = ["pipeline"]
+package-dir = {"" = "src"}
