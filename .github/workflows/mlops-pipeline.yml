@@ -62,13 +62,13 @@ jobs:
           BUCKET_KEYS: ${{ secrets.BUCKET_KEYS }}
         run: |
           make
-          dvc push
 
       - name: Push to Git Remote
         if: always()
         id: commit_and_push
         continue-on-error: true
         run: |
+          dvc push
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git config pull.rebase false
