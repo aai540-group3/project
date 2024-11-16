@@ -5,13 +5,9 @@ stages:
     - UV_LINK_MODE=copy uv venv .venv --python 3.9
     - .venv/bin/python -m ensurepip --upgrade
     - .venv/bin/python -m pip install -q uv
-    - .venv/bin/uv pip install -q --no-cache-dir  -e .
+    - .venv/bin/uv pip install -q --no-cache-dir -e .
     - .venv/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
-    - UV_LINK_MODE=copy uv venv .venv-models --python 3.9
-    - .venv-models/bin/python -m ensurepip --upgrade
-    - .venv-models/bin/python -m pip install -q uv
-    - .venv-models/bin/uv pip install -q --no-cache-dir  -e .
-    - .venv-models/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
+    - cp -r .venv .venv-models
     - .venv-models/bin/uv pip install --no-cache-dir -r requirements/models.txt
     deps:
     - path: requirements/base.txt
@@ -30,9 +26,9 @@ stages:
       nfiles: 0
     - path: .venv-models
       hash: md5
-      md5: c216a62c5b2e357bd02470fdec609cb6.dir
-      size: 43713945
-      nfiles: 698
+      md5: fb03307e98f566fcf9f9c048134685f0.dir
+      size: 391525093
+      nfiles: 15233
   infrastruct:
     cmd:
     - export UV_LINK_MODE=copy && uv venv .venv-infrastruct --python 3.11
@@ -1094,9 +1090,9 @@ stages:
     deps:
     - path: .venv-models
       hash: md5
-      md5: c216a62c5b2e357bd02470fdec609cb6.dir
-      size: 43713945
-      nfiles: 698
+      md5: fb03307e98f566fcf9f9c048134685f0.dir
+      size: 391525093
+      nfiles: 15233
     - path: data/processed/features.parquet
       hash: md5
       md5: d689a4a6098c1d804a9b5339048b14be
@@ -1147,7 +1143,7 @@ stages:
       size: 420
     - path: models/autogluon
       hash: md5
-      md5: 902911bf4b50cbe98d09fa6aed141c59.dir
+      md5: 3d16c593cd4daa5080546d7d9f50a3f4.dir
       size: 2502781
       nfiles: 14
     - path: plots/autogluon/calibration_curve.png
@@ -1172,9 +1168,9 @@ stages:
     deps:
     - path: .venv-models
       hash: md5
-      md5: c216a62c5b2e357bd02470fdec609cb6.dir
-      size: 43713945
-      nfiles: 698
+      md5: fb03307e98f566fcf9f9c048134685f0.dir
+      size: 391525093
+      nfiles: 15233
     - path: data/processed/features.parquet
       hash: md5
       md5: d689a4a6098c1d804a9b5339048b14be
@@ -1217,15 +1213,15 @@ stages:
     outs:
     - path: metrics/logisticregression/feature_importance.csv
       hash: md5
-      md5: 7ebb2f7229fb02dc4cd03562cd1ba189
-      size: 1703
+      md5: 9aafc98e8bca4d71457f33739947802c
+      size: 1707
     - path: metrics/logisticregression/metrics.json
       hash: md5
-      md5: ea40ca23c389ca8d4eba820f99f13f95
-      size: 410
+      md5: 1d3b86f3919af84782631e5326545219
+      size: 417
     - path: models/logisticregression/model.pth
       hash: md5
-      md5: 2a5decf99c4d553296fbd2937ee706d8
+      md5: 4b2303dbf09894b004fae8e30013ed7b
       size: 1740
     - path: models/logisticregression/scaler.joblib
       hash: md5
@@ -1233,20 +1229,20 @@ stages:
       size: 3631
     - path: plots/logisticregression/confusion_matrix.png
       hash: md5
-      md5: f05bd0bd5aa568dcd754cc29501a5868
-      size: 115952
+      md5: 16af154a245d7b05a3ae81b1d7dcae22
+      size: 114391
     - path: plots/logisticregression/feature_importance.png
       hash: md5
-      md5: 3126856754202eef61265e338fc24394
-      size: 348326
+      md5: 241e71e83de9f2216d84a537c0a56811
+      size: 354693
     - path: plots/logisticregression/precision_recall_curve.png
       hash: md5
-      md5: 86588eb68d6b09870ceb9f87e3f6ce54
-      size: 108156
+      md5: 8dba25f573c67208997563b3a6d435b7
+      size: 111074
     - path: plots/logisticregression/roc_curve.png
       hash: md5
-      md5: 39c4d784e265f3d01615114489a9135f
-      size: 159788
+      md5: 6786db1617e1e2636039df4f629bf9a1
+      size: 159801
   neuralnetwork:
     cmd:
     - .venv-models/bin/uv run python pipeline neuralnetwork
