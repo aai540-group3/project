@@ -1274,8 +1274,8 @@ stages:
       size: 24634
     - path: pipeline/models/model.py
       hash: md5
-      md5: b19ed6c979c02eb136c608292d527352
-      size: 13512
+      md5: e81f139b1fb62a27a71ac170a55b42e1
+      size: 13546
       isexec: true
     - path: pipeline/models/neuralnetwork.py
       hash: md5
@@ -1296,36 +1296,44 @@ stages:
       md5: 9adc69af1e9b835590c5fe8205db95dc
       size: 101
     outs:
+    - path: metrics/neuralnetwork/classification_report.json
+      hash: md5
+      md5: a848d9800ed129b2422511bad6cff018
+      size: 708
     - path: metrics/neuralnetwork/metrics.json
       hash: md5
-      md5: c26c7d1ef8393bb2b8067e27d14a5623
+      md5: 0f142ed79287140982d68654342d951a
       size: 421
     - path: models/neuralnetwork
       hash: md5
-      md5: 2f57dfcf31fb750c8775bfa770df3d31.dir
+      md5: 95a340b459d129be0f213bb50f3618c2.dir
       size: 35092
       nfiles: 2
     - path: plots/neuralnetwork/calibration_curve.png
       hash: md5
-      md5: 227425c5ada955b150919854e1f6b394
-      size: 192113
+      md5: 4990d0a43130de7fc80a4a840bdd7efb
+      size: 192029
     - path: plots/neuralnetwork/confusion_matrix.png
       hash: md5
-      md5: 353b907d97fd16772877b5836a95f454
-      size: 118342
+      md5: 73d8387d044e21fc938ff31f331d134a
+      size: 114898
+    - path: plots/neuralnetwork/precision_recall_curve.png
+      hash: md5
+      md5: bef98c3f5d10e941a52ba54483b51726
+      size: 111824
     - path: plots/neuralnetwork/probability_distribution.png
       hash: md5
-      md5: e9e403e80d8a0eb5d84cfbcea06b47d2
-      size: 216375
+      md5: 50e0e4d9db840ab70141aff0a42d45cc
+      size: 221849
     - path: plots/neuralnetwork/roc_curve.png
       hash: md5
-      md5: b3fbfa4e099375a3e0a6249a58275402
-      size: 160594
+      md5: 9eb292961de90110c387e7a7cbc8eb45
+      size: 161591
     - path: plots/neuralnetwork/training_accuracy.png
       hash: md5
-      md5: d474f020874d75982d4a9d34f204b83c
-      size: 243545
+      md5: 4c61854426c1c74fc67fc32cc85495b0
+      size: 235210
     - path: plots/neuralnetwork/training_loss.png
       hash: md5
-      md5: 09e4c3eabc06e9967a849450d0fb80bc
-      size: 217034
+      md5: 5a112105ec7497b010f9cc9d1ba63a3c
+      size: 221384

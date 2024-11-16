@@ -4,13 +4,9 @@ stages:
       - UV_LINK_MODE=copy uv venv .venv --python 3.9
       - .venv/bin/python -m ensurepip --upgrade
       - .venv/bin/python -m pip install -q uv
-      - .venv/bin/uv pip install -q --no-cache-dir  -e .
+      - .venv/bin/uv pip install -q --no-cache-dir -e .
       - .venv/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
-      - UV_LINK_MODE=copy uv venv .venv-models --python 3.9
-      - .venv-models/bin/python -m ensurepip --upgrade
-      - .venv-models/bin/python -m pip install -q uv
-      - .venv-models/bin/uv pip install -q --no-cache-dir  -e .
-      - .venv-models/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
+      - cp -r .venv .venv-models
       - .venv-models/bin/uv pip install --no-cache-dir -r requirements/models.txt
     outs:
       - .venv:
@@ -31,9 +27,9 @@ stages:
       - .venv
       - pipeline/__init__.py
       - pipeline/__main__.py
-      - pipeline/stages/stage.py
       - pipeline/stages/infrastruct.py
       - pipeline/stages/ingest.py
+      - pipeline/stages/stage.py
       - requirements/base.txt
     outs:
       - data/raw/data.parquet:
@@ -478,9 +474,9 @@ stages:
       - requirements/base.txt
       - requirements/feast.txt
     outs:
+      - feature_repo/data_hash.txt
       - feature_repo/feature_repo.py
       - feature_repo/feature_store.yaml
-      - feature_repo/data_hash.txt
       - feature_repo/features.parquet
     metrics:
       - metrics/feast/metrics.json:
