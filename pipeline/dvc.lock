@@ -51,8 +51,8 @@ stages:
       size: 2664
     - path: pipeline/stages/infrastruct.py
       hash: md5
-      md5: 13b3c73e3a0f8036706032021b1b5ccf
-      size: 1480
+      md5: 72d4ce3d11203df01a68df73c6a93abc
+      size: 1440
       isexec: true
     - path: pipeline/stages/ingest.py
       hash: md5
@@ -85,9 +85,13 @@ stages:
       hash: md5
       md5: af3722d3a8b6db1015406123b06cd79d
       size: 17401
+    - path: metrics/infrastruct/metrics.json
+      hash: md5
+      md5: 41c8d35f318cac046315a176a65b43d3
+      size: 221
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: 237ccda2cf9292aa566e78bfefad29a0
+      md5: 1372ef236b7efa4a68290c401606d503
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5
@@ -604,8 +608,8 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 9adc69af1e9b835590c5fe8205db95dc
-      size: 101
+      md5: aa1d2b05692758cb14e458ad5e114701
+      size: 105
     - path: requirements/feast.txt
       hash: md5
       md5: ce807b660e841b507c8a918e6d67460b
@@ -625,11 +629,11 @@ stages:
       size: 596
     - path: feature_repo/features.parquet
       hash: md5
-      md5: 4fb87b56d89d9d403f15fdac0c132bdf
+      md5: 36daad4e36c49d01c8ca5c1017e6ed3e
       size: 1981733
     - path: metrics/feast/metrics.json
       hash: md5
-      md5: 3ba51dcf50b72d8235df0324975725a8
+      md5: f8e8432957a2ddb899456e3df5eca5d5
       size: 370
   autogluon:
     cmd:

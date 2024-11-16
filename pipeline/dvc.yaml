@@ -15,9 +15,6 @@ stages:
       - .venv-models:
           cache: false
           persist: true
-    metrics:
-      - metrics/infrastruct/metrics.json:
-          cache: true
     deps:
       - requirements/base.txt
       - requirements/models.txt
@@ -44,6 +41,8 @@ stages:
       - data/raw/metadata.json:
           cache: true
     metrics:
+      - metrics/infrastruct/metrics.json:
+          cache: true
       - metrics/ingest/metrics.json:
           cache: true
     plots:
