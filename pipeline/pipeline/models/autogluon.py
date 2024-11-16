@@ -37,7 +37,7 @@ class Autogluon(Model):
         self.eval_metric: str = self.model_config.get("metric", "roc_auc")
         self.time_limit: int = self.model_config.get("time_limit", 60)
         self.presets: str = self.model_config.get("presets", "medium_quality")
-        self.hyperparameters: Dict[str, Any] = OmegaConf.to_container(
+        self.hyperparameters: Optional[Dict[str, Any]] = OmegaConf.to_container(
             self.model_config.get("hyperparameters", {}), resolve=True
         )
         logger.info(f"Autogluon initialized with label column '{self.label_column}'.")
@@ -73,15 +73,20 @@ class Autogluon(Model):
 
         # Fit TabularPredictor
         try:
-            self.predictor.fit(
-                train_data=train_data,
-                tuning_data=tuning_data,
-                hyperparameters=self.hyperparameters,
-                time_limit=self.time_limit,
-                presets=self.presets,
-                verbosity=2,
-                use_bag_holdout=True,
-            )
+            fit_kwargs = {
+                "train_data": train_data,
+                "tuning_data": tuning_data,
+                "time_limit": self.time_limit,
+                "presets": self.presets,
+                "verbosity": 2,
+                "use_bag_holdout": True,
+            }
+
+            # Only include hyperparameters if they are provided
+            if self.hyperparameters:
+                fit_kwargs["hyperparameters"] = self.hyperparameters
+
+            self.predictor.fit(**fit_kwargs)
             logger.info("Training completed successfully.")
         except Exception as e:
             logger.error(f"Error during model training: {e}")

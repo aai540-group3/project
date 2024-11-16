@@ -1,0 +1,81 @@
+schema: '2.0'
+stages:
+  autogluon:
+    cmd:
+    - .venv-models/bin/uv run $(sed 's/^/--with /' requirements/autogluon.txt | tr
+      '\n' ' ') python pipeline autogluon
+    deps:
+    - path: .venv-models
+      hash: md5
+      md5: 85141fa6fda9822e879059ef712de1fe.dir
+      size: 695606530
+      nfiles: 29070
+    - path: data/processed/features.parquet
+      hash: md5
+      md5: d689a4a6098c1d804a9b5339048b14be
+      size: 1378122
+    - path: pipeline/__init__.py
+      hash: md5
+      md5: 516d9abddfbef26ec011250ca5cf66aa
+      size: 2549
+    - path: pipeline/__main__.py
+      hash: md5
+      md5: 3e694b81981c3d6780a371efae6c117e
+      size: 2664
+    - path: pipeline/models/autogluon.py
+      hash: md5
+      md5: 2c048fbb15ef589194b2fa90e522fd97
+      size: 11272
+      isexec: true
+    - path: pipeline/models/metrics.py
+      hash: md5
+      md5: c28165ba8c3441b135cd32ac57b5c826
+      size: 24634
+    - path: pipeline/models/model.py
+      hash: md5
+      md5: e92f1366b886039fff6196f9570789c0
+      size: 13534
+      isexec: true
+    - path: pipeline/stages/autogluon.py
+      hash: md5
+      md5: a575fcf86fa05cf9b221ef3d97abd93b
+      size: 865
+    - path: pipeline/stages/stage.py
+      hash: md5
+      md5: 5d0e853805061bd824ea2316541f1c96
+      size: 5249
+      isexec: true
+    - path: requirements/autogluon.txt
+      hash: md5
+      md5: d4b0747708a57c1f67d4c15f4afa3e12
+      size: 33
+    - path: requirements/base.txt
+      hash: md5
+      md5: aa1d2b05692758cb14e458ad5e114701
+      size: 105
+    outs:
+    - path: metrics/autogluon/metrics.json
+      hash: md5
+      md5: 18cd39458e9b5867b72f8f787895e27c
+      size: 423
+    - path: models/autogluon
+      hash: md5
+      md5: 6c3eb5e121e5e7a3c2342a093c68328e.dir
+      size: 196393898
+      nfiles: 103
+    - path: plots/autogluon/calibration_curve.png
+      hash: md5
+      md5: 6b7458378e7438f51592b08d7f0dd586
+      size: 188719
+    - path: plots/autogluon/confusion_matrix.png
+      hash: md5
+      md5: 0059df1e8bd2be799ff3f36575638a82
+      size: 135570
+    - path: plots/autogluon/probability_distribution.png
+      hash: md5
+      md5: 6adef43af80a796a18747b71be3bb3e7
+      size: 179285
+    - path: plots/autogluon/roc_curve.png
+      hash: md5
+      md5: 9102b6c5cd0ba8e1248723571a7169f0
+      size: 176389

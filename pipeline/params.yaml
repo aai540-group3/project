@@ -93,31 +93,11 @@ models:
     quick:
       time_limit: 60
       presets: medium_quality
-      hyperparameters:
-        NN_TORCH:
-          num_epochs: 1
+      hyperparameters: {}
     full:
       time_limit: 7200
       presets: best_quality
-      hyperparameters:
-        GBM:
-          extra_trees: true
-          learning_rate: 0.05
-          num_boost_round: 500
-          num_leaves: 128
-          feature_fraction: 0.8
-          min_data_in_leaf: 20
-        CAT:
-          iterations: 1000
-          depth: 8
-          learning_rate: 0.05
-          min_data_in_leaf: 20
-        XGB:
-          max_depth: 8
-          learning_rate: 0.05
-          n_estimators: 500
-          subsample: 0.8
-          colsample_bytree: 0.8
+      hyperparameters: {}
 
   #-----------------------------------------------------------------------------#
   # MODEL: Logistic Regression
@@ -189,7 +169,6 @@ models:
         output_layer:
           units: 1
           activation: None
-
     full:
       model_params: {}
       training:
