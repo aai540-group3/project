@@ -38,6 +38,7 @@
     "pipeline/metrics/feast/metrics.json",
     "pipeline/metrics/featurize/metrics.json",
     "pipeline/metrics/featurize/statistics.json",
+    "pipeline/metrics/infrastruct/metrics.json",
     "pipeline/metrics/ingest/metrics.json",
     "pipeline/metrics/logisticregression/feature_importance.csv",
     "pipeline/metrics/logisticregression/metrics.json",

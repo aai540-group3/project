@@ -280,8 +280,8 @@ main() {
         log_info "No changes to commit"
     fi
 
-    rm -f "${DVC_LOCK_FILE}"
-    dvc repro -v
+    # rm -f "${DVC_LOCK_FILE}"
+    # dvc repro -v
 }
 
 # Execute main function
