@@ -587,8 +587,14 @@ stages:
     outs:
       - models/neuralnetwork:
           cache: true
+      - metrics/neuralnetwork:
+          cache: true
+      - plots/neuralnetwork:
+          cache: true
     metrics:
       - metrics/neuralnetwork/metrics.json:
+          cache: true
+      - metrics/neuralnetwork/classification_report.json:
           cache: true
     plots:
       - plots/neuralnetwork/confusion_matrix.png:
@@ -601,6 +607,11 @@ stages:
           x: False Positive Rate (FPR)
           y: True Positive Rate (TPR)
           template: roc
+      - plots/neuralnetwork/precision_recall_curve.png:
+          title: Precision-Recall Curve
+          x: Recall
+          y: Precision
+          template: pr
       - plots/neuralnetwork/calibration_curve.png:
           title: Calibration Curve
           x: Mean Predicted Probability
