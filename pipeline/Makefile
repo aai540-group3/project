@@ -1,6 +1,10 @@
 all:
-	pip install dvc[s3]
+	pip install -q dvc[s3]
 	MODE=full dvc repro
+
+unlock:
+	rm -f .dvc/tmp/lock
+	rm -f .dvc/tmp/rwlock
 
 clean:
 	cd ..
@@ -20,4 +24,4 @@ clean:
 	find . -name "*.egg-info" -exec rm -rf {} +
 	find . -name "*.log" -delete
 
-.PHONY: all clean
+.PHONY: all clean unlock

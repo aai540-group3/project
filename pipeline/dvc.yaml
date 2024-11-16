@@ -6,7 +6,7 @@ stages:
       - .venv/bin/python -m pip install -q uv
       - .venv/bin/uv pip install -q --no-cache-dir -e .
       - .venv/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
-      - cp -r .venv .venv-models
+      - rsync -a .venv/ .venv-models/
       - .venv-models/bin/uv pip install --no-cache-dir -r requirements/models.txt
     outs:
       - .venv:
