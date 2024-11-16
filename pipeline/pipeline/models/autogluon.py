@@ -67,6 +67,10 @@ class Autogluon(Model):
             problem_type=self.problem_type,
         )
 
+        # Log hyperparameters for debugging
+        logger.debug(f"Hyperparameters before conversion: {self.model_config.get('hyperparameters', {})}")
+        logger.debug(f"Converted hyperparameters: {self.hyperparameters}")
+
         # Fit TabularPredictor
         try:
             self.predictor.fit(
@@ -76,6 +80,7 @@ class Autogluon(Model):
                 time_limit=self.time_limit,
                 presets=self.presets,
                 verbosity=2,
+                use_bag_holdout=True,
             )
             logger.info("Training completed successfully.")
         except Exception as e:

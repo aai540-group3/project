@@ -118,13 +118,6 @@ models:
           n_estimators: 500
           subsample: 0.8
           colsample_bytree: 0.8
-        NN_TORCH:
-          num_epochs: 100
-          learning_rate: 0.001
-          dropout_prob: 0.1
-          weight_decay: 0.01
-          batch_size: 512
-          layers: [200, 100]
 
   #-----------------------------------------------------------------------------#
   # MODEL: Logistic Regression
