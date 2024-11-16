@@ -32,6 +32,7 @@ combine.txt
 debug/
 dist/
 models/autogluon/models/
+notebooks/
 pipeline/.dvc/cache/
 pptx2video/
 site-packages/
