@@ -48,11 +48,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-venv-
 
-      - name: Setup Virtual Environment
-        working-directory: pipeline
-        run: |
-          pip install dvc
-
       - name: Run DVC Pipeline
         working-directory: pipeline
         env:
@@ -66,7 +61,8 @@ jobs:
           TABLE_NAME: ${{ secrets.TABLE_NAME }}
           BUCKET_KEYS: ${{ secrets.BUCKET_KEYS }}
         run: |
-          dvc repro -f
+          pip install dvc uv
+          dvc repro
 
       - name: Push to DVC Remotes
         if: always()
