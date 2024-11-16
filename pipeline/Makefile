@@ -1,5 +1,5 @@
 all:
-	pip install dvc[s3] && MODE=full dvc repro
+	pip install uv dvc[s3] && MODE=full dvc repro
 
 clean:
 	cd ..
