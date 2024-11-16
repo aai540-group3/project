@@ -41,7 +41,7 @@ jobs:
 
       - name: Cache Python Virtualenv
         id: cache-venv
-        uses: actions/cache@v4
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
           path: pipeline/.venv
           key: ${{ runner.os }}-venv-${{ hashFiles('pipeline/requirements/**/*.txt') }}
@@ -50,7 +50,7 @@ jobs:
 
       - name: Cache Models Virtualenv
         id: cache-venv-models
-        uses: actions/cache@v4
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
           path: pipeline/.venv-models
           key: ${{ runner.os }}-venv-models-${{ hashFiles('pipeline/requirements/**/*.txt') }}
