@@ -249,19 +249,28 @@ class Model(ABC):
         y_proba = self.predict_proba(self.X_test)
 
         # For binary classification, take the probability of the positive class
-        if isinstance(y_proba, pd.DataFrame) and y_proba.shape[1] == 2:
-            y_proba = y_proba.iloc[:, 1]
-        elif isinstance(y_proba, np.ndarray) and y_proba.ndim > 1 and y_proba.shape[1] == 2:
-            y_proba = y_proba[:, 1]
+        if isinstance(y_proba, pd.DataFrame):
+            if y_proba.shape[1] == 2:
+                y_proba = y_proba.iloc[:, 1]
+            elif y_proba.shape[1] == 1:
+                y_proba = y_proba.iloc[:, 0]
+            else:
+                raise ValueError("Unexpected shape for y_proba DataFrame")
+        elif isinstance(y_proba, np.ndarray):
+            if y_proba.ndim > 1 and y_proba.shape[1] == 2:
+                y_proba = y_proba[:, 1]
+            elif y_proba.ndim == 1 or y_proba.shape[1] == 1:
+                y_proba = y_proba.ravel()
+            else:
+                raise ValueError("Unexpected shape for y_proba array")
 
-        # Initialize metrics with all necessary data
         metrics = Metrics(
             y_true=self.y_test.tolist(),
             y_proba=y_proba.tolist(),
             y_pred=y_pred.tolist(),
             model=self,
             X=self.X_test,
-            mode=self.mode,  # Pass the mode
+            mode=self.mode,
         )
 
         # Save metrics to JSON

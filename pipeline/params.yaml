@@ -1,6 +1,6 @@
 ---
 #-----------------------------------------------------------------------------#
-# GLOBAL CONFIGURATION
+# GLOBAL SETTINGS
 #-----------------------------------------------------------------------------#
 project: diabetes_readmission
 version: 0.1.0
@@ -161,8 +161,8 @@ models:
         optimizer:
           name: adam
           params:
-            learning_rate: 0.001
-        loss: binary_crossentropy
+            lr: 0.001
+        loss: binary_cross_entropy
         metrics:
           - accuracy
           - AUC
@@ -195,7 +195,7 @@ models:
             dropout: 0.3
         output_layer:
           units: 1
-          activation: sigmoid
+          activation: None
 
     full:
       model_params: {}
@@ -204,7 +204,7 @@ models:
           name: adam
           params:
             lr: 0.0005
-        loss: binary_crossentropy
+        loss: binary_cross_entropy
         metrics:
           - accuracy
           - AUC
@@ -261,7 +261,7 @@ models:
                 l2: 0.001
         output_layer:
           units: 1
-          activation: sigmoid
+          activation: None
 
 #-----------------------------------------------------------------------------#
 # VISUALIZATION CONFIGURATION
