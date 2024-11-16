@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """This script updates GitHub Actions workflow files, pinning action references
 to specific commit SHAs and adding comments with the latest version name (tag
 or branch). It enhances security by ensuring workflows use immutable code
