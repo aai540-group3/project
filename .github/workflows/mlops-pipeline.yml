@@ -1,128 +1,109 @@
-# .github/workflows/mlops-pipeline.yml
 name: MLOps Pipeline
 
 on:
   push:
     branches:
       - main
+      - develop
     paths:
-      - "pipeline/**"
       - ".github/workflows/mlops-pipeline.yml"
+      - "pipeline/**"
   pull_request:
     branches:
       - main
+      - develop
     paths:
-      - "pipeline/**"
       - ".github/workflows/mlops-pipeline.yml"
+      - "pipeline/**"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
-  validate:
+  run-mlops-pipeline:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
-          python-version: "3.10"
-          cache: pip
+          python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r pipeline/requirements.txt
-
-      - name: Validate configurations
-        run: |
-          python pipeline/src/utils/validate_configs.py
-
-  test:
-    needs: validate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Cache Python Virtualenv
+        id: cache-venv
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
         with:
-          python-version: "3.10"
-          cache: pip
+          path: pipeline/.venv
+          key: ${{ runner.os }}-venv-${{ hashFiles('pipeline/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-venv-
 
-      - name: Install dependencies
+      - name: Setup Virtual Environment
+        working-directory: pipeline
+        if: steps.cache-venv.outputs.cache-hit != 'true'
         run: |
-          python -m pip install --upgrade pip
-          pip install -r pipeline/requirements.txt
-          pip install -r pipeline/dev.txt
+          python3 -m venv .venv
+          pip install uv
 
-      - name: Run tests
-        run: |
-          pytest pipeline/tests/
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: pipeline/tests/results/
-
-  train:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-          cache: pip
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r pipeline/requirements.txt
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Run training pipeline
-        run: |
-          cd pipeline
-          dvc repro
+      - name: Run DVC Pipeline
+        working-directory: pipeline
         env:
-          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-
-      - name: Upload metrics
-        uses: actions/upload-artifact@v3
-        with:
-          name: metrics
-          path: pipeline/metrics/
-
-  deploy:
-    needs: train
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-          cache: pip
-
-      - name: Install dependencies
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          EMAILS: ${{ secrets.EMAILS }}
+          INITIAL_PASSWORD: ${{ secrets.INITIAL_PASSWORD }}
+          GROUP_NAME: ${{ secrets.GROUP_NAME }}
+          BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+          TABLE_NAME: ${{ secrets.TABLE_NAME }}
+          BUCKET_KEYS: ${{ secrets.BUCKET_KEYS }}
         run: |
-          python -m pip install --upgrade pip
-          pip install -r pipeline/requirements.txt
+          dvc repro -f
 
-      - name: Deploy to HuggingFace
+      - name: Push to DVC Remotes
+        if: always()
+        working-directory: pipeline
         run: |
-          cd pipeline
-          python src/stages/deploy.py
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          dvc push
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config pull.rebase false
+
+      - name: Push to Git Remote
+        if: always()
+        id: commit_and_push
+        continue-on-error: true
+        run: |
+          git add pipeline
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            echo "CHANGED=false" >> $GITHUB_ENV
+          else
+            git commit -m "Update DVC artifacts and metrics"
+            git push origin main || {
+              echo "Push failed. Creating a pull request..."
+              gh pr create --title "Update DVC artifacts and metrics" --body "Push to main failed. Updated DVC artifacts included." --label "automated-pr"
+            }
+            echo "CHANGED=true" >> $GITHUB_ENV
+          fi
+
+      - name: Repository Dispatch
+        if: env.CHANGED == 'true'
+        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        with:
+          token: ${{ secrets.AAI540_GROUP3_DISPATCH_TOKEN }}
+          repository: aai540-group3/project
+          event-type: package-deliverables
