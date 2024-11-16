@@ -62,7 +62,7 @@ jobs:
           BUCKET_KEYS: ${{ secrets.BUCKET_KEYS }}
         run: |
           pip install dvc[s3] uv
-          dvc repro
+          MODE=full dvc repro
 
       - name: Push to DVC Remotes
         if: always()
