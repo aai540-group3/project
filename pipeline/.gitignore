@@ -167,3 +167,4 @@ plots/preprocess/readmission_distribution.png
 plots/preprocess/time_in_hospital_distribution.png
 update.sh
 wandb/*
+metrics/infrastruct/metrics.json
