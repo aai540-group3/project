@@ -55,8 +55,7 @@ stages:
       size: 5
   preprocess:
     cmd:
-    - .venv/bin/uv run $(sed 's/^/--with /' requirements/preprocess.txt | tr '\n'
-      ' ') python pipeline preprocess
+    - .venv/bin/uv run python pipeline preprocess
     deps:
     - path: .venv
       hash: md5
@@ -89,10 +88,6 @@ stages:
       hash: md5
       md5: 9adc69af1e9b835590c5fe8205db95dc
       size: 101
-    - path: requirements/preprocess.txt
-      hash: md5
-      md5: d41d8cd98f00b204e9800998ecf8427e
-      size: 0
     outs:
     - path: data/interim/cleaned.parquet
       hash: md5
@@ -100,7 +95,7 @@ stages:
       size: 1801254
     - path: metrics/preprocess/metrics.json
       hash: md5
-      md5: 109e54cf331980aaa1ea2374febc2999
+      md5: dd5c5f579cfc5f3b6896262501eb5c72
       size: 15356
     - path: plots/preprocess/missing_values.png
       hash: md5
@@ -265,8 +260,7 @@ stages:
       size: 177556
   explore:
     cmd:
-    - .venv/bin/uv run $(sed 's/^/--with /' requirements/explore.txt | tr '\n' ' ')
-      python pipeline explore
+    - .venv/bin/uv run python pipeline explore
     deps:
     - path: .venv
       hash: md5
@@ -299,14 +293,10 @@ stages:
       hash: md5
       md5: 9adc69af1e9b835590c5fe8205db95dc
       size: 101
-    - path: requirements/explore.txt
-      hash: md5
-      md5: d41d8cd98f00b204e9800998ecf8427e
-      size: 0
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: 87455f36b898ec519a4470f78f172d62
+      md5: b3eaed04cb6616496237d09e01329427
       size: 656658
     - path: plots/explore/A1Cresult_chi_square.png
       hash: md5
@@ -1053,8 +1043,8 @@ stages:
       size: 2549
     - path: pipeline/__main__.py
       hash: md5
-      md5: 303c04429b51b25a7de341ad8ab5b9f2
-      size: 1884
+      md5: 3e694b81981c3d6780a371efae6c117e
+      size: 2664
     - path: pipeline/stages/feast.py
       hash: md5
       md5: 70a9138cb2c510196f9599567c1841e1
@@ -1091,11 +1081,11 @@ stages:
       size: 596
     - path: feature_repo/features.parquet
       hash: md5
-      md5: e2928521b3f00a331a215f38903cdcb8
+      md5: 9382091a5b2c2393bad30939cb7ec37a
       size: 1981733
     - path: metrics/feast/metrics.json
       hash: md5
-      md5: bd89e9c206825db4ce76dadc459210c7
+      md5: d161bddc242673079118d3ddf2eb52e4
       size: 370
   autogluon:
     cmd:
@@ -1117,17 +1107,21 @@ stages:
       size: 2549
     - path: pipeline/__main__.py
       hash: md5
-      md5: 303c04429b51b25a7de341ad8ab5b9f2
-      size: 1884
+      md5: 3e694b81981c3d6780a371efae6c117e
+      size: 2664
     - path: pipeline/models/autogluon.py
       hash: md5
       md5: 58c2ead2eb14b33dd9f34c81c8e89437
       size: 11007
       isexec: true
+    - path: pipeline/models/metrics.py
+      hash: md5
+      md5: c28165ba8c3441b135cd32ac57b5c826
+      size: 24634
     - path: pipeline/models/model.py
       hash: md5
-      md5: b495debfa0b2f8b32aa8a3a7972950df
-      size: 12646
+      md5: dc2276c4a00464354b10d739206a18b4
+      size: 13180
       isexec: true
     - path: pipeline/stages/autogluon.py
       hash: md5
@@ -1153,7 +1147,7 @@ stages:
       size: 420
     - path: models/autogluon
       hash: md5
-      md5: 0ceea58a2eced3a45fdd2a59cb22eb93.dir
+      md5: 7bb76c90a6b8891114381b2d3d88d9ba.dir
       size: 2502781
       nfiles: 14
     - path: plots/autogluon/calibration_curve.png

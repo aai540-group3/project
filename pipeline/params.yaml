@@ -1,7 +1,14 @@
+---
+#-----------------------------------------------------------------------------#
+# GLOBAL CONFIGURATION
+#-----------------------------------------------------------------------------#
 project: diabetes_readmission
 version: 0.1.0
 seed: 42
 
+#-----------------------------------------------------------------------------#
+# PATHS
+#-----------------------------------------------------------------------------#
 paths:
   raw: data/raw
   interim: data/interim
@@ -11,10 +18,16 @@ paths:
   plots: plots
   models: models
 
+#-----------------------------------------------------------------------------#
+# AWS CONFIGURATION
+#-----------------------------------------------------------------------------#
 aws:
   bucket_name: aai540-group3
   region: us-east-1
 
+#-----------------------------------------------------------------------------#
+# FEAST
+#-----------------------------------------------------------------------------#
 feast:
   stop_container: false
   config:
@@ -46,6 +59,9 @@ feast:
     entity_key_serialization_version: 2
     coerce_tz_aware: true
 
+#-----------------------------------------------------------------------------#
+# DATASET CONFIGURATION
+#-----------------------------------------------------------------------------#
 dataset:
   name: "Diabetes 130-US Hospitals for Years 1999-2008"
   id: 296
@@ -56,6 +72,9 @@ dataset:
     test: 0.10
     val: 0.10
 
+#-----------------------------------------------------------------------------#
+# BASE MODEL CONFIGURATION
+#-----------------------------------------------------------------------------#
 models:
   base:
     mode: quick
@@ -67,6 +86,9 @@ models:
     metric: roc_auc
     problem_type: binary
 
+  #-----------------------------------------------------------------------------#
+  # MODEL: AutoGluon
+  #-----------------------------------------------------------------------------#
   autogluon:
     quick:
       time_limit: 60
@@ -104,6 +126,9 @@ models:
           batch_size: 512
           layers: [200, 100]
 
+  #-----------------------------------------------------------------------------#
+  # MODEL: Logistic Regression
+  #-----------------------------------------------------------------------------#
   logisticregression:
     quick:
       model_params: {}
@@ -126,6 +151,9 @@ models:
         batch_size: 64
         epochs: 50
 
+  #-----------------------------------------------------------------------------#
+  # MODEL: Neural Network
+  #-----------------------------------------------------------------------------#
   neuralnetwork:
     quick:
       model_params: {}
@@ -175,7 +203,7 @@ models:
         optimizer:
           name: adam
           params:
-            learning_rate: 0.0005
+            lr: 0.0005
         loss: binary_crossentropy
         metrics:
           - accuracy
@@ -236,7 +264,7 @@ models:
           activation: sigmoid
 
 #-----------------------------------------------------------------------------#
-# Visualization settings
+# VISUALIZATION CONFIGURATION
 #-----------------------------------------------------------------------------#
 visualization:
   style: "seaborn-v0_8-white"
@@ -285,18 +313,3 @@ visualization:
           "#33BBEE",
           "#BB5566",
         ]
-
-plots:
-  confusion_matrix:
-    title: "Confusion Matrix"
-    x: "Predicted"
-    y: "Actual"
-    template: "confusion"
-  roc_curve:
-    title: "ROC Curve"
-    x: "False Positive Rate"
-    y: "True Positive Rate"
-  feature_importance:
-    title: "Top 20 Features by Importance"
-    x: "Importance"
-    y: "Feature"
