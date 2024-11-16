@@ -193,7 +193,6 @@
     "pipeline/plots/preprocess/number_outpatient_distribution.png",
     "pipeline/plots/preprocess/readmission_distribution.png",
     "pipeline/plots/preprocess/time_in_hospital_distribution.png",
-    "pipeline/plots/preprocess/time_in_hospital_num_lab_procedures_distribution.png",
     "pipeline/pyproject.toml",
     "pipeline/requirements/autogluon.txt",
     "pipeline/requirements/base.txt",

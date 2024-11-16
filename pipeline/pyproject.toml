@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "pipeline"
 version = "0.1.0"
 description = "MLOps Pipeline"
-readme = "README.md"
 requires-python = ">=3.8,<3.12"
 license = { text = "MIT" }
 authors = [

@@ -61,7 +61,7 @@ jobs:
           TABLE_NAME: ${{ secrets.TABLE_NAME }}
           BUCKET_KEYS: ${{ secrets.BUCKET_KEYS }}
         run: |
-          pip install dvc uv
+          pip install dvc[s3] uv
           dvc repro
 
       - name: Push to DVC Remotes
