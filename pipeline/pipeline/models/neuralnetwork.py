@@ -1,3 +1,16 @@
+"""
+Neural Network Model
+===================
+
+This module provides a neural network model implementation
+inheriting from the abstract base Model class.
+
+.. module:: pipeline.models.neuralnetwork
+   :synopsis: Neural Network model using PyTorch
+
+.. moduleauthor:: aai540-group3
+"""
+
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 

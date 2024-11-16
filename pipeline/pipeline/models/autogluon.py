@@ -1,6 +1,6 @@
 """
-AutoGluon Model Implementation
-==============================
+AutoGluon Model
+===============
 
 This module provides a machine learning model implementation using AutoGluon,
 inheriting from the abstract base Model class.

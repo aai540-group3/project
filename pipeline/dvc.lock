@@ -79,3 +79,104 @@ stages:
       hash: md5
       md5: 9102b6c5cd0ba8e1248723571a7169f0
       size: 176389
+  setup:
+    cmd:
+    - UV_LINK_MODE=copy uv venv .venv --python 3.9
+    - .venv/bin/python -m ensurepip --upgrade
+    - .venv/bin/python -m pip install -q uv
+    - .venv/bin/uv pip install -q --no-cache-dir -e .
+    - .venv/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
+    - cp -r .venv .venv-models
+    - .venv-models/bin/uv pip install --no-cache-dir -r requirements/models.txt
+    deps:
+    - path: requirements/base.txt
+      hash: md5
+      md5: aa1d2b05692758cb14e458ad5e114701
+      size: 105
+    - path: requirements/models.txt
+      hash: md5
+      md5: 1990e8fd4cc60ee9ec446af8d9970aa4
+      size: 35
+    outs:
+    - path: .venv
+      hash: md5
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
+    - path: .venv-models
+      hash: md5
+      md5: 85141fa6fda9822e879059ef712de1fe.dir
+      size: 695606530
+      nfiles: 29070
+  prepare:
+    cmd:
+    - .venv/bin/uv run $(sed 's/^/--with /' requirements/infrastruct.txt | tr '\n'
+      ' ') python pipeline infrastruct
+    - .venv/bin/uv run $(sed 's/^/--with /' requirements/ingest.txt | tr '\n' ' ')
+      python pipeline ingest
+    deps:
+    - path: .venv
+      hash: md5
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
+    - path: pipeline/__init__.py
+      hash: md5
+      md5: 516d9abddfbef26ec011250ca5cf66aa
+      size: 2549
+    - path: pipeline/__main__.py
+      hash: md5
+      md5: 3e694b81981c3d6780a371efae6c117e
+      size: 2664
+    - path: pipeline/stages/infrastruct.py
+      hash: md5
+      md5: 72d4ce3d11203df01a68df73c6a93abc
+      size: 1440
+      isexec: true
+    - path: pipeline/stages/ingest.py
+      hash: md5
+      md5: 2019d8008d88422b8a26c94cf4082e46
+      size: 3702
+      isexec: true
+    - path: pipeline/stages/stage.py
+      hash: md5
+      md5: 5d0e853805061bd824ea2316541f1c96
+      size: 5249
+      isexec: true
+    - path: requirements/base.txt
+      hash: md5
+      md5: aa1d2b05692758cb14e458ad5e114701
+      size: 105
+    outs:
+    - path: data/raw/data.csv
+      hash: md5
+      md5: 33411fa1536aaaadb24c0c1f2a8598b9
+      size: 16246860
+    - path: data/raw/data.parquet
+      hash: md5
+      md5: 80180ca21b2e0a18573675cdb3f741de
+      size: 1415409
+    - path: data/raw/metadata.json
+      hash: md5
+      md5: c8df8414d7743e8e95d42b91ef1402d3
+      size: 4903
+    - path: data/raw/variables.json
+      hash: md5
+      md5: af3722d3a8b6db1015406123b06cd79d
+      size: 17401
+    - path: metrics/infrastruct/metrics.json
+      hash: md5
+      md5: d89a7b9ed00a96bc6cdba7b20e8984a5
+      size: 221
+    - path: metrics/ingest/metrics.json
+      hash: md5
+      md5: b05bddf5285b76118751286e3df79e89
+      size: 4599
+    - path: plots/ingest/data_types.png
+      hash: md5
+      md5: c767b14c51d357e53b74bbb23d951f22
+      size: 77824
+    - path: plots/ingest/missing_values.png
+      hash: md5
+      md5: 28de93a4a968520fc11e31b6c1adae7d
+      size: 303104
