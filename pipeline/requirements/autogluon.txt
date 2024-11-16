@@ -1,3 +1,4 @@
-autogluon
-autogluon.tabular[lightgbm]
+autogluon 
+autogluon.tabular[all] 
+dvclive 
 shap

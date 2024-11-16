@@ -1,7 +1,0 @@
-prometheus-client
-grafana-api
-psutil
-pandas
-numpy
-scipy
-redis

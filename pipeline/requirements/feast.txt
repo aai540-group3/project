@@ -1,0 +1,5 @@
+dask[dataframe] 
+docker
+feast[postgres] 
+psycopg2-binary  
+testcontainers

@@ -59,23 +59,23 @@ dataset:
 models:
   base:
     mode: quick
+    quick:
+      sample_fraction: 0.1
+    full:
+      sample_fraction: 1.0
     label: readmitted
     metric: roc_auc
     problem_type: binary
 
   autogluon:
     quick:
-      time_limit: 60
+      time_limit: 60 # Maximum time in seconds for training
       presets: medium_quality
       hyperparameters:
-        GBM:
-          extra_trees: false
-          learning_rate: 0.1
-          num_boost_round: 100
-          num_leaves: 16
-          early_stopping_rounds: 10
+        NN_TORCH:
+          num_epochs: 1
     full:
-      time_limit: 7200
+      time_limit: 7200 # 2 hours
       presets: best_quality
       hyperparameters:
         GBM:
@@ -104,50 +104,27 @@ models:
           batch_size: 512
           layers: [200, 100]
 
-  logistic:
+  logistic_regression:
     quick:
-      optimize: true
-      max_iter: 100
-      solver: lbfgs
-      hyperparameters:
-        C: 1.0
-        penalty: l2
-        n_trials: 10
-        timeout: 600
-        direction: maximize
-        param_space:
-          C:
-            type: float
-            low: 0.1
-            high: 1.0
-            log: true
-          penalty:
-            type: categorical
-            choices: [l2]
+      model_params: {}
+      training:
+        optimizer:
+          name: adam
+          params:
+            lr: 0.01
+        loss: binary_cross_entropy
+        batch_size: 32
+        epochs: 1
     full:
-      optimize: true
-      max_iter: 1000
-      solver: saga
-      hyperparameters:
-        C: 0.1
-        penalty: l2
-        n_trials: 50
-        timeout: 3600
-        direction: maximize
-        tol: 1e-4
-        class_weight: balanced
-        param_space:
-          C:
-            type: float
-            low: 0.01
-            high: 10.0
-            log: true
-          penalty:
-            type: categorical
-            choices: [l1, l2]
-          solver:
-            type: categorical
-            choices: [liblinear, saga]
+      model_params: {}
+      training:
+        optimizer:
+          name: adam
+          params:
+            lr: 0.001
+        loss: binary_cross_entropy
+        batch_size: 64
+        epochs: 50
 
   neural_network:
     quick:

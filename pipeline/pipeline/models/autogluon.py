@@ -1,4 +1,16 @@
-import typing
+"""
+AutoGluon Model Implementation
+==============================
+
+This module provides a machine learning model implementation using AutoGluon,
+inheriting from the abstract base Model class.
+
+.. module:: pipeline.models.autogluon_model
+   :synopsis: AutoGluon model implementation
+
+.. moduleauthor:: aai540-group3
+"""
+
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
@@ -17,7 +29,18 @@ class Autogluon(Model):
     def __init__(self):
         """Initialize the AutoGluon model."""
         super().__init__()
-        self.predictor: typing.Optional[TabularPredictor] = None
+        self.predictor: Optional[TabularPredictor] = None
+
+        # Extract configuration parameters
+        self.label_column: str = self.cfg.models.base.get("label", "target")
+        self.problem_type: str = self.model_config.get("problem_type", "binary")
+        self.eval_metric: str = self.model_config.get("metric", "roc_auc")
+        self.time_limit: int = self.model_config.get("time_limit", 60)
+        self.presets: str = self.model_config.get("presets", "medium_quality")
+        self.hyperparameters: Dict[str, Any] = OmegaConf.to_container(
+            self.model_config.get("hyperparameters", {}), resolve=True
+        )
+        logger.info(f"Autogluon initialized with label column '{self.label_column}'.")
 
     def train(self) -> TabularPredictor:
         """Train the AutoGluon model and return the trained predictor.
@@ -31,30 +54,36 @@ class Autogluon(Model):
         train_data = pd.concat([self.X_train, self.y_train], axis=1)
         tuning_data = pd.concat([self.X_val, self.y_val], axis=1)
 
-        # Convert configuration for hyperparameters
-        hyperparameters = OmegaConf.to_container(self.model_config.get("hyperparameters", {}), resolve=True)
+        # Adjust time limit in quick mode
+        if self.mode == "quick":
+            self.time_limit = min(self.time_limit, 60)  # Limit time to 60 seconds
+            logger.info(f"Quick mode: time_limit set to {self.time_limit} seconds.")
 
         # Initialize TabularPredictor
-        predictor = TabularPredictor(
+        self.predictor = TabularPredictor(
             label=self.label_column,
             path=str(self.models_dir),
-            eval_metric=self.model_config.get("metric", "roc_auc"),
-            problem_type=self.model_config.get("problem_type", "binary"),
+            eval_metric=self.eval_metric,
+            problem_type=self.problem_type,
         )
 
         # Fit TabularPredictor
-        predictor.fit(
-            train_data=train_data,
-            tuning_data=tuning_data,
-            hyperparameters=hyperparameters,
-            time_limit=self.model_config.get("time_limit", 60),
-            presets=self.model_config.get("presets", "medium_quality"),
-            verbosity=2,
-        )
+        try:
+            self.predictor.fit(
+                train_data=train_data,
+                tuning_data=tuning_data,
+                hyperparameters=self.hyperparameters,
+                time_limit=self.time_limit,
+                presets=self.presets,
+                verbosity=2,
+            )
+            logger.info("Training completed successfully.")
+        except Exception as e:
+            logger.error(f"Error during model training: {e}")
+            raise
 
         # Save the predictor
-        self.predictor = predictor
-        self.save_model(predictor)
+        self.save_model(self.predictor)
         logger.info(f"Predictor saved to '{self.models_dir}'.")
 
         # Verify available models
@@ -167,23 +196,14 @@ class Autogluon(Model):
             return None
 
         try:
-            # Get the best base model name
-            leaderboard = self.predictor.leaderboard(silent=True)
-            base_models = leaderboard[~leaderboard["model"].str.contains("Ensemble")]
-            if base_models.empty:
-                logger.error("No base models found in the predictor.")
-                return None
-            best_model_name = base_models.iloc[0]["model"]
-            logger.info(f"Best base model identified: '{best_model_name}'.")
-
-            # Calculate feature importance directly using the predictor
-            feature_importance_df = self.predictor.feature_importance(
+            # Calculate feature importance using the predictor
+            importance_df = self.predictor.feature_importance(
                 data=pd.concat([self.X_test, self.y_test], axis=1),
-                model=best_model_name,
+                silent=True,
             )
 
             # Convert to dictionary format
-            feature_importance = feature_importance_df["importance"].to_dict()
+            feature_importance = importance_df["importance"].to_dict()
 
             # Ensure all values are float type
             feature_importance = {str(k): float(v) for k, v in feature_importance.items()}
@@ -209,21 +229,13 @@ class Autogluon(Model):
             return None
 
         try:
-            # Get the best base model name
-            leaderboard = self.predictor.leaderboard(silent=True)
-            base_models = leaderboard[~leaderboard["model"].str.contains("Ensemble")]
-            if base_models.empty:
-                logger.error("No base models found in the predictor.")
-                return None
-            best_model_name = base_models.iloc[0]["model"]
-            logger.info(f"Using base model '{best_model_name}' for SHAP analysis.")
-
-            # Get the feature columns
-            feature_columns = self.predictor.feature_metadata.get_features()
+            # Get the best model name
+            best_model_name = self.predictor.get_model_best()
+            logger.info(f"Using model '{best_model_name}' for SHAP analysis.")
 
             # Get the prediction function directly from the predictor for this specific model
             def predict_fn(x: np.ndarray) -> np.ndarray:
-                df = pd.DataFrame(x, columns=feature_columns)
+                df = pd.DataFrame(x, columns=self.X_test.columns)
                 proba = self.predictor.predict_proba(df, model=best_model_name)
                 if isinstance(proba, pd.DataFrame):
                     return proba.iloc[:, 1].values  # Return probability of positive class

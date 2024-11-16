@@ -51,8 +51,6 @@ class Model(ABC):
         self.X_train, self.X_val, self.X_test = None, None, None
         self.y_train, self.y_val, self.y_test = None, None, None
         self.label_column = self.cfg.models.base.get("label", "target")
-        if self.cfg.get("data"):
-            self.prepare_data()
 
         # Setup directories for metrics, plots, and models
         self.metrics_dir = Path("metrics") / self.name
@@ -158,9 +156,17 @@ class Model(ABC):
         try:
             data_path = Path(self.cfg.paths.processed) / "features.parquet"
             data = pd.read_parquet(data_path)
+
+            # Reduce dataset size in 'quick' mode
+            if self.mode == "quick":
+                sample_frac = self.cfg.models.base.quick.get("sample_fraction", 0.1)
+                data = data.sample(frac=sample_frac, random_state=self.cfg.get("seed", 42))
+                logger.info(f"Quick mode: using {sample_frac*100}% of the data.")
+
             X, y = data.drop(columns=[self.label_column]), data[self.label_column]
             self.X_train, self.X_val, self.X_test, self.y_train, self.y_val, self.y_test = self.split_data(X, y)
 
+            # Balance the training data
             smote = SMOTE(random_state=self.cfg.get("seed", 42))
             self.X_train, self.y_train = smote.fit_resample(self.X_train, self.y_train)
             logger.info("Data preparation complete.")
@@ -188,9 +194,6 @@ class Model(ABC):
     @abstractmethod
     def train(self) -> Any:
         """Abstract method to train the model.
-
-        This method is implemented by subclasses to encapsulate the model training process.
-        It returns the trained model artifact, which is typically saved for later use.
 
         :return: The trained model artifact.
         :rtype: Any

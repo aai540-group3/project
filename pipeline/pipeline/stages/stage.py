@@ -9,7 +9,6 @@ from typing import Any, Dict, Union
 import pandas as pd
 from loguru import logger
 from omegaconf import OmegaConf
-from sklearn.model_selection import train_test_split
 
 
 class Stage(ABC):

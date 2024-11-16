@@ -1,5 +1,1 @@
-pandas
-numpy
-matplotlib
-seaborn
-cleanlab
+pyarrow

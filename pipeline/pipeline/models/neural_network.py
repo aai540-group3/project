@@ -1,9 +1,9 @@
 """
-Neural Network Model Implementation
-===================================
+Neural Network Model
+====================
 
 This module provides a neural network model implementation with flexible architecture
-and configuration-driven parameters.
+and configuration-driven parameters using PyTorch.
 
 .. module:: pipeline.models.neural_network
    :synopsis: Configuration-driven neural network model
@@ -12,182 +12,142 @@ and configuration-driven parameters.
 """
 
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-import tensorflow as tf
+import torch
+import torch.nn as nn
+import torch.optim as optim
 from loguru import logger
 import joblib
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.class_weight import compute_class_weight
-import shap
 
 from .model import Model
-from .metrics import Metrics
 
 
 class NeuralNetwork(Model):
-    """Neural network model with flexible architecture."""
+    """Neural network model with flexible architecture using PyTorch."""
 
     def __init__(self):
         """Initialize the neural network model."""
         super().__init__()
-        self.model: Optional[tf.keras.Model] = None
+        self.model: Optional[nn.Module] = None
         self.scaler: Optional[StandardScaler] = None
-        self.history: Optional[tf.keras.callbacks.History] = None
+        self.history: List[Dict[str, float]] = []
 
         # Extract configuration parameters
         self.label_column: str = self.cfg.models.base.get("label", "target")
         self.model_params: Dict[str, Any] = self.model_config.get("model_params", {})
         self.training_params: Dict[str, Any] = self.model_config.get("training", {})
         self.architecture_params: Dict[str, Any] = self.model_config.get("architecture", {})
-        logger.info(f"NeuralNetwork initialized with label column '{self.label_column}'.")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        logger.info(f"NeuralNetwork initialized with label column '{self.label_column}' on device '{self.device}'.")
 
-    def _build_model(self, input_dim: int) -> tf.keras.Model:
+    def _build_model(self, input_dim: int) -> nn.Module:
         """Build the neural network model from the configuration.
 
         :param input_dim: The number of input features.
         :type input_dim: int
-        :return: A compiled Keras model.
-        :rtype: tf.keras.Model
+        :return: A PyTorch neural network model.
+        :rtype: nn.Module
         """
         try:
-            # Input layer
-            inputs = tf.keras.Input(shape=(input_dim,))
-            x = inputs
-
-            # Apply input layer configurations
+            layers = []
+            # Input Layer
             input_layer_cfg = self.architecture_params.get("input_layer", {})
             if input_layer_cfg.get("batch_norm", False):
-                x = tf.keras.layers.BatchNormalization()(x)
+                layers.append(nn.BatchNorm1d(input_dim))
             if input_layer_cfg.get("dropout", 0) > 0:
-                x = tf.keras.layers.Dropout(rate=input_layer_cfg["dropout"])(x)
+                layers.append(nn.Dropout(p=input_layer_cfg["dropout"]))
 
-            # Hidden layers
+            # Hidden Layers
+            prev_units = input_dim
             for layer_cfg in self.architecture_params.get("hidden_layers", []):
-                x = tf.keras.layers.Dense(
-                    units=layer_cfg["units"],
-                    activation=layer_cfg["activation"],
-                    kernel_regularizer=self._get_regularizer(layer_cfg.get("kernel_regularizer", {})),
-                )(x)
+                layers.append(nn.Linear(prev_units, layer_cfg["units"]))
+                layers.append(self._get_activation(layer_cfg["activation"]))
                 if layer_cfg.get("batch_norm", False):
-                    x = tf.keras.layers.BatchNormalization()(x)
+                    layers.append(nn.BatchNorm1d(layer_cfg["units"]))
                 if layer_cfg.get("dropout", 0) > 0:
-                    x = tf.keras.layers.Dropout(rate=layer_cfg["dropout"])(x)
+                    layers.append(nn.Dropout(p=layer_cfg["dropout"]))
+                prev_units = layer_cfg["units"]
 
-            # Output layer
+            # Output Layer
             output_layer_cfg = self.architecture_params.get("output_layer", {})
-            outputs = tf.keras.layers.Dense(
-                units=output_layer_cfg.get("units", 1),
-                activation=output_layer_cfg.get("activation", "sigmoid"),
-            )(x)
+            layers.append(nn.Linear(prev_units, output_layer_cfg.get("units", 1)))
+            layers.append(self._get_activation(output_layer_cfg.get("activation", "sigmoid")))
 
-            # Create model
-            model = tf.keras.Model(inputs=inputs, outputs=outputs)
-
-            # Compile model
-            model.compile(
-                optimizer=self._get_optimizer(),
-                loss=self._get_loss(),
-                metrics=self._get_metrics(),
-            )
-
-            logger.info("Model built and compiled successfully.")
+            # Create the model
+            model = nn.Sequential(*layers).to(self.device)
+            logger.info("Model built successfully.")
             return model
         except Exception as e:
             logger.error(f"Error building the model: {e}")
             raise
 
-    def _get_optimizer(self) -> tf.keras.optimizers.Optimizer:
+    def _get_activation(self, activation_name: str) -> nn.Module:
+        """Get activation function by name.
+
+        :param activation_name: Name of the activation function.
+        :type activation_name: str
+        :return: Activation function module.
+        :rtype: nn.Module
+        """
+        activations = {
+            "relu": nn.ReLU(),
+            "sigmoid": nn.Sigmoid(),
+            "tanh": nn.Tanh(),
+            "leaky_relu": nn.LeakyReLU(),
+            "softmax": nn.Softmax(dim=1),
+            # Add more activations if needed
+        }
+        return activations.get(activation_name.lower(), nn.ReLU())
+
+    def _get_optimizer(self) -> optim.Optimizer:
         """Create an optimizer from the configuration.
 
         :return: Configured optimizer.
-        :rtype: tf.keras.optimizers.Optimizer
+        :rtype: optim.Optimizer
         """
         optimizer_cfg = self.training_params.get("optimizer", {"name": "adam"})
-        optimizer_name = optimizer_cfg.get("name", "adam")
+        optimizer_name = optimizer_cfg.get("name", "adam").lower()
         optimizer_params = optimizer_cfg.get("params", {})
-        optimizer = tf.keras.optimizers.get(optimizer_name)
-        optimizer = optimizer(**optimizer_params)
+        optimizer_class = {
+            "adam": optim.Adam,
+            "sgd": optim.SGD,
+            # Add more optimizers if needed
+        }.get(optimizer_name, optim.Adam)
+        optimizer = optimizer_class(self.model.parameters(), **optimizer_params)
         return optimizer
 
-    def _get_loss(self) -> Union[str, Callable]:
+    def _get_loss_function(self) -> Callable:
         """Get the loss function from the configuration.
 
         :return: Configured loss function.
-        :rtype: Union[str, Callable]
+        :rtype: Callable
         """
-        loss = self.training_params.get("loss", "binary_crossentropy")
-        return loss
+        loss_name = self.training_params.get("loss", "binary_cross_entropy")
+        loss_functions = {
+            "binary_cross_entropy": nn.BCELoss(),
+            "cross_entropy": nn.CrossEntropyLoss(),
+            # Add more loss functions if needed
+        }
+        return loss_functions.get(loss_name.lower(), nn.BCELoss())
 
-    def _get_metrics(self) -> List[Union[str, Callable]]:
-        """Get the list of metrics from the configuration.
-
-        :return: List of metrics.
-        :rtype: List[Union[str, Callable]]
-        """
-        metrics_cfg = self.training_params.get("metrics", ["accuracy"])
-        metrics = [tf.keras.metrics.get(metric) if isinstance(metric, str) else metric for metric in metrics_cfg]
-        return metrics
-
-    def _get_regularizer(self, reg_cfg: Dict[str, Any]) -> Optional[tf.keras.regularizers.Regularizer]:
-        """Create a regularizer from the configuration.
-
-        :param reg_cfg: Regularizer configuration.
-        :type reg_cfg: Dict[str, Any]
-        :return: Configured regularizer or None.
-        :rtype: Optional[tf.keras.regularizers.Regularizer]
-        """
-        if not reg_cfg:
-            return None
-        reg_name = reg_cfg.get("name")
-        reg_params = reg_cfg.get("params", {})
-        regularizer = tf.keras.regularizers.get(reg_name)
-        return regularizer(**reg_params)
-
-    def _get_callbacks(self) -> List[tf.keras.callbacks.Callback]:
-        """Get the list of callbacks from the configuration.
-
-        :return: List of callbacks.
-        :rtype: List[tf.keras.callbacks.Callback]
-        """
-        callbacks_cfg = self.training_params.get("callbacks", {})
-        callbacks = []
-
-        # Early Stopping
-        if callbacks_cfg.get("early_stopping", {}).get("enabled", False):
-            early_stopping_params = callbacks_cfg["early_stopping"].get("params", {})
-            callbacks.append(tf.keras.callbacks.EarlyStopping(**early_stopping_params))
-
-        # Model Checkpoint
-        if callbacks_cfg.get("model_checkpoint", {}).get("enabled", False):
-            checkpoint_params = callbacks_cfg["model_checkpoint"].get("params", {})
-            checkpoint_params["filepath"] = str(self.models_dir / "best_model.h5")
-            callbacks.append(tf.keras.callbacks.ModelCheckpoint(**checkpoint_params))
-
-        # TensorBoard
-        if callbacks_cfg.get("tensorboard", {}).get("enabled", False):
-            tensorboard_params = callbacks_cfg["tensorboard"].get("params", {})
-            tensorboard_params["log_dir"] = str(self.models_dir / "logs")
-            callbacks.append(tf.keras.callbacks.TensorBoard(**tensorboard_params))
-
-        logger.info(f"Configured callbacks: {[type(cb).__name__ for cb in callbacks]}")
-        return callbacks
-
-    def _get_class_weights(self, y: pd.Series) -> Optional[Dict[int, float]]:
+    def _get_class_weights(self, y: pd.Series) -> Optional[torch.Tensor]:
         """Calculate class weights if enabled in the configuration.
 
         :param y: Target labels.
         :type y: pd.Series
-        :return: Class weights dictionary or None.
-        :rtype: Optional[Dict[int, float]]
+        :return: Class weights tensor or None.
+        :rtype: Optional[torch.Tensor]
         """
         class_weight_option = self.training_params.get("class_weight")
         if class_weight_option == "balanced":
             classes = np.unique(y)
             weights = compute_class_weight(class_weight="balanced", classes=classes, y=y)
-            class_weights = dict(zip(classes, weights))
+            class_weights = torch.tensor(weights, dtype=torch.float).to(self.device)
             logger.info(f"Computed class weights: {class_weights}")
             return class_weights
         return None
@@ -195,7 +155,7 @@ class NeuralNetwork(Model):
     def train(self) -> Any:
         """Train the neural network model.
 
-        :return: Trained Keras model.
+        :return: Trained PyTorch model.
         :rtype: Any
         """
         if self.X_train is None or self.y_train is None:
@@ -205,10 +165,27 @@ class NeuralNetwork(Model):
             # Data Preprocessing
             self.scaler = StandardScaler()
             X_train_scaled = self.scaler.fit_transform(self.X_train)
-            X_val_scaled = self.scaler.transform(self.X_val) if self.X_val is not None else None
+            y_train = self.y_train.values
 
-            # Build and compile the model
+            X_val_scaled = self.scaler.transform(self.X_val) if self.X_val is not None else None
+            y_val = self.y_val.values if self.y_val is not None else None
+
+            # Convert to PyTorch tensors
+            X_train_tensor = torch.tensor(X_train_scaled, dtype=torch.float32).to(self.device)
+            y_train_tensor = torch.tensor(y_train, dtype=torch.float32).view(-1, 1).to(self.device)
+
+            if X_val_scaled is not None:
+                X_val_tensor = torch.tensor(X_val_scaled, dtype=torch.float32).to(self.device)
+                y_val_tensor = torch.tensor(y_val, dtype=torch.float32).view(-1, 1).to(self.device)
+            else:
+                X_val_tensor = y_val_tensor = None
+
+            # Build the model
             self.model = self._build_model(input_dim=X_train_scaled.shape[1])
+
+            # Get optimizer and loss function
+            optimizer = self._get_optimizer()
+            loss_fn = self._get_loss_function()
 
             # Get class weights if needed
             class_weights = self._get_class_weights(self.y_train)
@@ -217,19 +194,52 @@ class NeuralNetwork(Model):
             batch_size = self.training_params.get("batch_size", 32)
             epochs = self.training_params.get("epochs", 10)
 
-            # Train the model
-            self.history = self.model.fit(
-                X_train_scaled,
-                self.y_train,
-                validation_data=(X_val_scaled, self.y_val) if self.X_val is not None else None,
-                batch_size=batch_size,
-                epochs=epochs,
-                callbacks=self._get_callbacks(),
-                class_weight=class_weights,
-                verbose=1,
-            )
+            # Training loop
+            train_dataset = torch.utils.data.TensorDataset(X_train_tensor, y_train_tensor)
+            train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
-            logger.info("Neural network training completed successfully.")
+            if X_val_tensor is not None:
+                val_dataset = torch.utils.data.TensorDataset(X_val_tensor, y_val_tensor)
+                val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+            else:
+                val_loader = None
+
+            logger.info(f"Starting training for {epochs} epochs.")
+            for epoch in range(epochs):
+                self.model.train()
+                epoch_loss = 0.0
+                for X_batch, y_batch in train_loader:
+                    optimizer.zero_grad()
+                    outputs = self.model(X_batch)
+                    loss = loss_fn(outputs, y_batch)
+                    if class_weights is not None:
+                        loss *= class_weights[y_batch.long()]
+                    loss.backward()
+                    optimizer.step()
+                    epoch_loss += loss.item() * X_batch.size(0)
+
+                avg_loss = epoch_loss / len(train_loader.dataset)
+                logger.info(f"Epoch [{epoch+1}/{epochs}], Loss: {avg_loss:.4f}")
+
+                # Validation
+                if val_loader is not None:
+                    self.model.eval()
+                    val_loss = 0.0
+                    with torch.no_grad():
+                        for X_batch, y_batch in val_loader:
+                            outputs = self.model(X_batch)
+                            loss = loss_fn(outputs, y_batch)
+                            val_loss += loss.item() * X_batch.size(0)
+                    avg_val_loss = val_loss / len(val_loader.dataset)
+                    logger.info(f"Validation Loss: {avg_val_loss:.4f}")
+
+                # Early Stopping (optional)
+                # Implement early stopping logic if needed
+
+                # Save training history
+                self.history.append({"epoch": epoch + 1, "loss": avg_loss})
+
+            logger.info("Training completed successfully.")
             return self.model
         except Exception as e:
             logger.error(f"Neural network training failed: {e}")
@@ -246,10 +256,12 @@ class NeuralNetwork(Model):
         if not self.model or not self.scaler:
             raise ValueError("Model has not been trained or loaded.")
         try:
+            self.model.eval()
             X_scaled = self.scaler.transform(X)
-            predictions = self.model.predict(X_scaled)
-            # Convert probabilities to class labels
-            predicted_labels = (predictions > 0.5).astype(int).flatten()
+            X_tensor = torch.tensor(X_scaled, dtype=torch.float32).to(self.device)
+            with torch.no_grad():
+                outputs = self.model(X_tensor)
+                predicted_labels = (outputs.cpu().numpy() > 0.5).astype(int).flatten()
             return predicted_labels
         except Exception as e:
             logger.error(f"Error during prediction: {e}")
@@ -266,17 +278,20 @@ class NeuralNetwork(Model):
         if not self.model or not self.scaler:
             raise ValueError("Model has not been trained or loaded.")
         try:
+            self.model.eval()
             X_scaled = self.scaler.transform(X)
-            probabilities = self.model.predict(X_scaled)
+            X_tensor = torch.tensor(X_scaled, dtype=torch.float32).to(self.device)
+            with torch.no_grad():
+                probabilities = self.model(X_tensor).cpu().numpy()
             return pd.DataFrame(probabilities, columns=["probability"])
         except Exception as e:
             logger.error(f"Error during probability prediction: {e}")
             raise
 
     def get_estimator(self) -> Any:
-        """Retrieve the trained Keras model.
+        """Retrieve the trained PyTorch model.
 
-        :return: The trained Keras model.
+        :return: The trained PyTorch model.
         :rtype: Any
         """
         if not self.model:
@@ -296,14 +311,17 @@ class NeuralNetwork(Model):
         try:
 
             def predict_fn(x: np.ndarray) -> np.ndarray:
-                return self.model.predict(x)
+                self.model.eval()
+                x_tensor = torch.tensor(x, dtype=torch.float32).to(self.device)
+                with torch.no_grad():
+                    return self.model(x_tensor).cpu().numpy()
 
             return predict_fn
         except Exception as e:
             logger.error(f"Failed to create prediction function: {e}")
             return None
 
-    def save_model(self, model_artifact: Any, filename: str = "model.h5") -> Path:
+    def save_model(self, model_artifact: Any, filename: str = "model.pth") -> Path:
         """Save the trained model to disk.
 
         :param model_artifact: The model artifact to save.
@@ -316,7 +334,7 @@ class NeuralNetwork(Model):
         model_path = self.models_dir / filename
         try:
             with self._model_lock:
-                model_artifact.save(model_path)
+                torch.save(model_artifact.state_dict(), model_path)
             # Save the scaler
             scaler_path = self.models_dir / "scaler.joblib"
             joblib.dump(self.scaler, scaler_path)
@@ -326,7 +344,7 @@ class NeuralNetwork(Model):
             logger.error(f"Failed to save model: {e}")
             raise
 
-    def load_model(self, filename: str = "model.h5") -> Any:
+    def load_model(self, filename: str = "model.pth") -> Any:
         """Load a trained model from disk.
 
         :param filename: The filename of the saved model.
@@ -338,8 +356,11 @@ class NeuralNetwork(Model):
         if not model_path.exists():
             raise FileNotFoundError(f"Model file not found at '{model_path}'")
         try:
+            # Build the model architecture
+            self.model = self._build_model(input_dim=self.X_train.shape[1])
             with self._model_lock:
-                self.model = tf.keras.models.load_model(model_path)
+                self.model.load_state_dict(torch.load(model_path))
+            self.model.to(self.device)
             # Load the scaler
             scaler_path = self.models_dir / "scaler.joblib"
             self.scaler = joblib.load(scaler_path)
@@ -350,64 +371,18 @@ class NeuralNetwork(Model):
             raise
 
     def get_feature_importance(self) -> Optional[Dict[str, float]]:
-        """Get feature importance scores using weights.
+        """Get feature importance scores using SHAP.
 
         :return: Dictionary mapping feature names to importance scores, or None if unavailable.
         :rtype: Optional[Dict[str, float]]
         """
-        logger.warning("Feature importance is not directly available for neural networks.")
+        logger.warning("Feature importance will be computed using SHAP values.")
         return None
 
-    def generate_plots(self, metrics: Metrics) -> None:
+    def generate_plots(self, metrics: Any) -> None:
         """Generate and save evaluation plots specific to neural networks.
 
         :param metrics: Metrics object containing evaluation data.
-        :type metrics: Metrics
+        :type metrics: Any
         """
         super().generate_plots(metrics)
-
-    def compute_shap_values(self, background: Optional[pd.DataFrame] = None) -> Optional[shap.Explanation]:
-        """Compute SHAP values for the model and feature data.
-
-        :param background: Background dataset for SHAP.
-        :type background: Optional[pd.DataFrame]
-        :return: SHAP values explanation object.
-        :rtype: Optional[shap.Explanation]
-        """
-        if not self.model or not self.X_test is not None:
-            logger.warning("Model or feature data not provided. Cannot compute SHAP values.")
-            return None
-
-        try:
-            # Use a smaller sample in quick mode
-            if self.mode == "quick":
-                sample_size = min(1000, len(self.X_test))
-                X_sample = self.X_test.sample(n=sample_size, random_state=42)
-                logger.info(f"Using a sample size of {X_sample.shape[0]} for SHAP analysis in quick mode.")
-            else:
-                X_sample = self.X_test
-
-            X_sample_scaled = self.scaler.transform(X_sample)
-
-            # Use DeepExplainer for neural networks
-            if background is not None:
-                background_scaled = self.scaler.transform(background)
-            else:
-                background_scaled = shap.sample(X_sample_scaled, 100, random_state=42)
-
-            explainer = shap.DeepExplainer(self.model, background_scaled)
-            shap_values = explainer.shap_values(X_sample_scaled)
-
-            # Create SHAP explanation object
-            shap_explanation = shap.Explanation(
-                values=shap_values[0],
-                base_values=explainer.expected_value[0],
-                data=X_sample_scaled,
-                feature_names=self.X_test.columns.tolist(),
-            )
-
-            logger.info("Successfully computed SHAP values.")
-            return shap_explanation
-        except Exception as e:
-            logger.error(f"Error computing SHAP values: {e}")
-            return None

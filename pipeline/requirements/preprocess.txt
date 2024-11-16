@@ -1,5 +1,2 @@
-numpy
-pandas
 pyarrow
-scikit-learn
 seaborn
