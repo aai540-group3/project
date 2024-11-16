@@ -1,3 +1,0 @@
-clang
-graphviz
-graphviz-dev

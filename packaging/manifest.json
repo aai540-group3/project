@@ -204,7 +204,6 @@
     "pipeline/requirements/infrastruct.txt",
     "pipeline/requirements/ingest.txt",
     "pipeline/requirements/models.txt",
-    "pipeline/requirements/packages-autogluon.txt",
     "pipeline/requirements/preprocess.txt",
     "pipeline/uv.lock",
     "pyproject.toml",
