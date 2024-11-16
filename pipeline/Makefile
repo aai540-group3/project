@@ -1,5 +1,5 @@
 all:
-	pip install -q dvc[s3]
+	pip install -q dvc[s3] uv
 	MODE=full dvc repro
 
 unlock:

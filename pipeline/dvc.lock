@@ -7,7 +7,7 @@ stages:
     - .venv/bin/python -m pip install -q uv
     - .venv/bin/uv pip install -q --no-cache-dir -e .
     - .venv/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
-    - cp -r .venv .venv-models
+    - rsync -a .venv/ .venv-models/
     - .venv-models/bin/uv pip install --no-cache-dir -r requirements/models.txt
     deps:
     - path: requirements/base.txt
@@ -26,6 +26,6 @@ stages:
       nfiles: 0
     - path: .venv-models
       hash: md5
-      md5: 24243bc3c55ef0201dc59c7a8e07a5d3.dir
-      size: 347799337
+      md5: 5e9950bda60646a6ed738f5ab3b9e5f0.dir
+      size: 347798826
       nfiles: 14537

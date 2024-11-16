@@ -9,7 +9,7 @@ stages:
       - rsync -a .venv/ .venv-models/
       - .venv-models/bin/uv pip install --no-cache-dir -r requirements/models.txt
       - .venv/bin/uv pip freeze > requirements/base-frozen.txt
-      - .venv/bin/uv pip freeze > requirements/base-models.txt
+      - .venv/bin/uv pip freeze > requirements/models-frozen.txt
     outs:
       - .venv:
           persist: true
@@ -19,7 +19,7 @@ stages:
           cache: true
       - requirements/base-frozen.txt:
           persist: true
-      - requirements/base-models.txt:
+      - requirements/models-frozen.txt:
           persist: true
     deps:
       - requirements/base.txt
