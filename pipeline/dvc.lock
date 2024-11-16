@@ -10,8 +10,8 @@ stages:
     deps:
     - path: requirements/base.txt
       hash: md5
-      md5: 9f0195a35546186f16ccfdf0f76a5106
-      size: 110
+      md5: b30af21c8eacbc511ef05917f97609e0
+      size: 93
     outs:
     - path: .venv
       hash: md5
@@ -72,8 +72,12 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 9f0195a35546186f16ccfdf0f76a5106
-      size: 110
+      md5: b30af21c8eacbc511ef05917f97609e0
+      size: 93
+    - path: requirements/preprocess.txt
+      hash: md5
+      md5: 8e8dc9a9a2731c184413aba2793a7f7e
+      size: 15
     outs:
     - path: data/interim/cleaned.parquet
       hash: md5
@@ -81,7 +85,7 @@ stages:
       size: 1801254
     - path: metrics/preprocess/metrics.json
       hash: md5
-      md5: fba746b11ea253b2bb6ee36189dd1821
+      md5: 0664931059daca7a1ebbc284b40b3831
       size: 15356
     - path: plots/preprocess/missing_values.png
       hash: md5
@@ -238,7 +242,8 @@ stages:
       size: 177556
   explore:
     cmd:
-    - .venv/bin/uv run python -m pipeline explore
+    - .venv/bin/uv run $(sed 's/^/--with /' requirements/explore.txt | tr '\n' ' ')
+      python pipeline explore
     deps:
     - path: .venv
       hash: md5
@@ -269,12 +274,12 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 84281fc645688e7c98af2e797b12a9ef
-      size: 126
+      md5: 9f0195a35546186f16ccfdf0f76a5106
+      size: 110
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: a9be2cf7f0e47993422b236cfea700c2
+      md5: 48be67cafa1a0b2a03f703c6cc465062
       size: 656658
     - path: plots/explore/A1Cresult_chi_square.png
       hash: md5
@@ -969,8 +974,8 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 9f0195a35546186f16ccfdf0f76a5106
-      size: 110
+      md5: b30af21c8eacbc511ef05917f97609e0
+      size: 93
     outs:
     - path: data/raw/data.csv
       hash: md5
@@ -990,7 +995,7 @@ stages:
       size: 17401
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: 3df2efccc3d5b6ee1693e2e69813a2df
+      md5: a25f1cbe99a472ea45db7c4930baa360
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5

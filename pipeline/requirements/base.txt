@@ -1,5 +1,4 @@
 dvc
-imbalanced-learn
 joblib
 loguru
 matplotlib
