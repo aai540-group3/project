@@ -1,3 +1,13 @@
+"""
+Ingest Stage
+============
+
+.. module:: pipeline.stages.ingest
+   :synopsis: This module handles data ingestion
+
+.. moduleauthor:: aai540-group3
+"""
+
 import pathlib
 import warnings
 
@@ -11,10 +21,19 @@ from .stage import Stage
 
 
 class Ingest(Stage):
-    """Pipeline stage for data ingestion."""
+    """Pipeline stage for data ingestion and initial analysis."""
 
     def run(self):
-        """Ingest data from UCI ML Repository and perform initial data analysis."""
+        """Ingest data from UCI ML Repository and perform initial data analysis.
+
+        This method performs the following steps:
+            1. Suppresses specific pandas warnings.
+            2. Fetches dataset from UCI ML Repository using the dataset ID.
+            3. Converts fetched data to a DataFrame and combines features and targets.
+            4. Creates and saves visualizations for missing values and data types.
+            5. Saves dataset outputs in various formats.
+            6. Calculates and saves quality metrics, including missing values, data types, and memory usage.
+        """
         # Suppress specific pandas warnings
         warnings.filterwarnings("ignore", category=pd.errors.DtypeWarning)
 
@@ -31,6 +50,7 @@ class Ingest(Stage):
         plots_dir.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Plots will be saved to: {plots_dir}")
 
+        # Generate Missing Values Heatmap
         logger.info("Generating Missing Values Heatmap")
         missing_data = df.isnull().mean().to_frame("missing_rate")
 
@@ -46,6 +66,7 @@ class Ingest(Stage):
         logger.debug(f"Saved Missing Values Heatmap to: {missing_plot_path}")
         plt.close()
 
+        # Generate Data Types Distribution Bar Plot
         logger.info("Generating Data Types Distribution Bar Plot")
         dtype_counts = df.dtypes.value_counts().to_frame("count").reset_index()
         dtype_counts.rename(columns={"index": "dtype"}, inplace=True)
@@ -62,6 +83,7 @@ class Ingest(Stage):
         logger.debug(f"Saved Data Types Distribution plot to: {dtype_plot_path}")
         plt.close()
 
+        # Save dataset outputs
         logger.info("Saving dataset outputs")
         outputs = {
             "data.parquet": df,
@@ -74,6 +96,7 @@ class Ingest(Stage):
             self.save_output(content, filename, subdir="data/raw")
             logger.debug(f"Saved {filename} to data/raw")
 
+        # Calculate and log data quality metrics
         logger.info("Calculating data quality metrics")
         quality_metrics = {
             "total_rows": len(df),
@@ -84,6 +107,7 @@ class Ingest(Stage):
             "unique_values_per_column": df.nunique().to_dict(),
         }
 
+        # Save metrics
         logger.info("Saving metrics")
         self.save_metrics(
             "metrics",

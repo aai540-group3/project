@@ -2,10 +2,10 @@
 Pipeline Stage Runner
 =====================
 
-This module provides functionality to dynamically run pipeline stages.
+This module provides functionality to dynamically run pipeline stages in parallel using threading.
 
 .. module:: run_stages
-  :synopsis: Dynamic pipeline stage executor with threading support
+   :synopsis: Dynamic pipeline stage executor with threading support.
 
 .. moduleauthor:: aai540-group3
 """
@@ -13,16 +13,19 @@ This module provides functionality to dynamically run pipeline stages.
 import argparse
 import importlib
 import threading
-
 from loguru import logger
 
 
-def run_stage(stage_name: str) -> None:
-    """Load and execute a pipeline stage using a mapping.
+def run_stage(stage_name: str):
+    """Load and execute a specified pipeline stage.
 
-    :param stage_name: Name of the stage to execute
+    This function retrieves the appropriate module and class for a given stage name
+    and dynamically imports and executes the stage class.
+
+    :param stage_name: Name of the stage to execute.
     :type stage_name: str
-    :raises ImportError: If stage module cannot be imported
+    :raises ImportError: If the specified stage module cannot be imported.
+    :raises ValueError: If the stage name is not found in the stage mapping.
     """
     stage_mapping = {
         "autogluon": ("pipeline.stages.autogluon", "Autogluon"),
@@ -54,8 +57,12 @@ def run_stage(stage_name: str) -> None:
 
 
 @logger.catch()
-def main() -> None:
-    """Main entry point for parallel pipeline execution."""
+def main():
+    """Main entry point for executing multiple pipeline stages in parallel.
+
+    Parses command-line arguments to determine which stages to run and initiates a separate thread
+    for each specified stage. Waits for all threads to complete before exiting.
+    """
     parser = argparse.ArgumentParser(description="Execute pipeline stages in parallel")
     parser.add_argument(
         "stages",

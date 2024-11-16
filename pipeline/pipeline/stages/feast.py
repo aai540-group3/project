@@ -1,3 +1,13 @@
+"""
+Postgres and Feast Management
+============================
+
+.. module:: pipeline.stages.postgres_feast
+   :synopsis: This module manages PostgreSQL operations and the Feast feature store
+
+.. moduleauthor:: aai540-group3
+"""
+
 import os
 import pathlib
 import shutil
@@ -27,21 +37,35 @@ from .stage import Stage
 
 @dataclass
 class PostgresConfig:
-    """Configuration for PostgreSQL connection."""
+    """Configuration for PostgreSQL connection.
 
-    host: str
-    port: int
-    database: str
-    user: str
-    password: str
-    db_schema: str = "public"
-    min_conn: int = 1
-    max_conn: int = 10
-    keepalives_idle: int = 30
-    sslmode: Optional[str] = None
-    sslkey_path: Optional[str] = None
-    sslcert_path: Optional[str] = None
-    sslrootcert_path: Optional[str] = None
+    :param host: The hostname of the PostgreSQL server.
+    :type host: str
+    :param port: The port number on which PostgreSQL is running.
+    :type port: int
+    :param database: The name of the PostgreSQL database.
+    :type database: str
+    :param user: The username for PostgreSQL authentication.
+    :type user: str
+    :param password: The password for PostgreSQL authentication.
+    :type password: str
+    :param db_schema: The schema within the PostgreSQL database, defaults to "public".
+    :type db_schema: str, optional
+    :param min_conn: The minimum number of connections in the pool, defaults to 1.
+    :type min_conn: int, optional
+    :param max_conn: The maximum number of connections in the pool, defaults to 10.
+    :type max_conn: int, optional
+    :param keepalives_idle: The number of seconds of inactivity after which a keepalive message is sent, defaults to 30.
+    :type keepalives_idle: int, optional
+    :param sslmode: The SSL mode for the PostgreSQL connection, defaults to None.
+    :type sslmode: str, optional
+    :param sslkey_path: Path to the SSL key file, defaults to None.
+    :type sslkey_path: str, optional
+    :param sslcert_path: Path to the SSL certificate file, defaults to None.
+    :type sslcert_path: str, optional
+    :param sslrootcert_path: Path to the SSL root certificate file, defaults to None.
+    :type sslrootcert_path: str, optional
+    """
 
 
 def wait_for_postgres(
@@ -53,7 +77,26 @@ def wait_for_postgres(
     max_retries: int = 30,
     retry_interval: int = 2,
 ):
-    """Wait for PostgreSQL to be ready for connections."""
+    """Wait for PostgreSQL to be ready for connections.
+
+    :param host: The hostname of the PostgreSQL server.
+    :type host: str
+    :param port: The port number on which PostgreSQL is running.
+    :type port: int
+    :param user: The username for PostgreSQL authentication.
+    :type user: str
+    :param password: The password for PostgreSQL authentication.
+    :type password: str
+    :param database: The name of the PostgreSQL database.
+    :type database: str
+    :param max_retries: Maximum number of retry attempts, defaults to 30.
+    :type max_retries: int, optional
+    :param retry_interval: Time in seconds between retries, defaults to 2.
+    :type retry_interval: int, optional
+    :return: `True` if PostgreSQL becomes ready within the retry limit.
+    :rtype: bool
+    :raises OperationalError: If PostgreSQL does not become ready within the retry limit.
+    """
     import time
 
     from psycopg import OperationalError
@@ -81,15 +124,27 @@ def wait_for_postgres(
 
 
 class PostgresManager:
-    """Manager class for PostgreSQL operations."""
+    """Manager class for PostgreSQL operations.
+
+    This class handles connections, schema management, table creation from DataFrames,
+    query execution, and connection pool management for PostgreSQL.
+    """
 
     def __init__(self, config: PostgresConfig):
-        """Initialize with PostgreSQL configuration."""
+        """Initialize with PostgreSQL configuration.
+
+        :param config: The configuration object containing PostgreSQL connection details.
+        :type config: PostgresConfig
+        """
         self.config = config
         self._pool = None
 
     def _get_conninfo(self) -> str:
-        """Generate connection info string."""
+        """Generate connection info string.
+
+        :return: The connection info string for psycopg.
+        :rtype: str
+        """
         return make_conninfo(
             conninfo="",
             user=self.config.user,
@@ -100,14 +155,21 @@ class PostgresManager:
         )
 
     def get_connection(self) -> psycopg.Connection:
-        """Get a single database connection."""
+        """Get a single database connection.
+
+        :return: A psycopg connection object.
+        :rtype: psycopg.Connection
+        """
         return psycopg.connect(
             conninfo=self._get_conninfo(),
             keepalives_idle=self.config.keepalives_idle,
         )
 
     def ensure_schema_exists(self):
-        """Ensure the specified schema exists with retry logic."""
+        """Ensure the specified schema exists with retry logic.
+
+        :raises Exception: If the schema cannot be created after all retries.
+        """
         import time
 
         max_retries = 5
@@ -137,7 +199,20 @@ class PostgresManager:
         if_exists: str = "fail",
         schema: Optional[str] = None,
     ) -> Dict[str, np.dtype]:
-        """Create a table from DataFrame and return schema."""
+        """Create a table from DataFrame and return schema.
+
+        :param df: The pandas DataFrame to create a table from.
+        :type df: pd.DataFrame
+        :param table_name: The name of the table to create.
+        :type table_name: str
+        :param if_exists: Behavior when the table already exists ('fail', 'replace', 'ignore'), defaults to "fail".
+        :type if_exists: str, optional
+        :param schema: The schema under which to create the table, defaults to None.
+        :type schema: str, optional
+        :return: A dictionary mapping column names to their numpy data types.
+        :rtype: Dict[str, np.dtype]
+        :raises Exception: If table creation or data insertion fails.
+        """
         target_schema = schema or self.config.db_schema
         self.ensure_schema_exists()
 
@@ -171,7 +246,17 @@ class PostgresManager:
         table_name: str,
         schema: Optional[str] = None,
     ) -> str:
-        """Generate SQL for table creation from DataFrame."""
+        """Generate SQL for table creation from DataFrame.
+
+        :param df: The pandas DataFrame to generate SQL from.
+        :type df: pd.DataFrame
+        :param table_name: The name of the table to create.
+        :type table_name: str
+        :param schema: The schema under which to create the table, defaults to None.
+        :type schema: str, optional
+        :return: The SQL statement for creating the table.
+        :rtype: str
+        """
         target_schema = schema or self.config.db_schema
         pa_table = pa.Table.from_pandas(df)
         columns = [f""""{f.name}" {arrow_to_pg_type(str(f.type))}""" for f in pa_table.schema]
@@ -181,8 +266,15 @@ class PostgresManager:
             );
         """
 
-    def execute_query(self, query: str, params: Optional[List[Any]] = None) -> None:
-        """Execute a query with optional parameters."""
+    def execute_query(self, query: str, params: Optional[List[Any]] = None):
+        """Execute a query with optional parameters.
+
+        :param query: The SQL query to execute.
+        :type query: str
+        :param params: A list of parameters to bind to the query, defaults to None.
+        :type params: List[Any], optional
+        :raises Exception: If query execution fails.
+        """
         with self.get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(f'SET search_path TO "{self.config.db_schema}"')
@@ -197,15 +289,33 @@ class PostgresManager:
 
 
 class Feast(Stage):
-    """Pipeline stage for feature store setup using PostgreSQL with pgvector."""
+    """Pipeline stage for feature store setup using PostgreSQL with pgvector.
+
+    This stage handles the setup and configuration of the Feast feature store,
+    including PostgreSQL management, pgvector extension setup, feature table creation,
+    and feature repository configuration.
+    """
 
     def __init__(self, *args, **kwargs):
+        """Initialize the Feast stage with necessary parameters.
+
+        :param args: Variable length argument list.
+        :type args: Any
+        :param kwargs: Arbitrary keyword arguments.
+        :type kwargs: Any
+        """
         super().__init__(*args, **kwargs)
         self._temp_dirs = []
         self._pg_manager = None
 
     def _setup_postgres_manager(self, db_config: Dict[str, Any]) -> PostgresManager:
-        """Set up PostgreSQL manager with configuration."""
+        """Set up PostgreSQL manager with configuration.
+
+        :param db_config: A dictionary containing PostgreSQL connection details.
+        :type db_config: Dict[str, Any]
+        :return: An instance of PostgresManager initialized with the provided configuration.
+        :rtype: PostgresManager
+        """
         config = PostgresConfig(
             host=db_config["host"],
             port=int(db_config["port"]),
@@ -217,7 +327,12 @@ class Feast(Stage):
         return PostgresManager(config)
 
     def _setup_pgvector(self, pg_manager: PostgresManager):
-        """Set up pgvector extension."""
+        """Set up pgvector extension.
+
+        :param pg_manager: An instance of PostgresManager to execute queries.
+        :type pg_manager: PostgresManager
+        :raises Exception: If pgvector extension setup fails.
+        """
         try:
             pg_manager.execute_query("CREATE EXTENSION IF NOT EXISTS vector;")
             logger.info("Successfully created pgvector extension")
@@ -226,7 +341,12 @@ class Feast(Stage):
             raise
 
     def verify_tables(self):
-        """Verify table creation and column existence using SQLAlchemy."""
+        """Verify table creation and column existence using SQLAlchemy.
+
+        :return: A pandas DataFrame containing table names and their columns.
+        :rtype: pd.DataFrame
+        :raises Exception: If table verification fails.
+        """
         # Create SQLAlchemy engine
         encoded_password = urllib.parse.quote_plus(self.cfg.feast.config.online_store.password)
         engine_url = (
@@ -264,13 +384,21 @@ class Feast(Stage):
             engine.dispose()
 
     def _setup_feature_tables(self, df: pd.DataFrame):
-        """Set up required feature tables in PostgreSQL aligned with feature views."""
+        """Set up required feature tables in PostgreSQL aligned with feature views.
+
+        :param df: The pandas DataFrame containing feature data.
+        :type df: pd.DataFrame
+        :raises Exception: If feature table setup fails.
+        """
         try:
             logger.info("Setting up feature tables...")
 
             # Create the main features table that all feature views source from
             self._pg_manager.create_table_from_df(
-                df=df, table_name="feast_diabetes_features", if_exists="replace", schema="feast"
+                df=df,
+                table_name="feast_diabetes_features",
+                if_exists="replace",
+                schema="feast",
             )
             logger.info("Created main features table: feast_diabetes_features")
 
@@ -286,7 +414,10 @@ class Feast(Stage):
             entity_cols = ["patient_id", "event_timestamp"]
             entity_df = df[entity_cols].copy().drop_duplicates()
             self._pg_manager.create_table_from_df(
-                df=entity_df, table_name="feast_patient_entities", if_exists="replace", schema="feast"
+                df=entity_df,
+                table_name="feast_patient_entities",
+                if_exists="replace",
+                schema="feast",
             )
             logger.info("Created entity reference table: feast_patient_entities")
 
@@ -300,18 +431,35 @@ class Feast(Stage):
 
     def data_has_changed(self, df: pd.DataFrame) -> bool:
         """Check if data has changed based on a hash.
-        If the hash file is corrupt or invalid, it will be recreated."""
+
+        If the hash file is corrupt or invalid, it will be recreated.
+
+        :param df: The pandas DataFrame to check for changes.
+        :type df: pd.DataFrame
+        :return: `True` if data has changed or hash is invalid/missing, `False` otherwise.
+        :rtype: bool
+        """
         data_hash = pd.util.hash_pandas_object(df).sum()
         hash_file = pathlib.Path(self.cfg.paths.feature_repo) / "data_hash.txt"
 
-        def write_hash(hash_value: int) -> None:
-            """Helper function to write hash value to file."""
+        def write_hash(hash_value: int):
+            """Helper function to write hash value to file.
+
+            :param hash_value: The hash value to write.
+            :type hash_value: int
+            """
             hash_file.parent.mkdir(parents=True, exist_ok=True)
             with open(hash_file, "w") as f:
                 f.write(str(hash_value))
 
         def read_hash() -> int:
-            """Helper function to read the hash value from the file."""
+            """Helper function to read the hash value from the file.
+
+            :return: The hash value read from the file.
+            :rtype: int
+            :raises ValueError: If the hash file is empty.
+            :raises OSError: If the hash file cannot be read.
+            """
             with open(hash_file, "r") as f:
                 content = f.read().strip()
                 if not content:
@@ -338,6 +486,14 @@ class Feast(Stage):
             return True
 
     def _prepare_feature_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Prepare feature data by handling missing values and ensuring correct data types.
+
+        :param df: The pandas DataFrame to prepare.
+        :type df: pd.DataFrame
+        :return: The prepared pandas DataFrame.
+        :rtype: pd.DataFrame
+        :raises Exception: If data preparation fails.
+        """
         if not self.data_has_changed(df):
             return df
 
@@ -418,7 +574,11 @@ class Feast(Stage):
             raise
 
     def is_docker_running(self):
-        """Check if Docker daemon is running."""
+        """Check if Docker daemon is running.
+
+        :return: `True` if Docker is running, `False` otherwise.
+        :rtype: bool
+        """
         try:
             import docker
 
@@ -431,7 +591,24 @@ class Feast(Stage):
             return False
 
     def run(self):
-        """Set up and configure feature store with PostgreSQL and pgvector extension."""
+        """Set up and configure feature store with PostgreSQL and pgvector extension.
+
+        This method performs the following steps:
+            1. Checks if Docker is running.
+            2. Loads and validates Feast configuration.
+            3. Starts a PostgreSQL container with pgvector extension.
+            4. Waits for PostgreSQL to be ready.
+            5. Initializes PostgreSQL manager.
+            6. Copies feature data and configurations.
+            7. Prepares feature data.
+            8. Sets up feature tables in PostgreSQL.
+            9. Initializes and applies Feast feature store.
+           10. Saves exploration metrics and cleans up.
+
+        :raises RuntimeError: If Docker is not running.
+        :raises ValueError: If Feast configuration is missing required fields.
+        :raises Exception: If any step in the setup process fails.
+        """
         try:
             logger.debug(f"Feast version: {feast.__version__}")
 
@@ -465,12 +642,27 @@ class Feast(Stage):
 
                 container = (
                     DockerContainer("pgvector/pgvector:pg16")
-                    .with_env("POSTGRES_USER", online_store_cfg.get("user", "postgres"))
-                    .with_env("POSTGRES_PASSWORD", online_store_cfg.get("password", "postgres"))
-                    .with_env("POSTGRES_DB", online_store_cfg.get("database", "registry"))
+                    .with_env(
+                        "POSTGRES_USER",
+                        online_store_cfg.get("user", "postgres"),
+                    )
+                    .with_env(
+                        "POSTGRES_PASSWORD",
+                        online_store_cfg.get("password", "postgres"),
+                    )
+                    .with_env(
+                        "POSTGRES_DB",
+                        online_store_cfg.get("database", "registry"),
+                    )
                     .with_exposed_ports(online_store_cfg.get("port", 5432))
-                    .with_volume_mapping(init_sql_path, "/docker-entrypoint-initdb.d/init.sql")
-                    .with_bind_ports(online_store_cfg.get("port", 5432), online_store_cfg.get("port", 5432))
+                    .with_volume_mapping(
+                        init_sql_path,
+                        "/docker-entrypoint-initdb.d/init.sql",
+                    )
+                    .with_bind_ports(
+                        online_store_cfg.get("port", 5432),
+                        online_store_cfg.get("port", 5432),
+                    )
                 )
                 container.start()
 
@@ -533,7 +725,12 @@ class Feast(Stage):
                     )
 
                 # Ensure required top-level fields
-                required_fields = ["project", "provider", "entity_key_serialization_version", "coerce_tz_aware"]
+                required_fields = [
+                    "project",
+                    "provider",
+                    "entity_key_serialization_version",
+                    "coerce_tz_aware",
+                ]
                 top_level_config = {
                     field: feast_config.pop(field, None) for field in required_fields if field in feast_config
                 }

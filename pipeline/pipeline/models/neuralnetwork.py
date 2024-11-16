@@ -6,7 +6,7 @@ This module provides a neural network model implementation
 inheriting from the abstract base Model class.
 
 .. module:: pipeline.models.neuralnetwork
-   :synopsis: Neural Network model using PyTorch
+    :synopsis: Neural Network model using PyTorch
 
 .. moduleauthor:: aai540-group3
 """
@@ -318,7 +318,7 @@ class NeuralNetwork(Model):
             logger.error(f"Neural network training failed: {e}")
             raise
 
-    def _save_training_plots(self) -> None:
+    def _save_training_plots(self):
         """Generate and save training loss and accuracy plots."""
         import matplotlib.pyplot as plt
 
@@ -512,7 +512,7 @@ class NeuralNetwork(Model):
         logger.warning("Feature importance will be computed using SHAP values.")
         return None
 
-    def generate_plots(self, metrics: Any) -> None:
+    def generate_plots(self, metrics: Any):
         """Generate and save evaluation plots specific to neural networks.
 
         :param metrics: Metrics object containing evaluation data.

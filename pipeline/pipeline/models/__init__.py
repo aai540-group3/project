@@ -1,11 +1,14 @@
 """
-Model Implementations
-===================
+Model Package
+=============
 
 This module provides implementations of various machine learning models
 for diabetic readmission prediction.
 
-Each model supports both quick validation and full training modes.
+.. module:: pipeline.models
+    :synopsis: Machine learning model implementations for diabetic readmission
+
+.. moduleauthor:: aai540-group3
 """
 
 import importlib

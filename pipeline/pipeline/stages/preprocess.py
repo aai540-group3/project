@@ -1,3 +1,13 @@
+"""
+Data Preprocessing Stage
+========================
+
+.. module:: pipeline.stages.preprocess
+   :synopsis: Pipeline stage for data preprocessing
+
+.. moduleauthor:: aai540-group3
+"""
+
 import pathlib
 
 import matplotlib.pyplot as plt
@@ -13,8 +23,19 @@ class Preprocess(Stage):
     """Pipeline stage for data preprocessing."""
 
     def run(self):
-        """Execute preprocessing pipeline to clean data without creating new features."""
+        """Execute the data preprocessing pipeline.
 
+        This method performs the following:
+            1. Loads raw data and captures initial metrics.
+            2. Drops columns with excessive missing values.
+            3. Handles missing values and categorical encoding.
+            4. Filters, cleans, and clips outliers in numeric data.
+            5. Prepares target variable for modeling.
+            6. Saves metrics and outputs, and generates visualizations.
+
+        :raises KeyError: If required columns are missing during processing.
+        :raises ValueError: If preprocessing results in a complete loss of positive cases in the target variable.
+        """
         HIGH_MISSING_FEATURES = [
             "weight",       # 96.86% missing (98,569/101,766), only 9 unique values when present
             "examide",      # No variation: single value for all records (zero-variance predictor)
@@ -43,15 +64,15 @@ class Preprocess(Stage):
             "five_number_summary": df.describe().to_dict(),
         }
 
-        # Capture number of missing values for each high-missing column before dropping
+        # Record missing values for high-missing columns before dropping
         metrics["high_missing_features_dropped"] = {
             col: df[col].isnull().sum() for col in HIGH_MISSING_FEATURES if col in df.columns
         }
 
-        # Handle medical specialty and payer code before other preprocessing
+        # Handle medical specialty and payer code before further processing
         logger.info("Processing medical specialty and payer code")
 
-        # Analyze and visualize medical specialty distribution
+        # Visualize top medical specialties
         plt.figure(figsize=(12, 6))
         specialty_counts = df["medical_specialty"].value_counts().head(15)
         sns.barplot(x=specialty_counts.values, y=specialty_counts.index)
@@ -61,11 +82,11 @@ class Preprocess(Stage):
         plt.savefig(plots_dir / "medical_specialty_distribution.png", bbox_inches="tight")
         plt.close()
 
-        # Fill missing values with meaningful categories
+        # Fill missing categories for specific columns
         df["medical_specialty"] = df["medical_specialty"].fillna("Unknown Specialty")
         df["payer_code"] = df["payer_code"].fillna("Unknown Payer")
 
-        # Capture specialty and payer code distributions in metrics
+        # Capture distributions in metrics
         metrics.update(
             {
                 "medical_specialty_distribution": df["medical_specialty"].value_counts().to_dict(),
@@ -73,20 +94,19 @@ class Preprocess(Stage):
             }
         )
 
-        # Drop columns with high missing values
-        logger.info("Dropping columns with excessive missing values")
+        # Drop columns with excessive missing values
+        logger.info("Dropping columns with high missing values")
         df = df.drop(columns=HIGH_MISSING_FEATURES, errors="ignore")
 
-        # Replace missing placeholders
+        # Replace placeholder values
         logger.info("Replacing missing placeholders")
         df = df.replace("?", np.nan)
 
-        # Before filtering, capture diagnosis code distributions
+        # Capture diagnosis code distributions before filtering
         logger.info("Capturing diagnosis code distributions")
 
         for diag_col in ["diag_1", "diag_2", "diag_3"]:
             if diag_col in df.columns:
-                # Get top 20 diagnoses and their stats
                 diagnosis_stats = (
                     pd.DataFrame(
                         {
@@ -102,34 +122,24 @@ class Preprocess(Stage):
                 diagnosis_stats.columns = ["diagnosis", "count", "readmission_rate"]
                 diagnosis_stats = diagnosis_stats.nlargest(20, "count").sort_values("count", ascending=True)
 
-                # Create the visualization
                 fig, ax = plt.subplots(figsize=(15, 8))
-
-                # Create color map based on readmission rates
                 norm = plt.Normalize(
                     diagnosis_stats["readmission_rate"].min(), diagnosis_stats["readmission_rate"].max()
                 )
                 cmap = plt.cm.RdYlBu
                 sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-                sm.set_array([])  # Only needed for older versions of Matplotlib
+                sm.set_array([])
 
-                # Apply the color map to the bars
                 ax.barh(
                     diagnosis_stats["diagnosis"],
                     diagnosis_stats["count"],
                     color=cmap(norm(diagnosis_stats["readmission_rate"])),
                 )
-
-                # Configure axes
                 ax.set_title(f"Top 20 {diag_col} Codes - Count and Readmission Rate")
                 ax.set_xlabel("Number of Patients")
                 ax.set_ylabel("Diagnosis Code")
-
-                # Add colorbar associated with the current Axes
                 cbar = fig.colorbar(sm, ax=ax)
                 cbar.set_label("Readmission Rate")
-
-                # Adjust layout and save
                 plt.tight_layout()
                 plot_path = plots_dir / f"{diag_col}_distribution.png"
                 plt.savefig(plot_path, bbox_inches="tight", dpi=300)
@@ -152,7 +162,7 @@ class Preprocess(Stage):
         df = df.reset_index(drop=True)
         df["id"] = df.index
 
-        # Handle outliers by clipping
+        # Clip outliers for numeric features
         logger.info("Clipping outliers for numeric features")
         numeric_cols = df.select_dtypes(include=[np.number]).columns.difference(["id", "readmitted"])
         for col in numeric_cols:
@@ -202,12 +212,7 @@ class Preprocess(Stage):
         logger.info("Generating Missing Values Heatmap")
         plt.figure(figsize=(12, 8))
         missing_data = df.isnull().mean().to_frame("missing_rate")
-        sns.heatmap(
-            missing_data,
-            cmap="YlOrRd",
-            cbar=True,
-            yticklabels=True,
-        )
+        sns.heatmap(missing_data, cmap="YlOrRd", cbar=True, yticklabels=True)
         plt.title("Distribution - Missing Values")
         plt.xlabel("Features")
         plt.ylabel("Missing Rate")
@@ -256,5 +261,4 @@ class Preprocess(Stage):
         plt.savefig(target_plot_path, bbox_inches="tight")
         logger.debug(f"Saved Readmission Distribution plot to: {target_plot_path}")
         plt.close()
-
         logger.info("Preprocessing completed successfully")

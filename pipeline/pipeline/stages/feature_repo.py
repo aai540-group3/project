@@ -1,22 +1,45 @@
+"""
+Feature Repository
+==================
+
+.. module:: pipeline.stages.feature_repo
+   :synopsis: This module defines the entities, views, and services for the Feast feature store
+
+.. moduleauthor:: aai540-group3
+"""
+
 from datetime import timedelta
 
 from feast import Entity, FeatureService, FeatureView, Field
 from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import PostgreSQLSource
 from feast.types import Float32, Int64
 
+
+# Define the primary entity for Feast
 entities = Entity(
     name="patient",
     join_keys=["patient_id"],
 )
 
 
-def get_source(name):
+def get_source(name: str) -> PostgreSQLSource:
+    """Retrieve the PostgreSQL source for a given feature view.
+
+    This function creates a PostgreSQLSource object configured to query all records from the specified feature table.
+
+    :param name: The base name of the feature view to retrieve the source for.
+    :type name: str
+    :return: A PostgreSQLSource configured for the specified feature view.
+    :rtype: PostgreSQLSource
+    """
     return PostgreSQLSource(
         name=f"{name}_source",
         query="SELECT * FROM feast_diabetes_features",
         timestamp_field="event_timestamp",
     )
 
+
+# Define Feature Views for various feature domains
 
 admissions = FeatureView(
     name="admissions",
@@ -184,6 +207,7 @@ target = FeatureView(
     tags={"domain": "target"},
 )
 
+# Aggregate all feature views into a list for easy management
 features = [
     demographic,
     clinical,
@@ -196,6 +220,7 @@ features = [
     target,
 ]
 
+# Define a Feature Service that includes all feature views
 feature_service = FeatureService(
     name="readmission_prediction",
     features=features,

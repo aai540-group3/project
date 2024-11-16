@@ -2,10 +2,10 @@
 MLOps Pipeline
 ==============
 
-This module initializs the MLOps pipeline
+This module initializes the MLOps pipeline with standardized visualization settings, color schemes, and stage imports.
 
 .. module:: pipeline
-   :synopsis: MLOps pipeline
+   :synopsis: MLOps pipeline initialization and visualization setup.
 
 .. moduleauthor:: aai540-group3
 """
@@ -13,7 +13,6 @@ This module initializs the MLOps pipeline
 from importlib.metadata import version
 
 __version__ = version("pipeline")
-
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -94,7 +93,6 @@ plt.rcParams.update(PLOT_PARAMS)
 
 # Set seaborn theme
 sns.set_theme(style="white", context="paper", font_scale=1.6)
-
 
 __all__ = [
     "__version__",

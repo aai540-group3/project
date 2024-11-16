@@ -6,8 +6,7 @@ This module provides an abstract base class for machine learning models,
 managing configurations, data processing, training, evaluation, and metrics.
 
 .. module:: model
-  :synopsis: Abstract base class for ML model pipelines with data preparation,
-             training, and evaluation.
+    :synopsis: Abstract base class for ML model pipelines
 
 .. moduleauthor:: aai540-group3
 """
@@ -90,7 +89,7 @@ class Model(ABC):
         """
         pass
 
-    def save_metrics(self, metrics_data: Optional[Dict[str, Any]] = None) -> None:
+    def save_metrics(self, metrics_data: Optional[Dict[str, Any]] = None):
         """Save metrics data to a JSON file in a thread-safe manner.
 
         :param metrics_data: Dictionary of metrics data.
@@ -322,7 +321,7 @@ class Model(ABC):
 
         return metrics
 
-    def generate_plots(self, metrics: Metrics) -> None:
+    def generate_plots(self, metrics: Metrics):
         """Generate and save evaluation plots."""
         paths = {
             "confusion_matrix": self.plots_dir / "confusion_matrix.png",

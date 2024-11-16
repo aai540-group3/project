@@ -6,7 +6,7 @@ This module provides a machine learning model implementation using AutoGluon,
 inheriting from the abstract base Model class.
 
 .. module:: pipeline.models.autogluon_model
-   :synopsis: AutoGluon model implementation
+    :synopsis: AutoGluon model implementation
 
 .. moduleauthor:: aai540-group3
 """
@@ -258,7 +258,7 @@ class Autogluon(Model):
             logger.error(f"Failed to create prediction function: {e}")
             return None
 
-    def list_available_models(self) -> None:
+    def list_available_models(self):
         """List all available model names in the predictor."""
         if not self.predictor:
             logger.error("Predictor has not been trained or loaded. Cannot list models.")

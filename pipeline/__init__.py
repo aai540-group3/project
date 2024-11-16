@@ -2,12 +2,13 @@
 Pipeline Package
 ================
 
+This package serves as the entry point for all pipeline functionalities, including initializing
+pipeline stages and setting up the package environment.
+
 .. module:: pipeline
-   :synopsis: Main package for pipeline stages, models, utilities, and configuration
+   :synopsis: Main package for pipeline stages and versioning.
 
 .. moduleauthor:: aai540-group3
-
-This package is the entry point for all pipeline functionalities, including stages, model training, utilities, and configuration management.
 """
 
 from importlib.metadata import version

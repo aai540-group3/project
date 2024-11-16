@@ -1,3 +1,13 @@
+"""
+Featurize Stage
+===============
+
+.. module:: pipeline.stages.featurize
+   :synopsis: This module handles feature engineering
+
+.. moduleauthor:: aai540-group3
+"""
+
 import pathlib
 
 import matplotlib.pyplot as plt
@@ -9,7 +19,6 @@ from sklearn.ensemble import RandomForestClassifier
 
 from .stage import Stage
 
-# Constants
 MEDICATIONS = [
     "metformin",
     "repaglinide",
@@ -54,52 +63,28 @@ BINARY_MAP = {
 }
 
 LAB_MAP = {
-    "A1Cresult": {">8": 1, ">7": 1, "Norm": 0},  # Removed "None": -99
-    "max_glu_serum": {">300": 1, ">200": 1, "Norm": 0},  # Removed "None": -99
+    "A1Cresult": {">8": 1, ">7": 1, "Norm": 0},
+    "max_glu_serum": {">300": 1, ">200": 1, "Norm": 0},
 }
 
 DISCHARGE_MAP = {
-    6: 1,
-    8: 1,
-    9: 1,
-    13: 1,  # HOME
-    3: 2,
-    4: 2,
-    5: 2,
-    14: 2,
-    22: 2,
-    23: 2,
-    24: 2,  # HEALTHCARE FACILITY
-    12: 10,
-    15: 10,
-    16: 10,
-    17: 10,  # OUTPATIENT
-    25: 18,
-    26: 18,  # PSYCHIATRIC
-}
+    6: 1, 8: 1, 9: 1, 13: 1,                       # HOME 
+    3: 2, 4: 2, 5: 2, 14: 2, 22: 2, 23: 2, 24: 2,  # HEALTHCARE FACILITY
+    12: 10, 15: 10, 16: 10, 17: 10,                # OUTPATIENT
+    25: 18, 26: 18,                                # PSYCHIATRIC 
+}  # fmt: off
 
 ADMISSION_MAP = {
-    2: 1,
-    3: 1,  # PHYSICIAN REFERRAL
-    5: 4,
-    6: 4,
-    10: 4,
-    22: 4,
-    25: 4,  # TRANSFER
-    15: 9,
-    17: 9,
-    20: 9,
-    21: 9,  # EMERGENCY
-    13: 11,
-    14: 11,  # OTHER
-}
+    2: 1, 3: 1,                       # PHYSICIAN REFERRAL
+    5: 4, 6: 4, 10: 4, 22: 4, 25: 4,  # TRANSFER
+    15: 9, 17: 9, 20: 9, 21: 9,       # EMERGENCY
+    13: 11, 14: 11,                   # OTHER
+}  # fmt: off
 
 ADMISSION_TYPE_MAP = {
-    2: 1,
-    7: 1,  # EMERGENCY/URGENT
-    6: 5,
-    8: 5,  # OTHER
-}
+    2: 1, 7: 1,  # EMERGENCY/URGENT
+    6: 5, 8: 5,  # OTHER
+}  # fmt: off
 
 MEDICATION_STATUS_MAP = {"No": 0, "Steady": 1, "Up": 1, "Down": 1}
 
@@ -215,11 +200,30 @@ HIGH_MISSING_VALUES = [
 
 
 class Featurize(Stage):
-    """Pipeline stage for feature engineering with medical domain knowledge."""
+    """Pipeline stage for feature engineering with medical domain knowledge.
+
+    This stage performs comprehensive feature transformations, including handling missing values,
+    encoding categorical variables, creating interaction terms, and generating visualizations
+    to prepare the data for machine learning models.
+    """
 
     def run(self):
-        """Generate and transform features with medical domain expertise."""
+        """Generate and transform features with medical domain expertise.
 
+        This method performs the following steps:
+            1. Loads the preprocessed dataset.
+            2. Defines output directories for processed data and plots.
+            3. Drops columns with extensive missing values.
+            4. Maps and transforms various features based on medical domain knowledge.
+            5. Handles binary and multi-categorical feature encodings.
+            6. Creates interaction terms between selected features.
+            7. Validates the presence of target features.
+            8. Saves the processed features and generates relevant visualizations.
+            9. Logs metrics related to feature engineering.
+
+        :raises RuntimeError: If essential columns are missing from the dataset.
+        :raises ValueError: If target features are missing after processing.
+        """
         # Load preprocessed data
         df = self.load_data("cleaned.parquet", "data/interim")
         logger.info(f"Initial shape: {df.shape}")
@@ -326,10 +330,10 @@ class Featurize(Stage):
 
         # Define expected categories for multi-categorical features
         expected_multi_categories = {
-            "admission_source_id": ["1", "2", "3", "4", "7", "9"],  # Replace with actual categories
+            "admission_source_id": ["1", "2", "3", "4", "7", "9"],
             "admission_type_id": ["3", "5"],
             "discharge_disposition_id": ["2", "7", "10", "18"],
-            "level1_diag1": [f"{i}.0" for i in range(1, 9)],  # '1.0' to '8.0'
+            "level1_diag1": [f"{i}.0" for i in range(1, 9)],
         }
 
         # One-hot encode binary features without dropping any categories
@@ -376,8 +380,7 @@ class Featurize(Stage):
                     f"Cannot create interaction term '{term1}|{term2}' because one or both features are missing."
                 )
 
-        # Final selection of columns
-        # Ensure 'readmitted' is present
+        # Final selection of columns - ensure 'readmitted' is present
         if "readmitted" not in df.columns:
             raise RuntimeError("Target column 'readmitted' not found in DataFrame.")
 
@@ -407,7 +410,7 @@ class Featurize(Stage):
                     # Other features
                     logger.error(f"Feature '{feature}' is missing due to unexpected data or encoding issues.")
             # Raise error to halt pipeline and prompt investigation
-            raise RuntimeError(f"Missing features in final dataset: {missing_features}")
+            raise ValueError(f"Missing features in final dataset: {missing_features}")
         else:
             logger.info("All target features are present in the final dataset.")
 
@@ -538,5 +541,4 @@ class Featurize(Stage):
         plt.savefig(str(figure_filename), bbox_inches="tight")
         plt.close()
         logger.debug(f"Saved readmission distribution plot to: {figure_filename}")
-
         logger.info("All visualizations generated and saved successfully.")

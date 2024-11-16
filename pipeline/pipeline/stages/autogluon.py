@@ -1,6 +1,6 @@
 """
-AutoGluon Stage Implementation
-==============================
+AutoGluon Stage
+===============
 
 .. module:: pipeline.stages.autogluon
    :synopsis: Pipeline stage for AutoGluon model training with DVC Live tracking

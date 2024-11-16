@@ -1,3 +1,13 @@
+"""
+Explore Stage
+=============
+
+.. module:: pipeline.stages.explore
+   :synopsis: This module contains the Explore stage
+
+.. moduleauthor:: aai540-group3
+"""
+
 import pathlib
 
 import matplotlib
@@ -18,18 +28,17 @@ from .stage import Stage
 
 
 def analyze_feature_group(args):
-    """
-    Analyze a single feature group: compute statistics and generate plots.
+    """Analyze a single feature group by computing statistics and generating plots.
 
-    Args:
-        args (tuple): A tuple containing:
-            - group (str): The name of the feature group.
-            - cols (list): List of column names in the feature group.
-            - df (pd.DataFrame): The DataFrame containing the data.
-            - plots_directory (str or pathlib.Path): Directory to save plots.
-
-    Returns:
-        tuple: (group name, group statistics dictionary)
+    :param args: A tuple containing the necessary parameters for analysis.
+        - group (str): The name of the feature group.
+        - cols (list): List of column names in the feature group.
+        - df (pd.DataFrame): The DataFrame containing the data.
+        - plots_directory (str or pathlib.Path): Directory to save plots.
+    :type args: tuple
+    :return: A tuple containing the group name and its corresponding statistics dictionary.
+    :rtype: tuple
+    :raises Exception: If an error occurs during the analysis of the feature group.
     """
     group, cols, df, plots_directory = args
     group_stats = {}
@@ -87,17 +96,16 @@ def analyze_feature_group(args):
 
 
 def analyze_categorical_variable(args):
-    """
-    Perform chi-square test and generate plots for a single categorical variable.
+    """Perform chi-square test and generate plots for a single categorical variable.
 
-    Args:
-        args (tuple): A tuple containing:
-            - col (str): The name of the categorical column.
-            - df (pd.DataFrame): The DataFrame containing the data.
-            - plots_directory (str or pathlib.Path): Directory to save plots.
-
-    Returns:
-        tuple: (column name, analysis result dictionary)
+    :param args: A tuple containing the necessary parameters for analysis.
+        - col (str): The name of the categorical column.
+        - df (pd.DataFrame): The DataFrame containing the data.
+        - plots_directory (str or pathlib.Path): Directory to save plots.
+    :type args: tuple
+    :return: A tuple containing the column name and its corresponding analysis result dictionary.
+    :rtype: tuple
+    :raises Exception: If an error occurs during the analysis of the categorical variable.
     """
     col, df, plots_directory = args
     try:
@@ -137,11 +145,27 @@ def analyze_categorical_variable(args):
 
 
 class Explore(Stage):
-    """Pipeline stage for data exploration and analysis."""
+    """Pipeline stage for data exploration and analysis.
+
+    This stage performs comprehensive analysis on the dataset, including statistical computations,
+    visualization generation, feature importance calculation, and correlation analysis.
+
+    :raises Exception: If any step in the exploration process fails.
+    """
 
     def run(self):
-        """Execute exploration analysis."""
+        """Execute exploration analysis.
 
+        This method performs the following steps:
+            1. Loads the cleaned dataset.
+            2. Defines feature groups for analysis.
+            3. Generates various statistical analyses and plots for each feature group.
+            4. Calculates feature importance using a RandomForestClassifier.
+            5. Analyzes correlations among numeric features.
+            6. Saves all computed metrics and generated plots.
+
+        :raises Exception: If the exploration process encounters any errors.
+        """
         try:
             # Load data
             df = self.load_data("cleaned.parquet", "data/interim")

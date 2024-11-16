@@ -1,3 +1,16 @@
+"""
+Model Metrics
+=============
+
+This module provides comprehensive metrics calculation and visualization
+capabilities for machine learning model evaluation.
+
+.. module:: pipeline.models.metrics
+    :synopsis: Metrics computation and visualization for model evaluation
+
+.. moduleauthor:: aai540-group3
+"""
+
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -78,7 +91,7 @@ class Metrics:
         """
         return self.get_metrics()
 
-    def to_json(self, filepath: str) -> None:
+    def to_json(self, filepath: str):
         """Save metrics to a JSON file.
 
         :param filepath: Path where the JSON file will be saved
@@ -162,7 +175,7 @@ class Metrics:
         logger.warning("Specificity is not defined for non-binary classification.")
         return 0.0
 
-    def plot_confusion_matrix(self, save_path: Path, title: str = "Confusion Matrix") -> None:
+    def plot_confusion_matrix(self, save_path: Path, title: str = "Confusion Matrix"):
         """Generate and save a confusion matrix visualization."""
         try:
             cm = confusion_matrix(self.y_true, self.y_pred)
@@ -184,7 +197,7 @@ class Metrics:
         except Exception as e:
             logger.error(f"Error generating confusion matrix plot: {e}")
 
-    def plot_roc_curve(self, save_path: Path, title: str = "ROC Curve") -> None:
+    def plot_roc_curve(self, save_path: Path, title: str = "ROC Curve"):
         """Generate and save a ROC curve plot."""
         try:
             fpr, tpr, _ = roc_curve(self.y_true, self.y_proba)
@@ -206,7 +219,7 @@ class Metrics:
         except Exception as e:
             logger.error(f"Error generating ROC curve plot: {e}")
 
-    def plot_precision_recall_curve(self, save_path: Path, title: str = "Precision-Recall Curve") -> None:
+    def plot_precision_recall_curve(self, save_path: Path, title: str = "Precision-Recall Curve"):
         """Generate and save a precision-recall curve plot."""
         try:
             precision, recall, _ = precision_recall_curve(self.y_true, self.y_proba)
@@ -226,7 +239,7 @@ class Metrics:
         except Exception as e:
             logger.error(f"Error generating precision-recall curve plot: {e}")
 
-    def plot_calibration_curve(self, save_path: Path, n_bins: int = 10, title: str = "Calibration Plot") -> None:
+    def plot_calibration_curve(self, save_path: Path, n_bins: int = 10, title: str = "Calibration Plot"):
         """Generate and save a calibration curve plot."""
         try:
             prob_true, prob_pred = calibration_curve(self.y_true, self.y_proba, n_bins=n_bins)
@@ -246,7 +259,7 @@ class Metrics:
         except Exception as e:
             logger.error(f"Error generating calibration curve plot: {e}")
 
-    def plot_probability_distribution(self, save_path: Path, title: str = "Probability Distribution") -> None:
+    def plot_probability_distribution(self, save_path: Path, title: str = "Probability Distribution"):
         """Generate and save probability distribution plots."""
         try:
             plt.figure(figsize=(10, 6))
@@ -274,7 +287,7 @@ class Metrics:
     @staticmethod
     def plot_feature_importance(
         feature_importance: pd.DataFrame, save_path: Path, title: str = "Top 20 Features by Importance"
-    ) -> None:
+    ):
         """Generate and save feature importance visualization and data.
 
         :param feature_importance: DataFrame with feature names and importance scores
@@ -328,7 +341,7 @@ class Metrics:
         save_path: Path,
         plot_type: str = "dot",
         title: str = "SHAP Summary Plot",
-    ) -> None:
+    ):
         """Generate and save a SHAP summary plot.
 
         :param shap_values: SHAP values explanation object
@@ -356,7 +369,7 @@ class Metrics:
     @staticmethod
     def plot_shap_dependence(
         shap_values: shap.Explanation, feature: str, X: pd.DataFrame, save_path: Path, title: Optional[str] = None
-    ) -> None:
+    ):
         """Generate and save a SHAP dependence plot for a specific feature.
 
         :param shap_values: SHAP values explanation object
@@ -517,7 +530,7 @@ class Metrics:
 
     def generate_shap_plots(
         self, shap_values: shap.Explanation, save_dir: Path, title: Optional[str] = "SHAP Summary Plot"
-    ) -> None:
+    ):
         """Generate SHAP summary and dependence plots.
 
         :param shap_values: SHAP values explanation object

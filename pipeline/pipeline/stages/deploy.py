@@ -62,10 +62,9 @@ class Deploy(Stage):
                 "plots": Path(self.cfg.paths.models) / "logisticregression/artifacts/plots",
                 "scaler": Path(self.cfg.paths.models) / "logisticregression/artifacts/model/scaler.joblib",
             },
-            # Add other model configurations similarly
         }
 
-    def run(self) -> None:
+    def run(self):
         """Execute deployment pipeline.
 
         :raises RuntimeError: If deployment fails
@@ -149,7 +148,7 @@ class Deploy(Stage):
 
     # pipeline/pipeline/stages/deploy.py (continued)
 
-    def _create_model_card(self, best_model: str, metrics: Dict) -> None:
+    def _create_model_card(self, best_model: str, metrics: Dict):
         """Create model card with metrics and documentation.
 
         :param best_model: Name of best model
@@ -265,7 +264,7 @@ interventions and improved healthcare resource allocation.
 
         return content
 
-    def _create_preprocessing_config(self, model_type: str) -> None:
+    def _create_preprocessing_config(self, model_type: str):
         """Create preprocessing configuration.
 
         :param model_type: Type of model
@@ -302,7 +301,7 @@ interventions and improved healthcare resource allocation.
             logger.error(f"Failed to create preprocessing config: {e}")
             raise IOError(f"Preprocessing config creation failed: {e}")
 
-    def _create_model_config(self, model_type: str) -> None:
+    def _create_model_config(self, model_type: str):
         """Create model configuration.
 
         :param model_type: Type of model
@@ -329,7 +328,7 @@ interventions and improved healthcare resource allocation.
             logger.error(f"Failed to create model config: {e}")
             raise IOError(f"Model config creation failed: {e}")
 
-    def _upload_to_huggingface(self) -> None:
+    def _upload_to_huggingface(self):
         """Upload model to HuggingFace Hub.
 
         :raises RuntimeError: If upload fails

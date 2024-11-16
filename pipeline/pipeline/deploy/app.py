@@ -1,3 +1,16 @@
+"""
+Diabetes Readmission Prediction API
+===================================
+
+This module defines a FastAPI application for predicting hospital readmission for diabetes patients.
+The API provides endpoints for making predictions, checking model health, and returning feature importance.
+
+.. module:: pipeline.deploy.app
+   :synopsis: FastAPI application for diabetes readmission prediction.
+
+.. moduleauthor:: aai540-group3
+"""
+
 import logging
 from typing import Dict
 
@@ -13,13 +26,25 @@ app = FastAPI(title="Diabetes Readmission Prediction")
 
 
 class PredictionRequest(BaseModel):
-    """Prediction request model."""
+    """Schema for prediction request.
+
+    :param features: Dictionary of features needed for prediction
+    :type features: Dict[str, float]
+    """
 
     features: Dict[str, float]
 
 
 class PredictionResponse(BaseModel):
-    """Prediction response model."""
+    """Schema for prediction response.
+
+    :param prediction: Predicted label (0 or 1)
+    :type prediction: int
+    :param probability: Probability of readmission
+    :type probability: float
+    :param feature_importance: Dictionary of feature importances
+    :type feature_importance: Dict[str, float]
+    """
 
     prediction: int
     probability: float
@@ -28,7 +53,11 @@ class PredictionResponse(BaseModel):
 
 @app.on_event("startup")
 async def startup_event():
-    """Load model on startup."""
+    """Load the production model on startup.
+
+    Initializes the model registry and retrieves the production model.
+    Logs an error if model loading fails.
+    """
     global model, registry
 
     try:
@@ -46,7 +75,16 @@ async def startup_event():
 
 @app.post("/predict", response_model=PredictionResponse)
 async def predict(request: PredictionRequest):
-    """Make prediction."""
+    """Endpoint to make predictions.
+
+    Takes in feature data and returns a prediction, probability, and feature importance.
+
+    :param request: JSON body containing feature data
+    :type request: PredictionRequest
+    :return: PredictionResponse with prediction, probability, and feature importance
+    :rtype: PredictionResponse
+    :raises HTTPException: 500 error if prediction fails
+    """
     try:
         # Convert features to DataFrame
         features_df = pd.DataFrame([request.features])
@@ -71,7 +109,7 @@ async def predict(request: PredictionRequest):
 
 @app.get("/health")
 async def health():
-    """Health check endpoint."""
+    """Health check endpoint to ensure API is running."""
     return {"status": "healthy"}
 
 

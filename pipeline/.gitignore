@@ -35,7 +35,6 @@ data/raw/data.csv
 data/raw/data.parquet
 data/raw/metadata.json
 data/raw/variables.json
-dvc.lock
 feature_repo/data_hash.txt
 feature_repo/feature_repo.py
 feature_repo/feature_store.yaml

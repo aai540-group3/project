@@ -6,7 +6,7 @@ This module provides a logistic regression model implementation
 inheriting from the abstract base Model class.
 
 .. module:: pipeline.models.logisticregression
-   :synopsis: Logistic Regression model using PyTorch
+    :synopsis: Logistic Regression model using PyTorch
 
 .. moduleauthor:: aai540-group3
 """

@@ -71,7 +71,7 @@ The model was trained on the Diabetes 130-US hospitals dataset.
         output_dir: Path,
         metrics: Dict[str, float],
         feature_info: Dict[str, List[str]],
-    ) -> None:
+    ):
         """Prepare model for deployment."""
         # Create deployment directory
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -86,7 +86,7 @@ The model was trained on the Diabetes 130-US hospitals dataset.
         # Create configuration files
         self._create_config_files(output_dir, feature_info)
 
-    def push_to_hub(self, local_dir: Path, commit_message: str) -> None:
+    def push_to_hub(self, local_dir: Path, commit_message: str):
         """Push model to HuggingFace Hub."""
         self.api.upload_folder(
             repo_id=self.repo_id,
@@ -107,7 +107,7 @@ The model was trained on the Diabetes 130-US hospitals dataset.
             sections.append(f"### {group}\n{features_str}")
         return "\n\n".join(sections)
 
-    def _create_config_files(self, output_dir: Path, feature_info: Dict[str, List[str]]) -> None:
+    def _create_config_files(self, output_dir: Path, feature_info: Dict[str, List[str]]):
         """Create necessary configuration files."""
         # Create config.json
         config = {
