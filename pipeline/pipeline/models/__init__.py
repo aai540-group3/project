@@ -15,6 +15,7 @@ __all__ = [
     "LogisticRegression",
     "Metrics",
     "Model",
+    "NeuralNetwork",
 ]
 
 _MODULES = {
@@ -22,6 +23,7 @@ _MODULES = {
     "LogisticRegression": "pipeline.models.logistic_regression",
     "Metrics": "pipeline.models.metrics",
     "Model": "pipeline.models.model",
+    "NeuralNetwork": "pipeline.models.neural_network",
 }
 
 

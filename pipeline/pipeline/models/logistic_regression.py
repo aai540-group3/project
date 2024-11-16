@@ -1,116 +1,186 @@
-"""
-Logistic Regression Model
-=========================
-
-.. module:: pipeline.models.logistic_regression
-   :synopsis: Logistic Regression model
-
-.. moduleauthor:: aai540-group3
-"""
-
 import pathlib
-import typing
+from typing import Any, Callable, Dict, Optional
 
+import joblib
 import numpy as np
 import pandas as pd
-import sklearn
 from loguru import logger
+from sklearn.linear_model import LogisticRegression as SklearnLogisticRegression
 
-from .metrics import Metrics
 from .model import Model
 
 
 class LogisticRegression(Model):
-    """Concrete implementation of BaseModel using Logistic Regression."""
+    """Concrete implementation of the Model abstract base class using Logistic Regression."""
 
     def __init__(self):
-        """Initialize the LogisticRegressionModel."""
+        """Initialize the Logistic Regression model."""
         super().__init__()
-        self.predictor: typing.Optional[sklearn.linear_model.LogisticRegression] = None
-        self.label_column: str = self.cfg.get("label_column", "readmitted")
-        self.problem_type: str = self.cfg.logistic.get("problem_type", "binary")
-        self.eval_metric: str = self.cfg.logistic.get("metric", "roc_auc")
-        self.model_params: typing.Dict[str, typing.Any] = self.cfg.logistic.get("model_params", {})
-        self.preprocessor: typing.Optional[sklearn.pipeline.Pipeline] = None
-        logger.info(f"LogisticRegressionModel initialized with label column '{self.label_column}'.")
+        self.predictor: Optional[SklearnLogisticRegression] = None
 
-    def train(self) -> typing.Tuple[pathlib.Path, Metrics]:
-        """Train the Logistic Regression model."""
+        # Extract configuration parameters
+        self.label_column: str = self.cfg.models.base.get("label", "target")
+        self.problem_type: str = self.model_config.get("problem_type", "binary")
+        self.eval_metric: str = self.model_config.get("metric", "roc_auc")
+        self.model_params: Dict[str, Any] = self.model_config.get("model_params", {})
+        logger.info(f"LogisticRegression initialized with label column '{self.label_column}'.")
+
+    def train(self) -> SklearnLogisticRegression:
+        """Train the Logistic Regression model.
+
+        :return: The trained Logistic Regression model.
+        :rtype: SklearnLogisticRegression
+        """
         logger.info("Starting training with Logistic Regression.")
-        data = pd.concat([self.cfg.data.X_train, self.cfg.data.y_train], axis=1)
-        tuning_data = pd.concat([self.cfg.data.X_val, self.cfg.data.y_val], axis=1)
 
-        # Initialize the Logistic Regression model
-        self.predictor = LogisticRegression(**self.model_params)
+        # Set random_state if not already set in model_params
+        seed = self.cfg.get("seed", 42)
+        if "random_state" not in self.model_params:
+            self.model_params["random_state"] = seed
+
+        # Initialize the Logistic Regression model with parameters
+        self.predictor = SklearnLogisticRegression(**self.model_params)
 
         # Fit the model
-        self.predictor.fit(self.cfg.data.X_train, self.cfg.data.y_train)
+        try:
+            self.predictor.fit(self.X_train, self.y_train)
+            logger.info("Training completed successfully.")
+        except Exception as e:
+            logger.error(f"Error during model training: {e}")
+            raise
 
-        # Save the trained model
-        model_path = self.save_model_path()
-
-        # Evaluate on validation data
-        y_val = self.cfg.data.y_val
-        y_pred = self.predict(self.cfg.data.X_val)
-        y_proba = self.predict_proba(self.cfg.data.X_val).iloc[:, 1]
-
-        metrics = Metrics(
-            y_true=y_val.tolist(),
-            y_pred=y_pred.tolist(),
-            y_proba=y_proba.tolist(),
-        )
-
-        logger.info("Training completed.")
-        return model_path, metrics
+        return self.predictor
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
-        """Generate predictions using the trained model."""
+        """Generate predictions using the trained model.
+
+        :param X: Features for prediction.
+        :type X: pd.DataFrame
+        :return: Predicted labels.
+        :rtype: np.ndarray
+        """
         if not self.predictor:
             raise ValueError("Model has not been trained or loaded.")
-        return self.predictor.predict(X).values
+        try:
+            predictions = self.predictor.predict(X)
+            return predictions
+        except Exception as e:
+            logger.error(f"Error during prediction: {e}")
+            raise
 
     def predict_proba(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Generate prediction probabilities using the trained model."""
+        """Generate prediction probabilities using the trained model.
+
+        :param X: Features for probability prediction.
+        :type X: pd.DataFrame
+        :return: Predicted probabilities.
+        :rtype: pd.DataFrame
+        """
         if not self.predictor:
             raise ValueError("Model has not been trained or loaded.")
-        return pd.DataFrame(self.predictor.predict_proba(X), columns=self.predictor.classes_)
+        try:
+            proba = self.predictor.predict_proba(X)
+            return pd.DataFrame(proba, columns=self.predictor.classes_)
+        except Exception as e:
+            logger.error(f"Error during probability prediction: {e}")
+            raise
 
-    def evaluate(self, X: pd.DataFrame, y: pd.Series) -> Metrics:
-        """Evaluate the model on the test set."""
+    def get_estimator(self) -> Any:
+        """Retrieve the underlying estimator for feature importance and SHAP computations.
+
+        :return: The underlying trained estimator.
+        :rtype: Any
+        """
         if not self.predictor:
-            raise ValueError("Model has not been trained or loaded.")
-        y_pred = self.predict(X).tolist()
-        y_proba = self.predict_proba(X).iloc[:, 1].tolist()
-        metrics = Metrics(
-            y_true=y.tolist(),
-            y_pred=y_pred,
-            y_proba=y_proba,
-        )
-        logger.info("Evaluation completed.")
-        return metrics
+            logger.error("Predictor has not been trained or loaded.")
+            return None
+        return self.predictor
 
-    def optimize(self) -> typing.Dict[str, typing.Any]:
-        """Perform hyperparameter optimization."""
-        logger.info("Logistic Regression typically does not require extensive hyperparameter optimization.")
-        logger.info("Returning current hyperparameters.")
-        return self.hyperparameters
+    def get_feature_importance(self) -> Optional[Dict[str, float]]:
+        """Get feature importance scores from the model coefficients.
 
-    def save_model_path(self) -> pathlib.Path:
-        """Save the trained Logistic Regression model."""
-        model_path = self.models_dir / "logistic_regression_model.joblib"
-        # Use joblib to save the model
-        import joblib
+        :return: Dictionary mapping feature names to their importance scores, or None if unavailable.
+        :rtype: Optional[Dict[str, float]]
+        """
+        if not self.predictor:
+            logger.error("Predictor has not been trained or loaded.")
+            return None
 
-        joblib.dump(self.predictor, model_path)
-        logger.info(f"Model saved at '{model_path}'.")
-        return model_path
+        try:
+            feature_names = self.X_train.columns
+            coefficients = self.predictor.coef_
 
-    def load_model(self, source_path: typing.Optional[pathlib.Path] = None) -> None:
-        """Load a trained Logistic Regression model from disk."""
-        source_path = source_path or (self.models_dir / "logistic_regression_model.joblib")
-        if not source_path.exists():
-            raise FileNotFoundError(f"Model file not found at '{source_path}'.")
-        import joblib
+            if coefficients.ndim == 1:
+                # Binary classification
+                feature_importance = dict(zip(feature_names, coefficients))
+            else:
+                # Multiclass classification
+                # For simplicity, take the mean of the coefficients across classes
+                mean_coefficients = np.mean(coefficients, axis=0)
+                feature_importance = dict(zip(feature_names, mean_coefficients))
 
-        self.predictor = joblib.load(source_path)
-        logger.info(f"Model loaded from '{source_path}'.")
+            logger.info("Feature importance calculated successfully.")
+            return feature_importance
+        except Exception as e:
+            logger.error(f"Failed to calculate feature importance: {e}")
+            return None
+
+    def get_prediction_function(self) -> Optional[Callable]:
+        """Get a prediction function suitable for SHAP analysis.
+
+        :return: A callable that takes a NumPy array and returns predictions, or None if unavailable.
+        :rtype: Optional[Callable]
+        """
+        if not self.predictor:
+            logger.error("Predictor has not been trained or loaded.")
+            return None
+
+        try:
+
+            def predict_fn(x: np.ndarray) -> np.ndarray:
+                return self.predictor.predict_proba(x)[:, 1]  # Probability of positive class
+
+            return predict_fn
+        except Exception as e:
+            logger.error(f"Failed to create prediction function: {e}")
+            return None
+
+    def save_model(self, model_artifact: Any, filename: str = "model.joblib") -> pathlib.Path:
+        """Save the trained Logistic Regression model.
+
+        :param model_artifact: The model artifact to save.
+        :type model_artifact: Any
+        :param filename: The filename to save the model under.
+        :type filename: str
+        :return: Path to the saved model file.
+        :rtype: pathlib.Path
+        """
+        model_path = self.models_dir / filename
+        try:
+            with self._model_lock:
+                joblib.dump(model_artifact, model_path)
+            logger.info(f"Model saved successfully at '{model_path}'.")
+            return model_path
+        except Exception as e:
+            logger.error(f"Failed to save model to '{model_path}': {e}")
+            raise
+
+    def load_model(self, filename: str = "model.joblib") -> Any:
+        """Load a trained Logistic Regression model from disk.
+
+        :param filename: The filename of the saved model.
+        :type filename: str
+        :return: The loaded model.
+        :rtype: Any
+        """
+        model_path = self.models_dir / filename
+        if not model_path.exists():
+            raise FileNotFoundError(f"Model file not found at '{model_path}'")
+        try:
+            with self._model_lock:
+                self.predictor = joblib.load(model_path)
+            logger.info(f"Model loaded successfully from '{model_path}'.")
+            return self.predictor
+        except Exception as e:
+            logger.error(f"Failed to load model from '{model_path}': {e}")
+            raise

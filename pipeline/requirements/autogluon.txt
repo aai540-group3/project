@@ -1,5 +1,3 @@
-autogluon.tabular
-pandas
-numpy
-scikit-learn
-joblib
+autogluon
+autogluon.tabular[lightgbm]
+shap

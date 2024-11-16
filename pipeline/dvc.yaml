@@ -4,8 +4,8 @@ stages:
             - UV_LINK_MODE=copy uv venv .venv --python 3.11
             - .venv/bin/python -m ensurepip --upgrade
             - .venv/bin/python -m pip install -q uv
-            - .venv/bin/uv pip install -q -e .
-            - .venv/bin/uv pip install -q -r requirements/base.txt
+            - .venv/bin/uv pip install -q --no-cache-dir  -e .
+            - .venv/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
         outs:
             - .venv:
                   cache: false
@@ -481,7 +481,7 @@ stages:
 
     autogluon:
         cmd:
-            - .venv/bin/uv run --with autogluon --with autogluon.tabular[lightgbm] --with dvclive --with shap python pipeline autogluon
+            - .venv/bin/uv run --with dvclive --with autogluon --with autogluon.tabular[all] --with shap python pipeline autogluon
         deps:
             - .venv
             - data/processed/features.parquet
@@ -521,7 +521,7 @@ stages:
 
     logistic:
         cmd:
-            - MODE=quick .venv/bin/uv run --with imblearn --with dvclive python pipeline logistic_regression
+            - .venv/bin/uv run --with dvclive --with shap --with imbalanced-learn python pipeline logistic_regression
         deps:
             - .venv
             - data/processed/features.parquet
@@ -555,111 +555,3 @@ stages:
             - plots/logistic/feature_importance.png:
                   y: feature
                   x: importance
-                  title: Top 20 Features by Importance
-#   register:
-#     cmd:
-#       - export UV_LINK_MODE=copy && uv venv .venv-register --python 3.11
-#       - . .venv-register/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/base.txt
-#       - . .venv-register/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/register.txt
-#       - . .venv-register/bin/activate && python pipeline/stages/register.py
-#     deps:
-#       - pipeline/stages/register.py
-#       - requirements/base.txt
-#       - requirements/register.txt
-#       - metrics/evaluation/model_comparison.json
-#       - models/*/model.pkl
-#     outs:
-#       - registry/metadata.json
-
-#   deploy:
-#     cmd:
-#       - export UV_LINK_MODE=copy && uv venv .venv-deploy --python 3.11
-#       - . .venv-deploy/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/base.txt
-#       - . .venv-deploy/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/deploy.txt
-#       - . .venv-deploy/bin/activate && python pipeline/stages/deploy.py
-#     deps:
-#       - pipeline/stages/deploy.py
-#       - requirements/base.txt
-#       - requirements/deploy.txt
-#       - models/*/model.pkl
-#       - metrics/evaluation/model_comparison.json
-#     outs:
-#       - deploy/huggingface:
-#           persist: true
-
-#   serve:
-#     cmd:
-#       - export UV_LINK_MODE=copy && uv venv .venv-serve --python 3.11
-#       - export UV_LINK_MODE=copy && uv pip install -r requirements/serve.txt --python .venv-serve/bin/python
-#       - export UV_LINK_MODE=copy && uv pip install -e . --python .venv-serve/bin/python
-#       - .venv-serve/bin/uvicorn pipeline.serve.app:app --host 0.0.0.0 --port 8000
-#     deps:
-#       - pipeline/serve/app.py
-#       - models/*/model.pkl
-#       - conf/config.yaml
-#       - requirements/serve.txt
-#     outs:
-#       - serve/logs:
-#           persist: true
-
-#   monitor:
-#     cmd:
-#       - export UV_LINK_MODE=copy && uv venv .venv-monitoring --python 3.11
-#       - export UV_LINK_MODE=copy && uv pip install -r requirements/monitoring.txt --python .venv-monitoring/bin/python
-#       - export UV_LINK_MODE=copy && uv pip install -e . --python .venv-monitoring/bin/python
-#       - .venv-monitoring/bin/python pipeline/stages/monitoring.py
-#     deps:
-#       - pipeline/monitoring/app.py
-#       - conf/config.yaml
-#     metrics:
-#       - metrics/monitoring/system_metrics.json
-#     plots:
-#       - metrics/plots/monitoring/resource_usage.png
-#       - metrics/plots/monitoring/prediction_latency.png
-#       - metrics/plots/monitoring/error_rate.png
-
-# artifacts:
-#   diabetes-dataset:
-#     path: data/raw/data.csv
-#     type: dataset
-#     desc: "Diabetes 130-US hospitals for years 1999-2008 dataset"
-#     labels:
-#       - tabular
-#       - healthcare
-#     meta:
-#       source: "UCI Machine Learning Repository"
-#       url: https://archive.ics.uci.edu/ml/datasets/diabetes+130-us+hospitals+for+years+1999-2008
-#       records: 101766
-#       features: 55
-#   logistic_regression:
-#     path: models/logistic_regression/artifacts/model/model.joblib
-#     type: model
-#     desc: "Trained Logistic Regression model for readmission prediction"
-#     labels:
-#       - baseline
-#       - interpretable
-#     meta:
-#       features: "engineered features, standardized"
-#       algorithm: sklearn.linear_model.LogisticRegression
-#   neural_network:
-#     path: models/neural_network/artifacts/model/model.keras
-#     type: model
-#     desc: "Trained deep Neural Network model for readmission prediction"
-#     labels:
-#       - deep-learning
-#       - tensorflow
-#     meta:
-#       architecture: "MLP, 3 hidden layers"
-#       optimizer: Adam
-#       epochs: 100
-#   autogluon:
-#     path: models/autogluon/artifacts/model/model.pkl
-#     type: model
-#     desc: "Trained AutoGluon ensemble model for readmission prediction"
-#     labels:
-#       - automl
-#       - ensemble
-#     meta:
-#       framework: autogluon
-#       hyperparameters: "tuned with best_quality preset"
-

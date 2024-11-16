@@ -10,7 +10,6 @@ import seaborn as sns
 import shap
 from loguru import logger
 from sklearn.calibration import calibration_curve
-from sklearn.inspection import permutation_importance
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -47,6 +46,8 @@ class Metrics:
     :type model: Optional[Any]
     :param X: Feature data used for predictions
     :type X: Optional[pd.DataFrame]
+    :param mode: Mode of operation, either 'quick' or 'full'
+    :type mode: str
     """
 
     y_true: Optional[List[int]] = field(default=None, repr=False)
@@ -54,6 +55,7 @@ class Metrics:
     y_pred: Optional[List[int]] = field(default=None, repr=False)
     model: Optional[Any] = field(default=None, repr=False)
     X: Optional[pd.DataFrame] = field(default=None, repr=False)
+    mode: str = field(default="quick", repr=False)
 
     def __post_init__(self):
         """Initialize the Metrics instance."""
@@ -65,9 +67,8 @@ class Metrics:
         :return: True if the target variable has two unique values, otherwise False.
         :rtype: bool
         """
-        # Ensure y_true is a Series for consistent attribute access
         y_true = pd.Series(self.y_true) if isinstance(self.y_true, list) else self.y_true
-        return len(set(y_true)) == 2 if not y_true.empty else False
+        return len(set(y_true)) == 2 if y_true is not None else False
 
     def to_dict(self) -> Dict[str, Optional[float]]:
         """Convert metrics to a dictionary format.
@@ -93,6 +94,7 @@ class Metrics:
         data: Dict[str, Union[List[int], List[float]]],
         model: Optional[Any] = None,
         X: Optional[pd.DataFrame] = None,
+        mode: str = "quick",
     ) -> "Metrics":
         """Create a Metrics instance from a dictionary.
 
@@ -102,6 +104,8 @@ class Metrics:
         :type model: Optional[Any]
         :param X: Feature data used for predictions
         :type X: Optional[pd.DataFrame]
+        :param mode: Mode of operation
+        :type mode: str
         :return: Instance of Metrics class populated with values from the dictionary
         :rtype: Metrics
         """
@@ -110,7 +114,7 @@ class Metrics:
         y_proba = data.get("y_proba")
 
         logger.info("Creating Metrics instance from dictionary.")
-        return cls(y_true=y_true, y_pred=y_pred, y_proba=y_proba, model=model, X=X)
+        return cls(y_true=y_true, y_pred=y_pred, y_proba=y_proba, model=model, X=X, mode=mode)
 
     def get_metrics(self) -> Dict[str, Optional[float]]:
         """Compute and return classification metrics.
@@ -119,20 +123,22 @@ class Metrics:
         :rtype: Dict[str, Optional[float]]
         """
         metrics = {}
-        if self.y_true and self.y_pred:
+        if self.y_true is not None and self.y_pred is not None:
+            average_method = "binary" if self.binary else "macro"
             metrics.update(
                 {
                     "accuracy": accuracy_score(self.y_true, self.y_pred),
-                    "precision": precision_score(self.y_true, self.y_pred, average="binary", zero_division=0),
-                    "recall": recall_score(self.y_true, self.y_pred, average="binary", zero_division=0),
-                    "f1_score": f1_score(self.y_true, self.y_pred, average="binary", zero_division=0),
-                    "specificity": self.calculate_specificity(),
+                    "precision": precision_score(self.y_true, self.y_pred, average=average_method, zero_division=0),
+                    "recall": recall_score(self.y_true, self.y_pred, average=average_method, zero_division=0),
+                    "f1_score": f1_score(self.y_true, self.y_pred, average=average_method, zero_division=0),
                     "balanced_accuracy": balanced_accuracy_score(self.y_true, self.y_pred),
                     "mcc": matthews_corrcoef(self.y_true, self.y_pred),
                 }
             )
+            if self.binary:
+                metrics["specificity"] = self.calculate_specificity()
 
-        if self.y_proba and self.y_true and self.is_binary():
+        if self.y_proba is not None and self.y_true is not None and self.binary:
             try:
                 metrics["roc_auc"] = roc_auc_score(self.y_true, self.y_proba)
                 metrics["average_precision"] = average_precision_score(self.y_true, self.y_proba)
@@ -156,164 +162,114 @@ class Metrics:
         logger.warning("Specificity is not defined for non-binary classification.")
         return 0.0
 
-    @staticmethod
-    def plot_confusion_matrix(
-        y_true: List[int], y_pred: List[int], save_path: Path, title: str = "Confusion Matrix"
-    ) -> None:
-        """Generate and save a confusion matrix visualization.
+    def plot_confusion_matrix(self, save_path: Path, title: str = "Confusion Matrix") -> None:
+        """Generate and save a confusion matrix visualization."""
+        try:
+            cm = confusion_matrix(self.y_true, self.y_pred)
+            cm_df = pd.DataFrame(
+                cm,
+                index=["Actual No", "Actual Yes"],
+                columns=["Predicted No", "Predicted Yes"],
+            )
 
-        :param y_true: Ground truth labels
-        :type y_true: List[int]
-        :param y_pred: Predicted labels
-        :type y_pred: List[int]
-        :param save_path: Path where the plot will be saved
-        :type save_path: Path
-        :param title: Title for the plot
-        :type title: str
-        """
-        cm = confusion_matrix(y_true, y_pred)
-        cm_df = pd.DataFrame(
-            cm,
-            index=["Actual No", "Actual Yes"],
-            columns=["Predicted No", "Predicted Yes"],
-        )
+            plt.figure(figsize=(8, 6))
+            sns.heatmap(cm_df, annot=True, fmt="d", cmap="Blues")
+            plt.title(title)
+            plt.xlabel("Predicted")
+            plt.ylabel("Actual")
+            plt.tight_layout()
+            plt.savefig(save_path)
+            plt.close()
+            logger.info(f"Confusion matrix plot saved at '{save_path}'.")
+        except Exception as e:
+            logger.error(f"Error generating confusion matrix plot: {e}")
 
-        plt.figure(figsize=(8, 6))
-        sns.heatmap(cm_df, annot=True, fmt="d", cmap="Blues")
-        plt.title(title)
-        plt.xlabel("Predicted")
-        plt.ylabel("Actual")
-        plt.tight_layout()
-        plt.savefig(save_path)
-        plt.close()
-        logger.info(f"Confusion matrix plot saved at '{save_path}'.")
+    def plot_roc_curve(self, save_path: Path, title: str = "ROC Curve") -> None:
+        """Generate and save a ROC curve plot."""
+        try:
+            fpr, tpr, _ = roc_curve(self.y_true, self.y_proba)
+            roc_auc = roc_auc_score(self.y_true, self.y_proba)
 
-    @staticmethod
-    def plot_roc_curve(y_true: List[int], y_proba: List[float], save_path: Path, title: str = "ROC Curve") -> None:
-        """Generate and save a ROC curve plot.
+            plt.figure(figsize=(8, 6))
+            plt.plot(fpr, tpr, color="darkorange", lw=2, label=f"ROC curve (AUC = {roc_auc:.3f})")
+            plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--", label="Random Chance")
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.05])
+            plt.xlabel("False Positive Rate")
+            plt.ylabel("True Positive Rate")
+            plt.title(title)
+            plt.legend(loc="lower right")
+            plt.tight_layout()
+            plt.savefig(save_path)
+            plt.close()
+            logger.info(f"ROC curve plot saved at '{save_path}'.")
+        except Exception as e:
+            logger.error(f"Error generating ROC curve plot: {e}")
 
-        :param y_true: Ground truth labels
-        :type y_true: List[int]
-        :param y_proba: Predicted probabilities for the positive class
-        :type y_proba: List[float]
-        :param save_path: Path where the plot will be saved
-        :type save_path: Path
-        :param title: Title for the plot
-        :type title: str
-        """
-        fpr, tpr, _ = roc_curve(y_true, y_proba)
-        roc_auc = roc_auc_score(y_true, y_proba)
+    def plot_precision_recall_curve(self, save_path: Path, title: str = "Precision-Recall Curve") -> None:
+        """Generate and save a precision-recall curve plot."""
+        try:
+            precision, recall, _ = precision_recall_curve(self.y_true, self.y_proba)
+            avg_precision = average_precision_score(self.y_true, self.y_proba)
 
-        plt.figure(figsize=(8, 6))
-        plt.plot(fpr, tpr, color="darkorange", lw=2, label=f"ROC curve (AUC = {roc_auc:.3f})")
-        plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--", label="Random Chance")
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel("False Positive Rate")
-        plt.ylabel("True Positive Rate")
-        plt.title(title)
-        plt.legend(loc="lower right")
-        plt.tight_layout()
-        plt.savefig(save_path)
-        plt.close()
-        logger.info(f"ROC curve plot saved at '{save_path}'.")
+            plt.figure(figsize=(8, 6))
+            plt.plot(recall, precision, color="darkorange", lw=2, label=f"PR curve (AP = {avg_precision:.3f})")
+            plt.xlabel("Recall")
+            plt.ylabel("Precision")
+            plt.title(title)
+            plt.legend(loc="lower left")
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig(save_path)
+            plt.close()
+            logger.info(f"Precision-Recall curve plot saved at '{save_path}'.")
+        except Exception as e:
+            logger.error(f"Error generating precision-recall curve plot: {e}")
 
-    @staticmethod
-    def plot_precision_recall_curve(
-        y_true: List[int], y_proba: List[float], save_path: Path, title: str = "Precision-Recall Curve"
-    ) -> None:
-        """Generate and save a precision-recall curve plot.
+    def plot_calibration_curve(self, save_path: Path, n_bins: int = 10, title: str = "Calibration Plot") -> None:
+        """Generate and save a calibration curve plot."""
+        try:
+            prob_true, prob_pred = calibration_curve(self.y_true, self.y_proba, n_bins=n_bins)
 
-        :param y_true: Ground truth labels
-        :type y_true: List[int]
-        :param y_proba: Predicted probabilities for the positive class
-        :type y_proba: List[float]
-        :param save_path: Path where the plot will be saved
-        :type save_path: Path
-        :param title: Title for the plot
-        :type title: str
-        """
-        precision, recall, _ = precision_recall_curve(y_true, y_proba)
-        avg_precision = average_precision_score(y_true, y_proba)
+            plt.figure(figsize=(8, 6))
+            plt.plot(prob_pred, prob_true, marker="o", color="darkorange", label="Calibration curve")
+            plt.plot([0, 1], [0, 1], linestyle="--", color="navy", label="Perfect calibration")
+            plt.xlabel("Mean predicted probability")
+            plt.ylabel("Fraction of positives")
+            plt.title(title)
+            plt.legend(loc="lower right")
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig(save_path)
+            plt.close()
+            logger.info(f"Calibration plot saved at '{save_path}'.")
+        except Exception as e:
+            logger.error(f"Error generating calibration curve plot: {e}")
 
-        plt.figure(figsize=(8, 6))
-        plt.plot(recall, precision, color="darkorange", lw=2, label=f"PR curve (AP = {avg_precision:.3f})")
-        plt.xlabel("Recall")
-        plt.ylabel("Precision")
-        plt.title(title)
-        plt.legend(loc="lower left")
-        plt.grid(True)
-        plt.tight_layout()
-        plt.savefig(save_path)
-        plt.close()
-        logger.info(f"Precision-Recall curve plot saved at '{save_path}'.")
+    def plot_probability_distribution(self, save_path: Path, title: str = "Probability Distribution") -> None:
+        """Generate and save probability distribution plots."""
+        try:
+            plt.figure(figsize=(10, 6))
 
-    @staticmethod
-    def plot_calibration_curve(
-        y_true: List[int], y_proba: List[float], save_path: Path, n_bins: int = 10, title: str = "Calibration Plot"
-    ) -> None:
-        """Generate and save a calibration curve plot.
+            # Convert to numpy arrays for easier manipulation
+            y_true_np = np.array(self.y_true)
+            y_proba_np = np.array(self.y_proba)
 
-        :param y_true: Ground truth labels
-        :type y_true: List[int]
-        :param y_proba: Predicted probabilities for the positive class
-        :type y_proba: List[float]
-        :param save_path: Path where the plot will be saved
-        :type save_path: Path
-        :param n_bins: Number of bins for calibration
-        :type n_bins: int
-        :param title: Title for the plot
-        :type title: str
-        """
-        prob_true, prob_pred = calibration_curve(y_true, y_proba, n_bins=n_bins)
+            # Plot distributions for positive and negative classes
+            sns.kdeplot(data=y_proba_np[y_true_np == 1], label="Positive Class", color="forestgreen")
+            sns.kdeplot(data=y_proba_np[y_true_np == 0], label="Negative Class", color="crimson")
 
-        plt.figure(figsize=(8, 6))
-        plt.plot(prob_pred, prob_true, marker="o", color="darkorange", label="Calibration curve")
-        plt.plot([0, 1], [0, 1], linestyle="--", color="navy", label="Perfect calibration")
-        plt.xlabel("Mean predicted probability")
-        plt.ylabel("Fraction of positives")
-        plt.title(title)
-        plt.legend(loc="lower right")
-        plt.grid(True)
-        plt.tight_layout()
-        plt.savefig(save_path)
-        plt.close()
-        logger.info(f"Calibration plot saved at '{save_path}'.")
-
-    @staticmethod
-    def plot_probability_distribution(
-        y_true: List[int], y_proba: List[float], save_path: Path, title: str = "Probability Distribution"
-    ) -> None:
-        """Generate and save probability distribution plots.
-
-        :param y_true: Ground truth labels
-        :type y_true: List[int]
-        :param y_proba: Predicted probabilities for the positive class
-        :type y_proba: List[float]
-        :param save_path: Path where the plot will be saved
-        :type save_path: Path
-        :param title: Title for the plot
-        :type title: str
-        """
-        plt.figure(figsize=(10, 6))
-
-        # Convert to numpy arrays for easier manipulation
-        y_true_np = np.array(y_true)
-        y_proba_np = np.array(y_proba)
-
-        # Plot distributions for positive and negative classes
-        sns.kdeplot(data=y_proba_np[y_true_np == 1], label="Positive Class", color="forestgreen")
-        sns.kdeplot(data=y_proba_np[y_true_np == 0], label="Negative Class", color="crimson")
-
-        plt.xlabel("Predicted Probability")
-        plt.ylabel("Density")
-        plt.title(title)
-        plt.legend()
-        plt.grid(True)
-        plt.tight_layout()
-        plt.savefig(save_path)
-        plt.close()
-        logger.info(f"Probability distribution plot saved at '{save_path}'.")
+            plt.xlabel("Predicted Probability")
+            plt.ylabel("Density")
+            plt.title(title)
+            plt.legend()
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig(save_path)
+            plt.close()
+            logger.info(f"Probability distribution plot saved at '{save_path}'.")
+        except Exception as e:
+            logger.error(f"Error generating probability distribution plot: {e}")
 
     @staticmethod
     def plot_feature_importance(
@@ -329,38 +285,41 @@ class Metrics:
         :type title: str
 
         .. note::
-        The DataFrame must have 'feature' and 'importance' columns.
-        The method will save both a .png visualization and a .csv file.
-        If save_path includes a .png extension, it will be removed before saving.
+            The DataFrame must have 'feature' and 'importance' columns.
+            The method will save both a .png visualization and a .csv file.
+            If save_path includes a .png extension, it will be removed before saving.
         """
         if feature_importance is None or feature_importance.empty:
             logger.warning("Feature importance data is empty. Skipping plot and CSV export.")
             return
 
-        # Remove .png extension if present and create base path
-        base_path = save_path.with_suffix("") if save_path.suffix == ".png" else save_path
+        try:
+            # Remove .png extension if present and create base path
+            base_path = save_path.with_suffix("") if save_path.suffix == ".png" else save_path
 
-        # Prepare paths for both files
-        plot_path = base_path.with_suffix(".png")
-        csv_path = base_path.with_suffix(".csv")
+            # Prepare paths for both files
+            plot_path = base_path.with_suffix(".png")
+            csv_path = base_path.with_suffix(".csv")
 
-        # Get top features
-        top_features = feature_importance.nlargest(20, "importance")
+            # Get top features
+            top_features = feature_importance.nlargest(20, "importance")
 
-        # Save the plot
-        plt.figure(figsize=(10, 8))
-        sns.barplot(data=top_features, x="importance", y="feature")
-        plt.title(title)
-        plt.xlabel("Importance")
-        plt.ylabel("Feature")
-        plt.tight_layout()
-        plt.savefig(plot_path)
-        plt.close()
-        logger.info(f"Feature importance plot saved at '{plot_path}'")
+            # Save the plot
+            plt.figure(figsize=(10, 8))
+            sns.barplot(data=top_features, x="importance", y="feature")
+            plt.title(title)
+            plt.xlabel("Importance")
+            plt.ylabel("Feature")
+            plt.tight_layout()
+            plt.savefig(plot_path)
+            plt.close()
+            logger.info(f"Feature importance plot saved at '{plot_path}'")
 
-        # Save the CSV
-        top_features.to_csv(csv_path, index=False)
-        logger.info(f"Feature importance data saved at '{csv_path}'")
+            # Save the CSV
+            top_features.to_csv(csv_path, index=False)
+            logger.info(f"Feature importance data saved at '{csv_path}'")
+        except Exception as e:
+            logger.error(f"Error generating feature importance plot: {e}")
 
     @staticmethod
     def plot_shap_summary(
@@ -423,7 +382,7 @@ class Metrics:
             logger.error(f"Error generating SHAP dependence plot for '{feature}': {e}")
 
     def compute_model_based_importance(self) -> Optional[pd.DataFrame]:
-        """Compute feature importance using the trained model's inherent feature_importances_ attribute.
+        """Compute feature importance using the model's inherent feature_importances_ attribute.
 
         :return: DataFrame containing features and their importance scores
         :rtype: Optional[pd.DataFrame]
@@ -463,6 +422,8 @@ class Metrics:
             return None
 
         try:
+            from sklearn.inspection import permutation_importance
+
             result = permutation_importance(
                 self.model, self.X, self.y_true, scoring=scoring, n_repeats=n_repeats, random_state=random_state
             )
@@ -501,16 +462,55 @@ class Metrics:
         :return: SHAP values explanation object
         :rtype: Optional[shap.Explanation]
         """
-        # Ensure that both model and feature data are available
         if self.model is None or self.X is None or self.X.empty:
             logger.warning("Model or feature data not provided. Cannot compute SHAP values.")
             return None
 
         try:
-            explainer = shap.Explainer(self.model, background if background is not None else self.X)
-            shap_values = explainer(self.X)
-            logger.info("Computed SHAP values.")
+            estimator = self.model.get_estimator()
+            if estimator is None:
+                logger.warning("No estimator available for SHAP computation.")
+                return None
+
+            # Determine the type of estimator
+            model_type = type(estimator).__name__
+
+            # Use a smaller sample in quick mode
+            if self.mode == "quick":
+                sample_size = min(1000, len(self.X))  # Adjust sample size as needed
+                X_sample = self.X.sample(n=sample_size, random_state=42)
+                logger.info(f"Using a sample size of {X_sample.shape[0]} for SHAP analysis in quick mode.")
+            else:
+                X_sample = self.X
+
+            if model_type in ["LGBMClassifier", "XGBClassifier", "CatBoostClassifier", "LightGBM"]:
+                logger.info(f"Using TreeExplainer for {model_type}.")
+                explainer = shap.TreeExplainer(estimator)
+                shap_values = explainer.shap_values(X_sample)
+            else:
+                logger.info(f"Using KernelExplainer for {model_type}.")
+                predict_fn = self.model.get_prediction_function()
+                if predict_fn is None:
+                    logger.error("Could not obtain prediction function from model.")
+                    return None
+                background_data = background if background is not None else shap.sample(X_sample, 100, random_state=42)
+                explainer = shap.KernelExplainer(predict_fn, background_data)
+                shap_values = explainer.shap_values(X_sample)
+
+            # Convert to Explanation object if necessary
+            if not isinstance(shap_values, shap.Explanation):
+                if isinstance(shap_values, list):
+                    shap_values = shap_values[1]  # For binary classification, take positive class
+                shap_values = shap.Explanation(
+                    values=shap_values,
+                    base_values=explainer.expected_value,
+                    data=X_sample.values,
+                    feature_names=list(X_sample.columns),
+                )
+
+            logger.info("Successfully computed SHAP values.")
             return shap_values
+
         except Exception as e:
             logger.error(f"Error computing SHAP values: {e}")
             return None
@@ -533,9 +533,15 @@ class Metrics:
 
         save_dir.mkdir(parents=True, exist_ok=True)
 
+        # Use the data from shap_values for plotting
+        X_plot = pd.DataFrame(shap_values.data, columns=shap_values.feature_names)
+
+        # Log the sample size used
+        logger.info(f"Generating SHAP plots using a sample size of {X_plot.shape[0]}.")
+
         # SHAP Summary Plot
         self.plot_shap_summary(
-            shap_values=shap_values, X=self.X, save_path=save_dir / "shap_summary.png", plot_type="dot", title=title
+            shap_values=shap_values, X=X_plot, save_path=save_dir / "shap_summary.png", plot_type="dot", title=title
         )
 
         # SHAP Dependence Plots for Top Features
@@ -543,13 +549,13 @@ class Metrics:
             # Determine top features based on mean absolute SHAP values
             shap_abs = np.abs(shap_values.values).mean(axis=0)
             top_indices = np.argsort(shap_abs)[-10:]
-            top_features = self.X.columns[top_indices]
+            top_features = X_plot.columns[top_indices]
 
             for feature in top_features:
                 self.plot_shap_dependence(
                     shap_values=shap_values,
                     feature=feature,
-                    X=self.X,
+                    X=X_plot,
                     save_path=save_dir / f"shap_dependence_{feature}.png",
                     title=f"SHAP Dependence Plot for {feature}",
                 )
@@ -562,7 +568,7 @@ class Metrics:
         :return: Classification report with precision, recall, and f1-score for each class
         :rtype: Dict[str, Any]
         """
-        if self.y_true and self.y_pred:
+        if self.y_true is not None and self.y_pred is not None:
             report = classification_report(self.y_true, self.y_pred, output_dict=True)
             logger.info("Generated classification report.")
             return report

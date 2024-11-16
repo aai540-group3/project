@@ -5,13 +5,13 @@ stages:
     - UV_LINK_MODE=copy uv venv .venv --python 3.11
     - .venv/bin/python -m ensurepip --upgrade
     - .venv/bin/python -m pip install -q uv
-    - .venv/bin/uv pip install -q -e .
-    - .venv/bin/uv pip install -q -r requirements/base.txt
+    - .venv/bin/uv pip install -q --no-cache-dir  -e .
+    - .venv/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
     deps:
     - path: requirements/base.txt
       hash: md5
-      md5: 6df55f5a56ea7d3d381a88e0ed4b071a
-      size: 156
+      md5: b1e6b1ff6e26c62456be87c19c2a08d1
+      size: 155
     outs:
     - path: .venv
       hash: md5
@@ -71,8 +71,8 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 6df55f5a56ea7d3d381a88e0ed4b071a
-      size: 156
+      md5: b1e6b1ff6e26c62456be87c19c2a08d1
+      size: 155
     outs:
     - path: data/interim/cleaned.parquet
       hash: md5
@@ -80,7 +80,7 @@ stages:
       size: 1801254
     - path: metrics/preprocess/metrics.json
       hash: md5
-      md5: 68f7e97d7b5264ba0fe104c256be7b8d
+      md5: 5fd6de1e1f04a3152a553e02895b4dfe
       size: 15356
     - path: plots/preprocess/missing_values.png
       hash: md5
@@ -145,8 +145,8 @@ stages:
       size: 1884
     - path: pipeline/stages/featurize.py
       hash: md5
-      md5: 983e852085db63550076f31b728dbd09
-      size: 20210
+      md5: 105048222cac5747b0fbcfca07f6c35e
+      size: 20211
       isexec: true
     - path: pipeline/stages/stage.py
       hash: md5
@@ -160,11 +160,11 @@ stages:
       size: 1378122
     - path: metrics/featurize/metrics.json
       hash: md5
-      md5: 74c2878aa6a993c937dcdd1c7566e440
+      md5: 60ea89cbdcf2aadc730f35ab19febf26
       size: 1727
     - path: metrics/featurize/statistics.json
       hash: md5
-      md5: 92eaabfd1aa447234de39f8c447e87e7
+      md5: 3ca593f0c04b2423a98626d3ed4be017
       size: 2690
     - path: plots/featurize/age_distribution.png
       hash: md5
@@ -267,12 +267,12 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 6df55f5a56ea7d3d381a88e0ed4b071a
-      size: 156
+      md5: 09e50bdd8e3c4a4690eb42c17c31432f
+      size: 160
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: a8479404f04e2f1e047699f84c8bdefd
+      md5: ade9982a991447984f94b116e2e3c846
       size: 656658
     - path: plots/explore/A1Cresult_chi_square.png
       hash: md5
@@ -965,8 +965,8 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 6df55f5a56ea7d3d381a88e0ed4b071a
-      size: 156
+      md5: b1e6b1ff6e26c62456be87c19c2a08d1
+      size: 155
     outs:
     - path: data/raw/data.csv
       hash: md5
@@ -986,7 +986,7 @@ stages:
       size: 17401
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: 933bc6034600949608ca87209a3344b3
+      md5: e91c403132720a34fc2869029573a542
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5
@@ -1034,8 +1034,8 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 6df55f5a56ea7d3d381a88e0ed4b071a
-      size: 156
+      md5: 09e50bdd8e3c4a4690eb42c17c31432f
+      size: 160
     outs:
     - path: feature_repo/data_hash.txt
       hash: md5
@@ -1051,16 +1051,16 @@ stages:
       size: 596
     - path: feature_repo/features.parquet
       hash: md5
-      md5: 672273ddaa50f9b3b6082f7e46d350a3
+      md5: 39ca49f6e8ab2306f446292d3c276807
       size: 1981733
     - path: metrics/feast/metrics.json
       hash: md5
-      md5: 20f0de9ecf3f1f83199209af02b4768f
+      md5: 60117e664bfc4560f9ed0dae52150708
       size: 370
   autogluon:
     cmd:
-    - .venv/bin/uv run --with autogluon --with autogluon.tabular[lightgbm] --with
-      dvclive --with shap python pipeline autogluon
+    - .venv/bin/uv run --with dvclive --with autogluon --with autogluon.tabular[all]
+      --with shap python pipeline autogluon
     deps:
     - path: .venv
       hash: md5
@@ -1081,13 +1081,13 @@ stages:
       size: 1884
     - path: pipeline/models/autogluon.py
       hash: md5
-      md5: cee6e24b95a01c325ddcfecb9aa47f53
-      size: 4768
+      md5: 63d015379476014dbf044f50c0aae2be
+      size: 10781
       isexec: true
     - path: pipeline/models/model.py
       hash: md5
-      md5: 06e12839f3d29380a99a3666acc9bbbe
-      size: 13334
+      md5: c0a1aa5239d2aa959ab3b04c1c532f2b
+      size: 12503
       isexec: true
     - path: pipeline/stages/autogluon.py
       hash: md5
@@ -1100,18 +1100,18 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 6df55f5a56ea7d3d381a88e0ed4b071a
-      size: 156
+      md5: 09e50bdd8e3c4a4690eb42c17c31432f
+      size: 160
     outs:
     - path: metrics/autogluon/metrics.json
       hash: md5
-      md5: 49ab36b297aebf35db2aa8013de3edbc
+      md5: 429c8585bdf15988f17abe9c45d8ab00
       size: 426
     - path: models/autogluon
       hash: md5
-      md5: 4f9d01a470baab96969d0e62ceedef7d.dir
-      size: 21647219
-      nfiles: 15
+      md5: f7939d1b840296d33a34610331d02000.dir
+      size: 21618152
+      nfiles: 14
     - path: plots/autogluon/calibration_curve.png
       hash: md5
       md5: 8d1605f06ed24988cfdbba9ccd5e48bb

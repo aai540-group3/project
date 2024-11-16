@@ -13,16 +13,14 @@ managing configurations, data processing, training, evaluation, and metrics.
 """
 
 import json
-import pickle
 import threading
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from dvclive import Live
 from imblearn.over_sampling import SMOTE
 from loguru import logger
 from omegaconf import DictConfig, OmegaConf
@@ -38,13 +36,14 @@ class Model(ABC):
         """Initialize model configurations, data setup, and directories."""
         self.start_time = datetime.now()
         self.end_time: Optional[datetime] = None
-        self.live: Optional[Live] = None
 
         # Load model configuration
         self.cfg: DictConfig = OmegaConf.load("params.yaml")
         self.name = self.__class__.__name__.lower()
         self.mode = self.cfg.models.base.get("mode", "quick")
         seed = self.cfg.get("seed", 42)
+
+        # Set random seed for reproducibility
         np.random.seed(seed)
 
         # Model and data setup
@@ -66,51 +65,35 @@ class Model(ABC):
         self._model_lock = threading.Lock()
         self._metrics_lock = threading.Lock()
 
+    @abstractmethod
     def save_model(self, model_artifact: Any, filename: str = "model.pkl") -> Path:
         """Save a model artifact to disk in the specified directory.
 
         :param model_artifact: Model artifact to be saved.
         :type model_artifact: Any
-        :param filename: Name of the file to save the model as, defaults to "model.pkl".
-        :type filename: str, optional
+        :param filename: Name of the file to save the model as.
+        :type filename: str
         :return: Path to the saved model file.
         :rtype: Path
         """
-        destination_path = self.models_dir / filename
-        try:
-            with open(destination_path, "wb") as f:
-                pickle.dump(model_artifact, f)
-            logger.info(f"Model saved successfully at '{destination_path}'.")
-            return destination_path
-        except IOError as e:
-            logger.error(f"Failed to save model to '{destination_path}': {e}")
-            raise IOError(f"Error saving model to '{destination_path}'") from e
+        pass
 
+    @abstractmethod
     def load_model(self, filename: str = "model.pkl") -> Any:
         """Load a model artifact from disk.
 
-        :param filename: Name of the file from which to load the model, defaults to "model.pkl".
-        :type filename: str, optional
+        :param filename: Name of the file from which to load the model.
+        :type filename: str
         :return: Loaded model artifact.
         :rtype: Any
         """
-        source_path = self.models_dir / filename
-        if not source_path.exists():
-            raise FileNotFoundError(f"Model file not found at '{source_path}'")
-        try:
-            with open(source_path, "rb") as f:
-                return pickle.load(f)
-        except (IOError, pickle.UnpicklingError) as e:
-            logger.error(f"Failed to load model from '{source_path}': {e}")
-            raise
+        pass
 
     def save_metrics(self, metrics_data: Optional[Dict[str, Any]] = None) -> None:
         """Save metrics data to a JSON file in a thread-safe manner.
 
-        :param filename: Name of the file to save metrics.
-        :type filename: str
-        :param metrics_data: Dictionary of metrics data, defaults to None.
-        :type metrics_data: Optional[Dict[str, Any]], optional
+        :param metrics_data: Dictionary of metrics data.
+        :type metrics_data: Optional[Dict[str, Any]]
         """
         metrics_path = self.metrics_dir / "metrics.json"
         try:
@@ -162,17 +145,9 @@ class Model(ABC):
             model_artifact = self.train()
             self.save_model(model_artifact)
             y_pred = self.predict(self.X_test)
-            y_proba = self.predict_proba(self.X_test).iloc[:, 1]
+            y_proba = self.predict_proba(self.X_test)
             estimator = self.get_estimator()
-            metrics = self.calculate_and_save_metrics(
-                y_true=self.y_test.tolist(),
-                y_pred=y_pred.tolist(),
-                y_proba=y_proba.tolist(),
-                feature_importance=self.get_feature_importance(),
-                estimator=estimator,
-            )
-            if self.live:
-                self.live.log_metrics(metrics.to_dict())
+            metrics = self.calculate_and_save_metrics(self.metrics_dir)
             logger.info(f"Model {self.name} execution completed in {datetime.now() - self.start_time}.")
         except Exception as e:
             logger.error(f"Execution failed: {e}")
@@ -181,7 +156,8 @@ class Model(ABC):
     def prepare_data(self):
         """Load, split, and balance dataset."""
         try:
-            data = pd.read_parquet(Path(self.cfg.paths.processed) / "features.parquet")
+            data_path = Path(self.cfg.paths.processed) / "features.parquet"
+            data = pd.read_parquet(data_path)
             X, y = data.drop(columns=[self.label_column]), data[self.label_column]
             self.X_train, self.X_val, self.X_test, self.y_train, self.y_val, self.y_test = self.split_data(X, y)
 
@@ -189,6 +165,9 @@ class Model(ABC):
             self.X_train, self.y_train = smote.fit_resample(self.X_train, self.y_train)
             logger.info("Data preparation complete.")
 
+        except FileNotFoundError as e:
+            logger.error(f"Data file not found at '{data_path}': {e}")
+            raise
         except Exception as e:
             logger.error(f"Data preparation failed: {e}")
             raise
@@ -249,49 +228,74 @@ class Model(ABC):
         """
         pass
 
-    def calculate_and_save_metrics(
-        self,
-        y_true,
-        y_pred,
-        y_proba,
-        feature_importance: Optional[pd.DataFrame] = None,
-        estimator: Optional[Any] = None,
-    ) -> Metrics:
-        """Calculate metrics, save reports, generate plots, and explain feature importance."""
+    def calculate_and_save_metrics(self, output_dir: Union[str, Path]) -> Metrics:
+        """Calculate and save all metrics and visualizations.
 
-        metrics = Metrics(y_true=y_true, y_pred=y_pred, y_proba=y_proba, model=estimator, X=self.X_test)
+        :param output_dir: Directory where metrics and plots will be saved
+        :type output_dir: Union[str, Path]
+        :return: The computed metrics object
+        :rtype: Metrics
+        """
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create predictions first
+        y_pred = self.predict(self.X_test)
+        y_proba = self.predict_proba(self.X_test)
+
+        # For binary classification, take the probability of the positive class
+        if isinstance(y_proba, pd.DataFrame) and y_proba.shape[1] == 2:
+            y_proba = y_proba.iloc[:, 1]
+        elif isinstance(y_proba, np.ndarray) and y_proba.ndim > 1 and y_proba.shape[1] == 2:
+            y_proba = y_proba[:, 1]
+
+        # Initialize metrics with all necessary data
+        metrics = Metrics(
+            y_true=self.y_test.tolist(),
+            y_proba=y_proba.tolist(),
+            y_pred=y_pred.tolist(),
+            model=self,
+            X=self.X_test,
+            mode=self.mode,  # Pass the mode
+        )
 
         # Save metrics to JSON
-        self.save_metrics(metrics.to_dict())
+        metrics_dict = metrics.to_dict()
+        metrics_path = output_dir / "metrics.json"
+        with open(metrics_path, "w") as f:
+            json.dump(metrics_dict, f, indent=4)
+        logger.info(f"Metrics saved successfully at '{metrics_path}'.")
 
-        # Generate and save the classification report
-        classification_report_data = metrics.get_classification_report()
-        report_path = self.metrics_dir / "classification_report.json"
+        # Generate classification report
+        report = metrics.get_classification_report()
+        report_path = output_dir / "classification_report.json"
         with open(report_path, "w") as f:
-            json.dump(classification_report_data, f, indent=4)
+            json.dump(report, f, indent=4)
         logger.info(f"Classification report saved at '{report_path}'.")
 
-        # Generate additional plots
+        # Generate plots
         self.generate_plots(metrics)
 
-        # Check for feature importance and save if available
-        if feature_importance is not None and feature_importance:
-            feature_importance_path = self.plots_dir / "feature_importance.csv"
-            pd.DataFrame.from_dict(feature_importance, orient="index", columns=["importance"]).to_csv(
-                feature_importance_path
-            )
-            logger.info(f"Feature importance data saved at '{feature_importance_path}'")
-        else:
-            logger.warning("Feature importance data is unavailable. Skipping saving 'feature_importance.csv'.")
+        # Feature importance
+        feature_importance = self.get_feature_importance()
+        if feature_importance:
+            feature_importance_df = pd.DataFrame(list(feature_importance.items()), columns=["feature", "importance"])
+            feature_importance_df = feature_importance_df.sort_values("importance", ascending=False)
 
-        # Attempt SHAP explanation if model is compatible
-        shap_values = metrics.compute_shap_values(background=self.X_train)
-        if shap_values:
-            shap_save_dir = self.metrics_dir / "shap"
-            shap_save_dir.mkdir(parents=True, exist_ok=True)
-            metrics.generate_shap_plots(shap_values, save_dir=shap_save_dir)
+            feature_importance_path = output_dir / "feature_importance"
+            Metrics.plot_feature_importance(feature_importance_df, feature_importance_path)
+            logger.info(f"Feature importance data saved at '{feature_importance_path.with_suffix('.csv')}'")
+
+        # SHAP values
+        if self.mode != "quick":
+            shap_values = metrics.compute_shap_values()
+            if shap_values is not None:
+                shap_dir = output_dir / "shap"
+                metrics.generate_shap_plots(shap_values, shap_dir)
+            else:
+                logger.warning("SHAP values could not be computed for the model.")
         else:
-            logger.warning("SHAP values could not be computed for the model.")
+            logger.info("Skipping SHAP analysis in quick mode.")
 
         return metrics
 
@@ -305,30 +309,18 @@ class Model(ABC):
             "probability_distribution": self.plots_dir / "probability_distribution.png",
         }
 
-        # Pass `y_true` and `y_pred` for confusion matrix
-        metrics.plot_confusion_matrix(
-            y_true=self.y_test, y_pred=self.predict(self.X_test), save_path=paths["confusion_matrix"]
-        )
+        # Use data from the metrics object
+        metrics.plot_confusion_matrix(save_path=paths["confusion_matrix"])
 
-        # Pass `y_true` and `y_proba` for the ROC curve
-        metrics.plot_roc_curve(
-            y_true=self.y_test, y_proba=self.predict_proba(self.X_test).iloc[:, 1], save_path=paths["roc_curve"]
-        )
+        metrics.plot_roc_curve(save_path=paths["roc_curve"])
 
-        # Pass `y_true` and `y_proba` for the precision-recall curve
         metrics.plot_precision_recall_curve(
-            y_true=self.y_test,
-            y_proba=self.predict_proba(self.X_test).iloc[:, 1],
             save_path=paths["precision_recall_curve"],
         )
 
-        metrics.plot_calibration_curve(
-            y_true=self.y_test, y_proba=self.predict_proba(self.X_test).iloc[:, 1], save_path=paths["calibration_curve"]
-        )
+        metrics.plot_calibration_curve(save_path=paths["calibration_curve"])
 
         metrics.plot_probability_distribution(
-            y_true=self.y_test,
-            y_proba=self.predict_proba(self.X_test).iloc[:, 1],
             save_path=paths["probability_distribution"],
         )
 

@@ -124,7 +124,6 @@ models:
           penalty:
             type: categorical
             choices: [l2]
-
     full:
       optimize: true
       max_iter: 1000
@@ -149,6 +148,115 @@ models:
           solver:
             type: categorical
             choices: [liblinear, saga]
+
+  neural_network:
+    quick:
+      model_params: {}
+      training:
+        optimizer:
+          name: adam
+          params:
+            learning_rate: 0.001
+        loss: binary_crossentropy
+        metrics:
+          - accuracy
+          - AUC
+        batch_size: 32
+        epochs: 10
+        class_weight: balanced
+        callbacks:
+          early_stopping:
+            enabled: true
+            params:
+              monitor: val_loss
+              patience: 2
+              restore_best_weights: true
+          model_checkpoint:
+            enabled: false
+          tensorboard:
+            enabled: false
+      architecture:
+        input_layer:
+          batch_norm: true
+          dropout: 0.0
+        hidden_layers:
+          - units: 64
+            activation: relu
+            batch_norm: true
+            dropout: 0.4
+          - units: 32
+            activation: relu
+            batch_norm: true
+            dropout: 0.3
+        output_layer:
+          units: 1
+          activation: sigmoid
+
+    full:
+      model_params: {}
+      training:
+        optimizer:
+          name: adam
+          params:
+            learning_rate: 0.0005
+        loss: binary_crossentropy
+        metrics:
+          - accuracy
+          - AUC
+        batch_size: 64
+        epochs: 50
+        class_weight: balanced
+        callbacks:
+          early_stopping:
+            enabled: true
+            params:
+              monitor: val_loss
+              patience: 5
+              restore_best_weights: true
+          model_checkpoint:
+            enabled: true
+            params:
+              monitor: val_loss
+              save_best_only: true
+              mode: min
+          tensorboard:
+            enabled: true
+            params:
+              histogram_freq: 1
+              write_graph: true
+              write_images: true
+      architecture:
+        input_layer:
+          batch_norm: true
+          dropout: 0.0
+        hidden_layers:
+          - units: 128
+            activation: relu
+            batch_norm: true
+            dropout: 0.3
+            kernel_regularizer:
+              name: l2
+              params:
+                l2: 0.001
+          - units: 64
+            activation: relu
+            batch_norm: true
+            dropout: 0.3
+            kernel_regularizer:
+              name: l2
+              params:
+                l2: 0.001
+          - units: 32
+            activation: relu
+            batch_norm: true
+            dropout: 0.3
+            kernel_regularizer:
+              name: l2
+              params:
+                l2: 0.001
+        output_layer:
+          units: 1
+          activation: sigmoid
 
 #-----------------------------------------------------------------------------#
 # Visualization settings
@@ -209,9 +317,9 @@ plots:
     template: "confusion"
   roc_curve:
     title: "ROC Curve"
-    x: "FPR"
-    y: "TPR"
+    x: "False Positive Rate"
+    y: "True Positive Rate"
   feature_importance:
     title: "Top 20 Features by Importance"
-    x: "importance"
-    y: "feature"
+    x: "Importance"
+    y: "Feature"

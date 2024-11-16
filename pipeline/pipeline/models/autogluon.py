@@ -1,6 +1,8 @@
 import typing
-from typing import Any, Optional, Dict
+from pathlib import Path
+from typing import Any, Callable, Dict, Optional
 
+import numpy as np
 import pandas as pd
 from autogluon.tabular import TabularPredictor
 from loguru import logger
@@ -50,9 +52,49 @@ class Autogluon(Model):
             verbosity=2,
         )
 
-        self.predictor = predictor.load("models/autogluon")
+        # Save the predictor
+        self.predictor = predictor
+        self.save_model(predictor)
+        logger.info(f"Predictor saved to '{self.models_dir}'.")
+
+        # Verify available models
+        self.list_available_models()
 
         return self.predictor
+
+    def save_model(self, model_artifact: Any, filename: str = "model.pkl") -> Path:
+        """Save the AutoGluon predictor.
+
+        :param model_artifact: AutoGluon predictor to be saved.
+        :type model_artifact: TabularPredictor
+        :param filename: Ignored for AutoGluon as it manages its own filenames.
+        :type filename: str
+        :return: Path to the saved model directory.
+        :rtype: Path
+        """
+        try:
+            model_artifact.save()
+            logger.info(f"Model saved successfully at '{self.models_dir}'.")
+            return self.models_dir
+        except Exception as e:
+            logger.error(f"Failed to save model: {e}")
+            raise
+
+    def load_model(self, filename: str = "model.pkl") -> Any:
+        """Load the AutoGluon predictor.
+
+        :param filename: Ignored for AutoGluon as it manages its own filenames.
+        :type filename: str
+        :return: Loaded AutoGluon predictor.
+        :rtype: TabularPredictor
+        """
+        try:
+            self.predictor = TabularPredictor.load(str(self.models_dir))
+            logger.info(f"Model loaded from '{self.models_dir}'.")
+            return self.predictor
+        except Exception as e:
+            logger.error(f"Failed to load model: {e}")
+            raise
 
     def predict(self, X: pd.DataFrame) -> pd.Series:
         """Generate predictions using the trained model.
@@ -79,47 +121,153 @@ class Autogluon(Model):
         return self.predictor.predict_proba(X)
 
     def get_estimator(self) -> Any:
+        """Get the best base model from the predictor.
+
+        :return: Best base model if available, None otherwise.
+        :rtype: Any
+        """
         if not self.predictor:
             logger.error("Predictor has not been trained or loaded. Cannot retrieve estimator.")
             return None
         try:
             leaderboard = self.predictor.leaderboard(silent=True)
             logger.debug(f"Leaderboard:\n{leaderboard}")
+
+            # Filter out ensemble models
             base_models = leaderboard[~leaderboard["model"].str.contains("Ensemble")]
             if base_models.empty:
                 logger.error("No base models found in the predictor.")
                 return None
+
+            # Retrieve the name of the best base model
             best_model_name = base_models.iloc[0]["model"]
-            best_model = self.predictor._trainer.models.get(best_model_name)
+            logger.info(f"Best base model identified: '{best_model_name}'.")
+
+            # Get the best model
+            best_model = self.predictor._trainer.load_model(best_model_name)
+
             if not best_model:
-                logger.error(f"Best model '{best_model_name}' not found in trainer models.")
+                logger.error(f"Best model '{best_model_name}' could not be retrieved.")
                 return None
+
             logger.info(f"Retrieved best base model '{best_model_name}' for feature importance and SHAP.")
-            return best_model
+            return best_model.model  # Return the underlying model
         except Exception as e:
             logger.error(f"An error occurred while retrieving the best base model: {e}")
             return None
 
     def get_feature_importance(self) -> Optional[Dict[str, float]]:
-        """Get feature importance scores from the best model."""
-        model = self.get_estimator()
-        if not model:
-            logger.error("Could not retrieve model for feature importance calculation")
+        """Get feature importance scores from the best model.
+
+        :return: Dictionary mapping feature names to their importance scores, or None if calculation fails.
+        :rtype: Optional[Dict[str, float]]
+        """
+        if not self.predictor:
+            logger.error("Predictor has not been trained or loaded.")
             return None
 
         try:
-            # Pass the test dataset to feature_importance
-            feature_importance = self.predictor.feature_importance(model=model, dataset=self.X_test)
+            # Get the best base model name
+            leaderboard = self.predictor.leaderboard(silent=True)
+            base_models = leaderboard[~leaderboard["model"].str.contains("Ensemble")]
+            if base_models.empty:
+                logger.error("No base models found in the predictor.")
+                return None
+            best_model_name = base_models.iloc[0]["model"]
+            logger.info(f"Best base model identified: '{best_model_name}'.")
 
-            # Convert to dictionary format if pandas Series or DataFrame
-            if hasattr(feature_importance, "to_dict"):
-                feature_importance = feature_importance.to_dict()
+            # Calculate feature importance directly using the predictor
+            feature_importance_df = self.predictor.feature_importance(
+                data=pd.concat([self.X_test, self.y_test], axis=1),
+                model=best_model_name,
+            )
+
+            # Convert to dictionary format
+            feature_importance = feature_importance_df["importance"].to_dict()
 
             # Ensure all values are float type
             feature_importance = {str(k): float(v) for k, v in feature_importance.items()}
 
+            logger.info("Feature importance calculated successfully.")
             return feature_importance
 
+        except KeyError as e:
+            logger.error(f"KeyError while calculating feature importance: {e}")
+            return None
         except Exception as e:
             logger.error(f"Failed to calculate feature importance: {e}")
             return None
+
+    def get_prediction_function(self) -> Optional[Callable]:
+        """Get a prediction function suitable for SHAP analysis.
+
+        :return: A callable that takes a DataFrame and returns predictions, or None if unavailable.
+        :rtype: Optional[Callable]
+        """
+        if not self.predictor:
+            logger.error("Predictor has not been trained or loaded.")
+            return None
+
+        try:
+            # Get the best base model name
+            leaderboard = self.predictor.leaderboard(silent=True)
+            base_models = leaderboard[~leaderboard["model"].str.contains("Ensemble")]
+            if base_models.empty:
+                logger.error("No base models found in the predictor.")
+                return None
+            best_model_name = base_models.iloc[0]["model"]
+            logger.info(f"Using base model '{best_model_name}' for SHAP analysis.")
+
+            # Get the feature columns
+            feature_columns = self.predictor.feature_metadata.get_features()
+
+            # Get the prediction function directly from the predictor for this specific model
+            def predict_fn(x: np.ndarray) -> np.ndarray:
+                df = pd.DataFrame(x, columns=feature_columns)
+                proba = self.predictor.predict_proba(df, model=best_model_name)
+                if isinstance(proba, pd.DataFrame):
+                    return proba.iloc[:, 1].values  # Return probability of positive class
+                else:
+                    return proba
+
+            return predict_fn
+
+        except Exception as e:
+            logger.error(f"Failed to create prediction function: {e}")
+            return None
+
+    def list_available_models(self) -> None:
+        """List all available model names in the predictor."""
+        if not self.predictor:
+            logger.error("Predictor has not been trained or loaded. Cannot list models.")
+            return
+        try:
+            model_names = self.predictor.get_model_names()
+            logger.info(f"Available models in predictor: {model_names}")
+        except Exception as e:
+            logger.error(f"Failed to retrieve model names: {e}")
+
+    def verify_model_names(self) -> bool:
+        """Verify that the model names in the leaderboard match those available in the predictor.
+
+        :return: True if verification succeeds, False otherwise.
+        :rtype: bool
+        """
+        if not self.predictor:
+            logger.error("Predictor has not been trained or loaded. Cannot verify model names.")
+            return False
+        try:
+            leaderboard = self.predictor.leaderboard(silent=True)
+            available_models = self.predictor.get_model_names()
+            leaderboard_models = leaderboard["model"].tolist()
+
+            # Check for each leaderboard model if it exists in available_models
+            for model_name in leaderboard_models:
+                if model_name not in available_models:
+                    logger.warning(f"Model '{model_name}' from leaderboard not found in available models.")
+                else:
+                    logger.info(f"Model '{model_name}' is available for retrieval.")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to verify model names: {e}")
+            return False
