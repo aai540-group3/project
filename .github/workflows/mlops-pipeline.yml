@@ -50,10 +50,8 @@ jobs:
 
       - name: Setup Virtual Environment
         working-directory: pipeline
-        if: steps.cache-venv.outputs.cache-hit != 'true'
         run: |
-          python3 -m venv .venv
-          pip install uv dvc
+          pip install dvc
 
       - name: Run DVC Pipeline
         working-directory: pipeline
