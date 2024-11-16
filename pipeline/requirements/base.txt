@@ -1,4 +1,4 @@
-dvc
+dvc[s3]
 joblib
 loguru
 matplotlib
