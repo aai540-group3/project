@@ -1120,8 +1120,8 @@ stages:
       size: 24634
     - path: pipeline/models/model.py
       hash: md5
-      md5: b19ed6c979c02eb136c608292d527352
-      size: 13512
+      md5: e81f139b1fb62a27a71ac170a55b42e1
+      size: 13546
       isexec: true
     - path: pipeline/stages/autogluon.py
       hash: md5
@@ -1147,7 +1147,7 @@ stages:
       size: 420
     - path: models/autogluon
       hash: md5
-      md5: ccc62f31849c4b1aa5db43a96beb6404.dir
+      md5: 902911bf4b50cbe98d09fa6aed141c59.dir
       size: 2502781
       nfiles: 14
     - path: plots/autogluon/calibration_curve.png
@@ -1197,8 +1197,8 @@ stages:
       size: 24634
     - path: pipeline/models/model.py
       hash: md5
-      md5: b19ed6c979c02eb136c608292d527352
-      size: 13512
+      md5: e81f139b1fb62a27a71ac170a55b42e1
+      size: 13546
       isexec: true
     - path: pipeline/stages/logisticregression.py
       hash: md5
@@ -1217,15 +1217,15 @@ stages:
     outs:
     - path: metrics/logisticregression/feature_importance.csv
       hash: md5
-      md5: 9189588fa03bc5599229cd7af126a537
-      size: 1705
+      md5: 7ebb2f7229fb02dc4cd03562cd1ba189
+      size: 1703
     - path: metrics/logisticregression/metrics.json
       hash: md5
-      md5: afcd4237be628207dd2010a7f4ec8adb
-      size: 418
+      md5: ea40ca23c389ca8d4eba820f99f13f95
+      size: 410
     - path: models/logisticregression/model.pth
       hash: md5
-      md5: 982e907f39115faeaad7add4033b9dab
+      md5: 2a5decf99c4d553296fbd2937ee706d8
       size: 1740
     - path: models/logisticregression/scaler.joblib
       hash: md5
@@ -1233,20 +1233,20 @@ stages:
       size: 3631
     - path: plots/logisticregression/confusion_matrix.png
       hash: md5
-      md5: 700fa13ec82857392538d291e22e0e6b
-      size: 117151
+      md5: f05bd0bd5aa568dcd754cc29501a5868
+      size: 115952
     - path: plots/logisticregression/feature_importance.png
       hash: md5
-      md5: e0c64b1bb4897aeba0bd82ad6dc83829
-      size: 341124
+      md5: 3126856754202eef61265e338fc24394
+      size: 348326
     - path: plots/logisticregression/precision_recall_curve.png
       hash: md5
-      md5: 19359da5d236905bb938762c30c6c772
-      size: 107953
+      md5: 86588eb68d6b09870ceb9f87e3f6ce54
+      size: 108156
     - path: plots/logisticregression/roc_curve.png
       hash: md5
-      md5: 17f9dc905e461898286a70e84cf24407
-      size: 161128
+      md5: 39c4d784e265f3d01615114489a9135f
+      size: 159788
   neuralnetwork:
     cmd:
     - .venv-models/bin/uv run python pipeline neuralnetwork

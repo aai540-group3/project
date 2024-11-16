@@ -587,10 +587,6 @@ stages:
     outs:
       - models/neuralnetwork:
           cache: true
-      - metrics/neuralnetwork:
-          cache: true
-      - plots/neuralnetwork:
-          cache: true
     metrics:
       - metrics/neuralnetwork/metrics.json:
           cache: true
