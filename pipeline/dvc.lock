@@ -4,11 +4,13 @@ stages:
     cmd:
     - UV_LINK_MODE=copy uv venv .venv --python 3.9
     - .venv/bin/python -m ensurepip --upgrade
-    - .venv/bin/python -m pip install -q uv
+    - .venv/bin/python -m pip install -q --no-cache-dir uv
     - .venv/bin/uv pip install -q --no-cache-dir -e .
     - .venv/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
     - rsync -a .venv/ .venv-models/
     - .venv-models/bin/uv pip install --no-cache-dir -r requirements/models.txt
+    - .venv/bin/uv pip freeze > requirements/base-frozen.txt
+    - .venv/bin/uv pip freeze > requirements/models-frozen.txt
     deps:
     - path: requirements/base.txt
       hash: md5
@@ -29,3 +31,11 @@ stages:
       md5: 5e9950bda60646a6ed738f5ab3b9e5f0.dir
       size: 347798826
       nfiles: 14537
+    - path: requirements/base-frozen.txt
+      hash: md5
+      md5: 34e05ea34608c568b527ed458cf0cc4f
+      size: 2803
+    - path: requirements/models-frozen.txt
+      hash: md5
+      md5: 34e05ea34608c568b527ed458cf0cc4f
+      size: 2803

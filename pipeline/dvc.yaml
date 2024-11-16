@@ -4,7 +4,6 @@ stages:
       - UV_LINK_MODE=copy uv venv .venv --python 3.9
       - .venv/bin/python -m ensurepip --upgrade
       - .venv/bin/python -m pip install -q --no-cache-dir uv
-      - .venv/bin/uv pip install -q --no-cache-dir -e .
       - .venv/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
       - rsync -a .venv/ .venv-models/
       - .venv-models/bin/uv pip install --no-cache-dir -r requirements/models.txt

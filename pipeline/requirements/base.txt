@@ -1,4 +1,4 @@
--e .
+.
 dvc[s3]
 joblib
 loguru
