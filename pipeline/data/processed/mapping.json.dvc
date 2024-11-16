@@ -1,0 +1,5 @@
+outs:
+- md5: 72650a8dee652e4c71581463b6c4431b
+  size: 7023
+  hash: md5
+  path: mapping.json

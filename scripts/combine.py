@@ -286,9 +286,7 @@ INCLUDE_FILES = ["Final_Project_Team_3_Deliverable_1.tex", "terraform/main.tf"]
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Combine files and generate directory tree structure."
-    )
+    parser = argparse.ArgumentParser(description="Combine files and generate directory tree structure.")
     parser.add_argument(
         "-d",
         "--directory",
@@ -402,9 +400,7 @@ def process_file(file_path: Path, outfile, parent_dir: Path) -> None:
     separator_line = generate_separator_line(comment_start, comment_end)
 
     outfile.write(f"\n\n{separator_line}\n")
-    outfile.write(
-        f"{comment_start} Source: {file_path.relative_to(parent_dir)} {comment_end}\n\n"
-    )
+    outfile.write(f"{comment_start} Source: {file_path.relative_to(parent_dir)} {comment_end}\n\n")
 
     try:
         with file_path.open("r", encoding="utf-8", errors="ignore") as infile:
@@ -486,9 +482,7 @@ def generate_tree_structure(
         connector = "└── " if is_last_entry else "├── "
 
         relative_path = entry.relative_to(parent_dir)
-        if entry.is_dir() and should_exclude_directory(
-            entry.name, relative_path, exclude_folders, exclude_folderpaths
-        ):
+        if entry.is_dir() and should_exclude_directory(entry.name, relative_path, exclude_folders, exclude_folderpaths):
             continue
         if entry.is_file() and should_exclude_file(
             entry.name,
@@ -545,9 +539,7 @@ def main():
     exclude_folders = set(args.exclude_folders) | EXCLUDE_FOLDERS
 
     # Convert folder paths to Path objects
-    exclude_folderpaths = {
-        Path(p) for p in args.exclude_folderpaths
-    } | EXCLUDE_FOLDERPATHS
+    exclude_folderpaths = {Path(p) for p in args.exclude_folderpaths} | EXCLUDE_FOLDERPATHS
 
     exclude_patterns = args.exclude_patterns + EXCLUDE_PATTERNS
 
@@ -656,9 +648,7 @@ def main():
         with debug_file.open("r", encoding="utf-8") as f:
             print(f.read())
 
-        print(
-            f"\nAll output files are located in the debug folder: {output_file.parent}"
-        )
+        print(f"\nAll output files are located in the debug folder: {output_file.parent}")
 
     except Exception as e:
         error_message = f"An error occurred: {e}"

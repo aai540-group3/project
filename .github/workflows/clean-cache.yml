@@ -1,5 +1,4 @@
 name: Cleanup Actions Cache
-
 on:
   workflow_dispatch:
 
