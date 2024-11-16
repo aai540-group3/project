@@ -12,8 +12,8 @@ stages:
     deps:
     - path: requirements/base.txt
       hash: md5
-      md5: aa1d2b05692758cb14e458ad5e114701
-      size: 105
+      md5: 4bd98f027655a386974abd690786183e
+      size: 110
     - path: requirements/models.txt
       hash: md5
       md5: 1990e8fd4cc60ee9ec446af8d9970aa4
@@ -26,6 +26,6 @@ stages:
       nfiles: 0
     - path: .venv-models
       hash: md5
-      md5: bd6725e0756cebcb89f5adcf300fb52a.dir
+      md5: 24243bc3c55ef0201dc59c7a8e07a5d3.dir
       size: 347799337
       nfiles: 14537
