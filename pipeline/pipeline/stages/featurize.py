@@ -1,6 +1,4 @@
 import pathlib
-from datetime import datetime, timezone
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -233,19 +231,6 @@ class Featurize(Stage):
         plots_dir.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Plots will be saved to: {plots_dir}")
 
-        # Create a unique patient ID if it doesn't exist
-        if "patient_id" not in df.columns:
-            df["patient_id"] = range(1, len(df) + 1)
-            logger.info("Created 'patient_id' column.")
-        elif not df["patient_id"].is_unique:
-            logger.warning("'patient_id' column is not unique. Overwriting with unique IDs.")
-            df["patient_id"] = range(1, len(df) + 1)
-
-        # Add event_timestamp if it doesn't exist
-        if "event_timestamp" not in df.columns:
-            df["event_timestamp"] = [pd.Timestamp(datetime.now(timezone.utc)).round("s") for _ in range(len(df))]
-            logger.info("Created 'event_timestamp' column with UTC-aware timestamps.")
-
         # Drop columns with extensive missing values
         df = df.drop(columns=[col for col in HIGH_MISSING_VALUES if col in df.columns])
 
@@ -378,11 +363,6 @@ class Featurize(Stage):
 
         # Drop original categorical columns after encoding
         df = df.drop(columns=[col for col in CATEGORICAL_FEATURES if col in df.columns])
-
-        # Save the non-one-hot encoded features
-        df_not_onehot = df.copy()
-        df_not_onehot.to_parquet(output_dir / "features_not_onehot.parquet", index=False)
-        logger.debug("Saved non-one-hot encoded features to 'features_not_onehot.parquet'.")
 
         # Create Interaction Terms
         for term1, term2 in INTERACTION_TERMS:

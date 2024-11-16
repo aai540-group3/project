@@ -1,4 +1,5 @@
 -e .
+docker
 dvclive
 imbalanced-learn
 joblib

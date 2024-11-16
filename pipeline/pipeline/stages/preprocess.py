@@ -114,7 +114,7 @@ class Preprocess(Stage):
                 sm.set_array([])  # Only needed for older versions of Matplotlib
 
                 # Apply the color map to the bars
-                bars = ax.barh(
+                ax.barh(
                     diagnosis_stats["diagnosis"],
                     diagnosis_stats["count"],
                     color=cmap(norm(diagnosis_stats["readmission_rate"])),

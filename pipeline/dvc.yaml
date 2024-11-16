@@ -12,7 +12,6 @@ stages:
                   persist: true
         deps:
             - requirements/base.txt
-        always_changed: false
 
     prepare:
         cmd:
@@ -37,7 +36,7 @@ stages:
                   cache: true
         metrics:
             - metrics/ingest/metrics.json:
-                  cache: false
+                  cache: true
         plots:
             - plots/ingest/missing_values.png:
                   x: feature
@@ -64,7 +63,7 @@ stages:
                   cache: true
         metrics:
             - metrics/preprocess/metrics.json:
-                  cache: false
+                  cache: true
         plots:
             - plots/preprocess/missing_values.png:
                   x: feature
@@ -120,7 +119,7 @@ stages:
             - requirements/base.txt
         metrics:
             - metrics/explore/metrics.json:
-                  cache: false
+                  cache: true
         plots:
             - plots/explore/clinical_numeric_correlation_heatmap.png:
                   x: feature1
@@ -366,96 +365,94 @@ stages:
         outs:
             - data/processed/features.parquet:
                   cache: true
-            - data/processed/features_not_onehot.parquet:
-                  cache: true
         metrics:
             - metrics/featurize/metrics.json:
-                  cache: false
+                  cache: true
             - metrics/featurize/statistics.json:
-                  cache: false
+                  cache: true
         plots:
             - plots/featurize/feature_correlations.png:
-                  cache: false
+                  cache: true
                   title: Feature Correlations Heatmap
                   x: feature
                   y: feature
             - plots/featurize/feature_importance.png:
-                  cache: false
+                  cache: true
                   title: Top 20 Features by Importance
                   x: importance
                   y: feature
             - plots/featurize/feature_importance.csv:
-                  cache: false
+                  cache: true
                   type: csv
                   x: feature
                   y: importance
             - plots/featurize/readmission_distribution.png:
-                  cache: false
+                  cache: true
                   title: Distribution of Readmission
                   x: readmitted
                   y: Count
             - plots/featurize/age_distribution.png:
-                  cache: false
+                  cache: true
                   title: Distribution of Age
                   x: age
                   y: Frequency
             - plots/featurize/time_in_hospital_distribution.png:
-                  cache: false
+                  cache: true
                   title: Distribution of Time in Hospital
                   x: time_in_hospital
                   y: Frequency
             - plots/featurize/num_medications_distribution.png:
-                  cache: false
+                  cache: true
                   title: Distribution of Number of Medications
                   x: num_medications
                   y: Frequency
             - plots/featurize/num_procedures_distribution.png:
-                  cache: false
+                  cache: true
                   title: Distribution of Number of Procedures
                   x: num_procedures
                   y: Frequency
             - plots/featurize/num_medications_time_in_hospital_distribution.png:
-                  cache: false
+                  cache: true
                   title: Distribution of Medications and Time in Hospital
                   x: num_medications|time_in_hospital
                   y: Frequency
             - plots/featurize/num_medications_num_procedures_distribution.png:
-                  cache: false
+                  cache: true
                   title: Distribution of Medications and Procedures
                   x: num_medications|num_procedures
                   y: Frequency
             - ? plots/featurize/time_in_hospital_num_lab_procedures_distribution.png
-              : cache: false
+              : cache: true
                 title: Distribution of Time and Lab Procedures
                 x: time_in_hospital|num_lab_procedures
                 y: Frequency
             - ? plots/featurize/num_medications_num_lab_procedures_distribution.png
-              : cache: false
+              : cache: true
                 title: Distribution of Medications and Lab Procedures
                 x: num_medications|num_lab_procedures
                 y: Frequency
             - plots/featurize/num_medications_number_diagnoses_distribution.png:
-                  cache: false
+                  cache: true
                   title: Distribution of Medications and Diagnoses
                   x: num_medications|number_diagnoses
                   y: Frequency
             - plots/featurize/age_number_diagnoses_distribution.png:
-                  cache: false
+                  cache: true
                   title: Distribution of Age and Diagnoses
                   x: age|number_diagnoses
                   y: Frequency
             - plots/featurize/change_num_medications_distribution.png:
-                  cache: false
+                  cache: true
                   title: Distribution of Changes and Medications
                   x: change|num_medications
                   y: Frequency
             - ? plots/featurize/number_diagnoses_time_in_hospital_distribution.png
-              : cache: false
+              : cache: true
                 title: Distribution of Diagnoses and Time
                 x: number_diagnoses|time_in_hospital
                 y: Frequency
             - plots/featurize/num_medications_numchange_distribution.png:
-                  cache: false
+                  cache: true
                   title: Distribution of Medications and Changes
                   x: num_medications|numchange
                   y: Frequency
@@ -466,16 +463,25 @@ stages:
             - .venv/bin/uv run --with psycopg2-binary --with feast[postgres] --with dask[dataframe] python -m pipeline feast
         deps:
             - .venv
-            - data/processed/features_not_onehot.parquet
             - data/processed/features.parquet
-            - pipeline/stages/stage.py
+            - pipeline/__init__.py
+            - pipeline/__main__.py
             - pipeline/stages/feast.py
             - pipeline/stages/feature_repo.py
+            - pipeline/stages/stage.py
             - requirements/base.txt
+        outs:
+            - feature_repo/feature_repo.py
+            - feature_repo/feature_store.yaml
+            - feature_repo/data_hash.txt
+            - feature_repo/features.parquet
+        metrics:
+            - metrics/feast/metrics.json:
+                  cache: true
 
     autogluon:
         cmd:
-            - .venv/bin/uv run --with autogluon.tabular[lightgbm] --with dvclive python pipeline autogluon
+            - .venv/bin/uv run --with autogluon --with autogluon.tabular[lightgbm] --with dvclive --with shap python pipeline autogluon
         deps:
             - .venv
             - data/processed/features.parquet
@@ -491,9 +497,7 @@ stages:
                   cache: true
         metrics:
             - metrics/autogluon/metrics.json:
-                  cache: false
-            - metrics/autogluon/feature_importance.csv:
-                  cache: false
+                  cache: true
         plots:
             - plots/autogluon/confusion_matrix.png:
                   title: Confusion Matrix
@@ -505,11 +509,6 @@ stages:
                   x: False Positive Rate (FPR)
                   y: True Positive Rate (TPR)
                   template: roc
-            - plots/autogluon/precision_recall_curve.png:
-                  title: Precision-Recall Curve
-                  x: Recall
-                  y: Precision
-                  template: precision_recall
             - plots/autogluon/calibration_curve.png:
                   title: Calibration Curve
                   x: Mean Predicted Probability
@@ -519,30 +518,26 @@ stages:
                   title: Probability Distribution
                   x: Predicted Probability
                   y: Density
-            - plots/autogluon/feature_importance.png:
-                  title: Top 20 Features by Importance
-                  y: feature
-                  x: importance
 
     logistic:
         cmd:
-            - MODE=quick .venv/bin/uv run --with imblearn --with dvclive python pipeline logistic
+            - MODE=quick .venv/bin/uv run --with imblearn --with dvclive python pipeline logistic_regression
         deps:
             - .venv
             - data/processed/features.parquet
             - pipeline/__init__.py
             - pipeline/__main__.py
             - pipeline/stages/stage.py
-            - pipeline/stages/logistic.py
+            - pipeline/stages/logistic_regression.py
             - requirements/base.txt
         outs:
             - models/logistic/model.joblib:
                   cache: true
         metrics:
             - metrics/logistic/metrics.json:
-                  cache: false
+                  cache: true
             - metrics/logistic/feature_importance.csv:
-                  cache: false
+                  cache: true
         plots:
             - plots/logistic/confusion_matrix.png:
                   title: Confusion Matrix
@@ -561,45 +556,6 @@ stages:
                   y: feature
                   x: importance
                   title: Top 20 Features by Importance
-#   optimize:
-#     foreach: ${models}
-#     do:
-#       cmd:
-#         - export UV_LINK_MODE=copy && uv venv .venv-optimize-${item} --python 3.11
-#         - . .venv-optimize-${item}/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/base.txt
-#         - . .venv-optimize-${item}/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/optimize.txt
-#         - . .venv-optimize-${item}/bin/activate && python pipeline/stages/optimize.py model=${item}
-#       deps:
-#         - pipeline/stages/optimize.py
-#         - pipeline/models/${item}.py
-#         - requirements/base.txt
-#         - requirements/optimize.txt
-#         - data/processed/train_features.parquet
-#         - data/processed/val_features.parquet
-#       metrics:
-#         - metrics/optimize/${item}/trials.json
-#       plots:
-#         - metrics/plots/optimize/${item}/parameter_importance.png
-#         - metrics/plots/optimize/${item}/optimization_history.png
-
-#   evaluate:
-#     cmd:
-#       - export UV_LINK_MODE=copy && uv venv .venv-evaluate --python 3.11
-#       - . .venv-evaluate/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/base.txt
-#       - . .venv-evaluate/bin/activate && export UV_LINK_MODE=copy && uv pip install -r requirements/evaluate.txt
-#       - . .venv-evaluate/bin/activate && python pipeline/stages/evaluate.py
-#     deps:
-#       - pipeline/stages/evaluate.py
-#       - requirements/base.txt
-#       - requirements/evaluate.txt
-#       - data/processed/test_features.parquet
-#       - models/*/model.pkl
-#     metrics:
-#       - metrics/evaluation/model_comparison.json
-#     plots:
-#       - metrics/plots/evaluation/model_comparison.png
-#       - metrics/plots/evaluation/feature_importance.png
-
 #   register:
 #     cmd:
 #       - export UV_LINK_MODE=copy && uv venv .venv-register --python 3.11

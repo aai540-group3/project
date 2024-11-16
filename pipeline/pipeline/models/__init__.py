@@ -8,17 +8,32 @@ for diabetic readmission prediction.
 Each model supports both quick validation and full training modes.
 """
 
-from .autogluon import Autogluon
-from .metrics import Metrics
-# from .logistic_regression import LogisticRegressionModel
-from .model import Model
-
-# from .neural import NeuralNetworkModel
+import importlib
 
 __all__ = [
     "Autogluon",
-    # "LogisticRegressionModel",
-    # "NeuralNetworkModel",
+    "LogisticRegression",
     "Metrics",
     "Model",
 ]
+
+_MODULES = {
+    "Autogluon": "pipeline.models.autogluon",
+    "LogisticRegression": "pipeline.models.logistic_regression",
+    "Metrics": "pipeline.models.metrics",
+    "Model": "pipeline.models.model",
+}
+
+
+def __getattr__(name):
+    if name in _MODULES:
+        try:
+            module = importlib.import_module(_MODULES[name])
+            attribute = getattr(module, name)
+            globals()[name] = attribute  # Cache the imported attribute
+            return attribute
+        except ImportError as e:
+            raise ImportError(f"Cannot import name '{name}' from '{_MODULES[name]}'") from e
+        except AttributeError as e:
+            raise AttributeError(f"Module '{_MODULES[name]}' does not have attribute '{name}'") from e
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

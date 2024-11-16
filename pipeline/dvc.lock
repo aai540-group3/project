@@ -10,8 +10,8 @@ stages:
     deps:
     - path: requirements/base.txt
       hash: md5
-      md5: ad4949ee1718c53cb857ae9f720ffd5d
-      size: 149
+      md5: 6df55f5a56ea7d3d381a88e0ed4b071a
+      size: 156
     outs:
     - path: .venv
       hash: md5
@@ -61,8 +61,8 @@ stages:
       size: 1884
     - path: pipeline/stages/preprocess.py
       hash: md5
-      md5: db48c25bd535a30296b56440f184446e
-      size: 10896
+      md5: 74de3b33a9099e551744fcb18222f95d
+      size: 10889
       isexec: true
     - path: pipeline/stages/stage.py
       hash: md5
@@ -71,8 +71,8 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: ad4949ee1718c53cb857ae9f720ffd5d
-      size: 149
+      md5: 6df55f5a56ea7d3d381a88e0ed4b071a
+      size: 156
     outs:
     - path: data/interim/cleaned.parquet
       hash: md5
@@ -80,7 +80,7 @@ stages:
       size: 1801254
     - path: metrics/preprocess/metrics.json
       hash: md5
-      md5: 736aeedbe1afe7e4fab85fae8f49c845
+      md5: 68f7e97d7b5264ba0fe104c256be7b8d
       size: 15356
     - path: plots/preprocess/missing_values.png
       hash: md5
@@ -145,8 +145,8 @@ stages:
       size: 1884
     - path: pipeline/stages/featurize.py
       hash: md5
-      md5: 951a68727ec341359d84a5eb1988801a
-      size: 21219
+      md5: 983e852085db63550076f31b728dbd09
+      size: 20210
       isexec: true
     - path: pipeline/stages/stage.py
       hash: md5
@@ -158,17 +158,13 @@ stages:
       hash: md5
       md5: d689a4a6098c1d804a9b5339048b14be
       size: 1378122
-    - path: data/processed/features_not_onehot.parquet
-      hash: md5
-      md5: 5b1a3246f0ed7e8935fed8d1d18bfb14
-      size: 2575190
     - path: metrics/featurize/metrics.json
       hash: md5
-      md5: bcb0d40ad635d5b7056c354eeb968419
+      md5: 74c2878aa6a993c937dcdd1c7566e440
       size: 1727
     - path: metrics/featurize/statistics.json
       hash: md5
-      md5: 506b84defa5e0b30e54129f2459cd36b
+      md5: 92eaabfd1aa447234de39f8c447e87e7
       size: 2690
     - path: plots/featurize/age_distribution.png
       hash: md5
@@ -261,8 +257,8 @@ stages:
       size: 1884
     - path: pipeline/stages/explore.py
       hash: md5
-      md5: ec7d14262aeac3cc35a2d4927e9c0a9d
-      size: 14773
+      md5: 0227aea11c3767b9b43ccfcc7c101718
+      size: 17518
       isexec: true
     - path: pipeline/stages/stage.py
       hash: md5
@@ -271,13 +267,13 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 5050f4f60d20602fe4410bcb29394c32
-      size: 132
+      md5: 6df55f5a56ea7d3d381a88e0ed4b071a
+      size: 156
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: 5aceb73d976a09ce4b43412b4707a611
-      size: 655583
+      md5: a8479404f04e2f1e047699f84c8bdefd
+      size: 656658
     - path: plots/explore/A1Cresult_chi_square.png
       hash: md5
       md5: 7aea173ea15ae4e63f1a5691d0bd5a3d
@@ -969,8 +965,8 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: ad4949ee1718c53cb857ae9f720ffd5d
-      size: 149
+      md5: 6df55f5a56ea7d3d381a88e0ed4b071a
+      size: 156
     outs:
     - path: data/raw/data.csv
       hash: md5
@@ -990,7 +986,7 @@ stages:
       size: 17401
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: 721ab3aa371c57e40160bb7a0577c453
+      md5: 933bc6034600949608ca87209a3344b3
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5
@@ -1015,14 +1011,18 @@ stages:
       hash: md5
       md5: d689a4a6098c1d804a9b5339048b14be
       size: 1378122
-    - path: data/processed/features_not_onehot.parquet
+    - path: pipeline/__init__.py
       hash: md5
-      md5: 5b1a3246f0ed7e8935fed8d1d18bfb14
-      size: 2575190
+      md5: 516d9abddfbef26ec011250ca5cf66aa
+      size: 2549
+    - path: pipeline/__main__.py
+      hash: md5
+      md5: 303c04429b51b25a7de341ad8ab5b9f2
+      size: 1884
     - path: pipeline/stages/feast.py
       hash: md5
-      md5: 1d9c3f7e5754acb0d8f1d1eed8cb42ba
-      size: 25357
+      md5: 70a9138cb2c510196f9599567c1841e1
+      size: 27391
     - path: pipeline/stages/feature_repo.py
       hash: md5
       md5: db7130a6b8f916993aa87f44722e2db3
@@ -1034,12 +1034,33 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 5050f4f60d20602fe4410bcb29394c32
-      size: 132
+      md5: 6df55f5a56ea7d3d381a88e0ed4b071a
+      size: 156
+    outs:
+    - path: feature_repo/data_hash.txt
+      hash: md5
+      md5: 09c26842994b965349f3b0b69bdea89e
+      size: 20
+    - path: feature_repo/feature_repo.py
+      hash: md5
+      md5: db7130a6b8f916993aa87f44722e2db3
+      size: 6219
+    - path: feature_repo/feature_store.yaml
+      hash: md5
+      md5: 63538ccddc0e3762595d6443472c000a
+      size: 596
+    - path: feature_repo/features.parquet
+      hash: md5
+      md5: 672273ddaa50f9b3b6082f7e46d350a3
+      size: 1981733
+    - path: metrics/feast/metrics.json
+      hash: md5
+      md5: 20f0de9ecf3f1f83199209af02b4768f
+      size: 370
   autogluon:
     cmd:
-    - .venv/bin/uv run --with autogluon.tabular[lightgbm] --with dvclive python pipeline
-      autogluon
+    - .venv/bin/uv run --with autogluon --with autogluon.tabular[lightgbm] --with
+      dvclive --with shap python pipeline autogluon
     deps:
     - path: .venv
       hash: md5
@@ -1048,52 +1069,62 @@ stages:
       nfiles: 0
     - path: data/processed/features.parquet
       hash: md5
-      md5: 496c907119330ae4232f7b6237fce100
-      size: 565552
+      md5: d689a4a6098c1d804a9b5339048b14be
+      size: 1378122
     - path: pipeline/__init__.py
       hash: md5
-      md5: f321818f173e8f62b49da0f746eed582
-      size: 273
+      md5: 516d9abddfbef26ec011250ca5cf66aa
+      size: 2549
     - path: pipeline/__main__.py
       hash: md5
-      md5: ca86d1d756b43370d3f001ab69dd9cb4
-      size: 1374
+      md5: 303c04429b51b25a7de341ad8ab5b9f2
+      size: 1884
+    - path: pipeline/models/autogluon.py
+      hash: md5
+      md5: cee6e24b95a01c325ddcfecb9aa47f53
+      size: 4768
+      isexec: true
+    - path: pipeline/models/model.py
+      hash: md5
+      md5: 06e12839f3d29380a99a3666acc9bbbe
+      size: 13334
+      isexec: true
     - path: pipeline/stages/autogluon.py
       hash: md5
-      md5: 5b8897a79ed52d478811671d7dbfccee
-      size: 8773
-    - path: pipeline/stages/base.py
+      md5: a575fcf86fa05cf9b221ef3d97abd93b
+      size: 865
+    - path: pipeline/stages/stage.py
       hash: md5
-      md5: 28da6be2a311d6c4e85c7b51f28e7f79
-      size: 9673
+      md5: f3b11490fd7c2d588d94fdcba77023f1
+      size: 5302
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 5050f4f60d20602fe4410bcb29394c32
-      size: 132
+      md5: 6df55f5a56ea7d3d381a88e0ed4b071a
+      size: 156
     outs:
-    - path: metrics/autogluon/feature_importance.csv
-      hash: md5
-      md5: 0d56db6b6dba9ee15d17ac0b5db906f4
-      size: 3149
     - path: metrics/autogluon/metrics.json
       hash: md5
-      md5: 02a755ac5b78c30ece90f893b6be05a9
-      size: 164
+      md5: 49ab36b297aebf35db2aa8013de3edbc
+      size: 426
     - path: models/autogluon
       hash: md5
-      md5: b28cb836aa009bfedd78d37ef2dd7a11.dir
-      size: 8871448
-      nfiles: 14
+      md5: 4f9d01a470baab96969d0e62ceedef7d.dir
+      size: 21647219
+      nfiles: 15
+    - path: plots/autogluon/calibration_curve.png
+      hash: md5
+      md5: 8d1605f06ed24988cfdbba9ccd5e48bb
+      size: 179885
     - path: plots/autogluon/confusion_matrix.png
       hash: md5
-      md5: e6c02006c0cda5f4d878ebe2c499a02f
-      size: 82840
-    - path: plots/autogluon/feature_importance.png
+      md5: c659664ad1effa0675c642f5079fb0b8
+      size: 130419
+    - path: plots/autogluon/probability_distribution.png
       hash: md5
-      md5: 85b52e1ae0b1e20359a4486ed9cfa80c
-      size: 209782
+      md5: 2fed77916773bf8a2adf44e6c9b73a46
+      size: 187206
     - path: plots/autogluon/roc_curve.png
       hash: md5
-      md5: 32d2a6ddc62ad33f1643735df29858b2
-      size: 101527
+      md5: 7a80103332695d0e433be3a4395412ad
+      size: 176229

@@ -16,6 +16,7 @@ aws:
   region: us-east-1
 
 feast:
+  stop_container: false
   config:
     project: diabetes_readmission
     provider: local
@@ -73,7 +74,6 @@ models:
           num_boost_round: 100
           num_leaves: 16
           early_stopping_rounds: 10
-
     full:
       time_limit: 7200
       presets: best_quality
@@ -106,14 +106,15 @@ models:
 
   logistic:
     quick:
+      optimize: true
       max_iter: 100
       solver: lbfgs
       hyperparameters:
         C: 1.0
         penalty: l2
-
-      optimize:
-        enabled: true
+        n_trials: 10
+        timeout: 600
+        direction: maximize
         param_space:
           C:
             type: float
@@ -123,21 +124,19 @@ models:
           penalty:
             type: categorical
             choices: [l2]
-        n_trials: 10
-        timeout: 600
-        direction: maximize
 
     full:
+      optimize: true
       max_iter: 1000
       solver: saga
       hyperparameters:
         C: 0.1
         penalty: l2
+        n_trials: 50
+        timeout: 3600
+        direction: maximize
         tol: 1e-4
         class_weight: balanced
-
-      optimize:
-        enabled: true
         param_space:
           C:
             type: float
@@ -150,9 +149,6 @@ models:
           solver:
             type: categorical
             choices: [liblinear, saga]
-        n_trials: 50
-        timeout: 3600
-        direction: maximize
 
 #-----------------------------------------------------------------------------#
 # Visualization settings
