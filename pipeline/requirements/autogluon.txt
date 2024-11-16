@@ -1,5 +1,2 @@
 autogluon 
-autogluon.tabular[all] 
-dvclive 
-imbalanced-learn
-shap
+autogluon.tabular[all]

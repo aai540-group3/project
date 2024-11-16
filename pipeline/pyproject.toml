@@ -31,7 +31,7 @@ dependencies = ["pytest"]
 
 [tool.black]
 line-length = 120
-target-version = ["py311"]
+target-version = ["py39"]
 
 [tool.flake8]
 max-line-length = 120
@@ -51,7 +51,7 @@ multi_line_output = 3
 include_trailing_comma = true
 line_length = 120
 known_third_party = ["feast", "yaml"]
-skip_glob = [".venv-*/*"]
+skip_glob = [".venv*/*"]
 
 [tool.pylint]
 disable = [

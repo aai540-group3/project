@@ -159,6 +159,14 @@ stages:
       md5: 5d0e853805061bd824ea2316541f1c96
       size: 5249
       isexec: true
+    - path: requirements/base.txt
+      hash: md5
+      md5: b30af21c8eacbc511ef05917f97609e0
+      size: 93
+    - path: requirements/featurize.txt
+      hash: md5
+      md5: 2d35c8ad09ef448e448cda0e6d217d88
+      size: 14
     outs:
     - path: data/processed/features.parquet
       hash: md5
@@ -166,11 +174,11 @@ stages:
       size: 1378122
     - path: metrics/featurize/metrics.json
       hash: md5
-      md5: b4a9e362552e9a6a2617e27e4ae92c0c
+      md5: fe5f7d87cf4faffec2b58958e558f6bd
       size: 1727
     - path: metrics/featurize/statistics.json
       hash: md5
-      md5: 34585212807b2ea72be266b375d9b60c
+      md5: 92d4135c84afbaab092476667995a363
       size: 2690
     - path: plots/featurize/age_distribution.png
       hash: md5
@@ -274,12 +282,16 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 9f0195a35546186f16ccfdf0f76a5106
-      size: 110
+      md5: b30af21c8eacbc511ef05917f97609e0
+      size: 93
+    - path: requirements/explore.txt
+      hash: md5
+      md5: 73c7c9f45a15bcc504df3e0903fa31cc
+      size: 8
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: 48be67cafa1a0b2a03f703c6cc465062
+      md5: 738debf9995e8d622bc56789b6b18f55
       size: 656658
     - path: plots/explore/A1Cresult_chi_square.png
       hash: md5
@@ -1038,13 +1050,17 @@ stages:
       size: 6219
     - path: pipeline/stages/stage.py
       hash: md5
-      md5: f3b11490fd7c2d588d94fdcba77023f1
-      size: 5302
+      md5: 5d0e853805061bd824ea2316541f1c96
+      size: 5249
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: b1e6b1ff6e26c62456be87c19c2a08d1
-      size: 155
+      md5: b30af21c8eacbc511ef05917f97609e0
+      size: 93
+    - path: requirements/feast.txt
+      hash: md5
+      md5: ce807b660e841b507c8a918e6d67460b
+      size: 74
     outs:
     - path: feature_repo/data_hash.txt
       hash: md5
@@ -1060,11 +1076,11 @@ stages:
       size: 596
     - path: feature_repo/features.parquet
       hash: md5
-      md5: aafb6d1002e4ce59e9a8921c714ef1b9
+      md5: 2cdcb4c9e17843d556f0151c0718430c
       size: 1981733
     - path: metrics/feast/metrics.json
       hash: md5
-      md5: 0c3dbb334572976cc507913d622f36c0
+      md5: 1182986bdbb564b2086ff032632c7cdf
       size: 370
   autogluon:
     cmd:
@@ -1104,13 +1120,17 @@ stages:
       size: 865
     - path: pipeline/stages/stage.py
       hash: md5
-      md5: f3b11490fd7c2d588d94fdcba77023f1
-      size: 5302
+      md5: 5d0e853805061bd824ea2316541f1c96
+      size: 5249
       isexec: true
+    - path: requirements/autogluon.txt
+      hash: md5
+      md5: 3d8f1622f7e5f3c4726858e7e4c5bd37
+      size: 65
     - path: requirements/base.txt
       hash: md5
-      md5: b1e6b1ff6e26c62456be87c19c2a08d1
-      size: 155
+      md5: b30af21c8eacbc511ef05917f97609e0
+      size: 93
     outs:
     - path: metrics/autogluon/metrics.json
       hash: md5
@@ -1118,8 +1138,8 @@ stages:
       size: 420
     - path: models/autogluon
       hash: md5
-      md5: b17559cc685301fd647e83c856509c5c.dir
-      size: 2502979
+      md5: c904cd87496e9e93279d612a543a83ef.dir
+      size: 2502809
       nfiles: 14
     - path: plots/autogluon/calibration_curve.png
       hash: md5

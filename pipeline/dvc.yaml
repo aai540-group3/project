@@ -6,12 +6,22 @@ stages:
       - .venv/bin/python -m pip install -q uv
       - .venv/bin/uv pip install -q --no-cache-dir  -e .
       - .venv/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
+      - UV_LINK_MODE=copy uv venv .venv-models --python 3.9
+      - .venv-models/bin/python -m ensurepip --upgrade
+      - .venv-models/bin/python -m pip install -q uv
+      - .venv-models/bin/uv pip install -q --no-cache-dir  -e .
+      - .venv-models/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
+      - .venv-models/bin/uv pip install -q --no-cache-dir -r requirements/models.txt
     outs:
       - .venv:
           cache: false
           persist: true
+      - .venv-models:
+          cache: false
+          persist: true
     deps:
       - requirements/base.txt
+      - requirements/models.txt
 
   prepare:
     cmd:
@@ -480,9 +490,9 @@ stages:
 
   autogluon:
     cmd:
-      - .venv/bin/uv run $(sed 's/^/--with /' requirements/autogluon.txt | tr '\n' ' ') python pipeline autogluon
+      - .venv-models/bin/uv run $(sed 's/^/--with /' requirements/autogluon.txt | tr '\n' ' ') python pipeline autogluon
     deps:
-      - .venv
+      - .venv-models
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -521,9 +531,9 @@ stages:
 
   logistic_regression:
     cmd:
-      - .venv/bin/uv run $(sed 's/^/--with /' requirements/logistic_regression.txt | tr '\n' ' ') python pipeline logistic_regression
+      - .venv-models/bin/uv run python pipeline logistic_regression
     deps:
-      - .venv
+      - .venv-models
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -532,7 +542,6 @@ stages:
       - pipeline/models/logistic_regression.py
       - pipeline/models/model.py
       - requirements/base.txt
-      - requirements/logistic_regression.txt
     outs:
       - models/logistic/model.joblib:
           cache: true
@@ -564,9 +573,9 @@ stages:
 
   neural_network:
     cmd:
-      - .venv/bin/uv run $(sed 's/^/--with /' requirements/neural_network.txt | tr '\n' ' ') python pipeline neural_network
+      - .venv-models/bin/uv run python pipeline neural_network
     deps:
-      - .venv
+      - .venv-models
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -575,7 +584,6 @@ stages:
       - pipeline/models/neural_network.py
       - pipeline/models/model.py
       - requirements/base.txt
-      - requirements/neural_network.txt
     outs:
       - models/neural_network:
           cache: true

@@ -50,7 +50,7 @@ dataset:
   name: "Diabetes 130-US Hospitals for Years 1999-2008"
   id: 296
   source: ucimlrepo
-  timestamp: "1999-01-01T00:00:00Z"
+  timestamp: "1999-01-01T00:00:00+00:00"
   splits:
     train: 0.80
     test: 0.10
@@ -69,13 +69,13 @@ models:
 
   autogluon:
     quick:
-      time_limit: 60 # Maximum time in seconds for training
+      time_limit: 60
       presets: medium_quality
       hyperparameters:
         NN_TORCH:
           num_epochs: 1
     full:
-      time_limit: 7200 # 2 hours
+      time_limit: 7200
       presets: best_quality
       hyperparameters:
         GBM:
@@ -104,7 +104,7 @@ models:
           batch_size: 512
           layers: [200, 100]
 
-  logistic_regression:
+  logisticregression:
     quick:
       model_params: {}
       training:
@@ -126,7 +126,7 @@ models:
         batch_size: 64
         epochs: 50
 
-  neural_network:
+  neuralnetwork:
     quick:
       model_params: {}
       training:

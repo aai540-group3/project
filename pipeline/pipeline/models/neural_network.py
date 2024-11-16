@@ -6,7 +6,7 @@ This module provides a neural network model implementation with flexible archite
 and configuration-driven parameters using PyTorch.
 
 .. module:: pipeline.models.neural_network
-   :synopsis: Configuration-driven neural network model
+   :synopsis: Neural Network model using PyTorch
 
 .. moduleauthor:: aai540-group3
 """
