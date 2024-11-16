@@ -14,7 +14,6 @@ from feast import Entity, FeatureService, FeatureView, Field
 from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import PostgreSQLSource
 from feast.types import Float32, Int64
 
-
 # Define the primary entity for Feast
 entities = Entity(
     name="patient",

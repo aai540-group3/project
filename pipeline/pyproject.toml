@@ -1,12 +1,11 @@
 [build-system]
-requires = ["setuptools", "wheel", "uv"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "diabetic-readmission-risk-prediction"
+name = "pipeline"
 version = "0.1.0"
-description = "Diabetic Readmission Risk Prediction using Machine Learning"
-readme = "../README.md"
+description = "Diabetic Readmission Risk Prediction"
 requires-python = ">=3.7"
 license = { text = "MIT" }
 authors = [
@@ -22,7 +21,6 @@ classifiers = [
 ]
 dependencies = [
     "dvc[s3]",
-    "uv",
 ]
 
 [tool.black]
@@ -42,11 +40,8 @@ skip_glob = [".venv-*/*"]
 
 [tool.pylint]
 disable = [
-    "missing-docstring",
-    "invalid-name",
     "line-too-long",
     "too-few-public-methods",
-    "import-error"
 ]
 max-line-length = 120
 
@@ -70,27 +65,17 @@ environments = ["sys_platform == 'linux'"]
 exclude = [
     "__pypackages__",
     "_build",
-    ".bzr",
-    ".direnv",
     ".eggs",
-    ".git-rewrite",
     ".git",
     ".hg",
     ".ipynb_checkpoints",
     ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".pyenv",
     ".pytest_cache",
-    ".pytype",
     ".ruff_cache",
-    ".svn",
-    ".tox",
     ".uv_cache",
     ".venv-*",
     ".venv",
     ".vscode",
-    "buck-out",
     "build",
     "dist",
     "node_modules",
@@ -115,3 +100,6 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 docstring-code-format = false
 docstring-code-line-length = "dynamic"
+
+[tool.setuptools]
+py-modules = []
