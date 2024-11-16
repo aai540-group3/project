@@ -10,11 +10,11 @@ stages:
       - .venv-models/bin/uv pip install --no-cache-dir -r requirements/models.txt
     outs:
       - .venv:
-          cache: false
           persist: true
+          cache: true
       - .venv-models:
-          cache: false
           persist: true
+          cache: true
     deps:
       - requirements/base.txt
       - requirements/models.txt
