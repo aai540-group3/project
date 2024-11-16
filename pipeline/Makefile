@@ -1,5 +1,6 @@
 all:
-	pip install uv dvc[s3] && MODE=full dvc repro
+	pip install dvc[s3]
+	MODE=full dvc repro
 
 clean:
 	cd ..
@@ -18,6 +19,5 @@ clean:
 	find . -name ".pytest_cache" -exec rm -rf {} +
 	find . -name "*.egg-info" -exec rm -rf {} +
 	find . -name "*.log" -delete
-
 
 .PHONY: all clean
