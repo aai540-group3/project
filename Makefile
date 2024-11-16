@@ -1,5 +1,5 @@
 all:
-	pip install dvc && cd pipeline && dvc repro
+	pip install dvc && cd pipeline && MODE=full dvc repro
 
 clean:
 	find . -name ".ruff_cache" -exec rm -rf {} +

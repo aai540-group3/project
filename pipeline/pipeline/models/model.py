@@ -41,7 +41,7 @@ class Model(ABC):
         # Load model configuration
         self.cfg: DictConfig = OmegaConf.load("params.yaml")
         self.name = self.__class__.__name__.lower()
-        self.mode = os.environ.get("MODE", self.cfg.models.base.get("mode", "quick"))
+        self.mode = os.environ.get("MODE", self.cfg.get("mode", "quick"))
         seed = self.cfg.get("seed", 42)
 
         # Set random seed for reproducibility

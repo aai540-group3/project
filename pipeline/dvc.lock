@@ -642,9 +642,9 @@ stages:
     deps:
     - path: .venv-models
       hash: md5
-      md5: fb03307e98f566fcf9f9c048134685f0.dir
-      size: 391525093
-      nfiles: 15233
+      md5: 85141fa6fda9822e879059ef712de1fe.dir
+      size: 695606530
+      nfiles: 29070
     - path: data/processed/features.parquet
       hash: md5
       md5: d689a4a6098c1d804a9b5339048b14be
@@ -686,8 +686,8 @@ stages:
       size: 33
     - path: requirements/base.txt
       hash: md5
-      md5: 9adc69af1e9b835590c5fe8205db95dc
-      size: 101
+      md5: aa1d2b05692758cb14e458ad5e114701
+      size: 105
     outs:
     - path: metrics/autogluon/metrics.json
       hash: md5
@@ -695,7 +695,7 @@ stages:
       size: 420
     - path: models/autogluon
       hash: md5
-      md5: 3d16c593cd4daa5080546d7d9f50a3f4.dir
+      md5: b28d4fb2aa947237255b9e68fa7bafc7.dir
       size: 2502781
       nfiles: 14
     - path: plots/autogluon/calibration_curve.png
