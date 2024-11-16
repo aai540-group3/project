@@ -26,6 +26,6 @@ stages:
       nfiles: 0
     - path: .venv-models
       hash: md5
-      md5: 44890c991fb3c13021f9c6d146dd8b85.dir
-      size: 753709541
-      nfiles: 33690
+      md5: bd6725e0756cebcb89f5adcf300fb52a.dir
+      size: 347799337
+      nfiles: 14537
