@@ -40,6 +40,5 @@ class Infrastruct(Stage):
             "metrics", {
                 "region": self.cfg.aws.region,
                 "resources": resources,
-                "status": "cleaned_up",
             },
         )  # fmt: skip

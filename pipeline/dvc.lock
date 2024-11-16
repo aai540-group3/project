@@ -12,8 +12,8 @@ stages:
     deps:
     - path: requirements/base.txt
       hash: md5
-      md5: 9adc69af1e9b835590c5fe8205db95dc
-      size: 101
+      md5: aa1d2b05692758cb14e458ad5e114701
+      size: 105
     - path: requirements/models.txt
       hash: md5
       md5: 1990e8fd4cc60ee9ec446af8d9970aa4
@@ -26,9 +26,9 @@ stages:
       nfiles: 0
     - path: .venv-models
       hash: md5
-      md5: b2e477bee3618aff872fe46d33289614.dir
-      size: 347811148
-      nfiles: 14535
+      md5: 85141fa6fda9822e879059ef712de1fe.dir
+      size: 695606530
+      nfiles: 29070
   prepare:
     cmd:
     - .venv/bin/uv run $(sed 's/^/--with /' requirements/infrastruct.txt | tr '\n'
@@ -66,8 +66,8 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 9adc69af1e9b835590c5fe8205db95dc
-      size: 101
+      md5: aa1d2b05692758cb14e458ad5e114701
+      size: 105
     outs:
     - path: data/raw/data.csv
       hash: md5
@@ -87,7 +87,7 @@ stages:
       size: 17401
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: 00d14606f6d7144c85bb5feb60e564f2
+      md5: 237ccda2cf9292aa566e78bfefad29a0
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5
@@ -214,12 +214,12 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 9adc69af1e9b835590c5fe8205db95dc
-      size: 101
+      md5: aa1d2b05692758cb14e458ad5e114701
+      size: 105
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: 736c7c3c9b7cb9a1d799c41573553cbc
+      md5: 57bc035d5b5de8ca9836e211c3d6cb1b
       size: 656658
     - path: plots/explore/A1Cresult_chi_square.png
       hash: md5
@@ -479,8 +479,8 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: 9adc69af1e9b835590c5fe8205db95dc
-      size: 101
+      md5: aa1d2b05692758cb14e458ad5e114701
+      size: 105
     - path: requirements/featurize.txt
       hash: md5
       md5: 6686853da3491a56c98917cc5c4ddea2
@@ -492,11 +492,11 @@ stages:
       size: 1378122
     - path: metrics/featurize/metrics.json
       hash: md5
-      md5: 12ed946b9ebfb97e72250b2118027bdb
+      md5: d58d8ab246c77174107666b7f32f222e
       size: 1727
     - path: metrics/featurize/statistics.json
       hash: md5
-      md5: 1aaa08ebec8d6612f01a9e485ae13e46
+      md5: 0b3ec2a56b9661546b9d4fcf6ef778ca
       size: 2690
     - path: plots/featurize/age_distribution.png
       hash: md5
