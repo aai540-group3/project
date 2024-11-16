@@ -26,9 +26,9 @@ stages:
       nfiles: 0
     - path: .venv-models
       hash: md5
-      md5: fb03307e98f566fcf9f9c048134685f0.dir
-      size: 391525093
-      nfiles: 15233
+      md5: b2e477bee3618aff872fe46d33289614.dir
+      size: 347811148
+      nfiles: 14535
   prepare:
     cmd:
     - .venv/bin/uv run $(sed 's/^/--with /' requirements/infrastruct.txt | tr '\n'
@@ -87,7 +87,7 @@ stages:
       size: 17401
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: c54cca00bcfed867e6e8a593403e66f2
+      md5: 00d14606f6d7144c85bb5feb60e564f2
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5
@@ -139,7 +139,7 @@ stages:
       size: 1801254
     - path: metrics/preprocess/metrics.json
       hash: md5
-      md5: 3af3f632c9a83ff6e9cb8b4f420fc1a2
+      md5: 349246c1c9d20a22e2979fab9f129152
       size: 15356
     - path: plots/preprocess/missing_values.png
       hash: md5
