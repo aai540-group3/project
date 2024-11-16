@@ -2,7 +2,7 @@
 Logistic Regression Stage Implementation
 ==============================
 
-.. module:: pipeline.stages.logistic_regression
+.. module:: pipeline.stages.logisticregression
    :synopsis: Pipeline stage for LogisticRegression
 
 .. moduleauthor:: aai540-group3

@@ -7,7 +7,7 @@ __all__ = [
     "featurize",
     "infrastruct",
     "ingest",
-    "logistic_regression",
+    "logisticregression",
     "preprocess",
     "stage",
 ]

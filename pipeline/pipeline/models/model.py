@@ -52,10 +52,12 @@ class Model(ABC):
         self.y_train, self.y_val, self.y_test = None, None, None
         self.label_column = self.cfg.models.base.get("label", "target")
 
-        # Setup directories for metrics, plots, and models
-        self.metrics_dir = Path("metrics") / self.name
-        self.plots_dir = Path("plots") / self.name
-        self.models_dir = Path("models") / self.name
+        # Setup directories for metrics, plots, and models using cfg
+        self.metrics_dir = Path(self.cfg.paths.metrics) / self.name
+        self.plots_dir = Path(self.cfg.paths.plots) / self.name
+        self.models_dir = Path(self.cfg.paths.models) / self.name
+
+        # Ensure the directories exist
         for path in [self.metrics_dir, self.plots_dir, self.models_dir]:
             path.mkdir(parents=True, exist_ok=True)
 
@@ -142,10 +144,10 @@ class Model(ABC):
                 self.prepare_data()
             model_artifact = self.train()
             self.save_model(model_artifact)
-            y_pred = self.predict(self.X_test)
-            y_proba = self.predict_proba(self.X_test)
-            estimator = self.get_estimator()
-            metrics = self.calculate_and_save_metrics(self.metrics_dir)
+            self.predict(self.X_test)
+            self.predict_proba(self.X_test)
+            self.get_estimator()
+            self.calculate_and_save_metrics(self.metrics_dir)
             logger.info(f"Model {self.name} execution completed in {datetime.now() - self.start_time}.")
         except Exception as e:
             logger.error(f"Execution failed: {e}")
@@ -285,9 +287,17 @@ class Model(ABC):
             feature_importance_df = pd.DataFrame(list(feature_importance.items()), columns=["feature", "importance"])
             feature_importance_df = feature_importance_df.sort_values("importance", ascending=False)
 
-            feature_importance_path = output_dir / "feature_importance"
-            Metrics.plot_feature_importance(feature_importance_df, feature_importance_path)
-            logger.info(f"Feature importance data saved at '{feature_importance_path.with_suffix('.csv')}'")
+            # Save feature importance data under metrics directory
+            feature_importance_csv_path = self.metrics_dir / "feature_importance.csv"
+            feature_importance_df.to_csv(feature_importance_csv_path, index=False)
+            logger.info(f"Feature importance data saved at '{feature_importance_csv_path}'")
+
+            # Save feature importance plot under plots directory
+            feature_importance_plot_path = self.plots_dir / "feature_importance.png"
+            Metrics.plot_feature_importance(feature_importance_df, feature_importance_plot_path)
+            logger.info(f"Feature importance plot saved at '{feature_importance_plot_path}'")
+        else:
+            logger.warning("Feature importance could not be calculated.")
 
         # SHAP values
         if self.mode != "quick":

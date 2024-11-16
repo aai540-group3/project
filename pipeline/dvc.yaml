@@ -11,7 +11,7 @@ stages:
       - .venv-models/bin/python -m pip install -q uv
       - .venv-models/bin/uv pip install -q --no-cache-dir  -e .
       - .venv-models/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
-      - .venv-models/bin/uv pip install -q --no-cache-dir -r requirements/models.txt
+      - .venv-models/bin/uv pip install --no-cache-dir -r requirements/models.txt
     outs:
       - .venv:
           cache: false
@@ -59,7 +59,7 @@ stages:
 
   preprocess:
     cmd:
-      - .venv/bin/uv run $(sed 's/^/--with /' requirements/preprocess.txt | tr '\n' ' ') python pipeline preprocess
+      - .venv/bin/uv run python pipeline preprocess
     deps:
       - .venv
       - data/raw/data.csv
@@ -68,7 +68,6 @@ stages:
       - pipeline/stages/preprocess.py
       - pipeline/stages/stage.py
       - requirements/base.txt
-      - requirements/preprocess.txt
     outs:
       - data/interim/cleaned.parquet:
           cache: true
@@ -119,7 +118,7 @@ stages:
 
   explore:
     cmd:
-      - .venv/bin/uv run $(sed 's/^/--with /' requirements/explore.txt | tr '\n' ' ') python pipeline explore
+      - .venv/bin/uv run python pipeline explore
     deps:
       - .venv
       - data/interim/cleaned.parquet
@@ -128,7 +127,6 @@ stages:
       - pipeline/stages/explore.py
       - pipeline/stages/stage.py
       - requirements/base.txt
-      - requirements/explore.txt
     metrics:
       - metrics/explore/metrics.json:
           cache: true
@@ -497,6 +495,7 @@ stages:
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/models/autogluon.py
+      - pipeline/models/metrics.py
       - pipeline/models/model.py
       - pipeline/stages/autogluon.py
       - pipeline/stages/stage.py
@@ -529,92 +528,93 @@ stages:
           x: Predicted Probability
           y: Density
 
-  logistic_regression:
+  logisticregression:
     cmd:
-      - .venv-models/bin/uv run python pipeline logistic_regression
+      - .venv-models/bin/uv run python pipeline logisticregression
     deps:
       - .venv-models
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
-      - pipeline/stages/logistic_regression.py
-      - pipeline/stages/stage.py
-      - pipeline/models/logistic_regression.py
+      - pipeline/models/logisticregression.py
+      - pipeline/models/metrics.py
       - pipeline/models/model.py
+      - pipeline/stages/logisticregression.py
+      - pipeline/stages/stage.py
       - requirements/base.txt
     outs:
-      - models/logistic/model.joblib:
+      - models/logisticregression/model.pth:
           cache: true
-      - .venv-logistic_regression:
-          cache: false
-          persist: true
+      - models/logisticregression/scaler.joblib:
+          cache: true
     metrics:
-      - metrics/logistic/metrics.json:
+      - metrics/logisticregression/metrics.json:
           cache: true
-      - metrics/logistic/feature_importance.csv:
+      - metrics/logisticregression/feature_importance.csv:
           cache: true
     plots:
-      - plots/logistic/confusion_matrix.png:
+      - plots/logisticregression/confusion_matrix.png:
           title: Confusion Matrix
           x: Predicted
           y: Actual
           template: confusion
-      - plots/logistic/roc_curve.png:
+      - plots/logisticregression/roc_curve.png:
           x: FPR
           y: TPR
           title: ROC Curve
-      - plots/logistic/precision_recall_curve.png:
+      - plots/logisticregression/precision_recall_curve.png:
           x: Recall
           y: Precision
           title: Precision-Recall Curve
-      - plots/logistic/feature_importance.png:
+      - plots/logisticregression/feature_importance.png:
           y: feature
           x: importance
 
-  neural_network:
+  neuralnetwork:
     cmd:
-      - .venv-models/bin/uv run python pipeline neural_network
+      - .venv-models/bin/uv run python pipeline neuralnetwork
     deps:
       - .venv-models
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
-      - pipeline/stages/neural_network.py
-      - pipeline/stages/stage.py
-      - pipeline/models/neural_network.py
+      - pipeline/models/metrics.py
       - pipeline/models/model.py
+      - pipeline/models/neuralnetwork.py
+      - pipeline/stages/neuralnetwork.py
+      - pipeline/stages/stage.py
       - requirements/base.txt
     outs:
-      - models/neural_network:
+      - models/neuralnetwork:
           cache: true
     metrics:
-      - metrics/neural_network/metrics.json:
+      - metrics/neuralnetwork/metrics.json:
           cache: true
     plots:
-      - plots/neural_network/confusion_matrix.png:
+      - plots/neuralnetwork/confusion_matrix.png:
           title: Confusion Matrix
           x: Predicted
           y: Actual
           template: confusion
-      - plots/neural_network/roc_curve.png:
+      - plots/neuralnetwork/roc_curve.png:
           title: ROC Curve
           x: False Positive Rate (FPR)
           y: True Positive Rate (TPR)
           template: roc
-      - plots/neural_network/calibration_curve.png:
+      - plots/neuralnetwork/calibration_curve.png:
           title: Calibration Curve
           x: Mean Predicted Probability
           y: Fraction of Positives
           template: calibration
-      - plots/neural_network/probability_distribution.png:
+      - plots/neuralnetwork/probability_distribution.png:
           title: Probability Distribution
           x: Predicted Probability
           y: Density
-      - plots/neural_network/training_loss.png:
+      - plots/neuralnetwork/training_loss.png:
           title: Training Loss Over Epochs
           x: Epoch
           y: Loss
-      - plots/neural_network/training_accuracy.png:
+      - plots/neuralnetwork/training_accuracy.png:
           title: Training Accuracy Over Epochs
           x: Epoch
           y: Accuracy

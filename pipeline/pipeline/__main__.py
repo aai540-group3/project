@@ -18,14 +18,29 @@ from loguru import logger
 
 
 def run_stage(stage_name: str) -> None:
-    """Dynamically load and execute a pipeline stage.
+    """Load and execute a pipeline stage using a mapping.
 
     :param stage_name: Name of the stage to execute
     :type stage_name: str
     :raises ImportError: If stage module cannot be imported
     """
-    module_name = f"pipeline.stages.{stage_name}"
-    class_name = "".join(word.capitalize() for word in stage_name.split("_"))
+    stage_mapping = {
+        "autogluon": ("pipeline.stages.autogluon", "Autogluon"),
+        "explore": ("pipeline.stages.explore", "Explore"),
+        "feast": ("pipeline.stages.feast", "Feast"),
+        "featurize": ("pipeline.stages.featurize", "Featurize"),
+        "infrastruct": ("pipeline.stages.infrastruct", "Infrastruct"),
+        "ingest": ("pipeline.stages.ingest", "Ingest"),
+        "logisticregression": ("pipeline.stages.logisticregression", "LogisticRegression"),
+        "neuralnetwork": ("pipeline.stages.neuralnetwork", "NeuralNetwork"),
+        "preprocess": ("pipeline.stages.preprocess", "Preprocess"),
+    }
+
+    if stage_name not in stage_mapping:
+        logger.error(f"Stage '{stage_name}' is not defined in the stage mapping.")
+        raise ValueError(f"Stage '{stage_name}' is not defined in the stage mapping.")
+
+    module_name, class_name = stage_mapping[stage_name]
     logger.debug(f"Importing module: {module_name}")
 
     try:
@@ -34,7 +49,7 @@ def run_stage(stage_name: str) -> None:
         stage_instance = stage_class()
         stage_instance.execute()
     except Exception as e:
-        logger.error(f"Error in stage {stage_name}: {e}")
+        logger.error(f"Error in stage '{stage_name}': {e}")
         raise
 
 

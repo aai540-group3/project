@@ -186,8 +186,8 @@ project/
 │   ├── interim/                    # Intermediate data after preprocessing
 │   └── processed/                  # Data ready for model training
 ├── models/                         # Trained model artifacts
-│   ├── logistic_regression/
-│   ├── neural_network/
+│   ├── logisticregression/
+│   ├── neuralnetwork/
 │   └── autogluon/
 ├── reports/                        # Reports and analysis outputs
 │   ├── plots/
@@ -199,8 +199,8 @@ project/
 │   ├── featurize.py                # Feature engineering script
 │   ├── utils.py                    # Utility functions
 │   └── models/                     # Model training scripts
-│       ├── logistic_regression/
-│       ├── neural_network/
+│       ├── logisticregression/
+│       ├── neuralnetwork/
 │       └── autogluon/
 ├── dvc.yaml                        # DVC pipeline configuration
 ├── requirements.txt                # Python dependencies

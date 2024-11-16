@@ -2,7 +2,7 @@
 Neural Network Stage
 ====================
 
-.. module:: pipeline.stages.neural_network
+.. module:: pipeline.stages.neuralnetwork
    :synopsis: Pipeline stage for NeuralNetwork
 
 .. moduleauthor:: aai540-group3

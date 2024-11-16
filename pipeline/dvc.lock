@@ -7,17 +7,32 @@ stages:
     - .venv/bin/python -m pip install -q uv
     - .venv/bin/uv pip install -q --no-cache-dir  -e .
     - .venv/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
+    - UV_LINK_MODE=copy uv venv .venv-models --python 3.9
+    - .venv-models/bin/python -m ensurepip --upgrade
+    - .venv-models/bin/python -m pip install -q uv
+    - .venv-models/bin/uv pip install -q --no-cache-dir  -e .
+    - .venv-models/bin/uv pip install -q --no-cache-dir -r requirements/base.txt
+    - .venv-models/bin/uv pip install --no-cache-dir -r requirements/models.txt
     deps:
     - path: requirements/base.txt
       hash: md5
-      md5: b30af21c8eacbc511ef05917f97609e0
-      size: 93
+      md5: 9adc69af1e9b835590c5fe8205db95dc
+      size: 101
+    - path: requirements/models.txt
+      hash: md5
+      md5: 1990e8fd4cc60ee9ec446af8d9970aa4
+      size: 35
     outs:
     - path: .venv
       hash: md5
       md5: d751713988987e9331980363e24189ce.dir
       size: 0
       nfiles: 0
+    - path: .venv-models
+      hash: md5
+      md5: c216a62c5b2e357bd02470fdec609cb6.dir
+      size: 43713945
+      nfiles: 698
   infrastruct:
     cmd:
     - export UV_LINK_MODE=copy && uv venv .venv-infrastruct --python 3.11
@@ -58,8 +73,8 @@ stages:
       size: 2549
     - path: pipeline/__main__.py
       hash: md5
-      md5: 303c04429b51b25a7de341ad8ab5b9f2
-      size: 1884
+      md5: 3e694b81981c3d6780a371efae6c117e
+      size: 2664
     - path: pipeline/stages/preprocess.py
       hash: md5
       md5: 74de3b33a9099e551744fcb18222f95d
@@ -72,12 +87,12 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: b30af21c8eacbc511ef05917f97609e0
-      size: 93
+      md5: 9adc69af1e9b835590c5fe8205db95dc
+      size: 101
     - path: requirements/preprocess.txt
       hash: md5
-      md5: 8e8dc9a9a2731c184413aba2793a7f7e
-      size: 15
+      md5: d41d8cd98f00b204e9800998ecf8427e
+      size: 0
     outs:
     - path: data/interim/cleaned.parquet
       hash: md5
@@ -85,7 +100,7 @@ stages:
       size: 1801254
     - path: metrics/preprocess/metrics.json
       hash: md5
-      md5: 0664931059daca7a1ebbc284b40b3831
+      md5: 109e54cf331980aaa1ea2374febc2999
       size: 15356
     - path: plots/preprocess/missing_values.png
       hash: md5
@@ -147,8 +162,8 @@ stages:
       size: 2549
     - path: pipeline/__main__.py
       hash: md5
-      md5: 303c04429b51b25a7de341ad8ab5b9f2
-      size: 1884
+      md5: 3e694b81981c3d6780a371efae6c117e
+      size: 2664
     - path: pipeline/stages/featurize.py
       hash: md5
       md5: 105048222cac5747b0fbcfca07f6c35e
@@ -161,12 +176,12 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: b30af21c8eacbc511ef05917f97609e0
-      size: 93
+      md5: 9adc69af1e9b835590c5fe8205db95dc
+      size: 101
     - path: requirements/featurize.txt
       hash: md5
-      md5: 2d35c8ad09ef448e448cda0e6d217d88
-      size: 14
+      md5: 6686853da3491a56c98917cc5c4ddea2
+      size: 5
     outs:
     - path: data/processed/features.parquet
       hash: md5
@@ -174,11 +189,11 @@ stages:
       size: 1378122
     - path: metrics/featurize/metrics.json
       hash: md5
-      md5: fe5f7d87cf4faffec2b58958e558f6bd
+      md5: 6046bb3f9bd4fdd98195ae8c11af720d
       size: 1727
     - path: metrics/featurize/statistics.json
       hash: md5
-      md5: 92d4135c84afbaab092476667995a363
+      md5: 5de23781c8fb2931679b36cdbfd62121
       size: 2690
     - path: plots/featurize/age_distribution.png
       hash: md5
@@ -268,8 +283,8 @@ stages:
       size: 2549
     - path: pipeline/__main__.py
       hash: md5
-      md5: 303c04429b51b25a7de341ad8ab5b9f2
-      size: 1884
+      md5: 3e694b81981c3d6780a371efae6c117e
+      size: 2664
     - path: pipeline/stages/explore.py
       hash: md5
       md5: 0227aea11c3767b9b43ccfcc7c101718
@@ -282,16 +297,16 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: b30af21c8eacbc511ef05917f97609e0
-      size: 93
+      md5: 9adc69af1e9b835590c5fe8205db95dc
+      size: 101
     - path: requirements/explore.txt
       hash: md5
-      md5: 73c7c9f45a15bcc504df3e0903fa31cc
-      size: 8
+      md5: d41d8cd98f00b204e9800998ecf8427e
+      size: 0
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: 738debf9995e8d622bc56789b6b18f55
+      md5: 87455f36b898ec519a4470f78f172d62
       size: 656658
     - path: plots/explore/A1Cresult_chi_square.png
       hash: md5
@@ -967,8 +982,8 @@ stages:
       size: 2549
     - path: pipeline/__main__.py
       hash: md5
-      md5: 303c04429b51b25a7de341ad8ab5b9f2
-      size: 1884
+      md5: 3e694b81981c3d6780a371efae6c117e
+      size: 2664
     - path: pipeline/stages/infrastruct.py
       hash: md5
       md5: 13b3c73e3a0f8036706032021b1b5ccf
@@ -986,8 +1001,8 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: b30af21c8eacbc511ef05917f97609e0
-      size: 93
+      md5: 9adc69af1e9b835590c5fe8205db95dc
+      size: 101
     outs:
     - path: data/raw/data.csv
       hash: md5
@@ -1007,7 +1022,7 @@ stages:
       size: 17401
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: a25f1cbe99a472ea45db7c4930baa360
+      md5: 099f0cd025d5be0f4260d0da94a1fe02
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5
@@ -1055,8 +1070,8 @@ stages:
       isexec: true
     - path: requirements/base.txt
       hash: md5
-      md5: b30af21c8eacbc511ef05917f97609e0
-      size: 93
+      md5: 9adc69af1e9b835590c5fe8205db95dc
+      size: 101
     - path: requirements/feast.txt
       hash: md5
       md5: ce807b660e841b507c8a918e6d67460b
@@ -1076,22 +1091,22 @@ stages:
       size: 596
     - path: feature_repo/features.parquet
       hash: md5
-      md5: 2cdcb4c9e17843d556f0151c0718430c
+      md5: e2928521b3f00a331a215f38903cdcb8
       size: 1981733
     - path: metrics/feast/metrics.json
       hash: md5
-      md5: 1182986bdbb564b2086ff032632c7cdf
+      md5: bd89e9c206825db4ce76dadc459210c7
       size: 370
   autogluon:
     cmd:
-    - .venv/bin/uv run $(sed 's/^/--with /' requirements/autogluon.txt | tr '\n' '
-      ') python pipeline autogluon
+    - .venv-models/bin/uv run $(sed 's/^/--with /' requirements/autogluon.txt | tr
+      '\n' ' ') python pipeline autogluon
     deps:
-    - path: .venv
+    - path: .venv-models
       hash: md5
-      md5: d751713988987e9331980363e24189ce.dir
-      size: 0
-      nfiles: 0
+      md5: c216a62c5b2e357bd02470fdec609cb6.dir
+      size: 43713945
+      nfiles: 698
     - path: data/processed/features.parquet
       hash: md5
       md5: d689a4a6098c1d804a9b5339048b14be
@@ -1125,12 +1140,12 @@ stages:
       isexec: true
     - path: requirements/autogluon.txt
       hash: md5
-      md5: 3d8f1622f7e5f3c4726858e7e4c5bd37
-      size: 65
+      md5: d4b0747708a57c1f67d4c15f4afa3e12
+      size: 33
     - path: requirements/base.txt
       hash: md5
-      md5: b30af21c8eacbc511ef05917f97609e0
-      size: 93
+      md5: 9adc69af1e9b835590c5fe8205db95dc
+      size: 101
     outs:
     - path: metrics/autogluon/metrics.json
       hash: md5
@@ -1138,8 +1153,8 @@ stages:
       size: 420
     - path: models/autogluon
       hash: md5
-      md5: c904cd87496e9e93279d612a543a83ef.dir
-      size: 2502809
+      md5: 0ceea58a2eced3a45fdd2a59cb22eb93.dir
+      size: 2502781
       nfiles: 14
     - path: plots/autogluon/calibration_curve.png
       hash: md5
@@ -1157,3 +1172,89 @@ stages:
       hash: md5
       md5: 5be611cf1cb1597fa8a5ce07456188b9
       size: 161600
+  logisticregression:
+    cmd:
+    - .venv-models/bin/uv run python pipeline logisticregression
+    deps:
+    - path: .venv-models
+      hash: md5
+      md5: c216a62c5b2e357bd02470fdec609cb6.dir
+      size: 43713945
+      nfiles: 698
+    - path: data/processed/features.parquet
+      hash: md5
+      md5: d689a4a6098c1d804a9b5339048b14be
+      size: 1378122
+    - path: pipeline/__init__.py
+      hash: md5
+      md5: 516d9abddfbef26ec011250ca5cf66aa
+      size: 2549
+    - path: pipeline/__main__.py
+      hash: md5
+      md5: 3e694b81981c3d6780a371efae6c117e
+      size: 2664
+    - path: pipeline/models/logisticregression.py
+      hash: md5
+      md5: 1429ff8739f9f7c667096536b74b331c
+      size: 12061
+    - path: pipeline/models/metrics.py
+      hash: md5
+      md5: c28165ba8c3441b135cd32ac57b5c826
+      size: 24634
+    - path: pipeline/models/model.py
+      hash: md5
+      md5: dc2276c4a00464354b10d739206a18b4
+      size: 13180
+      isexec: true
+    - path: pipeline/stages/logisticregression.py
+      hash: md5
+      md5: bf148685b42c74428a757af65c9bd2ed
+      size: 777
+      isexec: true
+    - path: pipeline/stages/stage.py
+      hash: md5
+      md5: 5d0e853805061bd824ea2316541f1c96
+      size: 5249
+      isexec: true
+    - path: requirements/base.txt
+      hash: md5
+      md5: 9adc69af1e9b835590c5fe8205db95dc
+      size: 101
+    outs:
+    - path: .venv-models
+      hash: md5
+      md5: c216a62c5b2e357bd02470fdec609cb6.dir
+      size: 43713945
+      nfiles: 698
+    - path: metrics/logisticregression/feature_importance.csv
+      hash: md5
+      md5: c717e0e05048f57bd498f8a106734ac7
+      size: 1703
+    - path: metrics/logisticregression/metrics.json
+      hash: md5
+      md5: bb4c18152b3ada8a5502f9a0fe84aee9
+      size: 402
+    - path: models/logisticregression/model.pth
+      hash: md5
+      md5: ad9a0da00016c7c41d001c4cb9110353
+      size: 1740
+    - path: models/logisticregression/scaler.joblib
+      hash: md5
+      md5: 1a4422403e1d3980e9e451690ee233a6
+      size: 3631
+    - path: plots/logisticregression/confusion_matrix.png
+      hash: md5
+      md5: bb52aea60a6900db2b19c265d9b5afad
+      size: 117231
+    - path: plots/logisticregression/feature_importance.png
+      hash: md5
+      md5: 139cf2a6e4a9d0f3a9daea09c7d22977
+      size: 355587
+    - path: plots/logisticregression/precision_recall_curve.png
+      hash: md5
+      md5: 3a7076f5d5ebffd0f76d540f11cb474b
+      size: 114031
+    - path: plots/logisticregression/roc_curve.png
+      hash: md5
+      md5: 632f176d613acd5fd4be00b14521d18b
+      size: 160214

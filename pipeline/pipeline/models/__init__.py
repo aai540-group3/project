@@ -20,10 +20,10 @@ __all__ = [
 
 _MODULES = {
     "Autogluon": "pipeline.models.autogluon",
-    "LogisticRegression": "pipeline.models.logistic_regression",
+    "LogisticRegression": "pipeline.models.logisticregression",
     "Metrics": "pipeline.models.metrics",
     "Model": "pipeline.models.model",
-    "NeuralNetwork": "pipeline.models.neural_network",
+    "NeuralNetwork": "pipeline.models.neuralnetwork",
 }
 
 

@@ -53,14 +53,14 @@ class Deploy(Stage):
         :rtype: Dict
         """
         return {
-            "logistic_regression": {
-                "root": Path(self.cfg.paths.models) / "logistic_regression/artifacts",
-                "model": Path(self.cfg.paths.models) / "logistic_regression/artifacts/model/model.joblib",
-                "metrics": Path(self.cfg.paths.models) / "logistic_regression/artifacts/metrics/metrics.json",
+            "logisticregression": {
+                "root": Path(self.cfg.paths.models) / "logisticregression/artifacts",
+                "model": Path(self.cfg.paths.models) / "logisticregression/artifacts/model/model.joblib",
+                "metrics": Path(self.cfg.paths.models) / "logisticregression/artifacts/metrics/metrics.json",
                 "feature_importance": Path(self.cfg.paths.models)
-                / "logistic_regression/artifacts/metrics/feature_importance.csv",
-                "plots": Path(self.cfg.paths.models) / "logistic_regression/artifacts/plots",
-                "scaler": Path(self.cfg.paths.models) / "logistic_regression/artifacts/model/scaler.joblib",
+                / "logisticregression/artifacts/metrics/feature_importance.csv",
+                "plots": Path(self.cfg.paths.models) / "logisticregression/artifacts/plots",
+                "scaler": Path(self.cfg.paths.models) / "logisticregression/artifacts/model/scaler.joblib",
             },
             # Add other model configurations similarly
         }
