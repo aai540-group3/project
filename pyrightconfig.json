@@ -11,6 +11,6 @@
         "dist",
         "node_modules",
         "venv-*",
-        "venv",
+        "venv"
     ]
 }

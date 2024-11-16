@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """This script updates GitHub Actions workflow files, pinning action references
 to specific commit SHAs and adding comments with the latest version name (tag
 or branch). It enhances security by ensuring workflows use immutable code
@@ -256,7 +255,7 @@ def update_workflow_file(file_path: str) -> List[str]:
             if new_line != full_match:
                 log_messages.append(f"    Updated action: {full_match} -> {new_line}")
             else:
-                log_messages.append(f"    Action is already up to date.")
+                log_messages.append("    Action is already up to date.")
             return new_line
         else:
             log_messages.append(

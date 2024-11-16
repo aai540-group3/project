@@ -1,6 +1,5 @@
-import threading
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import joblib
 import numpy as np
