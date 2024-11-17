@@ -297,7 +297,7 @@ main() {
         log_info "No changes to commit"
     fi
 
-    dvc exp run --vebose --ignore-errors --pull --force --queue
+    dvc exp run --verbose --ignore-errors --pull --force --queue
 }
 
 # Execute main function
