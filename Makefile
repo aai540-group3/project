@@ -36,4 +36,8 @@ clean_cache:
 	find . -name "*.egg-info" -exec rm -rf {} +
 	find . -name "*.log" -exec rm -rf {} +
 
+unlock:
+	rm -f pipeline/.dvc/tmp/lock
+	rm -f pipeline/.dvc/tmp/rwlock
+
 .PHONY: all clean install chkpkg clean_uv clean_dvc clean_docker clean_cache
