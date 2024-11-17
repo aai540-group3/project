@@ -827,8 +827,8 @@ stages:
       size: 3029
     - path: pipeline/stages/feast.py
       hash: md5
-      md5: 2d277b34825951a1dc4fdc4d639e06a5
-      size: 35224
+      md5: 08e5d8718535bd5e7626e06d19a3ff4f
+      size: 35226
     - path: pipeline/stages/feature_repo.py
       hash: md5
       md5: fbbd55592e89b4e174d41202e86f6ca4
@@ -857,9 +857,9 @@ stages:
       size: 596
     - path: feature_repo/features.parquet
       hash: md5
-      md5: 164cf67d3ac42309d4311d502ce89a84
+      md5: 4fc4d20c64e5ca6b221b623c21de43c8
       size: 1981733
     - path: metrics/feast/metrics.json
       hash: md5
-      md5: 043697e8319ffbf6463e626cce46f26b
+      md5: 8dc6ce887b4050bc404ccca916c0fcf2
       size: 370

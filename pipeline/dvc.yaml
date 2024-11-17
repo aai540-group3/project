@@ -584,7 +584,7 @@ stages:
 
   neuralnetwork:
     cmd:
-      - .venv-models/bin/uv run python pipeline neuralnetwork
+      - UV_LINK_MODE=copy pipx run uv run --python .venv-models/bin/python python pipeline neuralnetwork
     deps:
       - .venv-models/bin/uv
       - data/processed/features.parquet
