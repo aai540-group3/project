@@ -1,5 +1,5 @@
 stages:
-  setup:
+  setup-base:
     cmd:
       - pipx run uv python install 3.9
       - pipx run uv venv .venv --python 3.9
@@ -11,9 +11,22 @@ stages:
     outs:
       - requirements/base.lock
 
+  setup-models:
+    cmd:
+      - pipx run uv python install 3.9
+      - pipx run uv venv .venv-models --python 3.9
+      - UV_LINK_MODE=copy pipx run uv add --editable . --dev --python .venv-models/bin/python
+      - pipx run uv pip compile requirements/models.txt -o requirements/models.lock --python 3.9
+      - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock --python .venv-models/bin/python
+      - UV_LINK_MODE=copy pipx run uv pip sync requirements/models.lock --python .venv-models/bin/python
+    deps:
+      - requirements/models.txt
+      - requirements/base.lock
+    outs:
+      - requirements/models.lock
+
   infrastruct:
     cmd:
-      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python --with boto3 python pipeline infrastruct
     deps:
       - .venv
@@ -28,7 +41,6 @@ stages:
 
   ingest:
     cmd:
-      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python --with ucimlrepo python pipeline ingest
     deps:
       - .venv
@@ -62,7 +74,6 @@ stages:
 
   preprocess:
     cmd:
-      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python python pipeline preprocess
     deps:
       - .venv
@@ -122,7 +133,6 @@ stages:
 
   explore:
     cmd:
-      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python python pipeline explore
     deps:
       - .venv
@@ -363,7 +373,6 @@ stages:
 
   featurize:
     cmd:
-      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with /' requirements/featurize.txt | tr '\n' ' ') python pipeline featurize
     deps:
       - .venv
@@ -470,16 +479,12 @@ stages:
 
   feast:
     cmd:
-      - dvc push
       - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
       - (docker rm $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with /' requirements/feast.txt | tr '\n' ' ') python pipeline feast
       - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
-      - dvc push
       - (docker rm $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
       - (docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null || true)
-      - docker system prune -f --volumes
-
     deps:
       - .venv
       - data/processed/features.parquet
@@ -498,22 +503,8 @@ stages:
       - metrics/feast/metrics.json:
           cache: true
 
-  setup-models:
-    cmd:
-      - dvc push
-      - pipx run uv venv .venv-models --python 3.9
-      - UV_LINK_MODE=copy pipx run uv add --editable . --dev --python .venv-models/bin/python
-      - pipx run uv pip compile requirements/models.txt -o requirements/models.lock --python 3.9
-      - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock --python .venv-models/bin/python
-      - UV_LINK_MODE=copy pipx run uv pip sync requirements/models.lock --python .venv-models/bin/python
-    deps:
-      - requirements/models.txt
-    outs:
-      - requirements/models.lock
-
   autogluon:
     cmd:
-      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with /' requirements/autogluon.txt | tr '\n' ' ') python pipeline autogluon
     deps:
       - .venv
@@ -557,7 +548,6 @@ stages:
 
   logisticregression:
     cmd:
-      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv-models/bin/python python pipeline logisticregression
     deps:
       - .venv-models/bin/uv
@@ -654,9 +644,3 @@ stages:
           title: Training Accuracy Over Epochs
           x: Epoch
           y: Accuracy
-
-  push:
-    cmd:
-      - dvc push
-    deps:
-      - metrics/neuralnetwork/metrics.json
