@@ -61,7 +61,9 @@ idna==3.10
     #   anyio
     #   requests
 importlib-metadata==8.5.0
-    # via dask
+    # via
+    #   dask
+    #   typeguard
 jinja2==3.1.4
     # via feast
 jsonschema==4.23.0
@@ -181,6 +183,7 @@ typing-extensions==4.12.2
     #   pydantic
     #   pydantic-core
     #   sqlalchemy
+    #   starlette
     #   testcontainers
     #   typeguard
     #   uvicorn

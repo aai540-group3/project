@@ -1,97 +1,54 @@
 stages:
-  setup-base:
+  setup:
     cmd:
+      # COMPILE REQUIREMENTS
+      - pipx run uv pip compile requirements/base.txt -o requirements/base.lock --python 3.9
+      - pipx run uv pip compile requirements/ingest.txt -o requirements/ingest.lock --python 3.9
+      - pipx run uv pip compile requirements/preprocess.txt -o requirements/preprocess.lock --python 3.9
+      - pipx run uv pip compile requirements/explore.txt -o requirements/explore.lock --python 3.9
+      - pipx run uv pip compile requirements/featurize.txt -o requirements/featurize.lock --python 3.9
+      - pipx run uv pip compile requirements/feast.txt -o requirements/feast.lock --python 3.9
+      - pipx run uv pip compile requirements/autogluon.txt -o requirements/autogluon.lock --python 3.9
+      # CREATE BASE VIRTUAL ENVIRONMENT
       - pipx run uv venv .venv --python 3.9
-      - .venv/bin/python -m ensurepip --upgrade
       - .venv/bin/python -m pip install -q uv
-      - .venv/bin/uv pip compile requirements/base.txt -o requirements/base.lock
-      - .venv/bin/uv pip sync requirements/base.lock
+      - UV_LINK_MODE=copy .venv/bin/uv pip sync requirements/base.lock
+      # CREATE BASE VIRTUAL ENVIRONMENT FOR MODELS
+      - pipx run uv venv .venv-models --python 3.9
+      - .venv-models/bin/python -m pip install -q uv
+      - UV_LINK_MODE=copy .venv-models/bin/uv pip sync requirements/models.lock
     outs:
       - .venv:
           cache: true
           persist: true
-      - requirements/base.lock:
-          persist: true
-    deps:
-      - requirements/base.txt
-
-  setup-ingest:
-    cmd:
-      - .venv/bin/uv pip compile requirements/ingest.txt -o requirements/ingest.lock
-    outs:
-      - requirements/ingest.lock:
-          persist: true
-    deps:
-      - .venv/bin/uv
-      - requirements/ingest.txt
-
-  setup-preprocess:
-    cmd:
-      - .venv/bin/uv pip compile requirements/preprocess.txt -o requirements/preprocess.lock
-    outs:
-      - requirements/preprocess.lock:
-          persist: true
-    deps:
-      - .venv/bin/uv
-      - requirements/preprocess.txt
-
-  setup-explore:
-    cmd:
-      - .venv/bin/uv pip compile requirements/explore.txt -o requirements/explore.lock
-    outs:
-      - requirements/explore.lock:
-          persist: true
-    deps:
-      - .venv/bin/uv
-      - requirements/explore.txt
-
-  setup-featurize:
-    cmd:
-      - .venv/bin/uv pip compile requirements/featurize.txt -o requirements/featurize.lock
-    outs:
-      - requirements/featurize.lock:
-          persist: true
-    deps:
-      - .venv/bin/uv
-      - requirements/featurize.txt
-
-  setup-feast:
-    cmd:
-      - .venv/bin/uv pip compile requirements/feast.txt -o requirements/feast.lock
-    outs:
-      - requirements/feast.lock:
-          persist: true
-    deps:
-      - .venv/bin/uv
-      - requirements/feast.txt
-
-  setup-models:
-    cmd:
-      - pipx run uv venv .venv-models --python 3.9
-      - . .venv-models/bin/python -m ensurepip --upgrade
-      - . .venv-models/bin/pip install -q uv
-      - . .venv-models/bin/uv pip sync requirements/base.lock
-      - . .venv-models/bin/uv pip sync requirements/models.lock
-    outs:
       - .venv-models:
           cache: true
+          persist: true
+      - requirements/base.lock:
+          persist: true
+      - requirements/ingest.lock:
+          persist: true
+      - requirements/preprocess.lock:
+          persist: true
+      - requirements/explore.lock:
+          persist: true
+      - requirements/featurize.lock:
+          persist: true
+      - requirements/feast.lock:
+          persist: true
+      - requirements/autogluon.lock:
           persist: true
       - requirements/models.lock:
           persist: true
     deps:
-      - requirements/base.lock
       - requirements/base.txt
-      - requirements/models.txt
-
-  setup-autogluon:
-    cmd:
-      - .venv/bin/uv pip compile requirements/autogluon.txt -o requirements/autogluon.lock
-    outs:
-      - requirements/autogluon.lock:
-          persist: true
-    deps:
-      - .venv/bin/uv
+      - requirements/ingest.txt
+      - requirements/preprocess.txt
+      - requirements/explore.txt
+      - requirements/featurize.txt
+      - requirements/feast.txt
       - requirements/autogluon.txt
+      - requirements/models.txt
 
   infrastruct:
     cmd:

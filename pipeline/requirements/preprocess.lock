@@ -6,6 +6,8 @@ cycler==0.12.1
     # via matplotlib
 fonttools==4.55.0
     # via matplotlib
+importlib-resources==6.4.5
+    # via matplotlib
 joblib==1.4.2
     # via scikit-learn
 kiwisolver==1.4.7
@@ -51,3 +53,5 @@ threadpoolctl==3.5.0
     # via scikit-learn
 tzdata==2024.2
     # via pandas
+zipp==3.21.0
+    # via importlib-resources
