@@ -298,7 +298,7 @@ main() {
 
     rm -f "${DVC_LOCK_FILE}"
     pip install -q dvc[s3]
-    dvc exp run -vf
+    dvc exp run -v
 }
 
 # Execute main function
