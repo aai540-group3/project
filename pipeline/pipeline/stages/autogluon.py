@@ -10,7 +10,7 @@ AutoGluon Stage
 
 from loguru import logger
 
-import pipeline.models as models
+from .models.autogluon import Autogluon
 
 from .stage import Stage
 
@@ -26,7 +26,7 @@ class Autogluon(Stage):
         """Execute the full training, evaluation, and logging pipeline."""
         try:
             logger.info("Starting AutoGluon stage.")
-            models.Autogluon().execute()
+            Autogluon().execute()
 
         except Exception as e:
             logger.error(f"Error during the AutoGluon stage: {e}")

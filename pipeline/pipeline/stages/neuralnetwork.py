@@ -10,7 +10,7 @@ Neural Network Stage
 
 from loguru import logger
 
-import pipeline.models as models
+from .models.neuralnetwork import NeuralNetwork
 
 from .stage import Stage
 
@@ -33,7 +33,7 @@ class NeuralNetwork(Stage):
         """
         try:
             logger.info("Starting NeuralNetwork stage.")
-            models.NeuralNetwork().execute()
+            NeuralNetwork().execute()
 
         except Exception as e:
             logger.error(f"Error during the Neural Network stage: {e}")

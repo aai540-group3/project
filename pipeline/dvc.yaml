@@ -1,10 +1,12 @@
 stages:
   infrastruct:
     cmd: >-
+      UV_NO_CACHE=1
       UV_LINK_MODE=copy
       pipx run
       uv run
       --python 3.11
+      --no-cache
       --with boto3
       --with loguru
       --with omegaconf
@@ -22,10 +24,12 @@ stages:
 
   ingest:
     cmd: >-
+      UV_NO_CACHE=1
       UV_LINK_MODE=copy
       pipx run
       uv run
       --python 3.11
+      --no-cache
       --with loguru
       --with matplotlib
       --with omegaconf
@@ -52,10 +56,12 @@ stages:
 
   preprocess:
     cmd: >-
+      UV_NO_CACHE=1
       UV_LINK_MODE=copy
       pipx run
       uv run
       --python 3.11
+      --no-cache
       --with loguru
       --with matplotlib
       --with omegaconf
@@ -81,10 +87,12 @@ stages:
 
   explore:
     cmd: >-
+      UV_NO_CACHE=1
       UV_LINK_MODE=copy
       pipx run
       uv run
       --python 3.11
+      --no-cache
       --with loguru
       --with matplotlib
       --with omegaconf
@@ -108,10 +116,12 @@ stages:
 
   featurize:
     cmd: >-
+      UV_NO_CACHE=1
       UV_LINK_MODE=copy
       pipx run
       uv run
       --python 3.11
+      --no-cache
       --with boto3
       --with loguru
       --with matplotlib
@@ -139,10 +149,12 @@ stages:
 
   feast:
     cmd: >-
+      UV_NO_CACHE=1
       UV_LINK_MODE=copy
       pipx run
       uv run
       --python 3.11
+      --no-cache
       --with dask[dataframe]
       --with docker
       --with feast[postgres]
@@ -176,7 +188,7 @@ stages:
       uv run
       --python 3.11
       --with autogluon
-      --with autogluon.tabular[light]
+      --with autogluon.tabular
       --with imbalanced-learn
       --with loguru
       --with matplotlib

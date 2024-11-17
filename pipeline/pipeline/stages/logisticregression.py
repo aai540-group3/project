@@ -10,7 +10,7 @@ Logistic Regression Stage Implementation
 
 from loguru import logger
 
-import pipeline.models as models
+from ..models.logisticregression import LogisticRegression
 
 from .stage import Stage
 
@@ -33,7 +33,7 @@ class LogisticRegression(Stage):
         """
         try:
             logger.info("Starting LogisticRegression stage.")
-            models.LogisticRegression().execute()
+            LogisticRegression().execute()
 
         except Exception as e:
             logger.error(f"Error during the LogisticRegression stage: {e}")
