@@ -271,6 +271,7 @@ stages:
       size: 221
   ingest:
     cmd:
+    - dvc push
     - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python --with ucimlrepo
       python pipeline ingest
     deps:
@@ -281,7 +282,7 @@ stages:
       nfiles: 8587
     - path: metrics/infrastruct/metrics.json
       hash: md5
-      md5: 15fe5583f543e0ca737013e9624158c4
+      md5: 9fd95f67992c52bd38a66c3f4070e0c1
       size: 221
     - path: pipeline/__init__.py
       hash: md5
@@ -324,7 +325,7 @@ stages:
       size: 17401
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: fd620d81a1d29702dd40ffe95a457169
+      md5: ffe24675f5f8a2c52910433b1ee04fe7
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5
@@ -336,6 +337,7 @@ stages:
       size: 60161
   preprocess:
     cmd:
+    - dvc push
     - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python python pipeline
       preprocess
     deps:
@@ -377,7 +379,7 @@ stages:
       size: 1801254
     - path: metrics/preprocess/metrics.json
       hash: md5
-      md5: 76692bf99807713553b271127c694a5a
+      md5: 4c5398f4ebb92668c85fe1c716142c21
       size: 15356
     - path: plots/preprocess/missing_values.png
       hash: md5
@@ -421,6 +423,7 @@ stages:
       size: 39920
   explore:
     cmd:
+    - dvc push
     - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python python pipeline
       explore
     deps:
@@ -458,7 +461,7 @@ stages:
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: f626d721f0a05907d23b30087f50f349
+      md5: c0d45c5cc2dc4cc6453c27db090809cf
       size: 656658
     - path: plots/explore/A1Cresult_chi_square.png
       hash: md5
@@ -686,6 +689,7 @@ stages:
       size: 25657
   featurize:
     cmd:
+    - dvc push
     - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with
       /' requirements/featurize.txt | tr '\n' ' ') python pipeline featurize
     deps:
@@ -727,11 +731,11 @@ stages:
       size: 1378122
     - path: metrics/featurize/metrics.json
       hash: md5
-      md5: 3c08a122d61aafae224378a89276b80f
+      md5: 0466b94d6afe39db3677338a4bf9a305
       size: 1727
     - path: metrics/featurize/statistics.json
       hash: md5
-      md5: ac41cf3b602fc1a4273890b5c0ac84c6
+      md5: d404bb840addba3fbc31cb4336d62b89
       size: 2690
     - path: plots/featurize/age_distribution.png
       hash: md5
@@ -803,10 +807,16 @@ stages:
       size: 40918
   feast:
     cmd:
+    - dvc push
     - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
+    - (docker rm $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
     - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with
       /' requirements/feast.txt | tr '\n' ' ') python pipeline feast
     - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
+    - dvc push
+    - (docker rm $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
+    - (docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null || true)
+    - docker system prune -f --volumes
     deps:
     - path: .venv
       hash: md5
@@ -857,11 +867,11 @@ stages:
       size: 596
     - path: feature_repo/features.parquet
       hash: md5
-      md5: e24931e797fe03f59114b5e45de22b87
+      md5: bf5f9857ef179192482b8fd683fbc249
       size: 1981733
     - path: metrics/feast/metrics.json
       hash: md5
-      md5: 971c629867ff2c671be46d54b56d0dfe
+      md5: 32ecb02986912b59dccd81187e6aa117
       size: 370
   clean:
     cmd:
