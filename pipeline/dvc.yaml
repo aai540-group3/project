@@ -472,8 +472,14 @@ stages:
     cmd:
       - dvc push
       - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
+      - (docker rm $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with /' requirements/feast.txt | tr '\n' ' ') python pipeline feast
       - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
+      - dvc push
+      - (docker rm $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
+      - (docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null || true)
+      - docker system prune -f --volumes
+
     deps:
       - .venv
       - data/processed/features.parquet

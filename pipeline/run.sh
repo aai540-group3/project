@@ -234,8 +234,6 @@ process_path() {
 #   None
 #######################################
 main() {
-    pip install -q pipx dvc[s3]
-
     local -a all_paths=()
     local any_changes=false
 
@@ -283,8 +281,9 @@ main() {
     fi
 
     rm -f "${DVC_LOCK_FILE}"
-    pipx run dvc pull --allow-missing
-    pipx run dvc repro -v
+    pip install -q dvc[s3]
+    dvc pull --allow-missing
+    dvc repro -v
 }
 
 # Execute main function
