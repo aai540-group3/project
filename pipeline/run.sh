@@ -299,7 +299,7 @@ main() {
         log_info "No changes to commit"
     fi
 
-    dvc exp run -v
+    dvc exp run -v --ignore-errors --pull --force
 }
 
 # Execute main function
