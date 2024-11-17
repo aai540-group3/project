@@ -222,12 +222,18 @@ stages:
       md5: 1ce9cb3ad7e71b9027fb245aacf1e0c5
       size: 99
     outs:
+    - path: .venv
+      hash: md5
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
+      nfiles: 8587
     - path: requirements/base.lock
       hash: md5
       md5: 64e8b443d89e7fde7f293bdeb4158448
       size: 1836
   infrastruct:
     cmd:
+    - dvc push
     - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python --with boto3 python
       pipeline infrastruct
     deps:
@@ -261,7 +267,7 @@ stages:
     outs:
     - path: metrics/infrastruct/metrics.json
       hash: md5
-      md5: 15fe5583f543e0ca737013e9624158c4
+      md5: b06d80be65d541b5685224f3d98b541a
       size: 221
   ingest:
     cmd:
