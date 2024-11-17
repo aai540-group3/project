@@ -4,7 +4,7 @@ Pipeline Stage Runner
 
 This module provides functionality to dynamically run pipeline stages in parallel using threading.
 
-.. module:: run_stages
+.. module:: __main__
    :synopsis: Dynamic pipeline stage executor with threading support.
 
 .. moduleauthor:: aai540-group3
@@ -29,15 +29,15 @@ def run_stage(stage_name: str):
     :raises ValueError: If the stage name is not found in the stage mapping.
     """
     stage_mapping = {
-        "autogluon": ("pipeline.stages.autogluon", "Autogluon"),
-        "explore": ("pipeline.stages.explore", "Explore"),
-        "feast": ("pipeline.stages.feast", "Feast"),
-        "featurize": ("pipeline.stages.featurize", "Featurize"),
-        "infrastruct": ("pipeline.stages.infrastruct", "Infrastruct"),
-        "ingest": ("pipeline.stages.ingest", "Ingest"),
-        "logisticregression": ("pipeline.stages.logisticregression", "LogisticRegression"),
-        "neuralnetwork": ("pipeline.stages.neuralnetwork", "NeuralNetwork"),
-        "preprocess": ("pipeline.stages.preprocess", "Preprocess"),
+        "autogluon": ("stages.autogluon", "Autogluon"),
+        "explore": ("stages.explore", "Explore"),
+        "feast": ("stages.feast", "Feast"),
+        "featurize": ("stages.featurize", "Featurize"),
+        "infrastruct": ("stages.infrastruct", "Infrastruct"),
+        "ingest": ("stages.ingest", "Ingest"),
+        "logisticregression": ("stages.logisticregression", "LogisticRegression"),
+        "neuralnetwork": ("stages.neuralnetwork", "NeuralNetwork"),
+        "preprocess": ("stages.preprocess", "Preprocess"),
     }
 
     if stage_name not in stage_mapping:

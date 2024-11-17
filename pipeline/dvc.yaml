@@ -1,82 +1,41 @@
 stages:
   setup:
     cmd:
-      # COMPILE REQUIREMENTS
-      - pipx run uv pip compile requirements/base.txt -o requirements/base.lock --python 3.9
-      - pipx run uv pip compile requirements/ingest.txt -o requirements/ingest.lock --python 3.9
-      - pipx run uv pip compile requirements/preprocess.txt -o requirements/preprocess.lock --python 3.9
-      - pipx run uv pip compile requirements/explore.txt -o requirements/explore.lock --python 3.9
-      - pipx run uv pip compile requirements/featurize.txt -o requirements/featurize.lock --python 3.9
-      - pipx run uv pip compile requirements/feast.txt -o requirements/feast.lock --python 3.9
-      - pipx run uv pip compile requirements/autogluon.txt -o requirements/autogluon.lock --python 3.9
-      # CREATE BASE VIRTUAL ENVIRONMENT
+      - pipx run uv python install 3.9
       - pipx run uv venv .venv --python 3.9
-      - .venv/bin/python -m pip install -q uv
-      - UV_LINK_MODE=copy .venv/bin/uv pip sync requirements/base.lock
-      # CREATE BASE VIRTUAL ENVIRONMENT FOR MODELS
-      - pipx run uv venv .venv-models --python 3.9
-      - .venv-models/bin/python -m pip install -q uv
-      - UV_LINK_MODE=copy .venv-models/bin/uv pip sync requirements/models.lock
-    outs:
-      - .venv:
-          cache: true
-          persist: true
-      - .venv-models:
-          cache: true
-          persist: true
-      - requirements/base.lock:
-          persist: true
-      - requirements/ingest.lock:
-          persist: true
-      - requirements/preprocess.lock:
-          persist: true
-      - requirements/explore.lock:
-          persist: true
-      - requirements/featurize.lock:
-          persist: true
-      - requirements/feast.lock:
-          persist: true
-      - requirements/autogluon.lock:
-          persist: true
-      - requirements/models.lock:
-          persist: true
+      - UV_LINK_MODE=copy pipx run uv add --editable . --dev --python .venv/bin/python
+      - pipx run uv pip compile requirements/base.txt -o requirements/base.lock --python 3.9
+      - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock --python .venv/bin/python
     deps:
       - requirements/base.txt
-      - requirements/ingest.txt
-      - requirements/preprocess.txt
-      - requirements/explore.txt
-      - requirements/featurize.txt
-      - requirements/feast.txt
-      - requirements/autogluon.txt
-      - requirements/models.txt
+    outs:
+      - requirements/base.lock
 
   infrastruct:
     cmd:
-      - .venv/bin/uv run --with boto3 python pipeline infrastruct
+      - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python --with boto3 python pipeline infrastruct
     deps:
-      - .venv/bin/uv
+      - .venv
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/infrastruct.py
       - pipeline/stages/stage.py
       - requirements/base.lock
-      - requirements/infrastruct.lock
     metrics:
       - metrics/infrastruct/metrics.json:
           cache: true
 
   ingest:
     cmd:
-      - .venv/bin/uv run --with ucimlrepo python pipeline ingest
+      - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python --with ucimlrepo python pipeline ingest
     deps:
-      - .venv/bin/uv
+      - .venv
       - metrics/infrastruct/metrics.json
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/ingest.py
       - pipeline/stages/stage.py
       - requirements/base.lock
-      - requirements/ingest.lock
     outs:
       - data/raw/data.parquet:
           cache: true
@@ -101,9 +60,9 @@ stages:
 
   preprocess:
     cmd:
-      - .venv/bin/uv run python pipeline preprocess
+      - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python python pipeline preprocess
     deps:
-      - .venv/bin/uv
+      - .venv
       - data/raw/data.csv
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -160,9 +119,9 @@ stages:
 
   explore:
     cmd:
-      - .venv/bin/uv run python pipeline explore
+      - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python python pipeline explore
     deps:
-      - .venv/bin/uv
+      - .venv
       - data/interim/cleaned.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -400,16 +359,15 @@ stages:
 
   featurize:
     cmd:
-      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/featurize.lock)" python pipeline featurize
+      - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with /' requirements/featurize.txt | tr '\n' ' ') python pipeline featurize
     deps:
-      - .venv/bin/uv
+      - .venv
       - data/interim/cleaned.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/featurize.py
       - pipeline/stages/stage.py
       - requirements/base.lock
-      - requirements/featurize.lock
     outs:
       - data/processed/features.parquet:
           cache: true
@@ -507,10 +465,10 @@ stages:
 
   feast:
     cmd:
-      - docker stop $(docker ps -a -q --filter publish=5432)  &>/dev/null || true
-      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/feast.lock)" python pipeline feast
+      - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
+      - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with /' requirements/feast.txt | tr '\n' ' ') python pipeline feast
     deps:
-      - .venv/bin/uv
+      - .venv
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -518,7 +476,6 @@ stages:
       - pipeline/stages/feature_repo.py
       - pipeline/stages/stage.py
       - requirements/base.lock
-      - requirements/feast.lock
     outs:
       - feature_repo/data_hash.txt
       - feature_repo/feature_repo.py
@@ -528,11 +485,23 @@ stages:
       - metrics/feast/metrics.json:
           cache: true
 
+  setup-models:
+    cmd:
+      - pipx run uv venv .venv-models --python 3.9
+      - UV_LINK_MODE=copy pipx run uv add --editable . --dev --python .venv-models/bin/python
+      - pipx run uv pip compile requirements/models.txt -o requirements/models.lock --python 3.9
+      - UV_LINK_MODE=copy pipx run uv pip sync requirements/models.lock --python .venv-models/bin/python
+    deps:
+      - requirements/models.txt
+    outs:
+      - requirements/models.lock
+      - .venv-models
+
   autogluon:
     cmd:
-      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/autogluon.txt)" python pipeline autogluon
+      - UV_LINK_MODE=copy pipx uv run $(sed 's/^/--with /' requirements/autogluon.txt | tr '\n' ' ') --python .venv/bin/python python pipeline autogluon
     deps:
-      - .venv/bin/uv
+      - .venv
       - .venv-models
       - data/processed/features.parquet
       - pipeline/__init__.py
@@ -543,7 +512,6 @@ stages:
       - pipeline/stages/autogluon.py
       - pipeline/stages/stage.py
       - requirements/autogluon.txt
-      - requirements/base.lock
       - requirements/models.lock
     outs:
       - models/autogluon:
@@ -574,7 +542,7 @@ stages:
 
   logisticregression:
     cmd:
-      - .venv-models/bin/uv run python pipeline logisticregression
+      - UV_LINK_MODE=copy pipx run uv run --python .venv-models/bin/python python pipeline logisticregression
     deps:
       - .venv-models/bin/uv
       - data/processed/features.parquet
@@ -585,7 +553,6 @@ stages:
       - pipeline/models/model.py
       - pipeline/stages/logisticregression.py
       - pipeline/stages/stage.py
-      - requirements/base.lock
       - requirements/models.lock
     outs:
       - models/logisticregression/model.pth:

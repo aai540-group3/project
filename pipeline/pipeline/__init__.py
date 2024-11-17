@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
 
-from . import stages
+from . import pipeline, stages
 
 # DEFAULT COLOR PALETTE
 COLORS = {
@@ -98,5 +98,6 @@ __all__ = [
     "__version__",
     "COLORS",
     "CUSTOM_CMAP",
+    "pipeline",
     "stages",
 ]

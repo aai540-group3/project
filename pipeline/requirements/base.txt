@@ -1,5 +1,4 @@
-.
-dvc[s3]
+-e .
 joblib
 loguru
 matplotlib
@@ -11,4 +10,3 @@ pyarrow
 python-dotenv
 scikit-learn
 seaborn
-uv

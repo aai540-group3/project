@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pipeline"
 version = "0.1.0"
 description = "Diabetic Readmission Risk Prediction"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [
     { name = "Jonathan Agustin", email = "jonathan.agustin@example.com" },
@@ -19,9 +19,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
-dependencies = [
-    "dvc[s3]",
-]
+dependencies = [ "pipx>=1.7.1" ]
 
 [tool.black]
 line-length = 120
@@ -60,6 +58,9 @@ show_missing = true
 
 [tool.uv]
 environments = ["sys_platform == 'linux'"]
+
+[tool.uv.sources]
+pipeline = { workspace = true }
 
 [tool.ruff]
 exclude = [
@@ -103,3 +104,8 @@ docstring-code-line-length = "dynamic"
 
 [tool.setuptools]
 py-modules = []
+
+[dependency-groups]
+dev = [
+    "pipeline",
+]
