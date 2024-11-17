@@ -132,6 +132,7 @@ stages:
       size: 3642
   setup-models:
     cmd:
+    - dvc push
     - pipx run uv venv .venv-models --python 3.9
     - UV_LINK_MODE=copy pipx run uv add --editable . --dev --python .venv-models/bin/python
     - pipx run uv pip compile requirements/models.txt -o requirements/models.lock
@@ -144,11 +145,6 @@ stages:
       md5: 243c7446356ab8ea2878b2e4f6cdab65
       size: 46
     outs:
-    - path: .venv-models
-      hash: md5
-      md5: b0ea766ab5f803f37295250dfc10da3b.dir
-      size: 3454851542
-      nfiles: 26668
     - path: requirements/models.lock
       hash: md5
       md5: a77a6f0f6728e94359c3383495949520
@@ -222,11 +218,6 @@ stages:
       md5: 1ce9cb3ad7e71b9027fb245aacf1e0c5
       size: 99
     outs:
-    - path: .venv
-      hash: md5
-      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
-      size: 245405216
-      nfiles: 8587
     - path: requirements/base.lock
       hash: md5
       md5: 64e8b443d89e7fde7f293bdeb4158448
@@ -239,8 +230,8 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
-      size: 245405216
+      md5: 514213287c53c320fa8dd2348eb2bd7d.dir
+      size: 245405547
       nfiles: 8587
     - path: pipeline/__init__.py
       hash: md5
@@ -267,7 +258,7 @@ stages:
     outs:
     - path: metrics/infrastruct/metrics.json
       hash: md5
-      md5: b06d80be65d541b5685224f3d98b541a
+      md5: 36b2403b6bf14a5ce661c93c325cde89
       size: 221
   ingest:
     cmd:
@@ -277,12 +268,12 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
-      size: 245405216
+      md5: 514213287c53c320fa8dd2348eb2bd7d.dir
+      size: 245405547
       nfiles: 8587
     - path: metrics/infrastruct/metrics.json
       hash: md5
-      md5: 9fd95f67992c52bd38a66c3f4070e0c1
+      md5: 36b2403b6bf14a5ce661c93c325cde89
       size: 221
     - path: pipeline/__init__.py
       hash: md5
@@ -325,7 +316,7 @@ stages:
       size: 17401
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: ffe24675f5f8a2c52910433b1ee04fe7
+      md5: f0c3ad537689f3cd8361c551ce612cd6
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5
@@ -343,8 +334,8 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
-      size: 245405216
+      md5: 514213287c53c320fa8dd2348eb2bd7d.dir
+      size: 245405547
       nfiles: 8587
     - path: data/raw/data.csv
       hash: md5
@@ -379,7 +370,7 @@ stages:
       size: 1801254
     - path: metrics/preprocess/metrics.json
       hash: md5
-      md5: 4c5398f4ebb92668c85fe1c716142c21
+      md5: b440820634f654307e739d56c8c34215
       size: 15356
     - path: plots/preprocess/missing_values.png
       hash: md5
@@ -429,8 +420,8 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
-      size: 245405216
+      md5: 514213287c53c320fa8dd2348eb2bd7d.dir
+      size: 245405547
       nfiles: 8587
     - path: data/interim/cleaned.parquet
       hash: md5
@@ -461,7 +452,7 @@ stages:
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: c0d45c5cc2dc4cc6453c27db090809cf
+      md5: de61148534741bb83f9ea3d609566a50
       size: 656658
     - path: plots/explore/A1Cresult_chi_square.png
       hash: md5
@@ -695,8 +686,8 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
-      size: 245405216
+      md5: 514213287c53c320fa8dd2348eb2bd7d.dir
+      size: 245405547
       nfiles: 8587
     - path: data/interim/cleaned.parquet
       hash: md5
@@ -731,11 +722,11 @@ stages:
       size: 1378122
     - path: metrics/featurize/metrics.json
       hash: md5
-      md5: 0466b94d6afe39db3677338a4bf9a305
+      md5: 71606de718e7a13a004efb2f74f4d6d7
       size: 1727
     - path: metrics/featurize/statistics.json
       hash: md5
-      md5: d404bb840addba3fbc31cb4336d62b89
+      md5: df4f5c62cd5002f4b62d2c8c18d4fea3
       size: 2690
     - path: plots/featurize/age_distribution.png
       hash: md5
@@ -820,8 +811,8 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
-      size: 245405216
+      md5: 514213287c53c320fa8dd2348eb2bd7d.dir
+      size: 245405547
       nfiles: 8587
     - path: data/processed/features.parquet
       hash: md5
@@ -867,11 +858,11 @@ stages:
       size: 596
     - path: feature_repo/features.parquet
       hash: md5
-      md5: bf5f9857ef179192482b8fd683fbc249
+      md5: b234667a01c5595195d47b27f5c013e0
       size: 1981733
     - path: metrics/feast/metrics.json
       hash: md5
-      md5: 32ecb02986912b59dccd81187e6aa117
+      md5: 655bf08ac1685cc07ccf1ad97e1b3995
       size: 370
   clean:
     cmd:
