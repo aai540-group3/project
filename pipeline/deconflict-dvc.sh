@@ -4,9 +4,7 @@
 # and adding them to .gitignore. Handles various DVC output types including
 # metrics, plots, and general outputs.
 #
-# This script follows the Google Shell Style Guide.
 
-# Exit on error, undefined vars, and pipe failures
 set -o errexit
 set -o nounset
 set -o pipefail
