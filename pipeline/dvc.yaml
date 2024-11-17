@@ -1,56 +1,45 @@
 stages:
-  setup-base:
-    cmd:
-      - pip install pipx
-      - pipx run uv python install 3.9
-      - pipx run uv venv .venv -p 3.9
-      - pipx run uv pip compile requirements/base.txt -o requirements/base.lock -p 3.9
-      - UV_LINK_MODE=copy pipx run uv add --editable . --dev -p .venv/bin/python
-      - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock -p .venv/bin/python
-    deps:
-      - requirements/base.txt
-    outs:
-      - requirements/base.lock
-
-  setup-models:
-    cmd:
-      - pipx run uv venv .venv-models -p 3.9
-      - pipx run uv pip compile requirements/models.txt -o requirements/models.lock -p 3.9
-      - UV_LINK_MODE=copy pipx run uv add --editable . --dev -p .venv-models/bin/python
-      - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock -p .venv-models/bin/python
-      - UV_LINK_MODE=copy pipx run uv pip sync requirements/models.lock -p .venv-models/bin/python
-    deps:
-      - requirements/base.txt
-      - requirements/base.lock
-      - requirements/models.txt
-    outs:
-      - requirements/models.lock
-
   infrastruct:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python --with boto3 python pipeline infrastruct
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python 3.11
+      --with boto3
+      --with loguru
+      --with omegaconf
+      --with pandas
+      python pipeline infrastruct
     deps:
-      - .venv
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/infrastruct.py
       - pipeline/stages/stage.py
-      - requirements/base.lock
+      - requirements/base.txt
     metrics:
       - metrics/infrastruct/metrics.json:
           cache: true
 
   ingest:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python --with ucimlrepo python pipeline ingest
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python 3.11
+      --with loguru
+      --with matplotlib
+      --with omegaconf
+      --with pandas
+      --with pyarrow
+      --with seaborn
+      --with ucimlrepo
+      python pipeline ingest
     deps:
-      - .venv
       - metrics/infrastruct/metrics.json
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/ingest.py
       - pipeline/stages/stage.py
-      - requirements/base.lock
     outs:
       - data/raw/data.parquet:
           cache: true
@@ -74,16 +63,24 @@ stages:
           title: Distribution - Data Types
 
   preprocess:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python python pipeline preprocess
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python 3.11
+      --with loguru
+      --with matplotlib
+      --with omegaconf
+      --with pandas
+      --with pyarrow
+      --with seaborn
+      python pipeline preprocess
     deps:
-      - .venv
       - data/raw/data.csv
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/preprocess.py
       - pipeline/stages/stage.py
-      - requirements/base.lock
     outs:
       - data/interim/cleaned.parquet:
           cache: true
@@ -133,16 +130,25 @@ stages:
           title: Distribution - readmitted
 
   explore:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python python pipeline explore
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python 3.11
+      --with loguru
+      --with matplotlib
+      --with omegaconf
+      --with pandas
+      --with pyarrow
+      --with scikit-learn
+      --with seaborn
+      python pipeline explore
     deps:
-      - .venv
       - data/interim/cleaned.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/explore.py
       - pipeline/stages/stage.py
-      - requirements/base.lock
     metrics:
       - metrics/explore/metrics.json:
           cache: true
@@ -373,16 +379,26 @@ stages:
           title: Feature Importance Data
 
   featurize:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python $(sed 's/^/--with /' requirements/featurize.txt | tr '\n' ' ') python pipeline featurize
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python 3.11
+      --with boto3
+      --with loguru
+      --with matplotlib
+      --with omegaconf
+      --with pandas
+      --with pyarrow
+      --with scikit-learn
+      --with seaborn
+      python pipeline featurize
     deps:
-      - .venv
       - data/interim/cleaned.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/featurize.py
       - pipeline/stages/stage.py
-      - requirements/base.lock
     outs:
       - data/processed/features.parquet:
           cache: true
@@ -479,17 +495,30 @@ stages:
           y: Frequency
 
   feast:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python $(sed 's/^/--with /' requirements/feast.txt | tr '\n' ' ') python pipeline feast
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python 3.11
+      --with dask[dataframe]
+      --with docker
+      --with feast[postgres]
+      --with loguru
+      --with matplotlib
+      --with omegaconf
+      --with pandas
+      --with psycopg2-binary
+      --with pyarrow
+      --with seaborn
+      --with testcontainers
+      python pipeline feast
     deps:
-      - .venv
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/feast.py
       - pipeline/stages/feature_repo.py
       - pipeline/stages/stage.py
-      - requirements/base.lock
     outs:
       - feature_repo/data_hash.txt
       - feature_repo/feature_repo.py
@@ -500,11 +529,24 @@ stages:
           cache: true
 
   autogluon:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python $(sed 's/^/--with /' requirements/autogluon.txt | tr '\n' ' ') python pipeline autogluon
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python 3.11
+      --with autogluon
+      --with autogluon.tabular[light]
+      --with imbalanced-learn
+      --with loguru
+      --with matplotlib
+      --with omegaconf
+      --with pandas
+      --with pyarrow
+      --with seaborn
+      --with shap
+      --with torch
+      python pipeline autogluon
     deps:
-      - .venv
-      - .venv-models
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -513,8 +555,6 @@ stages:
       - pipeline/models/model.py
       - pipeline/stages/autogluon.py
       - pipeline/stages/stage.py
-      - requirements/autogluon.txt
-      - requirements/models.lock
     outs:
       - models/autogluon:
           cache: true
@@ -543,10 +583,22 @@ stages:
           y: Density
 
   logisticregression:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv-models/bin/python python pipeline logisticregression
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python 3.9
+      --with imbalanced-learn
+      --with loguru
+      --with matplotlib
+      --with omegaconf
+      --with pandas
+      --with pyarrow
+      --with seaborn
+      --with shap
+      --with torch
+      python pipeline logisticregression
     deps:
-      - .venv-models/bin/uv
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -555,7 +607,6 @@ stages:
       - pipeline/models/model.py
       - pipeline/stages/logisticregression.py
       - pipeline/stages/stage.py
-      - requirements/models.lock
     outs:
       - models/logisticregression/model.pth:
           cache: true
@@ -585,10 +636,23 @@ stages:
           x: importance
 
   neuralnetwork:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv-models/bin/python python pipeline neuralnetwork
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python 3.9
+      --with imbalanced-learn
+      --with loguru
+      --with matplotlib
+      --with omegaconf
+      --with pandas
+      --with pyarrow
+      --with seaborn
+      --with shap
+      --with torch
+      python pipeline neuralnetwork
     deps:
-      - .venv-models/bin/uv
+      - .venv
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -597,8 +661,6 @@ stages:
       - pipeline/models/neuralnetwork.py
       - pipeline/stages/neuralnetwork.py
       - pipeline/stages/stage.py
-      - requirements/base.lock
-      - requirements/models.lock
     outs:
       - models/neuralnetwork:
           cache: true

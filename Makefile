@@ -14,7 +14,7 @@ clean_uv:
 	uv cache clean
 
 clean_dvc:
-	dvc gc -fw && cd ..
+	cd pipeline && dvc gc -fw && cd ..
 
 clean_docker:
 	docker system prune -a -f
@@ -22,6 +22,7 @@ clean_docker:
 clean_cache:
 	find . -name ".ruff_cache" -exec rm -rf {} +
 	find . -name ".uv_cache" -exec rm -rf {} +
+	find . -name ".uv.lock" -exec rm -rf {} +
 	find . -name ".venv" -exec rm -rf {} +
 	find . -name ".venv-*" -exec rm -rf {} +
 	find . -name "build" -exec rm -rf {} +
