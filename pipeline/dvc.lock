@@ -6,7 +6,7 @@ stages:
     - .venv/bin/python -m ensurepip --upgrade
     - .venv/bin/python -m pip install -q uv
     - .venv/bin/uv pip compile requirements/base.txt -o requirements/base.lock
-    - .venv/bin/uv pip sync requirements/base.lock
+    - UV_LINK_MODE=copy .venv/bin/uv pip sync requirements/base.lock
     deps:
     - path: requirements/base.txt
       hash: md5
@@ -15,8 +15,8 @@ stages:
     outs:
     - path: .venv
       hash: md5
-      md5: ea9e36c556b8552f96bc556b31d0ace8.dir
-      size: 348215597
+      md5: 99c2a6d027fbb3c79a9ce2f5de5e74f6.dir
+      size: 348215637
       nfiles: 14809
     - path: requirements/base.lock
       hash: md5
