@@ -28,8 +28,6 @@ else
     echo "yq is already installed."
 fi
 
-rm -f ".dvc/tmp/rwlock"
-rm -f ".dvc/tmp/lock"
 pip install -q dvc[s3]
 
 # Constants for terminal colors
@@ -299,7 +297,7 @@ main() {
         log_info "No changes to commit"
     fi
 
-    dvc exp run -v --ignore-errors --pull --force
+    dvc exp run --vebose --ignore-errors --pull --force --queue
 }
 
 # Execute main function
