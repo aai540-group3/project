@@ -283,6 +283,7 @@ main() {
     fi
 
     rm -f "${DVC_LOCK_FILE}"
+    pipx run dvc pull --allow-missing
     pipx run dvc repro -v
 }
 

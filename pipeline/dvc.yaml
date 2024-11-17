@@ -13,6 +13,7 @@ stages:
 
   infrastruct:
     cmd:
+      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python --with boto3 python pipeline infrastruct
     deps:
       - .venv
@@ -27,6 +28,7 @@ stages:
 
   ingest:
     cmd:
+      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python --with ucimlrepo python pipeline ingest
     deps:
       - .venv
@@ -60,6 +62,7 @@ stages:
 
   preprocess:
     cmd:
+      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python python pipeline preprocess
     deps:
       - .venv
@@ -119,6 +122,7 @@ stages:
 
   explore:
     cmd:
+      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python python pipeline explore
     deps:
       - .venv
@@ -359,6 +363,7 @@ stages:
 
   featurize:
     cmd:
+      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with /' requirements/featurize.txt | tr '\n' ' ') python pipeline featurize
     deps:
       - .venv
@@ -465,6 +470,7 @@ stages:
 
   feast:
     cmd:
+      - dvc push
       - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with /' requirements/feast.txt | tr '\n' ' ') python pipeline feast
       - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
@@ -486,15 +492,9 @@ stages:
       - metrics/feast/metrics.json:
           cache: true
 
-  clean:
-    cmd:
-      - dvc push
-      - dvc gc -w -f
-    deps:
-      - feature_repo/data_hash.txt
-
   setup-models:
     cmd:
+      - dvc push
       - pipx run uv venv .venv-models --python 3.9
       - UV_LINK_MODE=copy pipx run uv add --editable . --dev --python .venv-models/bin/python
       - pipx run uv pip compile requirements/models.txt -o requirements/models.lock --python 3.9
@@ -508,6 +508,7 @@ stages:
 
   autogluon:
     cmd:
+      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with /' requirements/autogluon.txt | tr '\n' ' ') python pipeline autogluon
     deps:
       - .venv
@@ -551,6 +552,7 @@ stages:
 
   logisticregression:
     cmd:
+      - dvc push
       - UV_LINK_MODE=copy pipx run uv run --python .venv-models/bin/python python pipeline logisticregression
     deps:
       - .venv-models/bin/uv
@@ -647,3 +649,9 @@ stages:
           title: Training Accuracy Over Epochs
           x: Epoch
           y: Accuracy
+
+  push:
+    cmd:
+      - dvc push
+    deps:
+      - metrics/neuralnetwork/metrics.json
