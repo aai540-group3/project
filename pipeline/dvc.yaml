@@ -490,6 +490,7 @@ stages:
       - pipx run uv venv .venv-models --python 3.9
       - UV_LINK_MODE=copy pipx run uv add --editable . --dev --python .venv-models/bin/python
       - pipx run uv pip compile requirements/models.txt -o requirements/models.lock --python 3.9
+      - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock --python .venv-models/bin/python
       - UV_LINK_MODE=copy pipx run uv pip sync requirements/models.lock --python .venv-models/bin/python
     deps:
       - requirements/models.txt

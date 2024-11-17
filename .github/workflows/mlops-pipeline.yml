@@ -69,6 +69,7 @@ jobs:
           BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
           TABLE_NAME: ${{ secrets.TABLE_NAME }}
           BUCKET_KEYS: ${{ secrets.BUCKET_KEYS }}
+          MODE: full
         run: |
           make
 
