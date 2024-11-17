@@ -5,7 +5,6 @@ __pycache__
 .ipynb_checkpoints
 .python-version
 .terraform/
-.venv/*
 .vscode/
 *.avi
 *.bak

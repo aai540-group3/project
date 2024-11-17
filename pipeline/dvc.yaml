@@ -1,11 +1,13 @@
 stages:
   setup-base:
     cmd:
-      - UV_PYTHON=python3.9 uv venv .venv
-      - .venv/bin/uv pip compile -o requirements/base.lock -r requirements/base.txt
-      - .venv/bin/uv pip sync -r requirements/base.lock
+      - UV_LINK_MODE=copy uv venv .venv --python 3.9
+      - .venv/bin/python3.9 -m ensurepip --upgrade
+      - .venv/bin/python3.9 -m pip install -q --no-cache-dir uv
+      - .venv/bin/uv pip compile requirements/base.txt -o requirements/base.lock
+      - .venv/bin/uv pip sync requirements/base.lock
     outs:
-      - .venv:
+      - .venv/bin:
           persist: true
           cache: true
       - requirements/base.lock:
@@ -13,33 +15,118 @@ stages:
     deps:
       - requirements/base.txt
 
+  setup-infrastruct:
+    cmd:
+      - .venv/bin/uv pip compile requirements/infrastruct.txt -o requirements/infrastruct.lock
+    outs:
+      - requirements/infrastruct.lock:
+          persist: true
+    deps:
+      - .venv/bin/uv
+      - requirements/infrastruct.txt
+
+  setup-ingest:
+    cmd:
+      - .venv/bin/uv pip compile requirements/ingest.txt -o requirements/ingest.lock
+    outs:
+      - requirements/ingest.lock:
+          persist: true
+    deps:
+      - .venv/bin/uv
+      - requirements/ingest.txt
+
+  setup-preprocess:
+    cmd:
+      - .venv/bin/uv pip compile requirements/preprocess.txt -o requirements/preprocess.lock
+    outs:
+      - requirements/preprocess.lock:
+          persist: true
+    deps:
+      - .venv/bin/uv
+      - requirements/preprocess.txt
+
+  setup-explore:
+    cmd:
+      - .venv/bin/uv pip compile requirements/explore.txt -o requirements/explore.lock
+    outs:
+      - requirements/explore.lock:
+          persist: true
+    deps:
+      - .venv/bin/uv
+      - requirements/explore.txt
+
+  setup-featurize:
+    cmd:
+      - .venv/bin/uv pip compile requirements/featurize.txt -o requirements/featurize.lock
+    outs:
+      - requirements/featurize.lock:
+          persist: true
+    deps:
+      - .venv/bin/uv
+      - requirements/featurize.txt
+
+  setup-feast:
+    cmd:
+      - .venv/bin/uv pip compile requirements/feast.txt -o requirements/feast.lock
+    outs:
+      - requirements/feast.lock:
+          persist: true
+    deps:
+      - .venv/bin/uv
+      - requirements/feast.txt
+
+  setup-models:
+    cmd:
+      - rsync -a .venv/ .venv-models/
+      - .venv-models/bin/uv pip compile requirements/models.txt -o requirements/models.lock
+      - .venv-models/bin/uv pip sync requirements/models.lock
+    outs:
+      - .venv-models/bin:
+          persist: true
+          cache: true
+      - requirements/models.lock:
+          persist: true
+    deps:
+      - .venv/bin/uv
+      - requirements/models.txt
+
+  setup-autogluon:
+    cmd:
+      - .venv/bin/uv pip compile requirements/autogluon.txt -o requirements/autogluon.lock
+    outs:
+      - requirements/autogluon.lock:
+          persist: true
+    deps:
+      - .venv/bin/uv
+      - requirements/autogluon.txt
+
   infrastruct:
     cmd:
-      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/infrastruct.txt)" python pipeline infrastruct
+      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/infrastruct.lock)" python pipeline infrastruct
     deps:
-      - .venv
+      - .venv/bin/uv
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/infrastruct.py
       - pipeline/stages/stage.py
       - requirements/base.lock
-      - requirements/infrastruct.txt
+      - requirements/infrastruct.lock
     metrics:
       - metrics/infrastruct/metrics.json:
           cache: true
 
   ingest:
     cmd:
-      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/ingest.txt)" python pipeline ingest
+      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/ingest.lock)" python pipeline ingest
     deps:
-      - .venv
+      - .venv/bin/uv
       - metrics/infrastruct/metrics.json
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/ingest.py
       - pipeline/stages/stage.py
       - requirements/base.lock
-      - requirements/ingest.txt
+      - requirements/ingest.lock
     outs:
       - data/raw/data.parquet:
           cache: true
@@ -66,7 +153,7 @@ stages:
     cmd:
       - .venv/bin/uv run python pipeline preprocess
     deps:
-      - .venv
+      - .venv/bin/uv
       - data/raw/data.csv
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -125,7 +212,7 @@ stages:
     cmd:
       - .venv/bin/uv run python pipeline explore
     deps:
-      - .venv
+      - .venv/bin/uv
       - data/interim/cleaned.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -363,16 +450,16 @@ stages:
 
   featurize:
     cmd:
-      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/featurize.txt)" python pipeline featurize
+      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/featurize.lock)" python pipeline featurize
     deps:
-      - .venv
+      - .venv/bin/uv
       - data/interim/cleaned.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/featurize.py
       - pipeline/stages/stage.py
       - requirements/base.lock
-      - requirements/featurize.txt
+      - requirements/featurize.lock
     outs:
       - data/processed/features.parquet:
           cache: true
@@ -471,9 +558,9 @@ stages:
   feast:
     cmd:
       - docker stop $(docker ps -a -q --filter publish=5432)  &>/dev/null || true
-      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/feast.txt)" python pipeline feast
+      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/feast.lock)" python pipeline feast
     deps:
-      - .venv
+      - .venv/bin/uv
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -481,7 +568,7 @@ stages:
       - pipeline/stages/feature_repo.py
       - pipeline/stages/stage.py
       - requirements/base.lock
-      - requirements/feast.txt
+      - requirements/feast.lock
     outs:
       - feature_repo/data_hash.txt
       - feature_repo/feature_repo.py
@@ -491,25 +578,11 @@ stages:
       - metrics/feast/metrics.json:
           cache: true
 
-  setup-models:
-    cmd:
-      - rsync -a .venv/ .venv-models/
-      - .venv-models/bin/uv pip compile -o requirements/models.lock -r requirements/models.txt
-      - .venv-models/bin/uv pip sync -r requirements/models.lock
-    outs:
-      - .venv-models:
-          persist: true
-          cache: true
-      - requirements/models.lock:
-          persist: true
-    deps:
-      - requirements/models.txt
-      - .venv
-
   autogluon:
     cmd:
       - .venv/bin/uv run --with "$(paste -sd ' ' requirements/autogluon.txt)" python pipeline autogluon
     deps:
+      - .venv/bin/uv
       - .venv-models
       - data/processed/features.parquet
       - pipeline/__init__.py
@@ -553,7 +626,7 @@ stages:
     cmd:
       - .venv-models/bin/uv run python pipeline logisticregression
     deps:
-      - .venv-models
+      - .venv-models/bin/uv
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
@@ -596,7 +669,7 @@ stages:
     cmd:
       - .venv-models/bin/uv run python pipeline neuralnetwork
     deps:
-      - .venv-models
+      - .venv-models/bin/uv
       - data/processed/features.parquet
       - pipeline/__init__.py
       - pipeline/__main__.py
