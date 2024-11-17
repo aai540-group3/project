@@ -132,34 +132,27 @@ stages:
       size: 3642
   setup-models:
     cmd:
-    - uv venv .venv-models --python 3.9
-    - . .venv/bin/activate && python3.9 -m ensurepip --upgrade
-    - . .venv-models/bin/activate && pip install -q uv
-    - . .venv-models/bin/activate && uv pip sync requirements/base.lock
-    - . .venv-models/bin/activate && uv pip sync requirements/models.lock
+    - pipx run uv venv .venv-models --python 3.9
+    - UV_LINK_MODE=copy pipx run uv add --editable . --dev --python .venv-models/bin/python
+    - pipx run uv pip compile requirements/models.txt -o requirements/models.lock
+      --python 3.9
+    - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock --python .venv-models/bin/python
+    - UV_LINK_MODE=copy pipx run uv pip sync requirements/models.lock --python .venv-models/bin/python
     deps:
-    - path: requirements/base.lock
-      hash: md5
-      md5: 66297b32c9e3e7321482a0f67acb007c
-      size: 6738
-    - path: requirements/base.txt
-      hash: md5
-      md5: 7114f26595d0f5d2b110512305340e43
-      size: 107
     - path: requirements/models.txt
       hash: md5
-      md5: 1990e8fd4cc60ee9ec446af8d9970aa4
-      size: 35
+      md5: 243c7446356ab8ea2878b2e4f6cdab65
+      size: 46
     outs:
-    - path: .venv-models/bin
+    - path: .venv-models
       hash: md5
-      md5: e169352748d0aee5f35d6e7ea7cd80ee.dir
-      size: 100674
-      nfiles: 40
+      md5: 7a42cdca1fccc37f8d23f5ee0d0f1eb6.dir
+      size: 3454851581
+      nfiles: 26668
     - path: requirements/models.lock
       hash: md5
-      md5: 9a3ba3d80ab12d40c75ea3829a6f81ae
-      size: 6861
+      md5: a77a6f0f6728e94359c3383495949520
+      size: 7527
   setup-autogluon:
     cmd:
     - chmod +x .venv/bin/uv
@@ -863,3 +856,12 @@ stages:
       hash: md5
       md5: 8dc6ce887b4050bc404ccca916c0fcf2
       size: 370
+  clean:
+    cmd:
+    - dvc push
+    - dvc gc -w -f
+    deps:
+    - path: feature_repo/data_hash.txt
+      hash: md5
+      md5: 09c26842994b965349f3b0b69bdea89e
+      size: 20

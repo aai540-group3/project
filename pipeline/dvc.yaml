@@ -467,6 +467,7 @@ stages:
     cmd:
       - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
       - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with /' requirements/feast.txt | tr '\n' ' ') python pipeline feast
+      - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
     deps:
       - .venv
       - data/processed/features.parquet
@@ -485,6 +486,13 @@ stages:
       - metrics/feast/metrics.json:
           cache: true
 
+  clean:
+    cmd:
+      - dvc push
+      - dvc gc -w -f
+    deps:
+      - feature_repo/data_hash.txt
+
   setup-models:
     cmd:
       - pipx run uv venv .venv-models --python 3.9
@@ -500,7 +508,7 @@ stages:
 
   autogluon:
     cmd:
-      - UV_LINK_MODE=copy pipx uv run $(sed 's/^/--with /' requirements/autogluon.txt | tr '\n' ' ') --python .venv/bin/python python pipeline autogluon
+      - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with /' requirements/autogluon.txt | tr '\n' ' ') python pipeline autogluon
     deps:
       - .venv
       - .venv-models
