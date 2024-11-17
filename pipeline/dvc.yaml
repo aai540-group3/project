@@ -1,14 +1,12 @@
 stages:
   setup:
     cmd:
-      - UV_LINK_MODE=copy uv venv .venv --python 3.9
-      - .venv/bin/python -m ensurepip --upgrade
-      - .venv/bin/python -m pip install -q uv
-      - .venv/bin/uv pip install -q -r requirements/base.txt
+      - UV_PYTHON=python3.9 uv venv .venv
+      - .venv/bin/uv pip compile -o requirements/base.lock -r requirements/base.txt
+      - .venv/bin/uv pip sync -r requirements/base.lock
       - rsync -a .venv/ .venv-models/
-      - .venv-models/bin/uv pip install -r requirements/models.txt
-      - .venv/bin/uv pip freeze > requirements/base-frozen.txt
-      - .venv/bin/uv pip freeze > requirements/models-frozen.txt
+      - .venv-models/bin/uv pip compile -o requirements/models.lock -r requirements/models.txt
+      - .venv-models/bin/uv pip sync -r requirements/models.lock
     outs:
       - .venv:
           persist: true
@@ -16,9 +14,9 @@ stages:
       - .venv-models:
           persist: true
           cache: true
-      - requirements/base-frozen.txt:
+      - requirements/base.lock:
           persist: true
-      - requirements/models-frozen.txt:
+      - requirements/models.lock:
           persist: true
     deps:
       - requirements/base.txt
@@ -26,8 +24,8 @@ stages:
 
   prepare:
     cmd:
-      - .venv/bin/uv run $(sed 's/^/--with /' requirements/infrastruct.txt | tr '\n' ' ') python pipeline infrastruct
-      - .venv/bin/uv run $(sed 's/^/--with /' requirements/ingest.txt | tr '\n' ' ') python pipeline ingest
+      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/infrastruct.txt)" python pipeline infrastruct
+      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/ingest.txt)" python pipeline ingest
     deps:
       - .venv
       - pipeline/__init__.py
@@ -361,7 +359,7 @@ stages:
 
   featurize:
     cmd:
-      - .venv/bin/uv run $(sed 's/^/--with /' requirements/featurize.txt | tr '\n' ' ') python pipeline featurize
+      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/featurize.txt)" python pipeline featurize
     deps:
       - .venv
       - data/interim/cleaned.parquet
@@ -369,7 +367,7 @@ stages:
       - pipeline/__main__.py
       - pipeline/stages/featurize.py
       - pipeline/stages/stage.py
-      - requirements/base.txt
+      - requirements/base.lock
       - requirements/featurize.txt
     outs:
       - data/processed/features.parquet:
@@ -469,7 +467,7 @@ stages:
   feast:
     cmd:
       - docker stop $(docker ps -a -q --filter publish=5432)  &>/dev/null || true
-      - .venv/bin/uv run $(sed 's/^/--with /' requirements/feast.txt | tr '\n' ' ') python pipeline feast
+      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/feast.txt)" python pipeline feast
     deps:
       - .venv
       - data/processed/features.parquet
@@ -478,7 +476,7 @@ stages:
       - pipeline/stages/feast.py
       - pipeline/stages/feature_repo.py
       - pipeline/stages/stage.py
-      - requirements/base.txt
+      - requirements/base.lock
       - requirements/feast.txt
     outs:
       - feature_repo/data_hash.txt
@@ -491,7 +489,7 @@ stages:
 
   autogluon:
     cmd:
-      - .venv-models/bin/uv run $(sed 's/^/--with /' requirements/autogluon.txt | tr '\n' ' ') python pipeline autogluon
+      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/autogluon.txt)" python pipeline autogluon
     deps:
       - .venv-models
       - data/processed/features.parquet
@@ -503,7 +501,8 @@ stages:
       - pipeline/stages/autogluon.py
       - pipeline/stages/stage.py
       - requirements/autogluon.txt
-      - requirements/base.txt
+      - requirements/base.lock
+      - requirements/models.lock
     outs:
       - models/autogluon:
           cache: true
@@ -544,7 +543,8 @@ stages:
       - pipeline/models/model.py
       - pipeline/stages/logisticregression.py
       - pipeline/stages/stage.py
-      - requirements/base.txt
+      - requirements/base.lock
+      - requirements/models.lock
     outs:
       - models/logisticregression/model.pth:
           cache: true
@@ -586,7 +586,8 @@ stages:
       - pipeline/models/neuralnetwork.py
       - pipeline/stages/neuralnetwork.py
       - pipeline/stages/stage.py
-      - requirements/base.txt
+      - requirements/base.lock
+      - requirements/models.lock
     outs:
       - models/neuralnetwork:
           cache: true
