@@ -2,26 +2,22 @@ schema: '2.0'
 stages:
   setup-base:
     cmd:
-    - pipx run uv venv .venv --python 3.9
-    - .venv/bin/python -m ensurepip --upgrade
-    - .venv/bin/python -m pip install -q uv
-    - .venv/bin/uv pip compile requirements/base.txt -o requirements/base.lock
-    - UV_LINK_MODE=copy .venv/bin/uv pip sync requirements/base.lock
+    - pip install pipx
+    - pipx run uv python install 3.9
+    - pipx run uv venv .venv -p 3.9
+    - pipx run uv pip compile requirements/base.txt -o requirements/base.lock -p 3.9
+    - UV_LINK_MODE=copy pipx run uv add --editable . --dev -p .venv/bin/python
+    - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock -p .venv/bin/python
     deps:
     - path: requirements/base.txt
       hash: md5
-      md5: 7114f26595d0f5d2b110512305340e43
-      size: 107
+      md5: 1ce9cb3ad7e71b9027fb245aacf1e0c5
+      size: 99
     outs:
-    - path: .venv
-      hash: md5
-      md5: 99c2a6d027fbb3c79a9ce2f5de5e74f6.dir
-      size: 348215637
-      nfiles: 14809
     - path: requirements/base.lock
       hash: md5
-      md5: 66297b32c9e3e7321482a0f67acb007c
-      size: 6738
+      md5: 8f123b8978febce79e4afe1960aa5d31
+      size: 1830
   setup-infrastruct:
     cmd:
     - . .venv/bin/activate && uv pip compile requirements/infrastruct.txt -o requirements/infrastruct.lock
@@ -132,14 +128,21 @@ stages:
       size: 3642
   setup-models:
     cmd:
-    - dvc push
-    - pipx run uv venv .venv-models --python 3.9
-    - UV_LINK_MODE=copy pipx run uv add --editable . --dev --python .venv-models/bin/python
+    - pipx run uv venv .venv-models -p 3.9
     - pipx run uv pip compile requirements/models.txt -o requirements/models.lock
-      --python 3.9
-    - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock --python .venv-models/bin/python
-    - UV_LINK_MODE=copy pipx run uv pip sync requirements/models.lock --python .venv-models/bin/python
+      -p 3.9
+    - UV_LINK_MODE=copy pipx run uv add --editable . --dev -p .venv-models/bin/python
+    - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock -p .venv-models/bin/python
+    - UV_LINK_MODE=copy pipx run uv pip sync requirements/models.lock -p .venv-models/bin/python
     deps:
+    - path: requirements/base.lock
+      hash: md5
+      md5: 8f123b8978febce79e4afe1960aa5d31
+      size: 1830
+    - path: requirements/base.txt
+      hash: md5
+      md5: 1ce9cb3ad7e71b9027fb245aacf1e0c5
+      size: 99
     - path: requirements/models.txt
       hash: md5
       md5: 243c7446356ab8ea2878b2e4f6cdab65
@@ -147,8 +150,8 @@ stages:
     outs:
     - path: requirements/models.lock
       hash: md5
-      md5: a77a6f0f6728e94359c3383495949520
-      size: 7527
+      md5: 8bb49bf2b17d7e2f5418989e100fb060
+      size: 7521
   setup-autogluon:
     cmd:
     - chmod +x .venv/bin/uv
@@ -228,8 +231,8 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 97d2534c0c5bf37a2f5eb446d6e21735.dir
-      size: 245405243
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
       nfiles: 8587
     - path: pipeline/__init__.py
       hash: md5
@@ -256,7 +259,7 @@ stages:
     outs:
     - path: metrics/infrastruct/metrics.json
       hash: md5
-      md5: d89a6be0ec28abcc8c82b5577560051d
+      md5: fb5763ea07ac4567c028a6829c089374
       size: 221
   ingest:
     cmd:
@@ -265,12 +268,12 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 97d2534c0c5bf37a2f5eb446d6e21735.dir
-      size: 245405243
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
       nfiles: 8587
     - path: metrics/infrastruct/metrics.json
       hash: md5
-      md5: d89a6be0ec28abcc8c82b5577560051d
+      md5: fb5763ea07ac4567c028a6829c089374
       size: 221
     - path: pipeline/__init__.py
       hash: md5
@@ -313,7 +316,7 @@ stages:
       size: 17401
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: 99fd3ed55bb7fdb5f31e673df7f90971
+      md5: cd126c272e1692edf7e40a9f858531e8
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5
@@ -329,8 +332,8 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 97d2534c0c5bf37a2f5eb446d6e21735.dir
-      size: 245405243
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
       nfiles: 8587
     - path: data/raw/data.csv
       hash: md5
@@ -365,7 +368,7 @@ stages:
       size: 1801254
     - path: metrics/preprocess/metrics.json
       hash: md5
-      md5: 54df2a967c9902f064b4fe29cf56c6cc
+      md5: 238d2610e77f50102a2a8ff24178ea01
       size: 15356
     - path: plots/preprocess/missing_values.png
       hash: md5
@@ -413,8 +416,8 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 97d2534c0c5bf37a2f5eb446d6e21735.dir
-      size: 245405243
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
       nfiles: 8587
     - path: data/interim/cleaned.parquet
       hash: md5
@@ -445,7 +448,7 @@ stages:
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: 13f4667e51833b38acdde34b7d90a66b
+      md5: 255840517a21477235636980fe23ac89
       size: 656658
     - path: plots/explore/A1Cresult_chi_square.png
       hash: md5
@@ -673,13 +676,13 @@ stages:
       size: 25657
   featurize:
     cmd:
-    - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with
-      /' requirements/featurize.txt | tr '\n' ' ') python pipeline featurize
+    - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python $(sed 's/^/--with /' requirements/featurize.txt
+      | tr '\n' ' ') python pipeline featurize
     deps:
     - path: .venv
       hash: md5
-      md5: 97d2534c0c5bf37a2f5eb446d6e21735.dir
-      size: 245405243
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
       nfiles: 8587
     - path: data/interim/cleaned.parquet
       hash: md5
@@ -714,11 +717,11 @@ stages:
       size: 1378122
     - path: metrics/featurize/metrics.json
       hash: md5
-      md5: 2e96b54d141e1742df61e9b42b241542
+      md5: 596667a3fdefe96a249f7c73814c41f2
       size: 1727
     - path: metrics/featurize/statistics.json
       hash: md5
-      md5: 883f7db87eeb6bcf52710e0d5911e4ba
+      md5: ede1f6e06b90dc76dce9e912fb5e8251
       size: 2690
     - path: plots/featurize/age_distribution.png
       hash: md5
@@ -795,8 +798,8 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 97d2534c0c5bf37a2f5eb446d6e21735.dir
-      size: 245405243
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
       nfiles: 8587
     - path: data/processed/features.parquet
       hash: md5
@@ -842,11 +845,11 @@ stages:
       size: 596
     - path: feature_repo/features.parquet
       hash: md5
-      md5: a307a3208de2767e3e52bd0ff79dd797
+      md5: f2d1a26586f74ecba0ed19e0b863eb0c
       size: 1981733
     - path: metrics/feast/metrics.json
       hash: md5
-      md5: fdefe8a426cee450f80b6fd442127e7b
+      md5: c14f0889fb3164717f6ca145ab983288
       size: 370
   clean:
     cmd:

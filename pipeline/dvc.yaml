@@ -12,23 +12,14 @@ stages:
     outs:
       - requirements/base.lock
 
-  setup-models:
-    cmd:
-      - pipx run uv venv .venv-models -p 3.9
-      - pipx run uv pip compile requirements/models.txt -o requirements/models.lock -p 3.9
-      - UV_LINK_MODE=copy pipx run uv add --editable . --dev -p .venv-models/bin/python
-      - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock -p .venv-models/bin/python
-      - UV_LINK_MODE=copy pipx run uv pip sync requirements/models.lock -p .venv-models/bin/python
-    deps:
-      - requirements/base.txt
-      - requirements/base.lock
-      - requirements/models.txt
-    outs:
-      - requirements/models.lock
-
   infrastruct:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python --with boto3 python pipeline infrastruct
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python .venv/bin/python
+      --with boto3
+      python pipeline infrastruct
     deps:
       - .venv
       - pipeline/__init__.py
@@ -41,8 +32,13 @@ stages:
           cache: true
 
   ingest:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python --with ucimlrepo python pipeline ingest
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python .venv/bin/python
+      --with ucimlrepo
+      python pipeline ingest
     deps:
       - .venv
       - metrics/infrastruct/metrics.json
@@ -74,8 +70,12 @@ stages:
           title: Distribution - Data Types
 
   preprocess:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python python pipeline preprocess
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python .venv/bin/python
+      python pipeline preprocess
     deps:
       - .venv
       - data/raw/data.csv
@@ -133,8 +133,12 @@ stages:
           title: Distribution - readmitted
 
   explore:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python python pipeline explore
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python .venv/bin/python
+      python pipeline explore
     deps:
       - .venv
       - data/interim/cleaned.parquet
@@ -373,8 +377,13 @@ stages:
           title: Feature Importance Data
 
   featurize:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python $(sed 's/^/--with /' requirements/featurize.txt | tr '\n' ' ') python pipeline featurize
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python .venv/bin/python
+      --with boto3
+      python pipeline featurize
     deps:
       - .venv
       - data/interim/cleaned.parquet
@@ -479,8 +488,17 @@ stages:
           y: Frequency
 
   feast:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python $(sed 's/^/--with /' requirements/feast.txt | tr '\n' ' ') python pipeline feast
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python .venv/bin/python
+      --with dask[dataframe]
+      --with docker
+      --with feast[postgres]
+      --with psycopg2-binary
+      --with testcontainers
+      python pipeline feast
     deps:
       - .venv
       - data/processed/features.parquet
@@ -500,8 +518,19 @@ stages:
           cache: true
 
   autogluon:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python $(sed 's/^/--with /' requirements/autogluon.txt | tr '\n' ' ') python pipeline autogluon
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python .venv/bin/python
+      --with autogluon
+      --with autogluon.tabular[all]
+      --with dvc[s3]
+      --with dvclive
+      --with imbalanced-learn
+      --with shap
+      --with torch
+      python pipeline autogluon
     deps:
       - .venv
       - .venv-models
@@ -513,8 +542,7 @@ stages:
       - pipeline/models/model.py
       - pipeline/stages/autogluon.py
       - pipeline/stages/stage.py
-      - requirements/autogluon.txt
-      - requirements/models.lock
+      - requirements/base.lock
     outs:
       - models/autogluon:
           cache: true
@@ -543,8 +571,17 @@ stages:
           y: Density
 
   logisticregression:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv-models/bin/python python pipeline logisticregression
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python .venv/bin/python
+      --with dvc[s3]
+      --with dvclive
+      --with imbalanced-learn
+      --with shap
+      --with torch
+      python pipeline logisticregression
     deps:
       - .venv-models/bin/uv
       - data/processed/features.parquet
@@ -555,7 +592,7 @@ stages:
       - pipeline/models/model.py
       - pipeline/stages/logisticregression.py
       - pipeline/stages/stage.py
-      - requirements/models.lock
+      - requirements/base.lock
     outs:
       - models/logisticregression/model.pth:
           cache: true
@@ -585,8 +622,18 @@ stages:
           x: importance
 
   neuralnetwork:
-    cmd:
-      - UV_LINK_MODE=copy pipx run uv run -p .venv-models/bin/python python pipeline neuralnetwork
+    cmd: >-
+      UV_LINK_MODE=copy
+      pipx run
+      uv run
+      --python .venv/bin/python
+      --with dvc[s3]
+      --with dvclive
+      --with imbalanced-learn
+      --with shap
+      --with torch
+      --with uv
+      python pipeline neuralnetwork
     deps:
       - .venv-models/bin/uv
       - data/processed/features.parquet
@@ -598,7 +645,6 @@ stages:
       - pipeline/stages/neuralnetwork.py
       - pipeline/stages/stage.py
       - requirements/base.lock
-      - requirements/models.lock
     outs:
       - models/neuralnetwork:
           cache: true
