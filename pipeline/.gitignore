@@ -168,3 +168,6 @@ plots/preprocess/time_in_hospital_distribution.png
 update.sh
 wandb/*
 metrics/infrastruct/metrics.json
+.venv-models/bin
+.venv/bin
+requirements/autogluon.lock
