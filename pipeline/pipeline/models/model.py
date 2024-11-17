@@ -13,6 +13,7 @@ managing configurations, data processing, training, evaluation, and metrics.
 
 import json
 import os
+import random
 import threading
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -43,8 +44,9 @@ class Model(ABC):
         self.mode = os.environ.get("MODE", self.cfg.get("mode", "quick"))
         seed = self.cfg.get("seed", 42)
 
-        # Set random seed for reproducibility
+        # Set seed for reproducibility
         np.random.seed(seed)
+        random.seed(seed)
 
         # Model and data setup
         self.model_config = self.load_model_config(self.name)
