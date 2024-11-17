@@ -171,3 +171,5 @@ metrics/infrastruct/metrics.json
 .venv-models/bin
 .venv/bin
 requirements/autogluon.lock
+requirements/base.lock
+requirements/models.lock
