@@ -12,10 +12,18 @@ set -o nounset
 set -o pipefail
 set -o xtrace
 
+# Check if yq is installed
 if ! command -v yq &>/dev/null; then
     echo "yq not found. Installing yq..."
-    wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-    chmod +x /usr/bin/yq
+    wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O ~/.local/bin/yq
+    chmod +x ~/.local/bin/yq
+
+    # Add ~/.local/bin to PATH if not already present
+    if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+        export PATH="$HOME/.local/bin:$PATH"
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >>~/.bashrc
+        echo "Updated PATH to include ~/.local/bin"
+    fi
 else
     echo "yq is already installed."
 fi
