@@ -146,8 +146,6 @@ class Deploy(Stage):
 
         return best_model, best_metrics
 
-    # pipeline/pipeline/stages/deploy.py (continued)
-
     def _create_model_card(self, best_model: str, metrics: Dict):
         """Create model card with metrics and documentation.
 

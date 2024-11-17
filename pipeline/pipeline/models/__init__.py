@@ -22,11 +22,11 @@ __all__ = [
 ]
 
 _MODULES = {
-    "Autogluon": "pipeline.models.autogluon",
-    "LogisticRegression": "pipeline.models.logisticregression",
-    "Metrics": "pipeline.models.metrics",
-    "Model": "pipeline.models.model",
-    "NeuralNetwork": "pipeline.models.neuralnetwork",
+    "Autogluon": "models.autogluon",
+    "LogisticRegression": "models.logisticregression",
+    "Metrics": "models.metrics",
+    "Model": "models.model",
+    "NeuralNetwork": "models.neuralnetwork",
 }
 
 
