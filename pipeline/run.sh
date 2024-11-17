@@ -28,6 +28,10 @@ else
     echo "yq is already installed."
 fi
 
+rm -f ".dvc/tmp/rwlock"
+rm -f ".dvc/tmp/lock"
+pip install -q dvc[s3]
+
 # Constants for terminal colors
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
@@ -36,7 +40,6 @@ readonly NC='\033[0m' # No Color
 
 # DVC configuration constants
 readonly DVC_CONFIG_FILE="dvc.yaml"
-readonly DVC_LOCK_FILE="/home/user/project/pipeline/.dvc/tmp/rwlock"
 readonly DVC_PATH_TYPES=("outs" "plots" "metrics")
 
 #######################################
@@ -296,8 +299,6 @@ main() {
         log_info "No changes to commit"
     fi
 
-    rm -f "${DVC_LOCK_FILE}"
-    pip install -q dvc[s3]
     dvc exp run -v
 }
 
