@@ -1,39 +1,45 @@
 stages:
-  setup:
+  setup-base:
     cmd:
       - UV_PYTHON=python3.9 uv venv .venv
       - .venv/bin/uv pip compile -o requirements/base.lock -r requirements/base.txt
       - .venv/bin/uv pip sync -r requirements/base.lock
-      - rsync -a .venv/ .venv-models/
-      - .venv-models/bin/uv pip compile -o requirements/models.lock -r requirements/models.txt
-      - .venv-models/bin/uv pip sync -r requirements/models.lock
     outs:
       - .venv:
           persist: true
           cache: true
-      - .venv-models:
-          persist: true
-          cache: true
       - requirements/base.lock:
-          persist: true
-      - requirements/models.lock:
           persist: true
     deps:
       - requirements/base.txt
-      - requirements/models.txt
 
-  prepare:
+  infrastruct:
     cmd:
       - .venv/bin/uv run --with "$(paste -sd ' ' requirements/infrastruct.txt)" python pipeline infrastruct
-      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/ingest.txt)" python pipeline ingest
     deps:
       - .venv
       - pipeline/__init__.py
       - pipeline/__main__.py
       - pipeline/stages/infrastruct.py
+      - pipeline/stages/stage.py
+      - requirements/base.lock
+      - requirements/infrastruct.txt
+    metrics:
+      - metrics/infrastruct/metrics.json:
+          cache: true
+
+  ingest:
+    cmd:
+      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/ingest.txt)" python pipeline ingest
+    deps:
+      - .venv
+      - metrics/infrastruct/metrics.json
+      - pipeline/__init__.py
+      - pipeline/__main__.py
       - pipeline/stages/ingest.py
       - pipeline/stages/stage.py
-      - requirements/base.txt
+      - requirements/base.lock
+      - requirements/ingest.txt
     outs:
       - data/raw/data.parquet:
           cache: true
@@ -44,8 +50,6 @@ stages:
       - data/raw/metadata.json:
           cache: true
     metrics:
-      - metrics/infrastruct/metrics.json:
-          cache: true
       - metrics/ingest/metrics.json:
           cache: true
     plots:
@@ -68,7 +72,7 @@ stages:
       - pipeline/__main__.py
       - pipeline/stages/preprocess.py
       - pipeline/stages/stage.py
-      - requirements/base.txt
+      - requirements/base.lock
     outs:
       - data/interim/cleaned.parquet:
           cache: true
@@ -127,7 +131,7 @@ stages:
       - pipeline/__main__.py
       - pipeline/stages/explore.py
       - pipeline/stages/stage.py
-      - requirements/base.txt
+      - requirements/base.lock
     metrics:
       - metrics/explore/metrics.json:
           cache: true
@@ -486,6 +490,21 @@ stages:
     metrics:
       - metrics/feast/metrics.json:
           cache: true
+
+  setup-models:
+    cmd:
+      - rsync -a .venv/ .venv-models/
+      - .venv-models/bin/uv pip compile -o requirements/models.lock -r requirements/models.txt
+      - .venv-models/bin/uv pip sync -r requirements/models.lock
+    outs:
+      - .venv-models:
+          persist: true
+          cache: true
+      - requirements/models.lock:
+          persist: true
+    deps:
+      - requirements/models.txt
+      - .venv
 
   autogluon:
     cmd:
