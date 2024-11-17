@@ -207,11 +207,10 @@ stages:
   setup:
     cmd:
     - pipx run uv python install 3.9
-    - pipx run uv venv .venv --python 3.9
-    - UV_LINK_MODE=copy pipx run uv add --editable . --dev --python .venv/bin/python
-    - pipx run uv pip compile requirements/base.txt -o requirements/base.lock --python
-      3.9
-    - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock --python .venv/bin/python
+    - pipx run uv venv .venv -p 3.9
+    - UV_LINK_MODE=copy pipx run uv add --editable . --dev -p .venv/bin/python
+    - pipx run uv pip compile requirements/base.txt -o requirements/base.lock -p 3.9
+    - UV_LINK_MODE=copy pipx run uv pip sync requirements/base.lock -p .venv/bin/python
     deps:
     - path: requirements/base.txt
       hash: md5
@@ -220,18 +219,17 @@ stages:
     outs:
     - path: requirements/base.lock
       hash: md5
-      md5: 64e8b443d89e7fde7f293bdeb4158448
-      size: 1836
+      md5: 8f123b8978febce79e4afe1960aa5d31
+      size: 1830
   infrastruct:
     cmd:
-    - dvc push
-    - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python --with boto3 python
-      pipeline infrastruct
+    - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python --with boto3 python pipeline
+      infrastruct
     deps:
     - path: .venv
       hash: md5
-      md5: 514213287c53c320fa8dd2348eb2bd7d.dir
-      size: 245405547
+      md5: 97d2534c0c5bf37a2f5eb446d6e21735.dir
+      size: 245405243
       nfiles: 8587
     - path: pipeline/__init__.py
       hash: md5
@@ -253,27 +251,26 @@ stages:
       isexec: true
     - path: requirements/base.lock
       hash: md5
-      md5: 64e8b443d89e7fde7f293bdeb4158448
-      size: 1836
+      md5: 8f123b8978febce79e4afe1960aa5d31
+      size: 1830
     outs:
     - path: metrics/infrastruct/metrics.json
       hash: md5
-      md5: 36b2403b6bf14a5ce661c93c325cde89
+      md5: d89a6be0ec28abcc8c82b5577560051d
       size: 221
   ingest:
     cmd:
-    - dvc push
-    - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python --with ucimlrepo
-      python pipeline ingest
+    - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python --with ucimlrepo python
+      pipeline ingest
     deps:
     - path: .venv
       hash: md5
-      md5: 514213287c53c320fa8dd2348eb2bd7d.dir
-      size: 245405547
+      md5: 97d2534c0c5bf37a2f5eb446d6e21735.dir
+      size: 245405243
       nfiles: 8587
     - path: metrics/infrastruct/metrics.json
       hash: md5
-      md5: 36b2403b6bf14a5ce661c93c325cde89
+      md5: d89a6be0ec28abcc8c82b5577560051d
       size: 221
     - path: pipeline/__init__.py
       hash: md5
@@ -295,8 +292,8 @@ stages:
       isexec: true
     - path: requirements/base.lock
       hash: md5
-      md5: 64e8b443d89e7fde7f293bdeb4158448
-      size: 1836
+      md5: 8f123b8978febce79e4afe1960aa5d31
+      size: 1830
     outs:
     - path: data/raw/data.csv
       hash: md5
@@ -316,7 +313,7 @@ stages:
       size: 17401
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: f0c3ad537689f3cd8361c551ce612cd6
+      md5: 99fd3ed55bb7fdb5f31e673df7f90971
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5
@@ -328,14 +325,12 @@ stages:
       size: 60161
   preprocess:
     cmd:
-    - dvc push
-    - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python python pipeline
-      preprocess
+    - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python python pipeline preprocess
     deps:
     - path: .venv
       hash: md5
-      md5: 514213287c53c320fa8dd2348eb2bd7d.dir
-      size: 245405547
+      md5: 97d2534c0c5bf37a2f5eb446d6e21735.dir
+      size: 245405243
       nfiles: 8587
     - path: data/raw/data.csv
       hash: md5
@@ -361,8 +356,8 @@ stages:
       isexec: true
     - path: requirements/base.lock
       hash: md5
-      md5: 64e8b443d89e7fde7f293bdeb4158448
-      size: 1836
+      md5: 8f123b8978febce79e4afe1960aa5d31
+      size: 1830
     outs:
     - path: data/interim/cleaned.parquet
       hash: md5
@@ -370,7 +365,7 @@ stages:
       size: 1801254
     - path: metrics/preprocess/metrics.json
       hash: md5
-      md5: b440820634f654307e739d56c8c34215
+      md5: 54df2a967c9902f064b4fe29cf56c6cc
       size: 15356
     - path: plots/preprocess/missing_values.png
       hash: md5
@@ -414,14 +409,12 @@ stages:
       size: 39920
   explore:
     cmd:
-    - dvc push
-    - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python python pipeline
-      explore
+    - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python python pipeline explore
     deps:
     - path: .venv
       hash: md5
-      md5: 514213287c53c320fa8dd2348eb2bd7d.dir
-      size: 245405547
+      md5: 97d2534c0c5bf37a2f5eb446d6e21735.dir
+      size: 245405243
       nfiles: 8587
     - path: data/interim/cleaned.parquet
       hash: md5
@@ -447,12 +440,12 @@ stages:
       isexec: true
     - path: requirements/base.lock
       hash: md5
-      md5: 64e8b443d89e7fde7f293bdeb4158448
-      size: 1836
+      md5: 8f123b8978febce79e4afe1960aa5d31
+      size: 1830
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: de61148534741bb83f9ea3d609566a50
+      md5: 13f4667e51833b38acdde34b7d90a66b
       size: 656658
     - path: plots/explore/A1Cresult_chi_square.png
       hash: md5
@@ -680,14 +673,13 @@ stages:
       size: 25657
   featurize:
     cmd:
-    - dvc push
     - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with
       /' requirements/featurize.txt | tr '\n' ' ') python pipeline featurize
     deps:
     - path: .venv
       hash: md5
-      md5: 514213287c53c320fa8dd2348eb2bd7d.dir
-      size: 245405547
+      md5: 97d2534c0c5bf37a2f5eb446d6e21735.dir
+      size: 245405243
       nfiles: 8587
     - path: data/interim/cleaned.parquet
       hash: md5
@@ -713,8 +705,8 @@ stages:
       isexec: true
     - path: requirements/base.lock
       hash: md5
-      md5: 64e8b443d89e7fde7f293bdeb4158448
-      size: 1836
+      md5: 8f123b8978febce79e4afe1960aa5d31
+      size: 1830
     outs:
     - path: data/processed/features.parquet
       hash: md5
@@ -722,11 +714,11 @@ stages:
       size: 1378122
     - path: metrics/featurize/metrics.json
       hash: md5
-      md5: 71606de718e7a13a004efb2f74f4d6d7
+      md5: 2e96b54d141e1742df61e9b42b241542
       size: 1727
     - path: metrics/featurize/statistics.json
       hash: md5
-      md5: df4f5c62cd5002f4b62d2c8c18d4fea3
+      md5: 883f7db87eeb6bcf52710e0d5911e4ba
       size: 2690
     - path: plots/featurize/age_distribution.png
       hash: md5
@@ -798,21 +790,13 @@ stages:
       size: 40918
   feast:
     cmd:
-    - dvc push
-    - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
-    - (docker rm $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
-    - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with
-      /' requirements/feast.txt | tr '\n' ' ') python pipeline feast
-    - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
-    - dvc push
-    - (docker rm $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
-    - (docker rmi $(docker images -f "dangling=true" -q) 2>/dev/null || true)
-    - docker system prune -f --volumes
+    - UV_LINK_MODE=copy pipx run uv run -p .venv/bin/python $(sed 's/^/--with /' requirements/feast.txt
+      | tr '\n' ' ') python pipeline feast
     deps:
     - path: .venv
       hash: md5
-      md5: 514213287c53c320fa8dd2348eb2bd7d.dir
-      size: 245405547
+      md5: 97d2534c0c5bf37a2f5eb446d6e21735.dir
+      size: 245405243
       nfiles: 8587
     - path: data/processed/features.parquet
       hash: md5
@@ -841,8 +825,8 @@ stages:
       isexec: true
     - path: requirements/base.lock
       hash: md5
-      md5: 64e8b443d89e7fde7f293bdeb4158448
-      size: 1836
+      md5: 8f123b8978febce79e4afe1960aa5d31
+      size: 1830
     outs:
     - path: feature_repo/data_hash.txt
       hash: md5
@@ -858,11 +842,11 @@ stages:
       size: 596
     - path: feature_repo/features.parquet
       hash: md5
-      md5: b234667a01c5595195d47b27f5c013e0
+      md5: a307a3208de2767e3e52bd0ff79dd797
       size: 1981733
     - path: metrics/feast/metrics.json
       hash: md5
-      md5: 655bf08ac1685cc07ccf1ad97e1b3995
+      md5: fdefe8a426cee450f80b6fd442127e7b
       size: 370
   clean:
     cmd:

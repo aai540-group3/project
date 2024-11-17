@@ -10,7 +10,6 @@
 set -o errexit
 set -o nounset
 set -o pipefail
-set -o xtrace
 
 # Check if yq is installed
 if ! command -v yq &>/dev/null; then
@@ -27,10 +26,6 @@ if ! command -v yq &>/dev/null; then
 else
     echo "yq is already installed."
 fi
-
-rm -f ".dvc/tmp/rwlock"
-rm -f ".dvc/tmp/lock"
-pip install -q dvc[s3]
 
 # Constants for terminal colors
 readonly RED='\033[0;31m'
@@ -298,8 +293,6 @@ main() {
     else
         log_info "No changes to commit"
     fi
-
-    dvc exp run -v --ignore-errors --pull --force
 }
 
 # Execute main function
