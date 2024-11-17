@@ -102,59 +102,21 @@ stages:
       md5: 2e955e44b4cd315c99767ed32fa6676f
       size: 7335
       isexec: true
-    - path: requirements/base.txt
-      hash: md5
-      md5: a46b3bfbdd8e635ea76a154e08d63fd9
-      size: 95
     outs:
     - path: data/interim/cleaned.parquet
       hash: md5
       md5: 223ea481ba2bb2de4084b7fab860ec52
       size: 1801254
-    - path: metrics/preprocess/metrics.json
+    - path: metrics/preprocess
       hash: md5
-      md5: 7ccea857d38f8741bca2bdf05dbe0c2c
+      md5: 011974c1f087c5ed817879a844026b59.dir
       size: 15356
-    - path: plots/preprocess/missing_values.png
+      nfiles: 1
+    - path: plots/preprocess
       hash: md5
-      md5: 8299bc862a38c96df00614a25644adaa
-      size: 96229
-    - path: plots/preprocess/num_lab_procedures_distribution.png
-      hash: md5
-      md5: 973831ab7572261f64627310dcb37e41
-      size: 40225
-    - path: plots/preprocess/num_medications_distribution.png
-      hash: md5
-      md5: 1777e82baefa13289fd018acc6a48cc0
-      size: 33649
-    - path: plots/preprocess/num_procedures_distribution.png
-      hash: md5
-      md5: 77b3b48d3a735d4d8c5459dd334da825
-      size: 30268
-    - path: plots/preprocess/number_diagnoses_distribution.png
-      hash: md5
-      md5: 97c274f49a356f5ac5062e7f00199a67
-      size: 33412
-    - path: plots/preprocess/number_emergency_distribution.png
-      hash: md5
-      md5: 97111c66756a42b40aa2a227dc334a46
-      size: 20181
-    - path: plots/preprocess/number_inpatient_distribution.png
-      hash: md5
-      md5: ad90683247d55e1155a8b4f700c40bc8
-      size: 27987
-    - path: plots/preprocess/number_outpatient_distribution.png
-      hash: md5
-      md5: dca689a371262a57158200ee0b35c3d5
-      size: 19789
-    - path: plots/preprocess/readmission_distribution.png
-      hash: md5
-      md5: 5d1d036dd0f29d7a6486287dadb7184a
-      size: 20009
-    - path: plots/preprocess/time_in_hospital_distribution.png
-      hash: md5
-      md5: 656055b0f646b95655808304d76e60fe
-      size: 39920
+      md5: 6d524251a901a92ed9e4bd76bfc7b828.dir
+      size: 967696
+      nfiles: 14
   explore:
     cmd: UV_LINK_MODE=copy pipx run uv run --python 3.11 --with loguru --with matplotlib
       --with omegaconf --with pandas --with pyarrow --with scikit-learn --with scipy
