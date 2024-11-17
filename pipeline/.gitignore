@@ -188,3 +188,7 @@ plots/featurize
 plots/ingest
 plots/neuralnetwork
 plots/preprocess
+metrics/autogluon
+metrics/logisticregression
+plots/explore
+plots/logisticregression
