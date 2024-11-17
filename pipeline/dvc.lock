@@ -1,0 +1,182 @@
+schema: '2.0'
+stages:
+  setup-base:
+    cmd:
+    - pipx run uv venv .venv --python 3.9
+    - .venv/bin/python -m ensurepip --upgrade
+    - .venv/bin/python -m pip install -q uv
+    - .venv/bin/uv pip compile requirements/base.txt -o requirements/base.lock
+    - .venv/bin/uv pip sync requirements/base.lock
+    deps:
+    - path: requirements/base.txt
+      hash: md5
+      md5: 7114f26595d0f5d2b110512305340e43
+      size: 107
+    outs:
+    - path: .venv
+      hash: md5
+      md5: ea9e36c556b8552f96bc556b31d0ace8.dir
+      size: 348215597
+      nfiles: 14809
+    - path: requirements/base.lock
+      hash: md5
+      md5: 66297b32c9e3e7321482a0f67acb007c
+      size: 6738
+  setup-infrastruct:
+    cmd:
+    - . .venv/bin/activate && uv pip compile requirements/infrastruct.txt -o requirements/infrastruct.lock
+    deps:
+    - path: .venv/bin/uv
+      hash: md5
+      md5: bff4001ec32de290974b334553f1a23c
+      size: 33772288
+      isexec: true
+    - path: requirements/infrastruct.txt
+      hash: md5
+      md5: 6686853da3491a56c98917cc5c4ddea2
+      size: 5
+    outs:
+    - path: requirements/infrastruct.lock
+      hash: md5
+      md5: 3338f6911799bc54a75c2f19893c8021
+      size: 477
+  setup-ingest:
+    cmd:
+    - . .venv/bin/activate && uv pip compile requirements/ingest.txt -o requirements/ingest.lock
+    deps:
+    - path: .venv/bin/uv
+      hash: md5
+      md5: bff4001ec32de290974b334553f1a23c
+      size: 33772288
+      isexec: true
+    - path: requirements/ingest.txt
+      hash: md5
+      md5: 31ffd0cda78be4c5e200a9f79f51c5e2
+      size: 9
+    outs:
+    - path: requirements/ingest.lock
+      hash: md5
+      md5: 2d98cb7ecf0eb68fac9da658b425d9b4
+      size: 438
+  setup-preprocess:
+    cmd:
+    - . .venv/bin/activate && uv pip compile requirements/preprocess.txt -o requirements/preprocess.lock
+    deps:
+    - path: .venv/bin/uv
+      hash: md5
+      md5: bff4001ec32de290974b334553f1a23c
+      size: 33772288
+      isexec: true
+    - path: requirements/preprocess.txt
+      hash: md5
+      md5: 8f1375fbbd378c9044c3e04fa8664b55
+      size: 41
+    outs:
+    - path: requirements/preprocess.lock
+      hash: md5
+      md5: 06973e15081c231a326025e5d826a5cf
+      size: 1152
+  setup-explore:
+    cmd:
+    - . .venv/bin/activate && uv pip compile requirements/explore.txt -o requirements/explore.lock
+    deps:
+    - path: .venv/bin/uv
+      hash: md5
+      md5: bff4001ec32de290974b334553f1a23c
+      size: 33772288
+      isexec: true
+    - path: requirements/explore.txt
+      hash: md5
+      md5: 39280397241d7c0ea147a515c98468b7
+      size: 40
+    outs:
+    - path: requirements/explore.lock
+      hash: md5
+      md5: 83c5bab31c8eab51c641eb476aeb657a
+      size: 1258
+  setup-featurize:
+    cmd:
+    - . .venv/bin/activate && uv pip compile requirements/featurize.txt -o requirements/featurize.lock
+    deps:
+    - path: .venv/bin/uv
+      hash: md5
+      md5: bff4001ec32de290974b334553f1a23c
+      size: 33772288
+      isexec: true
+    - path: requirements/featurize.txt
+      hash: md5
+      md5: 6686853da3491a56c98917cc5c4ddea2
+      size: 5
+    outs:
+    - path: requirements/featurize.lock
+      hash: md5
+      md5: 832b57d40eb7ca91a7731d541f12a681
+      size: 471
+  setup-feast:
+    cmd:
+    - . .venv/bin/activate && uv pip compile requirements/feast.txt -o requirements/feast.lock
+    deps:
+    - path: .venv/bin/uv
+      hash: md5
+      md5: bff4001ec32de290974b334553f1a23c
+      size: 33772288
+      isexec: true
+    - path: requirements/feast.txt
+      hash: md5
+      md5: ce807b660e841b507c8a918e6d67460b
+      size: 74
+    outs:
+    - path: requirements/feast.lock
+      hash: md5
+      md5: c9eda86884a2ebc913c9c5bbec761c21
+      size: 3642
+  setup-models:
+    cmd:
+    - uv venv .venv-models --python 3.9
+    - . .venv/bin/activate && python3.9 -m ensurepip --upgrade
+    - . .venv-models/bin/activate && pip install -q uv
+    - . .venv-models/bin/activate && uv pip sync requirements/base.lock
+    - . .venv-models/bin/activate && uv pip sync requirements/models.lock
+    deps:
+    - path: requirements/base.lock
+      hash: md5
+      md5: 66297b32c9e3e7321482a0f67acb007c
+      size: 6738
+    - path: requirements/base.txt
+      hash: md5
+      md5: 7114f26595d0f5d2b110512305340e43
+      size: 107
+    - path: requirements/models.txt
+      hash: md5
+      md5: 1990e8fd4cc60ee9ec446af8d9970aa4
+      size: 35
+    outs:
+    - path: .venv-models/bin
+      hash: md5
+      md5: e169352748d0aee5f35d6e7ea7cd80ee.dir
+      size: 100674
+      nfiles: 40
+    - path: requirements/models.lock
+      hash: md5
+      md5: 9a3ba3d80ab12d40c75ea3829a6f81ae
+      size: 6861
+  setup-autogluon:
+    cmd:
+    - chmod +x .venv/bin/uv
+    - chmod +x .venv/bin/python3
+    - . .venv/bin/activate && uv pip compile requirements/autogluon.txt -o requirements/autogluon.lock
+    deps:
+    - path: .venv/bin/uv
+      hash: md5
+      md5: bff4001ec32de290974b334553f1a23c
+      size: 33772288
+      isexec: true
+    - path: requirements/autogluon.txt
+      hash: md5
+      md5: d4b0747708a57c1f67d4c15f4afa3e12
+      size: 33
+    outs:
+    - path: requirements/autogluon.lock
+      hash: md5
+      md5: 04655acc1d427b4d83607481c199b78c
+      size: 15439

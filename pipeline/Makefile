@@ -1,6 +1,6 @@
 all:
-	pip install -q dvc[s3] uv
-	MODE=full dvc repro
+	pip install -q pipx dvc[s3]
+	MODE=full pipx dvc repro
 
 unlock:
 	rm -f .dvc/tmp/lock

@@ -1,29 +1,19 @@
 stages:
   setup-base:
     cmd:
-      - UV_LINK_MODE=copy uv venv .venv --python 3.9
-      - .venv/bin/python3.9 -m ensurepip --upgrade
-      - .venv/bin/python3.9 -m pip install -q --no-cache-dir uv
+      - pipx run uv venv .venv --python 3.9
+      - .venv/bin/python -m ensurepip --upgrade
+      - .venv/bin/python -m pip install -q uv
       - .venv/bin/uv pip compile requirements/base.txt -o requirements/base.lock
       - .venv/bin/uv pip sync requirements/base.lock
     outs:
-      - .venv/bin:
-          persist: true
+      - .venv:
           cache: true
+          persist: true
       - requirements/base.lock:
           persist: true
     deps:
       - requirements/base.txt
-
-  setup-infrastruct:
-    cmd:
-      - .venv/bin/uv pip compile requirements/infrastruct.txt -o requirements/infrastruct.lock
-    outs:
-      - requirements/infrastruct.lock:
-          persist: true
-    deps:
-      - .venv/bin/uv
-      - requirements/infrastruct.txt
 
   setup-ingest:
     cmd:
@@ -77,17 +67,20 @@ stages:
 
   setup-models:
     cmd:
-      - rsync -a .venv/ .venv-models/
-      - .venv-models/bin/uv pip compile requirements/models.txt -o requirements/models.lock
-      - .venv-models/bin/uv pip sync requirements/models.lock
+      - pipx run uv venv .venv-models --python 3.9
+      - . .venv-models/bin/python -m ensurepip --upgrade
+      - . .venv-models/bin/pip install -q uv
+      - . .venv-models/bin/uv pip sync requirements/base.lock
+      - . .venv-models/bin/uv pip sync requirements/models.lock
     outs:
-      - .venv-models/bin:
-          persist: true
+      - .venv-models:
           cache: true
+          persist: true
       - requirements/models.lock:
           persist: true
     deps:
-      - .venv/bin/uv
+      - requirements/base.lock
+      - requirements/base.txt
       - requirements/models.txt
 
   setup-autogluon:
@@ -102,7 +95,7 @@ stages:
 
   infrastruct:
     cmd:
-      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/infrastruct.lock)" python pipeline infrastruct
+      - .venv/bin/uv run --with boto3 python pipeline infrastruct
     deps:
       - .venv/bin/uv
       - pipeline/__init__.py
@@ -117,7 +110,7 @@ stages:
 
   ingest:
     cmd:
-      - .venv/bin/uv run --with "$(paste -sd ' ' requirements/ingest.lock)" python pipeline ingest
+      - .venv/bin/uv run --with ucimlrepo python pipeline ingest
     deps:
       - .venv/bin/uv
       - metrics/infrastruct/metrics.json
