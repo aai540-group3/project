@@ -173,3 +173,17 @@ metrics/infrastruct/metrics.json
 requirements/autogluon.lock
 requirements/base.lock
 requirements/models.lock
+data/raw
+feature_repo
+metrics/explore
+metrics/feast
+metrics/featurize
+metrics/infrastruct
+metrics/ingest
+metrics/neuralnetwork
+metrics/preprocess
+models/logisticregression
+plots/autogluon
+plots/featurize
+plots/ingest
+plots/neuralnetwork
