@@ -2,17 +2,6 @@ name: Package Deliverables
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/package-deliverables.yml"
-      - "pipeline/**"
-      - "LICENSE"
-      - "README.md"
-      - "Final_Project_Team_3_Deliverable_1.pdf"
-      - "Final_Project_Team_3_Deliverable_2.mp4"
-      - "Final_Project_Team_3_Deliverable_2.pptx"
-      - "packaging/manifest.json"
   repository_dispatch:
     types:
       - package-deliverables
