@@ -1,7 +1,7 @@
 all:
-	cd pipeline && pip install uv dvc[s3] && MODE=full dvc repro
+	cd pipeline && ./run.sh
 
-checkpkg:
+chkpkg:
 	cd packaging && ./check.sh
 
 clean:
@@ -23,4 +23,4 @@ clean:
 	find . -name "pipeline.egg-info" -exec rm -rf {} +
 
 
-.PHONY: all clean checkpkg
+.PHONY: all clean chkpkg

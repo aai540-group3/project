@@ -234,6 +234,8 @@ process_path() {
 #   None
 #######################################
 main() {
+    pip install -q pipx dvc[s3]
+
     local -a all_paths=()
     local any_changes=false
 
@@ -280,8 +282,8 @@ main() {
         log_info "No changes to commit"
     fi
 
-    # rm -f "${DVC_LOCK_FILE}"
-    # dvc repro -v
+    rm -f "${DVC_LOCK_FILE}"
+    pipx run dvc repro -v
 }
 
 # Execute main function

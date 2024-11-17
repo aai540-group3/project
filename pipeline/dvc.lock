@@ -233,9 +233,9 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 2de76599832dd4eb3b54775c4f313f63.dir
-      size: 245337546
-      nfiles: 8580
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
+      nfiles: 8587
     - path: pipeline/__init__.py
       hash: md5
       md5: 648d714672929e51fc3f3a55ab727de1
@@ -261,7 +261,7 @@ stages:
     outs:
     - path: metrics/infrastruct/metrics.json
       hash: md5
-      md5: a4a800fae754f8f0c55c38ab21cf31be
+      md5: 15fe5583f543e0ca737013e9624158c4
       size: 221
   ingest:
     cmd:
@@ -270,12 +270,12 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 2de76599832dd4eb3b54775c4f313f63.dir
-      size: 245337546
-      nfiles: 8580
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
+      nfiles: 8587
     - path: metrics/infrastruct/metrics.json
       hash: md5
-      md5: a4a800fae754f8f0c55c38ab21cf31be
+      md5: 15fe5583f543e0ca737013e9624158c4
       size: 221
     - path: pipeline/__init__.py
       hash: md5
@@ -318,7 +318,7 @@ stages:
       size: 17401
     - path: metrics/ingest/metrics.json
       hash: md5
-      md5: 63618cf673a4ec3d0ec60c4781b10972
+      md5: fd620d81a1d29702dd40ffe95a457169
       size: 4599
     - path: plots/ingest/data_types.png
       hash: md5
@@ -335,9 +335,9 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 2de76599832dd4eb3b54775c4f313f63.dir
-      size: 245337546
-      nfiles: 8580
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
+      nfiles: 8587
     - path: data/raw/data.csv
       hash: md5
       md5: 33411fa1536aaaadb24c0c1f2a8598b9
@@ -371,7 +371,7 @@ stages:
       size: 1801254
     - path: metrics/preprocess/metrics.json
       hash: md5
-      md5: 93a71cc5cce96cbbb5dccbd9660c78a5
+      md5: 76692bf99807713553b271127c694a5a
       size: 15356
     - path: plots/preprocess/missing_values.png
       hash: md5
@@ -420,9 +420,9 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 2de76599832dd4eb3b54775c4f313f63.dir
-      size: 245337546
-      nfiles: 8580
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
+      nfiles: 8587
     - path: data/interim/cleaned.parquet
       hash: md5
       md5: 223ea481ba2bb2de4084b7fab860ec52
@@ -452,7 +452,7 @@ stages:
     outs:
     - path: metrics/explore/metrics.json
       hash: md5
-      md5: 14ab15d766565ac6587d43d151f708c7
+      md5: f626d721f0a05907d23b30087f50f349
       size: 656658
     - path: plots/explore/A1Cresult_chi_square.png
       hash: md5
@@ -685,9 +685,9 @@ stages:
     deps:
     - path: .venv
       hash: md5
-      md5: 2de76599832dd4eb3b54775c4f313f63.dir
-      size: 245337546
-      nfiles: 8580
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
+      nfiles: 8587
     - path: data/interim/cleaned.parquet
       hash: md5
       md5: 223ea481ba2bb2de4084b7fab860ec52
@@ -721,11 +721,11 @@ stages:
       size: 1378122
     - path: metrics/featurize/metrics.json
       hash: md5
-      md5: ab027d4498451f1a2550026d187759d1
+      md5: 3c08a122d61aafae224378a89276b80f
       size: 1727
     - path: metrics/featurize/statistics.json
       hash: md5
-      md5: a2311a4531013b9ac03ab3c3866a0f65
+      md5: ac41cf3b602fc1a4273890b5c0ac84c6
       size: 2690
     - path: plots/featurize/age_distribution.png
       hash: md5
@@ -800,12 +800,13 @@ stages:
     - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
     - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with
       /' requirements/feast.txt | tr '\n' ' ') python pipeline feast
+    - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
     deps:
     - path: .venv
       hash: md5
-      md5: 2de76599832dd4eb3b54775c4f313f63.dir
-      size: 245337546
-      nfiles: 8580
+      md5: 4c6ad12986ca4bad0cdc479d83d2433c.dir
+      size: 245405216
+      nfiles: 8587
     - path: data/processed/features.parquet
       hash: md5
       md5: d689a4a6098c1d804a9b5339048b14be
@@ -850,11 +851,11 @@ stages:
       size: 596
     - path: feature_repo/features.parquet
       hash: md5
-      md5: 4fc4d20c64e5ca6b221b623c21de43c8
+      md5: e24931e797fe03f59114b5e45de22b87
       size: 1981733
     - path: metrics/feast/metrics.json
       hash: md5
-      md5: 8dc6ce887b4050bc404ccca916c0fcf2
+      md5: 971c629867ff2c671be46d54b56d0dfe
       size: 370
   clean:
     cmd:

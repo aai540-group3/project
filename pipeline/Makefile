@@ -1,6 +1,8 @@
 all:
-	pip install -q pipx dvc[s3]
-	pipx run dvc repro
+	./run.sh
+
+chkpkg:
+	cd ../packaging && ./check.sh
 
 unlock:
 	rm -f .dvc/tmp/lock
@@ -24,4 +26,4 @@ clean:
 	find . -name "*.egg-info" -exec rm -rf {} +
 	find . -name "*.log" -delete
 
-.PHONY: all clean unlock
+.PHONY: all clean unlock chkpkg
