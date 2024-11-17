@@ -66,6 +66,7 @@ class PostgresConfig:
     :param sslrootcert_path: Path to the SSL root certificate file, defaults to None.
     :type sslrootcert_path: str, optional
     """
+
     host: str
     port: int
     database: str
@@ -79,6 +80,7 @@ class PostgresConfig:
     sslkey_path: Optional[str] = None
     sslcert_path: Optional[str] = None
     sslrootcert_path: Optional[str] = None
+
 
 def wait_for_postgres(
     host: str,

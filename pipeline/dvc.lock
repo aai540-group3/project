@@ -687,8 +687,8 @@ stages:
       size: 25657
   featurize:
     cmd:
-    - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python --with $(paste -sd
-      ' ' requirements/featurize.txt) python pipeline featurize
+    - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with
+      /' requirements/featurize.txt | tr '\n' ' ') python pipeline featurize
     deps:
     - path: .venv
       hash: md5
@@ -728,11 +728,11 @@ stages:
       size: 1378122
     - path: metrics/featurize/metrics.json
       hash: md5
-      md5: fd76d5f3b3dced6cf842e8f779a98fe9
+      md5: ab027d4498451f1a2550026d187759d1
       size: 1727
     - path: metrics/featurize/statistics.json
       hash: md5
-      md5: a21131d5fea36c42d2db843565233125
+      md5: a2311a4531013b9ac03ab3c3866a0f65
       size: 2690
     - path: plots/featurize/age_distribution.png
       hash: md5
@@ -802,3 +802,64 @@ stages:
       hash: md5
       md5: d08ef5c43299c30e00ae073a559e4e1b
       size: 40918
+  feast:
+    cmd:
+    - (docker stop $(docker ps -a -q --filter publish=5432) 2>/dev/null || true)
+    - UV_LINK_MODE=copy pipx run uv run --python .venv/bin/python $(sed 's/^/--with
+      /' requirements/feast.txt | tr '\n' ' ') python pipeline feast
+    deps:
+    - path: .venv
+      hash: md5
+      md5: 2de76599832dd4eb3b54775c4f313f63.dir
+      size: 245337546
+      nfiles: 8580
+    - path: data/processed/features.parquet
+      hash: md5
+      md5: d689a4a6098c1d804a9b5339048b14be
+      size: 1378122
+    - path: pipeline/__init__.py
+      hash: md5
+      md5: 648d714672929e51fc3f3a55ab727de1
+      size: 2690
+    - path: pipeline/__main__.py
+      hash: md5
+      md5: df2c15d54d4eb1f9787b4cec1e7f931e
+      size: 3029
+    - path: pipeline/stages/feast.py
+      hash: md5
+      md5: 2d277b34825951a1dc4fdc4d639e06a5
+      size: 35224
+    - path: pipeline/stages/feature_repo.py
+      hash: md5
+      md5: fbbd55592e89b4e174d41202e86f6ca4
+      size: 7068
+    - path: pipeline/stages/stage.py
+      hash: md5
+      md5: 2e955e44b4cd315c99767ed32fa6676f
+      size: 7335
+      isexec: true
+    - path: requirements/base.lock
+      hash: md5
+      md5: 64e8b443d89e7fde7f293bdeb4158448
+      size: 1836
+    outs:
+    - path: feature_repo/data_hash.txt
+      hash: md5
+      md5: 09c26842994b965349f3b0b69bdea89e
+      size: 20
+    - path: feature_repo/feature_repo.py
+      hash: md5
+      md5: fbbd55592e89b4e174d41202e86f6ca4
+      size: 7068
+    - path: feature_repo/feature_store.yaml
+      hash: md5
+      md5: 63538ccddc0e3762595d6443472c000a
+      size: 596
+    - path: feature_repo/features.parquet
+      hash: md5
+      md5: 164cf67d3ac42309d4311d502ce89a84
+      size: 1981733
+    - path: metrics/feast/metrics.json
+      hash: md5
+      md5: 043697e8319ffbf6463e626cce46f26b
+      size: 370
