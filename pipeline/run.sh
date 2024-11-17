@@ -12,6 +12,14 @@ set -o nounset
 set -o pipefail
 set -o xtrace
 
+if ! command -v yq &>/dev/null; then
+    echo "yq not found. Installing yq..."
+    wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+    chmod +x /usr/bin/yq
+else
+    echo "yq is already installed."
+fi
+
 # Constants for terminal colors
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
