@@ -1,18 +1,13 @@
-import os
-import yaml
 import logging
+import os
+
 import pandas as pd
+import yaml
 from autogluon.tabular import TabularPredictor
 from dvclive import Live
-from src.utils import (
-    calculate_metrics,
-    setup_artifacts,
-    load_data,
-    split_data,
-    save_metrics,
-    plot_confusion_matrix,
-    plot_roc_curve,
-)
+from src.utils import (calculate_metrics, load_data, plot_confusion_matrix,
+                       plot_roc_curve, save_metrics, setup_artifacts,
+                       split_data)
 
 # Configure logging
 logging.basicConfig(

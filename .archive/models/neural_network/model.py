@@ -1,25 +1,17 @@
-import os
-import yaml
 import logging
+import os
+
 import tensorflow as tf
+import yaml
 from dvclive import Live
+from src.utils import (apply_smote, calculate_metrics, load_data,
+                       log_class_distribution, plot_confusion_matrix,
+                       plot_roc_curve, preprocess_data, save_metrics,
+                       scale_features, setup_artifacts, split_data)
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import BatchNormalization, Dense, Dropout
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD, Adam
-from src.utils import (
-    calculate_metrics,
-    setup_artifacts,
-    load_data,
-    preprocess_data,
-    split_data,
-    apply_smote,
-    scale_features,
-    log_class_distribution,
-    save_metrics,
-    plot_confusion_matrix,
-    plot_roc_curve,
-)
 
 # Configure logging
 logging.basicConfig(

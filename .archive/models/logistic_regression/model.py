@@ -1,25 +1,15 @@
-import os
-import yaml
 import logging
+import os
+
 import numpy as np
+import yaml
 from dvclive import Live
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    roc_auc_score,
-)
-from src.utils import (
-    apply_smote,
-    calculate_metrics,
-    load_data,
-    log_class_distribution,
-    plot_confusion_matrix,
-    plot_roc_curve,
-    preprocess_data,
-    save_metrics,
-    scale_features,
-    setup_artifacts,
-    split_data,
-)
+from sklearn.metrics import roc_auc_score
+from src.utils import (apply_smote, calculate_metrics, load_data,
+                       log_class_distribution, plot_confusion_matrix,
+                       plot_roc_curve, preprocess_data, save_metrics,
+                       scale_features, setup_artifacts, split_data)
 
 # Configure logging
 logging.basicConfig(

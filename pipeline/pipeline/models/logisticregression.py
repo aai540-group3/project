@@ -341,26 +341,22 @@ class LogisticRegression(Model):
             logger.error(f"Failed to create prediction function: {e}")
             return None
 
-    def save_model(self, filename: str = "model.pth") -> pathlib.Path:
-        """Save the trained logistic regression model and scaler.
+    def save_model(self, model_artifact: Any, filename: str = "model.pkl") -> pathlib.Path:
+        """Save the AutoGluon predictor.
 
-        :param filename: The filename to save the model under.
+        :param model_artifact: AutoGluon predictor to be saved.
+        :type model_artifact: TabularPredictor
+        :param filename: Ignored for AutoGluon as it manages its own filenames.
         :type filename: str
-        :return: Path to the saved model file.
-        :rtype: pathlib.Path
+        :return: Path to the saved model directory.
+        :rtype: Path
         """
-        model_path = self.models_dir / filename
         try:
-            with self._model_lock:
-                torch.save(self.model.state_dict(), model_path)
-            # Save the scaler
-            scaler_path = self.models_dir / "scaler.joblib"
-            joblib.dump(self.scaler, scaler_path)
-            logger.info(f"Model saved successfully at '{model_path}'.")
-            logger.info(f"Scaler saved successfully at '{scaler_path}'.")
-            return model_path
+            model_artifact.save()
+            logger.info(f"Model saved successfully at '{self.models_dir}'.")
+            return self.models_dir
         except Exception as e:
-            logger.error(f"Failed to save model and scaler: {e}")
+            logger.error(f"Failed to save model: {e}")
             raise
 
     def load_model(self, filename: str = "model.pth") -> Optional[Any]:

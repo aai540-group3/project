@@ -1,4 +1,5 @@
 import logging
+
 import gradio as gr
 import pandas as pd
 from autogluon.tabular import TabularPredictor

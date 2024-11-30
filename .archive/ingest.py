@@ -11,16 +11,15 @@ Data Ingestion Stage
 import json
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
+import boto3
 import pandas as pd
 import requests
-from omegaconf import DictConfig
-from ucimlrepo import fetch_ucirepo
-import boto3
-
-from pipeline.stages.base import PipelineStage
 from loguru import logger
+from omegaconf import DictConfig
+from pipeline.stages.base import PipelineStage
+from ucimlrepo import fetch_ucirepo
 
 
 class DataIngestionStage(PipelineStage):
